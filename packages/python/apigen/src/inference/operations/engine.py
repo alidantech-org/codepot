@@ -25,7 +25,7 @@ def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]
         if not isinstance(path_item, dict):
             continue
 
-        path_resource = extract_resource_from_x_codegen(path_item.get(X_CODEGEN, {}))
+        path_resource = extract_resource_from_x_codegen(path_item.get(X_CODEGEN, {}), document)
 
         for method, operation in path_item.items():
             lower = method.lower()
@@ -36,7 +36,7 @@ def infer_operations(document: OpenApiDocument) -> tuple[InferredOperation, ...]
             if not isinstance(operation, dict):
                 continue
 
-            resource = infer_resource(operation, path_item, path_resource)
+            resource = infer_resource(operation, path_item, path_resource, document)
             merged_params = _merged_parameters(path_item, operation, document)
             parameters = infer_parameters(merged_params, document)
             request_body = infer_request_body(operation.get(REQUEST_BODY), document)

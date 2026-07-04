@@ -12,24 +12,13 @@ import typer
 
 from app import GeneratorApp
 
-from cli.commands.emit import emit_command
-from cli.commands.infer import infer_command
-from cli.commands.inspect import inspect_command
-from cli.commands.validate import validate_command
+from cli.commands.generate import generate_command
 from cli.constants.constants import (
     APP_DESCRIPTION,
     APP_NAME,
-    APP_VERSION,
-    CMD_EMIT,
-    CMD_INFER,
-    CMD_INSPECT,
-    CMD_VALIDATE,
-    HELP_EMIT,
-    HELP_INFER,
-    HELP_INSPECT,
-    HELP_VALIDATE,
+    CMD_GENERATE,
+    HELP_GENERATE,
 )
-from cli.presentation.core.console import print_header
 
 RUNTIME_KEY = "runtime"
 
@@ -37,17 +26,8 @@ RUNTIME_KEY = "runtime"
 class RuntimeApi(Protocol):
     """Runtime methods the CLI is allowed to call."""
 
-    def emit(self, **kwargs):
-        """Emit output for a target language."""
-
-    def infer(self, **kwargs):
-        """Run inference."""
-
-    def inspect(self, **kwargs):
-        """Inspect an OpenAPI document."""
-
-    def validate(self, **kwargs):
-        """Validate an OpenAPI document."""
+    def generate(self, **kwargs):
+        """Run CodepotFile generation."""
 
 
 def set_runtime(ctx: typer.Context, runtime: RuntimeApi) -> None:
@@ -81,16 +61,7 @@ def main(ctx: typer.Context) -> None:
     set_runtime(ctx, GeneratorApp())
 
 
-@app.command("version", help="Show version and exit.")
-def version_command() -> None:
-    """Show the CLI version."""
-    print_header(APP_NAME, APP_VERSION)
-
-
-app.command(CMD_INSPECT, help=HELP_INSPECT)(inspect_command)
-app.command(CMD_INFER, help=HELP_INFER)(infer_command)
-app.command(CMD_EMIT, help=HELP_EMIT)(emit_command)
-app.command(CMD_VALIDATE, help=HELP_VALIDATE)(validate_command)
+app.command(CMD_GENERATE, help=HELP_GENERATE)(generate_command)
 
 
 if __name__ == "__main__":

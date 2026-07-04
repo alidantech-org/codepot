@@ -43,3 +43,18 @@ class EmitInput:
     dry_run: bool = False
     templates_path: Path | None = None
     progress: ProgressSink | None = None
+
+
+@dataclass(frozen=True)
+class GenerateInput:
+    """Input for CodepotFile-driven generation."""
+
+    config_path: Path | None = None
+    task_name: str | None = None
+    all_tasks: bool = False
+    dry_run: bool = False
+    verbose: bool = False
+    refresh: bool = False
+    skip_before: bool = False
+    skip_after: bool = False
+    progress: ProgressSink | None = None

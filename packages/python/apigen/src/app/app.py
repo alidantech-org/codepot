@@ -7,6 +7,8 @@ from pathlib import Path
 from app.models import (
     EmitInput,
     EmitOutput,
+    GenerateInput,
+    GenerateOutput,
     InferInput,
     InferOutput,
     InspectInput,
@@ -15,6 +17,7 @@ from app.models import (
     ValidateOutput,
 )
 from app.workflows.emit import run_emit
+from app.workflows.generate import run_generate
 from app.workflows.infer import run_infer
 from app.workflows.inspect import run_inspect
 from app.workflows.validate import run_validate
@@ -65,6 +68,32 @@ class GeneratorApp:
                 output_path=output_path,
                 dry_run=dry_run,
                 templates_path=templates_path,
+            )
+        )
+
+    def generate(
+        self,
+        *,
+        config_path: Path | None = None,
+        task_name: str | None = None,
+        all_tasks: bool = False,
+        dry_run: bool = False,
+        verbose: bool = False,
+        refresh: bool = False,
+        skip_before: bool = False,
+        skip_after: bool = False,
+    ) -> GenerateOutput:
+        """Run CodepotFile-driven generation."""
+        return run_generate(
+            GenerateInput(
+                config_path=config_path,
+                task_name=task_name,
+                all_tasks=all_tasks,
+                dry_run=dry_run,
+                verbose=verbose,
+                refresh=refresh,
+                skip_before=skip_before,
+                skip_after=skip_after,
             )
         )
 

@@ -78,4 +78,4 @@ def _extract_resource_from_ref(
     if not isinstance(x_codegen, dict):
         return None
 
-    return extract_resource_from_x_codegen(x_codegen)
+    return extract_resource_from_x_codegen(x_codegen, document)

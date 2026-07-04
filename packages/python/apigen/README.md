@@ -1,50 +1,74 @@
-Codepot Gen
-===========
+codepotx
+========
 
-OpenAPI inference and template-driven code generation for TypeScript, Dart, and
-debug output.
+Config-driven OpenAPI code generation for TypeScript, Dart, and debug output.
 
 Installation
 ------------
 
 ```bash
-pip install codepot-gen
+pip install codepotx
 ```
 
 CLI Usage
 ---------
 
-```bash
-codepot-gen emit \
-  --input openapi.yaml \
-  --language typescript \
-  --output ./generated
-```
+`codepotx` exposes one public workflow: `generate`.
 
-Short aliases are also installed:
+Run generation from a project-local `CodepotFile.yml` or `CodepotFile.yaml`:
 
 ```bash
-apigen --help
-codepot --help
+codepotx generate
 ```
 
-Bundled templates are included in the package. You can still override them:
+Run one named task:
 
 ```bash
-codepot-gen emit \
-  --input openapi.yaml \
-  --language dart \
-  --output ./sdk \
-  --templates ./templates/dart
+codepotx generate my-task
 ```
 
-Python Usage
-------------
+Run every configured task:
 
-```python
-from codepot_gen import GeneratorApp
+```bash
+codepotx generate --all
+```
 
-app = GeneratorApp()
+Preview without writing files or running configured shell commands:
+
+```bash
+codepotx generate my-task --dry-run --verbose
+```
+
+CodepotFile
+-----------
+
+Example `CodepotFile.yml`:
+
+```yaml
+allow: true
+
+tasks:
+  my-task:
+    input: ./openapi.yaml
+    language: typescript
+    templateDir: ./templates/next
+    output: ./lib
+
+    before:
+      - run: pnpm exec codepot-openapi generate
+
+    after:
+      - run: pnpm prettier --write lib
+```
+
+Local Development
+-----------------
+
+Install this checkout in editable mode:
+
+```bash
+python -m pip install -e .
+codepotx --help
 ```
 
 Build And Publish
@@ -66,12 +90,6 @@ Check the package:
 
 ```bash
 python -m twine check dist/*
-```
-
-Publish to TestPyPI first:
-
-```bash
-python -m twine upload --repository testpypi dist/*
 ```
 
 Publish to PyPI:

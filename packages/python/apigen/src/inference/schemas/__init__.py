@@ -16,7 +16,12 @@ from inference.metadata.query import infer_query_metadata
 from inference.models import InferredResource, InferredSchema, InferredSchemaKind
 from inference.models.schemas import InferredSchemaComposition, InferredSchemaField, QueryMetadata
 from inference.resources import extract_resource_from_x_codegen
-from inference.schemas.composition import get_composition_refs, get_inherited_refs, infer_composition, split_nullable_union
+from inference.schemas.composition import (
+    get_composition_refs,
+    get_inherited_refs,
+    infer_composition,
+    split_nullable_union,
+)
 from inference.schemas.enums import infer_enum_type, infer_enum_values
 from inference.schemas.fields import infer_schema_fields
 from inference.schemas.primitives import infer_primitive_format, infer_primitive_type
@@ -44,18 +49,25 @@ def infer_schemas(document: OpenApiDocument) -> tuple[InferredSchema, ...]:
         effective_schema, nullable = split_nullable_union(schema)
 
         kind_fields = _infer_kind_specific_fields(
-            effective_schema, classify_schema(str(name), effective_schema, document=document), document, nullable, schema
+            effective_schema,
+            classify_schema(str(name), effective_schema, document=document),
+            document,
+            nullable,
+            schema,
         )
         schemas.append(
             InferredSchema(
                 name=str(name),
                 ref=ref,
                 kind=classify_schema(str(name), effective_schema, document=document),
-                resource=extract_resource_from_x_codegen(x_codegen_dict) or _infer_resource_from_alias(effective_schema, document),
+                resource=extract_resource_from_x_codegen(x_codegen_dict, document)
+                or _infer_resource_from_alias(effective_schema, document),
                 x_codegen=x_codegen_dict,
                 raw=schema,
                 dependencies=_dedupe_dependencies(
-                    found_ref.raw for found_ref in find_refs(schema) if found_ref.raw != f"{REF_SCHEMAS}{name}"
+                    found_ref.raw
+                    for found_ref in find_refs(schema)
+                    if found_ref.raw != f"{REF_SCHEMAS}{name}"
                 ),
                 alias_of=alias_of,
                 is_alias=is_alias,

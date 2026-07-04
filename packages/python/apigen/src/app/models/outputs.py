@@ -106,3 +106,32 @@ class EmitOutput:
     unchanged: list[Path] = field(default_factory=list)
     skipped: list[Path] = field(default_factory=list)
     diagnostics: list[RuntimeDiagnostic] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class GenerateTaskOutput:
+    """Output for one CodepotFile task."""
+
+    name: str
+    input_path: Path
+    language: str
+    output_path: Path
+    template_dir: Path
+    dry_run: bool = False
+    planned: list[Path] = field(default_factory=list)
+    written: list[Path] = field(default_factory=list)
+    updated: list[Path] = field(default_factory=list)
+    unchanged: list[Path] = field(default_factory=list)
+    skipped: list[Path] = field(default_factory=list)
+    cleaned: list[Path] = field(default_factory=list)
+    diagnostics: list[RuntimeDiagnostic] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class GenerateOutput:
+    """Output from CodepotFile-driven generation."""
+
+    config_path: Path
+    dry_run: bool = False
+    tasks: list[GenerateTaskOutput] = field(default_factory=list)
+    diagnostics: list[RuntimeDiagnostic] = field(default_factory=list)

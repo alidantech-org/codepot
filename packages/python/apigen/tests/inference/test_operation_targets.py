@@ -103,3 +103,64 @@ def test_infer_parameter_target_keeps_query_role_with_path_and_referenced_query(
     assert operation.target.source == "x-codegen.parameters.target"
     assert operation.target.inferred_roles == ("params", "query")
     assert operation.target.locations == ("path", "query")
+
+
+def test_infer_operation_resource_from_path_level_codegen_ref() -> None:
+    document = OpenApiDocument(
+        path=Path("openapi.yaml"),
+        raw={
+            "openapi": "3.1.0",
+            "info": {"title": "Test", "version": "1.0.0"},
+            "x-codegen": {
+                "resources": {
+                    "apps": {
+                        "name": "apps",
+                        "path": ["platform"],
+                    }
+                }
+            },
+            "paths": {
+                "/platform/apps": {
+                    "x-codegen": {
+                        "resource": {"$ref": "#/x-codegen/resources/apps"},
+                    },
+                    "get": {
+                        "operationId": "findApps",
+                        "x-codegen": {
+                            "parameters": {
+                                "target": {"$ref": "#/components/schemas/AppListQuery"},
+                            },
+                            "operation": {
+                                "name": "findApps",
+                                "role": "list",
+                            },
+                            "ui": {
+                                "enabled": True,
+                                "role": "list",
+                                "inferred": False,
+                            },
+                            "sources": {
+                                "apps": {
+                                    "responseField": "apps",
+                                    "item": {"$ref": "#/components/schemas/AppPartial"},
+                                    "key": "id",
+                                    "label": "name",
+                                }
+                            },
+                        },
+                        "responses": {"200": {"description": "OK"}},
+                    },
+                }
+            },
+        },
+    )
+
+    operation = infer_operations(document)[0]
+
+    assert operation.resource is not None
+    assert operation.resource.name == "apps"
+    assert operation.resource.path == ("platform",)
+    assert operation.target is not None
+    assert operation.target.ref == "#/components/schemas/AppListQuery"
+    assert operation.ui["enabled"] is True
+    assert operation.ui["role"] == "list"

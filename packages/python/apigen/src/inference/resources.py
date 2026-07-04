@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from constants.codegen import RESOURCE, NAME, PATH
+from constants.codegen import NAME, PATH, RESOURCE
+from constants.openapi import REF
 from inference.models import InferredResource
+from openapi.document import OpenApiDocument
+from openapi.resolver.pointers import resolve_pointer
 
 
 def make_resource(
@@ -18,7 +21,10 @@ def make_resource(
     )
 
 
-def extract_resource_from_x_codegen(x_codegen: dict[str, Any]) -> InferredResource | None:
+def extract_resource_from_x_codegen(
+    x_codegen: dict[str, Any],
+    document: OpenApiDocument | None = None,
+) -> InferredResource | None:
     resource = x_codegen.get(RESOURCE)
 
     if isinstance(resource, str):
@@ -27,6 +33,21 @@ def extract_resource_from_x_codegen(x_codegen: dict[str, Any]) -> InferredResour
     if not isinstance(resource, dict):
         return None
 
+    ref = resource.get(REF)
+    if isinstance(ref, str):
+        if document is None:
+            return None
+
+        resolved = resolve_pointer(document.raw, ref)
+        if not isinstance(resolved, dict):
+            return None
+
+        return _resource_from_dict(resolved)
+
+    return _resource_from_dict(resource)
+
+
+def _resource_from_dict(resource: dict[str, Any]) -> InferredResource | None:
     name = resource.get(NAME)
     raw_path = resource.get(PATH, ())
 

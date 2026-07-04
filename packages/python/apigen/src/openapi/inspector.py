@@ -5,6 +5,7 @@ from typing import Any
 
 from constants.codegen import X_CODEGEN
 from constants.http import HTTP_METHODS
+from inference.resources import extract_resource_from_x_codegen
 from openapi.document import OpenApiDocument
 from openapi.refs import find_refs
 from openapi.resolver.components import build_component_index
@@ -42,7 +43,7 @@ def inspect_openapi_document(document: OpenApiDocument) -> OpenApiInspection:
         if not isinstance(path_item, dict):
             continue
 
-        path_resource = _extract_resource(path_item)
+        path_resource = _extract_resource(path_item, document)
 
         for method, operation in path_item.items():
             if method.lower() not in HTTP_METHODS:
@@ -53,7 +54,7 @@ def inspect_openapi_document(document: OpenApiDocument) -> OpenApiInspection:
 
             operation_count += 1
 
-            operation_resource = _extract_resource(operation) or path_resource
+            operation_resource = _extract_resource(operation, document) or path_resource
             if operation_resource is None:
                 continue
 
@@ -94,33 +95,17 @@ def inspect_openapi_document(document: OpenApiDocument) -> OpenApiInspection:
     )
 
 
-def _extract_resource(node: dict[str, Any]) -> ResourceSummary | None:
-    from constants.openapi import X_CODEGEN_NAME, X_CODEGEN_PATH, X_CODEGEN_RESOURCE
-
+def _extract_resource(
+    node: dict[str, Any],
+    document: OpenApiDocument,
+) -> ResourceSummary | None:
     x_codegen = node.get(X_CODEGEN)
 
     if not isinstance(x_codegen, dict):
         return None
 
-    resource = x_codegen.get(X_CODEGEN_RESOURCE)
-
-    if isinstance(resource, str):
-        return ResourceSummary(name=resource)
-
-    if not isinstance(resource, dict):
+    resource = extract_resource_from_x_codegen(x_codegen, document)
+    if resource is None:
         return None
 
-    name = resource.get(X_CODEGEN_NAME)
-    raw_path = resource.get(X_CODEGEN_PATH, ())
-
-    if not isinstance(name, str) or not name:
-        return None
-
-    if isinstance(raw_path, list):
-        path = tuple(str(part) for part in raw_path)
-    elif isinstance(raw_path, str):
-        path = (raw_path,)
-    else:
-        path = ()
-
-    return ResourceSummary(name=name, path=path)
+    return ResourceSummary(name=resource.name, path=resource.path)

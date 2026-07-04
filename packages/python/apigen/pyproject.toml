@@ -3,9 +3,9 @@ requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "codepot-gen"
-version = "0.1.0"
-description = "General OpenAPI inference and multi-language code generation engine"
+name = "codepotx"
+version = "0.0.1"
+description = "Config-driven OpenAPI code generation engine"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
@@ -34,9 +34,7 @@ dependencies = [
 ]
 
 [project.scripts]
-codepot-gen = "cli.main:app"
-codepot = "cli.main:app"
-apigen = "cli.main:app"
+codepotx = "cli.main:app"
 
 [tool.setuptools]
 include-package-data = true
@@ -51,7 +49,8 @@ include = [
   "app*",
   "cli*",
   "constants*",
-  "codepot_gen*",
+  "codepot_file*",
+  "codepotx*",
   "contracts*",
   "core*",
   "emission*",
@@ -64,7 +63,7 @@ include = [
 exclude = ["tests*"]
 
 [tool.setuptools.package-data]
-codepot_gen = [
+codepotx = [
   "templates/**/*.j2",
   "templates/**/*.yaml",
   "templates/**/*.json",

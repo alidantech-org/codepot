@@ -54,14 +54,17 @@ def infer_resource_from_ref_alias(
 
     x_codegen = target.get(X_CODEGEN)
     if isinstance(x_codegen, dict):
-        resource = _extract_resource(x_codegen)
+        resource = _extract_resource(x_codegen, document)
         if resource is not None:
             return resource
 
     return infer_resource_from_ref_alias(target, document, seen)
 
 
-def _extract_resource(x_codegen: dict[str, Any]) -> InferredResource | None:
+def _extract_resource(
+    x_codegen: dict[str, Any],
+    document: OpenApiDocument,
+) -> InferredResource | None:
     from inference.resources import extract_resource_from_x_codegen
 
-    return extract_resource_from_x_codegen(x_codegen)
+    return extract_resource_from_x_codegen(x_codegen, document)

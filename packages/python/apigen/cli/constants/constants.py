@@ -4,11 +4,12 @@ This module is owned by the CLI adapter. Runtime and engine modules must not
 import from it.
 """
 
-APP_NAME = "codepot-gen"
-APP_DESCRIPTION = "Template-driven OpenAPI generator."
+APP_NAME = "codepotx"
+APP_DESCRIPTION = "Config-driven OpenAPI generator."
 APP_VERSION = "0.1.0"
 
 CMD_EMIT = "emit"
+CMD_GENERATE = "generate"
 CMD_INFER = "infer"
 CMD_INSPECT = "inspect"
 CMD_VALIDATE = "validate"
@@ -37,6 +38,7 @@ HELP_QUIET = "Suppress normal CLI output."
 HELP_VERSION = "Show version and exit."
 
 HELP_EMIT = "Emit output for a target language."
+HELP_GENERATE = "Run CodepotFile.yml task generation."
 HELP_INFER = "Run inference and optionally write inference JSON."
 HELP_INSPECT = "Inspect an OpenAPI document."
 HELP_VALIDATE = "Validate an OpenAPI document."
