@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-set -e
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-GENERATOR_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-
-cd "$GENERATOR_ROOT"
-python -m cli.main "$@"
