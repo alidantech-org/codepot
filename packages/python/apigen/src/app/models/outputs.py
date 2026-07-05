@@ -105,6 +105,9 @@ class EmitOutput:
     updated: list[Path] = field(default_factory=list)
     unchanged: list[Path] = field(default_factory=list)
     skipped: list[Path] = field(default_factory=list)
+    immutable_created: list[Path] = field(default_factory=list)
+    immutable_skipped: list[Path] = field(default_factory=list)
+    refused: list[Path] = field(default_factory=list)
     diagnostics: list[RuntimeDiagnostic] = field(default_factory=list)
 
 
@@ -123,6 +126,9 @@ class GenerateTaskOutput:
     updated: list[Path] = field(default_factory=list)
     unchanged: list[Path] = field(default_factory=list)
     skipped: list[Path] = field(default_factory=list)
+    immutable_created: list[Path] = field(default_factory=list)
+    immutable_skipped: list[Path] = field(default_factory=list)
+    refused: list[Path] = field(default_factory=list)
     cleaned: list[Path] = field(default_factory=list)
     diagnostics: list[RuntimeDiagnostic] = field(default_factory=list)
 

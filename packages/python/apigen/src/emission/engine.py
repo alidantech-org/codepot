@@ -18,7 +18,9 @@ from contracts.emission import (
     TemplateContext,
 )
 from contracts.events import ProgressSink, RuntimeEvent
+from contracts.paths import PathLifecycleMode, PathWritePolicy
 from contracts.template import TemplateContract, TemplateDependency, TemplateFile, TemplateGroup
+from core.errors import ConfigError
 from emission.dependencies.output_index import build_output_index
 from emission.dependencies.resolver import resolve_file_dependencies
 from emission.imports.base import ImportPlanner, ImportPlanningContext
@@ -95,6 +97,7 @@ class EmissionContextBuilder:
             "features": self.contract.features,
             "schemas": self.contract.schemas,
             "operations": self.contract.operations,
+            "entities": self.contract.entities,
             "file": self.contract.file,
         }
 
@@ -149,6 +152,14 @@ def build_emission_plan(
                 output_root=output_root,
                 path_config=path_config,
             )
+            folder_key = _descriptor_folder_key(descriptor)
+            lifecycle = _lifecycle_for_folder(folder_key, path_config)
+            refusal_reason = _write_refusal_reason(
+                output_path=output_path,
+                output_root=output_root,
+                lifecycle=lifecycle,
+                policy=path_config.write_policy,
+            )
 
             files.append(
                 EmissionFile(
@@ -162,6 +173,9 @@ def build_emission_plan(
                         template_extension=path_config.template_extension,
                     ),
                     compare_mode=_compare_mode_for_output(output_path),
+                    lifecycle=lifecycle,
+                    folder_key=folder_key,
+                    refusal_reason=refusal_reason,
                 )
             )
 
@@ -203,6 +217,13 @@ def execute_emission(
 ) -> EmissionResult:
     """Execute an emission plan by writing files unless dry-run is enabled."""
     if dry_run:
+        refused = tuple(file.output_path for file in plan.files if file.refusal_reason)
+        if refused:
+            reasons = {
+                file.output_path: file.refusal_reason for file in plan.files if file.refusal_reason
+            }
+            details = "\n".join(f"  - {path}: {reasons[path]}" for path in refused)
+            raise ConfigError(f"Unsafe template writes refused:\n{details}")
         _notify(
             progress,
             "emission_dry_run",
@@ -220,6 +241,10 @@ def execute_emission(
     updated: list[Path] = []
     unchanged: list[Path] = []
     skipped: list[Path] = []
+    immutable_created: list[Path] = []
+    immutable_skipped: list[Path] = []
+    refused: list[Path] = []
+    refusal_reasons: dict[Path, str] = {}
 
     for index, file in enumerate(plan.files, start=1):
         _notify(
@@ -229,6 +254,31 @@ def execute_emission(
             current=index,
             total=len(plan.files),
         )
+
+        if file.refusal_reason:
+            refused.append(file.output_path)
+            refusal_reasons[file.output_path] = file.refusal_reason
+            _notify(
+                progress,
+                "file_refused",
+                f"Refused unsafe {file.lifecycle.value} write: {file.output_path}",
+                level="error",
+                current=index,
+                total=len(plan.files),
+            )
+            continue
+
+        if file.lifecycle == PathLifecycleMode.IMMUTABLE and file.output_path.exists():
+            skipped.append(file.output_path)
+            immutable_skipped.append(file.output_path)
+            _notify(
+                progress,
+                "file_immutable_skipped",
+                f"Skipped immutable existing: {file.output_path}",
+                current=index,
+                total=len(plan.files),
+            )
+            continue
 
         if file.is_template:
             if not isinstance(file.content, str):
@@ -249,12 +299,19 @@ def execute_emission(
         updated.extend(result.updated)
         unchanged.extend(result.unchanged)
         skipped.extend(result.skipped)
+        if file.lifecycle == PathLifecycleMode.IMMUTABLE:
+            immutable_created.extend(result.created)
 
         for path in result.created:
+            label = (
+                "Created immutable"
+                if file.lifecycle == PathLifecycleMode.IMMUTABLE
+                else "Created managed"
+            )
             _notify(
                 progress,
                 "file_created",
-                f"Writing: {path}",
+                f"{label}: {path}",
                 current=index,
                 total=len(plan.files),
             )
@@ -262,7 +319,7 @@ def execute_emission(
             _notify(
                 progress,
                 "file_updated",
-                f"Updated: {path}",
+                f"Updated managed: {path}",
                 current=index,
                 total=len(plan.files),
             )
@@ -270,7 +327,7 @@ def execute_emission(
             _notify(
                 progress,
                 "file_unchanged",
-                f"Skipped unchanged: {path}",
+                f"Unchanged managed: {path}",
                 current=index,
                 total=len(plan.files),
             )
@@ -283,6 +340,10 @@ def execute_emission(
                 total=len(plan.files),
             )
 
+    if refused:
+        details = "\n".join(f"  - {path}: {refusal_reasons[path]}" for path in refused)
+        raise ConfigError(f"Unsafe template writes refused:\n{details}")
+
     return EmissionResult(
         plan=plan,
         write_result=EmissionWriteResult(
@@ -290,6 +351,10 @@ def execute_emission(
             updated=tuple(updated),
             unchanged=tuple(unchanged),
             skipped=tuple(skipped),
+            immutable_created=tuple(immutable_created),
+            immutable_skipped=tuple(immutable_skipped),
+            refused=tuple(refused),
+            refusal_reasons=refusal_reasons,
         ),
     )
 
@@ -489,6 +554,64 @@ def _descriptor_group(descriptor: TemplateDescriptor) -> str:
         return GROUP_GLOBAL
 
     return descriptor.folders[-1].expression
+
+
+def _descriptor_folder_key(descriptor: TemplateDescriptor) -> str:
+    if not descriptor.folders:
+        return GROUP_GLOBAL
+    return descriptor.folders[-1].expression
+
+
+def _lifecycle_for_folder(folder_key: str, path_config: Any) -> PathLifecycleMode:
+    if not path_config.write_policy.exists:
+        return PathLifecycleMode.MANAGED
+
+    folder = path_config.folder_by_name().get(folder_key)
+    if folder is not None and folder.lifecycle is not None:
+        return folder.lifecycle
+    return path_config.write_policy.default_mode
+
+
+def _write_refusal_reason(
+    *,
+    output_path: Path,
+    output_root: Path,
+    lifecycle: PathLifecycleMode,
+    policy: PathWritePolicy,
+) -> str:
+    if not policy.exists:
+        return ""
+
+    try:
+        relative = output_path.resolve().relative_to(output_root.resolve())
+    except ValueError:
+        return f"Target is outside output root: {output_root.resolve()}"
+
+    allowed_roots = (
+        policy.managed_roots
+        if lifecycle == PathLifecycleMode.MANAGED
+        else policy.immutable_roots
+    )
+    if _is_under_any(relative, allowed_roots):
+        return ""
+
+    if lifecycle == PathLifecycleMode.MANAGED:
+        return "Managed write is outside write_policy.managed_roots."
+    return "Immutable write is outside write_policy.immutable_roots."
+
+
+def _is_under_any(path: Path, roots: tuple[str, ...]) -> bool:
+    return any(_is_under(path, Path(root)) for root in roots)
+
+
+def _is_under(path: Path, root: Path) -> bool:
+    if str(root) in {"", "."}:
+        return True
+    try:
+        path.relative_to(root)
+        return True
+    except ValueError:
+        return False
 
 
 def _output_parts_for_context(

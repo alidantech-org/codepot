@@ -11,6 +11,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from contracts.paths import PathLifecycleMode
+
 TemplateContext = Mapping[str, Any]
 
 
@@ -25,6 +27,9 @@ class EmissionFile:
     group: str = "global"
     is_template: bool = True
     compare_mode: str = "exact"
+    lifecycle: PathLifecycleMode = PathLifecycleMode.MANAGED
+    folder_key: str = "global"
+    refusal_reason: str = ""
 
 
 @dataclass(frozen=True)
@@ -45,6 +50,10 @@ class EmissionWriteResult:
     updated: Sequence[Path] = field(default_factory=tuple)
     unchanged: Sequence[Path] = field(default_factory=tuple)
     skipped: Sequence[Path] = field(default_factory=tuple)
+    immutable_created: Sequence[Path] = field(default_factory=tuple)
+    immutable_skipped: Sequence[Path] = field(default_factory=tuple)
+    refused: Sequence[Path] = field(default_factory=tuple)
+    refusal_reasons: Mapping[Path, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

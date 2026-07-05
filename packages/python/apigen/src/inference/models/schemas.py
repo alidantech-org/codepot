@@ -20,7 +20,13 @@ class QueryMetadata:
     @property
     def enabled(self) -> bool:
         """Return whether any query behavior is enabled."""
-        return bool(self.filterable or self.operators or self.sortable or self.selectable or self.searchable)
+        return bool(
+            self.filterable
+            or self.operators
+            or self.sortable
+            or self.selectable
+            or self.searchable
+        )
 
 
 @dataclass(frozen=True)
@@ -38,6 +44,14 @@ class InferredSchemaField:
     item_refs: tuple[str, ...] = field(default_factory=tuple)
     enum_values: tuple[str, ...] | None = None
     default: Any = None
+    min_length: int | None = None
+    max_length: int | None = None
+    minimum: int | float | None = None
+    maximum: int | float | None = None
+    exclusive_minimum: bool | int | float | None = None
+    exclusive_maximum: bool | int | float | None = None
+    multiple_of: int | float | None = None
+    pattern: str | None = None
     description: str | None = None
     # Resolved type information for emitters
     resolved_kind: str | None = None

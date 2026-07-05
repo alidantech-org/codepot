@@ -6,6 +6,7 @@ from contracts.api import ApiResource
 from contracts.template import (
     TemplateDependency,
     TemplateDocs,
+    TemplateEntity,
     TemplateGroup,
     TemplateItemEmit,
     TemplateItemKey,
@@ -15,6 +16,7 @@ from contracts.template import (
     TemplateResourceMeta,
     TemplateSchemaGroups,
 )
+from languages.typescript.entities import entities_for_resource
 from languages.typescript.operations import operations_for_resource
 from languages.typescript.paths import resource_path_for_resource
 
@@ -29,10 +31,11 @@ def template_resources(
     *,
     schemas: TemplateSchemaGroups,
     operations: tuple[TemplateOperation, ...] = (),
+    entities: tuple[TemplateEntity, ...] = (),
 ) -> tuple[TemplateResource, ...]:
     """Build TypeScript resources with grouped children."""
     return tuple(
-        _resource(resource, schemas=schemas, operations=operations)
+        _resource(resource, schemas=schemas, operations=operations, entities=entities)
         for resource in resources
     )
 
@@ -42,6 +45,7 @@ def _resource(
     *,
     schemas: TemplateSchemaGroups,
     operations: tuple[TemplateOperation, ...],
+    entities: tuple[TemplateEntity, ...],
 ) -> TemplateResource:
     resource_path = resource_path_for_resource(resource)
 
@@ -49,6 +53,7 @@ def _resource(
     dtos = _items_for_resource(schemas.emit_dtos, resource_path)
     enums = _items_for_resource(schemas.emit_enums, resource_path)
     resource_operations = operations_for_resource(operations, resource_path)
+    resource_entities = entities_for_resource(entities, resource_path)
 
     return TemplateResource(
         api=resource,
@@ -56,6 +61,7 @@ def _resource(
         path=resource.path,
         path_name=resource.path_name,
         operations=resource_operations,
+        entities=resource_entities,
         models=models,
         dtos=dtos,
         enums=enums,

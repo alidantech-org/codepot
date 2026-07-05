@@ -13,6 +13,7 @@ from pathlib import Path
 
 from app.models.events import RuntimeEvent
 from codepot_file.models import CodepotCommand, CodepotTask
+from contracts.paths import PathWritePolicy
 from core.errors import CommandError, ConfigError
 
 ProgressSink = Callable[[RuntimeEvent], None]
@@ -46,13 +47,19 @@ def clean_task_paths(
     *,
     config_root: Path,
     dry_run: bool = False,
+    write_policy: PathWritePolicy | None = None,
 ) -> RunnerResult:
     """Delete configured clean paths with safety checks."""
     result = RunnerResult()
 
     for path in task.clean:
         clean_path = path.resolve()
-        _validate_clean_path(clean_path, config_root=config_root, output_path=task.output)
+        _validate_clean_path(
+            clean_path,
+            config_root=config_root,
+            output_path=task.output,
+            write_policy=write_policy,
+        )
         result.diagnostics.append(f"{'Would delete' if dry_run else 'Deleting'}: {clean_path}")
 
         if not dry_run and clean_path.exists():
@@ -326,6 +333,7 @@ def _validate_clean_path(
     *,
     config_root: Path,
     output_path: Path,
+    write_policy: PathWritePolicy | None = None,
 ) -> None:
     root = config_root.resolve()
     output = output_path.resolve()
@@ -343,10 +351,49 @@ def _validate_clean_path(
             f"Refusing to clean path outside config directory or task output: {clean_path}"
         )
 
+    if write_policy is None or not write_policy.exists:
+        return
+
+    try:
+        relative = clean_path.relative_to(output)
+    except ValueError:
+        try:
+            relative = clean_path.relative_to(root)
+        except ValueError:
+            relative = clean_path
+
+    if _is_under_any(relative, write_policy.immutable_roots):
+        raise ConfigError(f"Refusing to clean immutable path: {clean_path}")
+
+    if write_policy.clean_roots and not _is_under_any(relative, write_policy.clean_roots):
+        raise ConfigError(
+            f"Refusing to clean path outside write_policy.clean_roots: {clean_path}"
+        )
+
+    if _is_under_any(relative, write_policy.protected_roots) and not _is_under_any(
+        relative,
+        write_policy.clean_roots,
+    ):
+        raise ConfigError(f"Refusing to clean protected path: {clean_path}")
+
 
 def _is_relative_to(path: Path, parent: Path) -> bool:
     try:
         path.relative_to(parent)
+        return True
+    except ValueError:
+        return False
+
+
+def _is_under_any(path: Path, roots: tuple[str, ...]) -> bool:
+    return any(_is_under(path, Path(root)) for root in roots)
+
+
+def _is_under(path: Path, root: Path) -> bool:
+    if str(root) in {"", "."}:
+        return True
+    try:
+        path.relative_to(root)
         return True
     except ValueError:
         return False

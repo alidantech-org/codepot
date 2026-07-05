@@ -37,6 +37,25 @@ class PathSelectionMode(StrEnum):
     ONCE = "once"
 
 
+class PathLifecycleMode(StrEnum):
+    """How Codepot owns an emitted file."""
+
+    MANAGED = "managed"
+    IMMUTABLE = "immutable"
+
+
+@dataclass(frozen=True)
+class PathWritePolicy:
+    """Root-based write and clean safety policy."""
+
+    exists: bool = False
+    default_mode: PathLifecycleMode = PathLifecycleMode.MANAGED
+    managed_roots: tuple[str, ...] = ()
+    immutable_roots: tuple[str, ...] = ()
+    protected_roots: tuple[str, ...] = ()
+    clean_roots: tuple[str, ...] = ()
+
+
 @dataclass(frozen=True)
 class PathFolder:
     """Configured folder recipe used by `{folder}` path segments."""
@@ -46,6 +65,7 @@ class PathFolder:
     select: str = ""
     alias: str = ""
     mode: PathSelectionMode = PathSelectionMode.EACH
+    lifecycle: PathLifecycleMode | None = None
     description: str = "-"
 
 
@@ -84,6 +104,7 @@ class PathConfig:
     template_extension: str = ".j2"
     strip_template_extension: bool = True
     allow_raw_files: bool = True
+    write_policy: PathWritePolicy = field(default_factory=PathWritePolicy)
     rules: tuple[PathSyntaxRule, ...] = field(default_factory=tuple)
     meta: dict[str, Any] = field(default_factory=dict)
 
@@ -98,7 +119,10 @@ def default_path_rules() -> tuple[PathSyntaxRule, ...]:
         PathSyntaxRule(
             syntax="{folder}",
             kind=PathTokenKind.FOLDER,
-            description="Select and loop a configured paths.yaml folder recipe. The segment emits configured folder parts.",
+            description=(
+                "Select and loop a configured paths.yaml folder recipe. "
+                "The segment emits configured folder parts."
+            ),
             example="{model}/[model.name.path.o].md.j2",
         ),
         PathSyntaxRule(

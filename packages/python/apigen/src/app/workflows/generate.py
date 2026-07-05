@@ -11,10 +11,13 @@ from app.models import (
 )
 from app.models.inputs import EmitInput
 from app.workflows.emit import run_emit
+from app.workflows.template_paths import resolve_template_root
 from codepot_file.loader import load_codepot_file
 from codepot_file.models import CodepotFile, CodepotTask
 from codepot_file.runner import clean_task_paths, run_commands
 from core.errors import CommandError, ConfigError
+from emission.paths.config_loader import load_path_config
+from languages.discovery import resolve_language_adapter
 
 
 def run_generate(request: GenerateInput) -> GenerateOutput:
@@ -82,10 +85,18 @@ def _run_task(
         RuntimeDiagnostic(level="info", message=f"Running task: {task.name}")
     ]
     cleaned = []
+    adapter = resolve_language_adapter(task.language)
+    template_root = resolve_template_root(adapter=adapter, templates_path=task.template_dir)
+    path_config = load_path_config(template_root)
 
     if request.refresh:
         _notify(request, "cleaning_paths", "Cleaning configured paths")
-        clean_result = clean_task_paths(task, config_root=config.root, dry_run=request.dry_run)
+        clean_result = clean_task_paths(
+            task,
+            config_root=config.root,
+            dry_run=request.dry_run,
+            write_policy=path_config.write_policy,
+        )
         cleaned = clean_result.cleaned
         diagnostics.extend(
             RuntimeDiagnostic(level="info", message=item) for item in clean_result.diagnostics
@@ -174,6 +185,9 @@ def _run_task(
         updated=emit_result.updated,
         unchanged=emit_result.unchanged,
         skipped=emit_result.skipped,
+        immutable_created=emit_result.immutable_created,
+        immutable_skipped=emit_result.immutable_skipped,
+        refused=emit_result.refused,
         cleaned=cleaned,
         diagnostics=diagnostics,
     )

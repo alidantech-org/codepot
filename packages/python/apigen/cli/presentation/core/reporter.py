@@ -24,6 +24,7 @@ class Reporter:
             "file_updated",
             "file_unchanged",
             "file_skipped",
+            "file_immutable_skipped",
             "dependencies_resolved",
             "loading_path_config",
             "scanning_templates",

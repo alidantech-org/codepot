@@ -40,6 +40,10 @@ from contracts.api import (
     ApiContract,
     ApiDependency,
     ApiDocumentInfo,
+    ApiEntity,
+    ApiEntityConstraint,
+    ApiEntityField,
+    ApiEntityRelation,
     ApiEnumValue,
     ApiField,
     ApiFieldKind,
@@ -137,7 +141,11 @@ def build_api_contract(graph: InferenceGraph) -> ApiContract:
         servers=tuple(_server(server) for server in graph.servers),
         schemas=_schema_groups(schemas),
         operations=tuple(_operation(operation) for operation in graph.operations),
+        entities=_entities(graph.x_codegen or {}, schemas),
         dependencies=tuple(_dependency(dependency) for dependency in graph.dependencies),
+        meta={
+            X_CODEGEN: graph.x_codegen or {},
+        },
     )
 
 
@@ -165,6 +173,9 @@ def _resource(resource: InferredResource, graph: InferenceGraph) -> ApiResource:
         path=resource.path,
         path_name=make_contract_name("_".join(resource.path) if resource.path else resource.name),
         operations_count=operations_count,
+        meta={
+            X_CODEGEN: _resource_x_codegen(resource, graph.x_codegen or {}),
+        },
     )
 
 
@@ -260,6 +271,14 @@ def _field(field: InferredSchemaField, schemas: tuple[InferredSchema, ...]) -> A
         item_refs=_tuple(field.item_refs),
         enum_values=tuple(str(value) for value in _tuple(field.enum_values)),
         default=field.default,
+        min_length=field.min_length,
+        max_length=field.max_length,
+        minimum=field.minimum,
+        maximum=field.maximum,
+        exclusive_minimum=field.exclusive_minimum,
+        exclusive_maximum=field.exclusive_maximum,
+        multiple_of=field.multiple_of,
+        pattern=field.pattern,
         description=field.description or "-",
         query=_query(field.query),
     )
@@ -286,6 +305,8 @@ def _composition(
 
 
 def _operation(operation: InferredOperation) -> ApiOperation:
+    x_codegen = operation.raw.get(X_CODEGEN)
+    x_codegen = x_codegen if isinstance(x_codegen, dict) else {}
     return ApiOperation(
         id=operation.operation_id,
         name=make_contract_name(operation.operation_id),
@@ -297,7 +318,149 @@ def _operation(operation: InferredOperation) -> ApiOperation:
         responses=tuple(_response(response) for response in operation.responses),
         target=_operation_target(operation.target),
         description=str(operation.raw.get(DESCRIPTION) or operation.raw.get(SUMMARY) or "-"),
-        meta={UI: operation.ui},
+        meta={
+            UI: operation.ui,
+            X_CODEGEN: x_codegen,
+        },
+    )
+
+
+def _entities(x_codegen: dict[str, Any], schemas: tuple[ApiSchema, ...]) -> tuple[ApiEntity, ...]:
+    raw_entities = x_codegen.get("entities")
+    if not isinstance(raw_entities, dict):
+        return ()
+
+    schema_by_ref = {schema.ref: schema for schema in schemas}
+    entities: list[ApiEntity] = []
+    for resource_key, resource_entities in raw_entities.items():
+        if not isinstance(resource_entities, dict):
+            continue
+        for entity_name, raw_entity in resource_entities.items():
+            if not isinstance(raw_entity, dict):
+                continue
+            entities.append(
+                _entity(
+                    resource_key=str(resource_key),
+                    entity_name=str(entity_name),
+                    raw=raw_entity,
+                    schema_by_ref=schema_by_ref,
+                )
+            )
+    return tuple(entities)
+
+
+def _entity(
+    *,
+    resource_key: str,
+    entity_name: str,
+    raw: dict[str, Any],
+    schema_by_ref: dict[str, ApiSchema],
+) -> ApiEntity:
+    schema_ref = _ref(raw.get("schema"))
+    schema = schema_by_ref.get(schema_ref or "")
+    field_meta = raw.get("fields") if isinstance(raw.get("fields"), dict) else {}
+    backend_meta = raw.get("backend") if isinstance(raw.get("backend"), dict) else {}
+
+    return ApiEntity(
+        id=f"{resource_key}.{entity_name}",
+        name=make_contract_name(entity_name),
+        resource=resource_key,
+        resource_ref=_ref(raw.get("resource")),
+        schema_ref=schema_ref,
+        store=str(raw.get("store")) if raw.get("store") is not None else None,
+        extends=raw.get("extends") if isinstance(raw.get("extends"), dict) else {},
+        fields=tuple(
+            _entity_field(field.id, field_meta.get(field.id), field)
+            for field in (schema.fields if schema is not None else ())
+        ),
+        backend_fields=tuple(
+            _entity_backend_field(name, value) for name, value in backend_meta.items()
+        ),
+        relations=tuple(
+            _entity_relation(name, value)
+            for name, value in _dict(raw.get("relations")).items()
+        ),
+        constraints=tuple(
+            _entity_constraint(name, value)
+            for name, value in _dict(raw.get("constraints")).items()
+        ),
+        meta={
+            X_CODEGEN: raw,
+        },
+    )
+
+
+def _entity_field(name: str, raw: Any, schema_field: ApiField) -> ApiEntityField:
+    raw = raw if isinstance(raw, dict) else {}
+    return ApiEntityField(
+        id=name,
+        name=make_contract_name(name),
+        schema_ref=schema_field.schema_ref,
+        required=schema_field.required,
+        nullable=schema_field.nullable,
+        type=schema_field.type,
+        default=raw.get("default", schema_field.default),
+        min_length=_int_meta(raw, "minLength", schema_field.min_length),
+        max_length=_int_meta(raw, "maxLength", schema_field.max_length),
+        minimum=_number_meta(raw, "minimum", schema_field.minimum),
+        maximum=_number_meta(raw, "maximum", schema_field.maximum),
+        exclusive_minimum=raw.get("exclusiveMinimum", schema_field.exclusive_minimum),
+        exclusive_maximum=raw.get("exclusiveMaximum", schema_field.exclusive_maximum),
+        multiple_of=_number_meta(raw, "multipleOf", schema_field.multiple_of),
+        pattern=_string_meta(raw, "pattern", schema_field.pattern),
+        meta={
+            X_CODEGEN: raw,
+            "schema_field": schema_field,
+        },
+    )
+
+
+def _entity_backend_field(name: str, raw: Any) -> ApiEntityField:
+    raw_dict = raw if isinstance(raw, dict) else {}
+    return ApiEntityField(
+        id=name,
+        name=make_contract_name(name),
+        schema_ref=_ref(raw_dict),
+        required=True,
+        nullable=False,
+        default=raw_dict.get("default"),
+        min_length=_int_meta(raw_dict, "minLength", None),
+        max_length=_int_meta(raw_dict, "maxLength", None),
+        minimum=_number_meta(raw_dict, "minimum", None),
+        maximum=_number_meta(raw_dict, "maximum", None),
+        exclusive_minimum=raw_dict.get("exclusiveMinimum"),
+        exclusive_maximum=raw_dict.get("exclusiveMaximum"),
+        multiple_of=_number_meta(raw_dict, "multipleOf", None),
+        pattern=_string_meta(raw_dict, "pattern", None),
+        meta={
+            X_CODEGEN: raw_dict,
+            "backend_only": True,
+        },
+    )
+
+
+def _entity_relation(name: str, raw: Any) -> ApiEntityRelation:
+    raw = raw if isinstance(raw, dict) else {}
+    return ApiEntityRelation(
+        id=name,
+        name=make_contract_name(name),
+        cardinality=str(raw.get("cardinality") or "-"),
+        target_ref=_ref(raw.get("target")),
+        local=str(raw.get("local")) if raw.get("local") is not None else None,
+        foreign=str(raw.get("foreign")) if raw.get("foreign") is not None else None,
+        meta={X_CODEGEN: raw},
+    )
+
+
+def _entity_constraint(name: str, raw: Any) -> ApiEntityConstraint:
+    raw = raw if isinstance(raw, dict) else {}
+    fields = raw.get("fields")
+    return ApiEntityConstraint(
+        id=name,
+        name=make_contract_name(name),
+        kind=str(raw.get("kind") or "-"),
+        fields=tuple(str(field) for field in fields) if isinstance(fields, list | tuple) else (),
+        meta={X_CODEGEN: raw},
     )
 
 
@@ -417,6 +580,44 @@ def _resource_name(resource: InferredResource | None) -> str | None:
         return None
 
     return resource.name
+
+
+def _resource_x_codegen(resource: InferredResource, x_codegen: dict[str, Any]) -> dict[str, Any]:
+    resources = x_codegen.get("resources")
+    if not isinstance(resources, dict):
+        return {}
+    value = resources.get(resource.name)
+    return value if isinstance(value, dict) else {}
+
+
+def _ref(value: Any) -> str | None:
+    if isinstance(value, dict):
+        ref = value.get("$ref")
+        return str(ref) if ref else None
+    return None
+
+
+def _dict(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def _int_meta(raw: dict[str, Any], key: str, fallback: int | None) -> int | None:
+    value = raw.get(key, fallback)
+    return value if isinstance(value, int) and not isinstance(value, bool) else fallback
+
+
+def _number_meta(
+    raw: dict[str, Any],
+    key: str,
+    fallback: int | float | None,
+) -> int | float | None:
+    value = raw.get(key, fallback)
+    return value if isinstance(value, int | float) and not isinstance(value, bool) else fallback
+
+
+def _string_meta(raw: dict[str, Any], key: str, fallback: str | None) -> str | None:
+    value = raw.get(key, fallback)
+    return str(value) if value else None
 
 
 def _schema_groups(schemas: tuple[ApiSchema, ...]) -> ApiSchemaGroups:

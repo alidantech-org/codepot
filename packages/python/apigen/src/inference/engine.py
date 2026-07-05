@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from constants.codegen import ATTR_RESOURCE
+from constants.codegen import ATTR_RESOURCE, X_CODEGEN
 from inference.graph import collect_dependencies
 from inference.models import InferenceGraph, InferredResource
 from inference.operations.engine import infer_operations
@@ -30,6 +30,8 @@ class InferenceEngine:
         # Propagate resource information from operations to schemas
         schemas = _propagate_resources_to_schemas(schemas, operations, resources)
 
+        x_codegen = document.raw.get(X_CODEGEN)
+
         return InferenceGraph(
             title=document.title,
             openapi_version=document.openapi_version,
@@ -40,6 +42,7 @@ class InferenceEngine:
             schemas=schemas,
             operations=operations,
             dependencies=dependencies,
+            x_codegen=x_codegen if isinstance(x_codegen, dict) else {},
         )
 
 

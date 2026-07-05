@@ -29,6 +29,7 @@ from languages.typescript.constants import (
     TYPESCRIPT_TEMPLATE_NAME,
 )
 from languages.typescript.context import build_typescript_context
+from languages.typescript.entities import template_entities
 from languages.typescript.operations import template_operations
 from languages.typescript.resources import resource_paths, template_resources
 from languages.typescript.schemas import template_schema_groups
@@ -69,12 +70,26 @@ class TypeScriptLanguageAdapter:
         resource_path_map = resource_paths(api.resources)
         schemas = template_schema_groups(api, resource_paths=resource_path_map)
         schema_by_ref = {schema.ref: schema for schema in api.schemas.all}
+        resources_by_id = {resource.id: resource for resource in api.resources}
+        entities = template_entities(
+            api.entities,
+            resource_paths=resource_path_map,
+            resources_by_id=resources_by_id,
+            schema_by_ref=schema_by_ref,
+        )
         operations = template_operations(
             api.operations,
             resource_paths=resource_path_map,
+            resources_by_id=resources_by_id,
             schema_by_ref=schema_by_ref,
+            x_codegen=api.meta.get("x-codegen", {}),
         )
-        resources = template_resources(api.resources, schemas=schemas, operations=operations)
+        resources = template_resources(
+            api.resources,
+            schemas=schemas,
+            operations=operations,
+            entities=entities,
+        )
         server_urls = tuple(server.url for server in api.servers if server.url)
         servers = tuple(
             {
@@ -113,6 +128,7 @@ class TypeScriptLanguageAdapter:
             resources=resources,
             schemas=schemas,
             operations=operations,
+            entities=entities,
             lang=TemplateLanguage(
                 name=self.name,
                 framework=TemplateFramework(name=NODE_FRAMEWORK_NAME),
@@ -152,7 +168,11 @@ class TypeScriptLanguageAdapter:
         progress: ProgressSink | None = None,
     ) -> LanguagePostResult:
         """Return TypeScript post-action hints without running tools yet."""
-        _notify(progress, "typescript_post_actions", "TypeScript post-actions are informational for now")
+        _notify(
+            progress,
+            "typescript_post_actions",
+            "TypeScript post-actions are informational for now",
+        )
         return LanguagePostResult(
             diagnostics=(
                 "Run `npm install` in the generated package if package files are emitted.",

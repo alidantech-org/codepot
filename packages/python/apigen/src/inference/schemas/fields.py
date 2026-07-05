@@ -6,16 +6,29 @@ OpenAPI schema objects including type, refs, required status, and more.
 
 from typing import Any
 
-from constants.openapi import ALL_OF, DEFAULT, DESCRIPTION, ENUM, FORMAT, ITEMS, PROPERTIES, REQUIRED, TYPE, TYPE_NULL
-from openapi.document import OpenApiDocument
-from openapi.refs import get_ref
-
+from constants.openapi import (
+    ALL_OF,
+    DEFAULT,
+    DESCRIPTION,
+    ENUM,
+    FORMAT,
+    ITEMS,
+    PROPERTIES,
+    REQUIRED,
+    TYPE,
+    TYPE_NULL,
+)
 from inference.metadata.query import infer_query_metadata
 from inference.models.schemas import InferredSchemaField
 from inference.schemas.field_types import ResolvedFieldType, infer_field_type
+from openapi.document import OpenApiDocument
+from openapi.refs import get_ref
 
 
-def infer_schema_fields(schema: dict[str, Any] | None, document: OpenApiDocument | None = None) -> tuple[InferredSchemaField, ...]:
+def infer_schema_fields(
+    schema: dict[str, Any] | None,
+    document: OpenApiDocument | None = None,
+) -> tuple[InferredSchemaField, ...]:
     """Infer fields from an OpenAPI schema object.
 
     Args:
@@ -127,10 +140,7 @@ def _infer_field(
 
     # Handle enum values
     enum_values = effective_schema.get(ENUM)
-    if isinstance(enum_values, list):
-        enum_values = tuple(str(v) for v in enum_values)
-    else:
-        enum_values = None
+    enum_values = tuple(str(v) for v in enum_values) if isinstance(enum_values, list) else None
 
     default = effective_schema.get(DEFAULT)
     description = effective_schema.get(DESCRIPTION)
@@ -155,6 +165,14 @@ def _infer_field(
         item_refs=tuple(item_refs),
         enum_values=enum_values,
         default=default,
+        min_length=_int_value(effective_schema.get("minLength")),
+        max_length=_int_value(effective_schema.get("maxLength")),
+        minimum=_number_value(effective_schema.get("minimum")),
+        maximum=_number_value(effective_schema.get("maximum")),
+        exclusive_minimum=_exclusive_value(effective_schema.get("exclusiveMinimum")),
+        exclusive_maximum=_exclusive_value(effective_schema.get("exclusiveMaximum")),
+        multiple_of=_number_value(effective_schema.get("multipleOf")),
+        pattern=str(effective_schema.get("pattern")) if effective_schema.get("pattern") else None,
         description=str(description) if description else None,
         resolved_kind=resolved_types.resolved_kind if resolved_types else None,
         resolved_type=resolved_types.resolved_type if resolved_types else None,
@@ -164,3 +182,25 @@ def _infer_field(
         resolved_item_format=resolved_types.resolved_item_format if resolved_types else None,
         query=query_meta,
     )
+
+
+def _int_value(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    return None
+
+
+def _number_value(value: Any) -> int | float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int | float):
+        return value
+    return None
+
+
+def _exclusive_value(value: Any) -> bool | int | float | None:
+    if isinstance(value, bool | int | float):
+        return value
+    return None

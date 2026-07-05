@@ -37,6 +37,7 @@ from contracts.template import (
     TemplateOperation,
     TemplateOperationLang,
     TemplateOperationMeta,
+    TemplateOperationResource,
     TemplateParameter,
     TemplateParameterLang,
     TemplateParameterMeta,
@@ -64,14 +65,18 @@ def template_operations(
     operations: tuple[ApiOperation, ...],
     *,
     resource_paths: dict[str, tuple[str, ...]],
+    resources_by_id: dict[str, object] | None = None,
     schema_by_ref: dict[str, ApiSchema],
+    x_codegen: dict[str, object] | None = None,
 ) -> tuple[TemplateOperation, ...]:
     """Build TypeScript operation template variables."""
     return tuple(
         _operation(
             operation,
             resource_paths=resource_paths,
+            resources_by_id=resources_by_id or {},
             schema_by_ref=schema_by_ref,
+            x_codegen=x_codegen or {},
         )
         for operation in operations
     )
@@ -93,7 +98,9 @@ def _operation(
     operation: ApiOperation,
     *,
     resource_paths: dict[str, tuple[str, ...]],
+    resources_by_id: dict[str, object],
     schema_by_ref: dict[str, ApiSchema],
+    x_codegen: dict[str, object],
 ) -> TemplateOperation:
     resource_path = _operation_resource_path(operation, resource_paths)
     method = _operation_method(operation)
@@ -110,6 +117,10 @@ def _operation(
     list_field = _list_response_field(response_ref, schema_by_ref)
     path_params = _path_param_names(operation.path)
     request_content_types = _request_content_types(operation)
+    access_ref = _access_ref(operation)
+    resource_access_ref = _resource_access_ref(operation, x_codegen)
+    access_context_ref = _access_context_ref(access_ref or resource_access_ref, x_codegen)
+    use_case_base = operation.name.pascal.o
 
     return TemplateOperation(
         api=operation,
@@ -123,6 +134,7 @@ def _operation(
             else None
         ),
         responses=tuple(_response(response, schema_by_ref) for response in operation.responses),
+        resource=_operation_resource(operation, resource_paths, resources_by_id, x_codegen),
         lang=TemplateOperationLang(
             kind="typescript_operation",
             function_name=function_name,
@@ -173,6 +185,27 @@ def _operation(
             route_getter=function_name,
             path_params=path_params,
             has_path_params=bool(path_params),
+            nest_path=_nest_path(operation.path),
+            access_ref=access_ref or resource_access_ref,
+            access_context_ref=access_context_ref,
+            access_context_type=_schema_type(access_context_ref, schema_by_ref) or "unknown",
+            tags=_operation_tags(operation),
+            cache=_operation_cache(operation),
+            source=_operation_sources(operation),
+            payload_type=f"{use_case_base}Payload",
+            use_case_interface=f"{use_case_base}UseCase",
+            use_case_class=f"{use_case_base}UseCase",
+            use_case_impl_class=f"{use_case_base}UseCaseImpl",
+            use_case_file_name=(
+                f"{safe_file_name(name_text(operation.name.kebab.o), fallback=operation.id)}"
+                ".use-case"
+            ),
+            use_case_types_file_name=(
+                f"{safe_file_name(name_text(operation.name.kebab.o), fallback=operation.id)}"
+                ".use-case.types"
+            ),
+            controller_method_name=function_name,
+            service_method_name=function_name,
             ui_enabled=_ui_enabled(operation),
             ui_role=_ui_role(operation),
             ui_inferred=_ui_inferred(operation),
@@ -185,6 +218,28 @@ def _operation(
             ui_filter_fields=_query_filter_fields(query_ref, schema_by_ref),
             ui_select_fields=_query_select_fields(query_ref, schema_by_ref),
         ),
+    )
+
+
+def _operation_resource(
+    operation: ApiOperation,
+    resource_paths: dict[str, tuple[str, ...]],
+    resources_by_id: dict[str, object],
+    x_codegen: dict[str, object],
+) -> TemplateOperationResource | None:
+    if operation.resource is None:
+        return None
+    resource = resources_by_id.get(operation.resource)
+    name = getattr(resource, "name", None)
+    if name is None:
+        from contracts.names import make_contract_name
+
+        name = make_contract_name(operation.resource)
+    resource_x_codegen = _resource_x_codegen(operation.resource, x_codegen)
+    return TemplateOperationResource(
+        name=name,
+        path=getattr(resource, "path", ()) if resource is not None else (),
+        route=str(resource_x_codegen.get("route")) if resource_x_codegen.get("route") else None,
     )
 
 
@@ -648,6 +703,13 @@ def _path_param_names(path: str) -> tuple[str, ...]:
     return tuple(names)
 
 
+def _nest_path(path: str) -> str:
+    value = path.strip("/")
+    for name in _path_param_names(path):
+        value = value.replace(f"{{{name}}}", f":{name}")
+    return value
+
+
 def _operation_resource_path(
     operation: ApiOperation,
     resource_paths: dict[str, tuple[str, ...]],
@@ -670,6 +732,70 @@ def _first(values: tuple[str, ...]) -> str | None:
 def _ui_metadata(operation: ApiOperation) -> dict:
     ui = operation.meta.get(UI)
     return ui if isinstance(ui, dict) else {}
+
+
+def _operation_x_codegen(operation: ApiOperation) -> dict[str, object]:
+    value = operation.meta.get("x-codegen")
+    return value if isinstance(value, dict) else {}
+
+
+def _operation_tags(operation: ApiOperation) -> tuple[str, ...]:
+    tags = _operation_x_codegen(operation).get("tags")
+    return tuple(str(tag) for tag in tags) if isinstance(tags, list | tuple) else ()
+
+
+def _operation_cache(operation: ApiOperation) -> dict[str, object]:
+    value = _operation_x_codegen(operation).get("cache")
+    return value if isinstance(value, dict) else {}
+
+
+def _operation_sources(operation: ApiOperation) -> dict[str, object]:
+    value = _operation_x_codegen(operation).get("sources")
+    return value if isinstance(value, dict) else {}
+
+
+def _access_ref(operation: ApiOperation) -> str | None:
+    access = _operation_x_codegen(operation).get("access")
+    return _ref(access)
+
+
+def _resource_access_ref(operation: ApiOperation, x_codegen: dict[str, object]) -> str | None:
+    if operation.resource is None:
+        return None
+    resource = _resource_x_codegen(operation.resource, x_codegen)
+    return _ref(resource.get("access"))
+
+
+def _access_context_ref(access_ref: str | None, x_codegen: dict[str, object]) -> str | None:
+    if not access_ref:
+        return None
+    prefix = "#/x-codegen/access/"
+    if not access_ref.startswith(prefix):
+        return None
+    parts = access_ref[len(prefix) :].split("/")
+    current: object = x_codegen.get("access")
+    for part in parts:
+        if not isinstance(current, dict):
+            return None
+        current = current.get(part)
+    if not isinstance(current, dict):
+        return None
+    return _ref(current.get("context"))
+
+
+def _resource_x_codegen(resource_id: str, x_codegen: dict[str, object]) -> dict[str, object]:
+    resources = x_codegen.get("resources")
+    if not isinstance(resources, dict):
+        return {}
+    resource = resources.get(resource_id)
+    return resource if isinstance(resource, dict) else {}
+
+
+def _ref(value: object) -> str | None:
+    if isinstance(value, dict):
+        ref = value.get("$ref")
+        return str(ref) if ref else None
+    return None
 
 
 def _ui_enabled(operation: ApiOperation) -> bool:

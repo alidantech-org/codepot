@@ -58,7 +58,16 @@ def _register(
     name: str,
     aliases: tuple[str, ...],
 ) -> None:
-    if name in _REGISTERED_ADAPTERS:
+    existing = _REGISTERED_ADAPTERS.get(name)
+    if existing is not None and _is_same_adapter(existing, adapter_class):
+        for alias in aliases:
+            existing_name = _ALIAS_TO_NAME.get(alias)
+            if existing_name is not None and existing_name != name:
+                raise LanguageRegistrationError(f"language alias already registered: {alias}")
+            _ALIAS_TO_NAME[alias] = name
+        return
+
+    if existing is not None:
         raise LanguageRegistrationError(f"language already registered: {name}")
 
     _REGISTERED_ADAPTERS[name] = adapter_class
@@ -67,6 +76,20 @@ def _register(
         if alias in _ALIAS_TO_NAME:
             raise LanguageRegistrationError(f"language alias already registered: {alias}")
         _ALIAS_TO_NAME[alias] = name
+
+
+def _is_same_adapter(
+    left: type[LanguageAdapter],
+    right: type[LanguageAdapter],
+) -> bool:
+    return (
+        left is right
+        or (
+            left.__name__ == right.__name__
+            and left.__qualname__ == right.__qualname__
+            and left.__module__.split(".")[-3:] == right.__module__.split(".")[-3:]
+        )
+    )
 
 
 def _set_metadata(

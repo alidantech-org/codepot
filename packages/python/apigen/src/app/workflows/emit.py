@@ -105,6 +105,19 @@ def run_emit(request: EmitInput) -> EmitOutput:
                 f"{len(write_result.unchanged)} unchanged, "
                 f"{len(write_result.skipped)} skipped."
             ),
+        ),
+        RuntimeDiagnostic(
+            level="info",
+            message=(
+                "Managed: "
+                f"{len(write_result.created) - len(write_result.immutable_created)} created, "
+                f"{len(write_result.updated)} updated, "
+                f"{len(write_result.unchanged)} unchanged. "
+                "Immutable: "
+                f"{len(write_result.immutable_created)} created, "
+                f"{len(write_result.immutable_skipped)} skipped existing. "
+                f"Refused: {len(write_result.refused)}."
+            ),
         )
     ]
 
@@ -120,6 +133,9 @@ def run_emit(request: EmitInput) -> EmitOutput:
         updated=list(write_result.updated),
         unchanged=list(write_result.unchanged),
         skipped=list(write_result.skipped),
+        immutable_created=list(write_result.immutable_created),
+        immutable_skipped=list(write_result.immutable_skipped),
+        refused=list(write_result.refused),
         diagnostics=diagnostics,
     )
 

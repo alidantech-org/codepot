@@ -61,6 +61,42 @@ tasks:
       - run: pnpm prettier --write lib
 ```
 
+Template Write Safety
+---------------------
+
+Templates can opt into lifecycle-aware writes with `write_policy` in `paths.yaml`.
+Without `write_policy`, existing templates keep the old behavior.
+
+```yaml
+write_policy:
+  default_mode: managed
+  managed_roots:
+    - gen
+  immutable_roots:
+    - src
+  protected_roots:
+    - src
+  clean_roots:
+    - gen
+
+folders:
+  generated:
+    mode: managed
+    parts: [gen]
+
+  scaffold:
+    mode: immutable
+    parts: [src]
+```
+
+`managed` files may be created or updated, but only under `managed_roots`.
+`immutable` files are created once and skipped when they already exist. `mode:
+once` is accepted as an alias for `immutable` when `write_policy` is present.
+Unsafe writes are refused and fail the task instead of being written.
+
+`codepotx generate --refresh` cleans only paths allowed by `clean_roots` and
+will not delete immutable roots.
+
 Local Development
 -----------------
 

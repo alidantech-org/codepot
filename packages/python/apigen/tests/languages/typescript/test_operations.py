@@ -7,6 +7,10 @@ from pathlib import Path
 from src.contracts.api import (
     ApiContract,
     ApiDocumentInfo,
+    ApiEntity,
+    ApiEntityConstraint,
+    ApiEntityField,
+    ApiEntityRelation,
     ApiEnumValue,
     ApiField,
     ApiFieldKind,
@@ -514,4 +518,310 @@ def test_typescript_field_exposes_referenced_enum_metadata(tmp_path: Path) -> No
     assert tuple(option.wire for option in field.meta.enum_options) == (
         "active",
         "emailVerified",
+    )
+
+
+def test_typescript_operation_exposes_use_case_metadata_and_operation_access(
+    tmp_path: Path,
+) -> None:
+    params_ref = "#/components/schemas/AppRouteParams"
+    query_ref = "#/components/schemas/AppListQuery"
+    body_ref = "#/components/schemas/CreateAppBody"
+    response_ref = "#/components/schemas/AppResponse"
+    context_ref = "#/components/schemas/AuthUserContext"
+
+    api = ApiContract(
+        info=ApiDocumentInfo(title="Backend API", api_version="v1"),
+        resources=(
+            ApiResource(
+                id="apps",
+                name=make_contract_name("apps"),
+                path=("platform",),
+                operations_count=1,
+            ),
+        ),
+        schemas=ApiSchemaGroups(
+            all=(
+                _schema("AppRouteParams", params_ref),
+                _schema("AppListQuery", query_ref),
+                _schema("CreateAppBody", body_ref),
+                _schema("AppResponse", response_ref),
+                _schema("AuthUserContext", context_ref),
+            ),
+        ),
+        operations=(
+            ApiOperation(
+                id="createApp",
+                name=make_contract_name("createApp"),
+                method="post",
+                path="/apps/{appId}",
+                resource="apps",
+                parameters=(
+                    ApiParameter(
+                        id="appId",
+                        name=make_contract_name("appId"),
+                        location="path",
+                        required=True,
+                        schema_ref=params_ref,
+                    ),
+                ),
+                target=ApiOperationTarget(
+                    ref=query_ref,
+                    source="x-codegen.parameters.target",
+                    inferred_roles=("query",),
+                    locations=("query",),
+                ),
+                request_body=ApiRequestBody(required=True, schema_refs=(body_ref,)),
+                responses=(
+                    ApiResponse(
+                        status_code="201",
+                        schema_refs=(response_ref,),
+                        is_success=True,
+                    ),
+                ),
+                meta={
+                    "x-codegen": {
+                        "access": {"$ref": "#/x-codegen/access/user"},
+                        "tags": ["apps"],
+                        "cache": {"invalidate": ["apps"]},
+                        "sources": {"kind": "contract"},
+                    },
+                },
+            ),
+        ),
+        meta={
+            "x-codegen": {
+                "access": {
+                    "user": {"context": {"$ref": context_ref}},
+                },
+            },
+        },
+    )
+
+    contract = TypeScriptLanguageAdapter().build_template_contract(
+        api=api,
+        output_path=tmp_path,
+        template_root=tmp_path / "templates",
+        dry_run=True,
+    )
+
+    operation = contract.operations[0]
+
+    assert operation.resource is not None
+    assert operation.resource.name.kebab.o == "apps"
+    assert operation.resource.path == ("platform",)
+    assert operation.meta.nest_path == "apps/:appId"
+    assert operation.meta.path_params == ("appId",)
+    assert operation.meta.params_type == "AppRouteParams"
+    assert operation.meta.query_type == "AppListQuery"
+    assert operation.meta.body_type == "CreateAppBody"
+    assert operation.meta.response_type == "AppResponse"
+    assert operation.meta.access_ref == "#/x-codegen/access/user"
+    assert operation.meta.access_context_ref == context_ref
+    assert operation.meta.access_context_type == "AuthUserContext"
+    assert operation.meta.payload_type == "CreateAppPayload"
+    assert operation.meta.use_case_interface == "CreateAppUseCase"
+    assert operation.meta.use_case_impl_class == "CreateAppUseCaseImpl"
+    assert operation.meta.use_case_file_name == "create-app.use-case"
+    assert operation.meta.use_case_types_file_name == "create-app.use-case.types"
+    assert operation.meta.controller_method_name == "createApp"
+    assert operation.meta.service_method_name == "createApp"
+    assert operation.meta.tags == ("apps",)
+    assert operation.meta.cache == {"invalidate": ["apps"]}
+    assert operation.meta.source == {"kind": "contract"}
+
+
+def test_typescript_operation_access_context_falls_back_to_resource_access(
+    tmp_path: Path,
+) -> None:
+    context_ref = "#/components/schemas/AuthUserContext"
+
+    api = ApiContract(
+        info=ApiDocumentInfo(title="Backend API", api_version="v1"),
+        resources=(
+            ApiResource(
+                id="apps",
+                name=make_contract_name("apps"),
+                path=("platform",),
+                operations_count=1,
+            ),
+        ),
+        schemas=ApiSchemaGroups(all=(_schema("AuthUserContext", context_ref),)),
+        operations=(
+            ApiOperation(
+                id="findApps",
+                name=make_contract_name("findApps"),
+                method="get",
+                path="/apps",
+                resource="apps",
+            ),
+        ),
+        meta={
+            "x-codegen": {
+                "resources": {
+                    "apps": {
+                        "route": "apps",
+                        "access": {"$ref": "#/x-codegen/access/user"},
+                    },
+                },
+                "access": {
+                    "user": {"context": {"$ref": context_ref}},
+                },
+            },
+        },
+    )
+
+    contract = TypeScriptLanguageAdapter().build_template_contract(
+        api=api,
+        output_path=tmp_path,
+        template_root=tmp_path / "templates",
+        dry_run=True,
+    )
+
+    operation = contract.operations[0]
+
+    assert operation.resource is not None
+    assert operation.resource.route == "apps"
+    assert operation.meta.access_ref == "#/x-codegen/access/user"
+    assert operation.meta.access_context_type == "AuthUserContext"
+
+
+def test_typescript_entities_are_available_on_contract_and_resource(tmp_path: Path) -> None:
+    app_ref = "#/components/schemas/App"
+    status_ref = "#/components/schemas/AppStatus"
+
+    api = ApiContract(
+        info=ApiDocumentInfo(title="Entity API", api_version="v1"),
+        resources=(
+            ApiResource(
+                id="apps",
+                name=make_contract_name("apps"),
+                path=("platform",),
+                operations_count=0,
+            ),
+        ),
+        schemas=ApiSchemaGroups(
+            all=(
+                ApiSchema(
+                    id="AppStatus",
+                    name=make_contract_name("AppStatus"),
+                    ref=status_ref,
+                    kind=ApiSchemaKind.ENUM,
+                    enum_values=(make_enum_value("active"),),
+                ),
+                ApiSchema(
+                    id="App",
+                    name=make_contract_name("App"),
+                    ref=app_ref,
+                    kind=ApiSchemaKind.MODEL,
+                    resource="apps",
+                ),
+            ),
+        ),
+        entities=(
+            ApiEntity(
+                id="apps.App",
+                name=make_contract_name("App"),
+                resource="apps",
+                schema_ref=app_ref,
+                store="apps",
+                fields=(
+                    ApiEntityField(
+                        id="status",
+                        name=make_contract_name("status"),
+                        schema_ref=status_ref,
+                        default="active",
+                        type=ApiFieldType(kind=ApiFieldKind.ENUM),
+                    ),
+                    ApiEntityField(
+                        id="type",
+                        name=make_contract_name("type"),
+                        max_length=300,
+                        type=ApiFieldType(kind=ApiFieldKind.PRIMITIVE, type="string"),
+                    ),
+                ),
+                backend_fields=(
+                    ApiEntityField(
+                        id="keyHash",
+                        name=make_contract_name("keyHash"),
+                        meta={"backend_only": True, "x-codegen": {"type": "string"}},
+                    ),
+                ),
+                constraints=(
+                    ApiEntityConstraint(
+                        id="app_status_idx",
+                        name=make_contract_name("app_status_idx"),
+                        kind="index",
+                        fields=("status",),
+                    ),
+                ),
+                relations=(
+                    ApiEntityRelation(
+                        id="apiKeys",
+                        name=make_contract_name("apiKeys"),
+                        cardinality="hasMany",
+                        target_ref="#/x-codegen/entities/apps/AppApiKey",
+                    ),
+                ),
+            ),
+            ApiEntity(
+                id="apps.AppApiKey",
+                name=make_contract_name("AppApiKey"),
+                resource="apps",
+                relations=(
+                    ApiEntityRelation(
+                        id="app",
+                        name=make_contract_name("app"),
+                        cardinality="belongsTo",
+                        target_ref="#/x-codegen/entities/apps/App",
+                        foreign="appId",
+                    ),
+                ),
+            ),
+        ),
+    )
+
+    contract = TypeScriptLanguageAdapter().build_template_contract(
+        api=api,
+        output_path=tmp_path,
+        template_root=tmp_path / "templates",
+        dry_run=True,
+    )
+
+    entity = contract.entities[0]
+    resource = contract.resources[0]
+
+    assert entity.meta.class_name == "AppEntity"
+    assert entity.meta.file_name == "app.entity"
+    assert entity.meta.schema_type == "App"
+    assert entity.meta.table_name == "apps"
+    assert entity.resource is not None
+    assert entity.resource.path == ("platform",)
+    assert entity.fields[0].lang.type == "ApiTypes.AppStatus"
+    assert entity.fields[0].meta.column_type == "simple-enum"
+    assert entity.fields[0].meta.enum_type == "AppStatus"
+    assert entity.fields[0].meta.column_options == (
+        "type: 'simple-enum', name: 'status', enum: ApiTypes.AppStatus, "
+        'nullable: false, default: "active"'
+    )
+    assert entity.fields[1].lang.display_name == "type"
+    assert entity.fields[1].meta.column_type == "text"
+    assert entity.backend_fields[0].meta.backend_only is True
+    assert entity.constraints[0].kind == "index"
+    assert entity.constraints[0].fields == ("status",)
+    assert entity.relations[0].target_class_name == "AppApiKeyEntity"
+    assert tuple(item.meta.class_name for item in resource.entities) == (
+        "AppEntity",
+        "AppApiKeyEntity",
+    )
+    assert contract.entities[1].relations[0].inverse_field_name == "apiKeys"
+
+
+def _schema(name: str, ref: str) -> ApiSchema:
+    return ApiSchema(
+        id=name,
+        name=make_contract_name(name),
+        ref=ref,
+        kind=ApiSchemaKind.DTO,
+        resource="apps",
     )

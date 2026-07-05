@@ -8,7 +8,9 @@ from contracts.paths import (
     PathConfig,
     PathFolder,
     PathImportConfig,
+    PathLifecycleMode,
     PathSelectionMode,
+    PathWritePolicy,
     default_path_rules,
 )
 
@@ -25,6 +27,12 @@ KEY_TEMPLATE_EXTENSION = "template_extension"
 KEY_STRIP_TEMPLATE_EXTENSION = "strip_template_extension"
 KEY_ALLOW_RAW_FILES = "allow_raw_files"
 KEY_META = "meta"
+KEY_WRITE_POLICY = "write_policy"
+KEY_DEFAULT_MODE = "default_mode"
+KEY_MANAGED_ROOTS = "managed_roots"
+KEY_IMMUTABLE_ROOTS = "immutable_roots"
+KEY_PROTECTED_ROOTS = "protected_roots"
+KEY_CLEAN_ROOTS = "clean_roots"
 
 DEFAULT_TEMPLATE_EXTENSION = ".j2"
 IMPORT_STRATEGY_RELATIVE = "relative"
@@ -68,8 +76,25 @@ def path_config_from_yaml(data: dict[str, Any] | None) -> PathConfig:
             default=True,
             field_name=KEY_ALLOW_RAW_FILES,
         ),
+        write_policy=_parse_write_policy(data.get(KEY_WRITE_POLICY)),
         rules=default_path_rules(),
         meta=_dict(data.get(KEY_META), field_name=KEY_META),
+    )
+
+
+def _parse_write_policy(raw: Any) -> PathWritePolicy:
+    if raw is None:
+        return PathWritePolicy()
+    if not isinstance(raw, dict):
+        raise PathYamlError("'write_policy' must be an object.")
+    return PathWritePolicy(
+        exists=True,
+        default_mode=_lifecycle_mode(raw.get(KEY_DEFAULT_MODE), field_name=KEY_DEFAULT_MODE)
+        or PathLifecycleMode.MANAGED,
+        managed_roots=_string_list(raw.get(KEY_MANAGED_ROOTS), field_name=KEY_MANAGED_ROOTS),
+        immutable_roots=_string_list(raw.get(KEY_IMMUTABLE_ROOTS), field_name=KEY_IMMUTABLE_ROOTS),
+        protected_roots=_string_list(raw.get(KEY_PROTECTED_ROOTS), field_name=KEY_PROTECTED_ROOTS),
+        clean_roots=_string_list(raw.get(KEY_CLEAN_ROOTS), field_name=KEY_CLEAN_ROOTS),
     )
 
 
@@ -114,7 +139,15 @@ def _parse_folders(raw: Any) -> tuple[PathFolder, ...]:
 
 
 def _parse_folder(name: str, raw: dict[str, Any]) -> PathFolder:
-    mode = _mode(raw.get(KEY_MODE), folder=name)
+    mode_value = raw.get(KEY_MODE)
+    lifecycle = _lifecycle_mode(mode_value, field_name=f"{name}.{KEY_MODE}")
+    mode = (
+        PathSelectionMode.ONCE
+        if str(mode_value) == "once" or (lifecycle is not None and raw.get(KEY_SELECT) is None)
+        else _mode(None, folder=name)
+    )
+    if lifecycle is None:
+        mode = _mode(mode_value, folder=name)
     select = _optional_select(raw, name=name, mode=mode)
     alias = _string(
         raw.get(KEY_AS, raw.get(KEY_ALIAS)),
@@ -128,6 +161,7 @@ def _parse_folder(name: str, raw: dict[str, Any]) -> PathFolder:
         alias=alias,
         parts=_parse_parts(raw.get(KEY_PARTS), folder=name),
         mode=mode,
+        lifecycle=lifecycle,
         description=_string(
             raw.get(KEY_DESCRIPTION),
             default="-",
@@ -149,7 +183,12 @@ def _parse_part(value: Any, *, folder: str) -> Any:
             raise PathYamlError(f"'{folder}.parts' entries must be non-empty.")
         return value
 
-    if isinstance(value, list | tuple) and len(value) == 1 and isinstance(value[0], str) and value[0]:
+    if (
+        isinstance(value, list | tuple)
+        and len(value) == 1
+        and isinstance(value[0], str)
+        and value[0]
+    ):
         return f"[{value[0]}]"
 
     raise PathYamlError(f"'{folder}.parts' entries must be strings or single-expression lists.")
@@ -163,7 +202,32 @@ def _mode(value: Any, *, folder: str) -> PathSelectionMode:
         return PathSelectionMode(str(value))
     except ValueError as exc:
         allowed = ", ".join(item.value for item in PathSelectionMode)
-        raise PathYamlError(f"Invalid mode for folder '{folder}': {value}. Allowed: {allowed}.") from exc
+        message = f"Invalid mode for folder '{folder}': {value}. Allowed: {allowed}."
+        raise PathYamlError(message) from exc
+
+
+def _lifecycle_mode(value: Any, *, field_name: str) -> PathLifecycleMode | None:
+    if value is None:
+        return None
+    value = str(value)
+    if value == "once":
+        return PathLifecycleMode.IMMUTABLE
+    if value in {PathLifecycleMode.MANAGED.value, PathLifecycleMode.IMMUTABLE.value}:
+        return PathLifecycleMode(value)
+    return None
+
+
+def _string_list(value: Any, *, field_name: str) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if not isinstance(value, list | tuple):
+        raise PathYamlError(f"'{field_name}' must be a list.")
+    items = []
+    for item in value:
+        if not isinstance(item, str) or not item.strip():
+            raise PathYamlError(f"'{field_name}' entries must be non-empty strings.")
+        items.append(item.strip().replace("\\", "/").strip("/"))
+    return tuple(items)
 
 
 def _optional_select(raw: dict[str, Any], *, name: str, mode: PathSelectionMode) -> str:

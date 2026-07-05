@@ -13,6 +13,10 @@ from typing import Any
 
 from contracts.api import (
     ApiContract,
+    ApiEntity,
+    ApiEntityConstraint,
+    ApiEntityField,
+    ApiEntityRelation,
     ApiField,
     ApiOperation,
     ApiParameter,
@@ -58,6 +62,7 @@ class TemplateItemKey(StrEnum):
     PRIMITIVE = "primitive"
     OPERATION = "operation"
     FIELD = "field"
+    ENTITY = "entity"
     PARAMETER = "parameter"
     RESPONSE = "response"
     REQUEST = "request"
@@ -393,6 +398,10 @@ class TemplateResourceMeta:
     """Stable resource metadata."""
 
     operations_count: int = 0
+    route: str | None = None
+    tags: tuple[str, ...] = ()
+    access_ref: str | None = None
+    ui: MetaMap = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -433,6 +442,30 @@ class TemplateOperationMeta:
     ui_sort_fields: tuple[str, ...] = ()
     ui_filter_fields: tuple[str, ...] = ()
     ui_select_fields: tuple[str, ...] = ()
+    nest_path: str = "-"
+    access_ref: str | None = None
+    access_context_ref: str | None = None
+    access_context_type: str = "unknown"
+    tags: tuple[str, ...] = ()
+    cache: MetaMap = field(default_factory=dict)
+    source: MetaMap = field(default_factory=dict)
+    payload_type: str = "-"
+    use_case_interface: str = "-"
+    use_case_class: str = "-"
+    use_case_impl_class: str = "-"
+    use_case_file_name: str = "-"
+    use_case_types_file_name: str = "-"
+    controller_method_name: str = "-"
+    service_method_name: str = "-"
+
+
+@dataclass(frozen=True)
+class TemplateOperationResource:
+    """Resource facts attached to an operation for path selectors."""
+
+    name: NameSet
+    path: tuple[str, ...] = ()
+    route: str | None = None
 
 
 @dataclass(frozen=True)
@@ -456,6 +489,99 @@ class TemplateParameterMeta:
     """Stable parameter metadata."""
 
     ref: str | None = None
+
+
+@dataclass(frozen=True)
+class TemplateEntityFieldMeta:
+    """Entity field metadata for backend templates."""
+
+    column_name: str = "-"
+    column_type: str = "json"
+    enum_type: str | None = None
+    nullable: bool = False
+    primary: bool = False
+    generated: str | None = None
+    default: Any = None
+    min_length: int | None = None
+    max_length: int | None = None
+    minimum: int | float | None = None
+    maximum: int | float | None = None
+    exclusive_minimum: bool | int | float | None = None
+    exclusive_maximum: bool | int | float | None = None
+    multiple_of: int | float | None = None
+    pattern: str | None = None
+    column_options: str = "-"
+    backend_only: bool = False
+    raw: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TemplateEntityField:
+    """Entity field template variables."""
+
+    api: ApiEntityField
+    name: NameSet
+    lang: TemplateFieldLang = field(default_factory=TemplateFieldLang)
+    meta: TemplateEntityFieldMeta = field(default_factory=TemplateEntityFieldMeta)
+
+
+@dataclass(frozen=True)
+class TemplateEntityRelation:
+    """Entity relation template variables."""
+
+    api: ApiEntityRelation
+    name: NameSet
+    target_entity_name: str | None = None
+    target_class_name: str | None = None
+    target_file_name: str | None = None
+    inverse_field_name: str | None = None
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TemplateEntityConstraint:
+    """Entity constraint/index template variables."""
+
+    api: ApiEntityConstraint
+    name: NameSet
+    kind: str = "-"
+    fields: tuple[str, ...] = ()
+    unique: bool = False
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TemplateEntityMeta:
+    """Stable entity metadata for backend templates."""
+
+    resource_path: tuple[str, ...] = ()
+    resource_name: NameSet | None = None
+    schema_type: str | None = None
+    store: str | None = None
+    table_name: str | None = None
+    base_class: str | None = None
+    base_import: str | None = None
+    interface_type: str | None = None
+    class_name: str = "-"
+    file_name: str = "-"
+    schema_constant: str | None = None
+    raw: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TemplateEntity:
+    """Entity template variables."""
+
+    api: ApiEntity
+    name: NameSet
+    resource: TemplateOperationResource | None = None
+    fields: tuple[TemplateEntityField, ...] = ()
+    backend_fields: tuple[TemplateEntityField, ...] = ()
+    relations: tuple[TemplateEntityRelation, ...] = ()
+    constraints: tuple[TemplateEntityConstraint, ...] = ()
+    emit: TemplateItemEmit | None = None
+    docs: TemplateDocs = field(default_factory=TemplateDocs)
+    meta: TemplateEntityMeta = field(default_factory=TemplateEntityMeta)
 
 
 @dataclass(frozen=True)
@@ -516,6 +642,7 @@ class TemplateResource:
     dtos: tuple[TemplateSchema, ...] = ()
     enums: tuple[TemplateSchema, ...] = ()
     schemas: tuple[TemplateSchema, ...] = ()
+    entities: tuple[TemplateEntity, ...] = ()
     lang: TemplateResourceLang = field(default_factory=TemplateResourceLang)
     emit: TemplateItemEmit | None = None
     docs: TemplateDocs = field(default_factory=TemplateDocs)
@@ -565,6 +692,7 @@ class TemplateOperation:
     parameters: tuple[TemplateParameter, ...] = ()
     request_body: TemplateRequestBody | None = None
     responses: tuple[TemplateResponse, ...] = ()
+    resource: TemplateOperationResource | None = None
     lang: TemplateOperationLang = field(default_factory=TemplateOperationLang)
     emit: TemplateItemEmit | None = None
     docs: TemplateDocs = field(default_factory=TemplateDocs)
@@ -597,5 +725,6 @@ class TemplateContract:
     features: tuple[TemplateResource, ...] = ()
     schemas: TemplateSchemaGroups = field(default_factory=TemplateSchemaGroups)
     operations: tuple[TemplateOperation, ...] = ()
+    entities: tuple[TemplateEntity, ...] = ()
     file: TemplateFile | None = None
     meta: TemplateContractMeta = field(default_factory=TemplateContractMeta)

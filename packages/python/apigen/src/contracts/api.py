@@ -126,6 +126,70 @@ class ApiFieldType:
 
 
 @dataclass(frozen=True)
+class ApiEntityField:
+    """Language-neutral entity field fact from x-codegen.entities."""
+
+    id: str
+    name: NameSet
+    schema_ref: str | None = None
+    required: bool = True
+    nullable: bool = False
+    type: ApiFieldType = field(default_factory=ApiFieldType)
+    default: Any = None
+    min_length: int | None = None
+    max_length: int | None = None
+    minimum: int | float | None = None
+    maximum: int | float | None = None
+    exclusive_minimum: bool | int | float | None = None
+    exclusive_maximum: bool | int | float | None = None
+    multiple_of: int | float | None = None
+    pattern: str | None = None
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class ApiEntityRelation:
+    """Language-neutral entity relation fact."""
+
+    id: str
+    name: NameSet
+    cardinality: str = "-"
+    target_ref: str | None = None
+    local: str | None = None
+    foreign: str | None = None
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class ApiEntityConstraint:
+    """Language-neutral entity constraint/index fact."""
+
+    id: str
+    name: NameSet
+    kind: str = "-"
+    fields: tuple[str, ...] = ()
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class ApiEntity:
+    """Entity fact from root x-codegen.entities."""
+
+    id: str
+    name: NameSet
+    resource: str | None = None
+    resource_ref: str | None = None
+    schema_ref: str | None = None
+    store: str | None = None
+    extends: MetaMap = field(default_factory=dict)
+    fields: tuple[ApiEntityField, ...] = ()
+    backend_fields: tuple[ApiEntityField, ...] = ()
+    relations: tuple[ApiEntityRelation, ...] = ()
+    constraints: tuple[ApiEntityConstraint, ...] = ()
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class ApiField:
     """Language-neutral schema field fact."""
 
@@ -140,6 +204,14 @@ class ApiField:
     item_refs: tuple[str, ...] = ()
     enum_values: tuple[str, ...] = ()
     default: Any = None
+    min_length: int | None = None
+    max_length: int | None = None
+    minimum: int | float | None = None
+    maximum: int | float | None = None
+    exclusive_minimum: bool | int | float | None = None
+    exclusive_maximum: bool | int | float | None = None
+    multiple_of: int | float | None = None
+    pattern: str | None = None
     description: str = "-"
     query: ApiQueryOptions = field(default_factory=ApiQueryOptions)
     meta: MetaMap = field(default_factory=dict)
@@ -314,5 +386,6 @@ class ApiContract:
     servers: tuple[ApiServer, ...] = ()
     schemas: ApiSchemaGroups = field(default_factory=ApiSchemaGroups)
     operations: tuple[ApiOperation, ...] = ()
+    entities: tuple[ApiEntity, ...] = ()
     dependencies: tuple[ApiDependency, ...] = ()
     meta: MetaMap = field(default_factory=dict)

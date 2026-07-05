@@ -22,3 +22,4 @@ class InferenceGraph:
     schemas: tuple[InferredSchema, ...]
     operations: tuple[InferredOperation, ...]
     dependencies: tuple[InferredDependency, ...]
+    x_codegen: dict[str, Any] | None = None

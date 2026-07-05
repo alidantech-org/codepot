@@ -72,6 +72,20 @@ def generate_command(
                 for path in task.cleaned:
                     print_info(f"{'Would clean' if dry_run else 'Cleaned'}: {path}")
 
+            managed_written = max(len(task.written) - len(task.immutable_created), 0)
+            print_info(
+                "Managed: "
+                f"{managed_written} created, {len(task.updated)} updated, "
+                f"{len(task.unchanged)} unchanged"
+            )
+            print_info(
+                "Immutable: "
+                f"{len(task.immutable_created)} created, "
+                f"{len(task.immutable_skipped)} skipped existing"
+            )
+            if task.refused:
+                print_warning(f"Refused: {len(task.refused)} unsafe write(s)")
+
             if verbose:
                 render_emit_files("Planned Files", task.planned)
                 if not dry_run:
