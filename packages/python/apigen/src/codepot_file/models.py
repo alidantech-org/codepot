@@ -40,4 +40,5 @@ class CodepotFile:
     path: Path
     root: Path
     allow: bool
+    defaults: dict[str, object]
     tasks: tuple[CodepotTask, ...]

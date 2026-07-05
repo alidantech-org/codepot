@@ -1,5 +1,5 @@
 [project]
-name = "codepotx"
+name = "codepotx-old"
 version = "0.1.0"
 description = "Universal code generator powered by compiled Codepot specs"
 requires-python = ">=3.11"
@@ -21,8 +21,7 @@ dev = [
 ]
 
 [project.scripts]
-codepotx = "cli.main:app"
-cpx = "cli.main:app"
+cpx-old = "cli.main:app"
 
 [tool.setuptools.package-dir]
 "" = "src"

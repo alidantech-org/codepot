@@ -15,6 +15,7 @@ from cli.presentation.core.console import (
     print_success,
     print_warning,
 )
+from cli.presentation.core.reporter import Reporter
 from cli.presentation.emit.files import render_emit_files
 
 
@@ -44,8 +45,10 @@ def generate_command(
         from cli.main import get_runtime
 
         resolved_config = normalize_cli_path(config_path)
+        reporter = Reporter(verbose=verbose)
 
         runtime = get_runtime(ctx)
+        print_header("Generate", str(resolved_config or "CodepotFile.yml"))
         result = runtime.generate(
             config_path=resolved_config,
             task_name=task_name,
@@ -55,9 +58,10 @@ def generate_command(
             refresh=refresh,
             skip_before=skip_before,
             skip_after=skip_after,
+            progress=reporter.event,
         )
 
-        print_header("Generate", str(result.config_path))
+        reporter.step("Summary")
 
         for task in result.tasks:
             print_success(f"{task.name}: {task.language} -> {task.output_path}")

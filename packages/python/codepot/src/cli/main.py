@@ -11,8 +11,8 @@ from cli.commands.template import app as template_app
 from cli.commands.validate import validate_command
 
 app = typer.Typer(
-    name="cpx",
-    help="Codepotx code generation CLI.",
+    name="cpx-old",
+    help="Legacy Codepotx code generation CLI.",
     no_args_is_help=True,
 )
 

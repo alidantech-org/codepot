@@ -2,26 +2,36 @@
 
 from __future__ import annotations
 
-from app.models import GenerateInput, GenerateOutput, GenerateTaskOutput, RuntimeDiagnostic
+from app.models import (
+    GenerateInput,
+    GenerateOutput,
+    GenerateTaskOutput,
+    RuntimeDiagnostic,
+    RuntimeEvent,
+)
 from app.models.inputs import EmitInput
 from app.workflows.emit import run_emit
 from codepot_file.loader import load_codepot_file
 from codepot_file.models import CodepotFile, CodepotTask
 from codepot_file.runner import clean_task_paths, run_commands
-from core.errors import ConfigError
+from core.errors import CommandError, ConfigError
 
 
 def run_generate(request: GenerateInput) -> GenerateOutput:
     """Run one or more CodepotFile tasks."""
+    _notify(request, "loading_config", "Loading config")
     config = load_codepot_file(request.config_path)
     if not config.allow:
         raise ConfigError("Generation refused. Set allow: true in CodepotFile.yml to enable it.")
 
+    _notify(request, "resolving_task", "Resolving task")
     selected_tasks = _select_tasks(config, task_name=request.task_name, all_tasks=request.all_tasks)
     outputs: list[GenerateTaskOutput] = []
     diagnostics: list[RuntimeDiagnostic] = []
 
     for task in selected_tasks:
+        _notify(request, "resolving_task", f"Resolving task: {task.name}")
+        _notify(request, "validating_task", f"Validating task: {task.name}")
         task_output = _run_task(task, config=config, request=request)
         outputs.append(task_output)
         diagnostics.extend(task_output.diagnostics)
@@ -74,6 +84,7 @@ def _run_task(
     cleaned = []
 
     if request.refresh:
+        _notify(request, "cleaning_paths", "Cleaning configured paths")
         clean_result = clean_task_paths(task, config_root=config.root, dry_run=request.dry_run)
         cleaned = clean_result.cleaned
         diagnostics.extend(
@@ -81,13 +92,19 @@ def _run_task(
         )
 
     if not request.skip_before:
-        before_result = run_commands(
-            task.before,
-            task=task,
-            config_root=config.root,
-            dry_run=request.dry_run,
-            verbose=request.verbose,
-        )
+        _notify(request, "before_commands", "Running before commands")
+        try:
+            before_result = run_commands(
+                task.before,
+                task=task,
+                config_root=config.root,
+                dry_run=request.dry_run,
+                verbose=request.verbose,
+                phase="before",
+                progress=request.progress,
+            )
+        except CommandError as exc:
+            raise CommandError(f"Task failed: {task.name}\n  Stage: before command\n{exc}") from exc
         diagnostics.extend(
             RuntimeDiagnostic(
                 level="warning" if "Optional command failed" in item else "info",
@@ -96,6 +113,7 @@ def _run_task(
             for item in before_result.diagnostics
         )
 
+    _notify(request, "loading_openapi", f"Loading OpenAPI document: {task.input}")
     emit_result = run_emit(
         EmitInput(
             input_path=task.input,
@@ -109,13 +127,19 @@ def _run_task(
     diagnostics.extend(emit_result.diagnostics)
 
     if not request.skip_after and not request.dry_run:
-        after_result = run_commands(
-            task.after,
-            task=task,
-            config_root=config.root,
-            dry_run=False,
-            verbose=request.verbose,
-        )
+        _notify(request, "after_commands", "Running after commands")
+        try:
+            after_result = run_commands(
+                task.after,
+                task=task,
+                config_root=config.root,
+                dry_run=False,
+                verbose=request.verbose,
+                phase="after",
+                progress=request.progress,
+            )
+        except CommandError as exc:
+            raise CommandError(f"Task failed: {task.name}\n  Stage: after command\n{exc}") from exc
         diagnostics.extend(
             RuntimeDiagnostic(
                 level="warning" if "Optional command failed" in item else "info",
@@ -124,12 +148,15 @@ def _run_task(
             for item in after_result.diagnostics
         )
     elif not request.skip_after and request.dry_run:
+        _notify(request, "after_commands", "Running after commands")
         after_result = run_commands(
             task.after,
             task=task,
             config_root=config.root,
             dry_run=True,
             verbose=request.verbose,
+            phase="after",
+            progress=request.progress,
         )
         diagnostics.extend(
             RuntimeDiagnostic(level="info", message=item) for item in after_result.diagnostics
@@ -150,3 +177,15 @@ def _run_task(
         cleaned=cleaned,
         diagnostics=diagnostics,
     )
+
+
+def _notify(
+    request: GenerateInput,
+    stage: str,
+    message: str,
+    *,
+    level: str = "info",
+) -> None:
+    if request.progress is None:
+        return
+    request.progress(RuntimeEvent(stage=stage, message=message, level=level))

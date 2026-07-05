@@ -212,6 +212,61 @@ tasks:
         generate_workflow.run_generate(GenerateInput(config_path=config))
 
 
+def test_generate_merges_defaults_into_task(tmp_path: Path, monkeypatch) -> None:
+    config = _write_config(
+        tmp_path,
+        """
+allow: true
+defaults:
+  input: ./openapi.yaml
+tasks:
+  sdk:
+    language: typescript
+    templateDir: ./templates
+    output: ./lib
+""",
+    )
+    calls = _patch_emit(monkeypatch)
+
+    generate_workflow.run_generate(GenerateInput(config_path=config))
+
+    assert calls[0].input_path == (tmp_path / "openapi.yaml").resolve()
+
+
+def test_task_can_share_defaults_before_and_after(tmp_path: Path, monkeypatch) -> None:
+    config = _write_config(
+        tmp_path,
+        """
+allow: true
+defaults:
+  input: ./openapi.yaml
+  language: typescript
+  templateDir: ./templates
+  output: ./lib
+  before:
+    - run: echo before
+  after:
+    - run: echo after
+tasks:
+  admin:
+    output: ./admin
+  mobile:
+    output: ./mobile
+""",
+    )
+    calls = _patch_emit(monkeypatch)
+
+    result = generate_workflow.run_generate(
+        GenerateInput(config_path=config, all_tasks=True, dry_run=True)
+    )
+
+    assert [call.input_path for call in calls] == [
+        (tmp_path / "openapi.yaml").resolve(),
+        (tmp_path / "openapi.yaml").resolve(),
+    ]
+    assert sum("Would run" in diagnostic.message for diagnostic in result.diagnostics) == 4
+
+
 def _patch_emit(monkeypatch):
     calls = []
 

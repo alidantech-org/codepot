@@ -20,14 +20,19 @@ def run_emit(request: EmitInput) -> EmitOutput:
     _notify(
         request,
         stage="loading_openapi",
-        message=f"Loading OpenAPI document from {request.input_path}",
+        message=f"Loading OpenAPI document: {request.input_path}",
     )
     document = load_openapi_document(request.input_path)
 
     _notify(
         request,
-        stage="running_inference",
-        message="Running OpenAPI inference",
+        stage="inferring_schemas",
+        message="Inferring schemas",
+    )
+    _notify(
+        request,
+        stage="inferring_operations",
+        message="Inferring operations",
     )
     graph = InferenceEngine().infer(document)
 
@@ -51,8 +56,8 @@ def run_emit(request: EmitInput) -> EmitOutput:
 
     _notify(
         request,
-        stage="building_template_contract",
-        message=f"Building template contract from {template_root}",
+        stage="planning_output_files",
+        message="Planning output files",
     )
     template_contract = adapter.build_template_contract(
         api=api_contract,
@@ -64,8 +69,8 @@ def run_emit(request: EmitInput) -> EmitOutput:
 
     _notify(
         request,
-        stage="emitting_files",
-        message="Emitting files",
+        stage="rendering_writing_files",
+        message="Rendering/writing files",
     )
     emission_result = run_emission(
         template_contract,

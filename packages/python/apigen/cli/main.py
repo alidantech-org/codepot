@@ -13,11 +13,17 @@ import typer
 from app import GeneratorApp
 
 from cli.commands.generate import generate_command
+from cli.commands.init import init_command
+from cli.commands.task import app as task_app
 from cli.constants.constants import (
     APP_DESCRIPTION,
     APP_NAME,
     CMD_GENERATE,
+    CMD_INIT,
+    CMD_TASK,
     HELP_GENERATE,
+    HELP_INIT,
+    HELP_TASK,
 )
 
 RUNTIME_KEY = "runtime"
@@ -62,6 +68,8 @@ def main(ctx: typer.Context) -> None:
 
 
 app.command(CMD_GENERATE, help=HELP_GENERATE)(generate_command)
+app.command(CMD_INIT, help=HELP_INIT)(init_command)
+app.add_typer(task_app, name=CMD_TASK, help=HELP_TASK)
 
 
 if __name__ == "__main__":

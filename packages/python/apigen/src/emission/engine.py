@@ -18,15 +18,18 @@ from contracts.emission import (
     TemplateContext,
 )
 from contracts.events import ProgressSink, RuntimeEvent
-from contracts.template import TemplateContract
-from contracts.template import TemplateDependency, TemplateFile, TemplateGroup
+from contracts.template import TemplateContract, TemplateDependency, TemplateFile, TemplateGroup
 from emission.dependencies.output_index import build_output_index
 from emission.dependencies.resolver import resolve_file_dependencies
-from emission.imports.base import ImportPlanningContext, ImportPlanner
+from emission.imports.base import ImportPlanner, ImportPlanningContext
 from emission.imports.markdown import MarkdownImportPlanner
 from emission.imports.paths import to_posix_path
 from emission.paths.config_loader import load_path_config
-from emission.paths.selection import CONTEXT_FOLDER_NAME, CONTEXT_FOLDER_PARTS, expand_folder_contexts
+from emission.paths.selection import (
+    CONTEXT_FOLDER_NAME,
+    CONTEXT_FOLDER_PARTS,
+    expand_folder_contexts,
+)
 from emission.templates.descriptor import TemplateDescriptor
 from emission.templates.path_expander import expand_template_path
 from emission.templates.renderer import render_template
@@ -169,7 +172,13 @@ def build_emission_plan(
         progress=progress,
         contract=contract,
     )
-    files = [replace(file, content=_resolve_content(file.template_path, template_root, file.context)) for file in files]
+    files = [
+        replace(
+            file,
+            content=_resolve_content(file.template_path, template_root, file.context),
+        )
+        for file in files
+    ]
 
     _notify(
         progress,
@@ -215,8 +224,8 @@ def execute_emission(
     for index, file in enumerate(plan.files, start=1):
         _notify(
             progress,
-            "writing_file",
-            f"Writing {file.output_path}",
+            "rendering_file",
+            f"Rendering: {file.output_path}",
             current=index,
             total=len(plan.files),
         )
@@ -240,6 +249,39 @@ def execute_emission(
         updated.extend(result.updated)
         unchanged.extend(result.unchanged)
         skipped.extend(result.skipped)
+
+        for path in result.created:
+            _notify(
+                progress,
+                "file_created",
+                f"Writing: {path}",
+                current=index,
+                total=len(plan.files),
+            )
+        for path in result.updated:
+            _notify(
+                progress,
+                "file_updated",
+                f"Updated: {path}",
+                current=index,
+                total=len(plan.files),
+            )
+        for path in result.unchanged:
+            _notify(
+                progress,
+                "file_unchanged",
+                f"Skipped unchanged: {path}",
+                current=index,
+                total=len(plan.files),
+            )
+        for path in result.skipped:
+            _notify(
+                progress,
+                "file_skipped",
+                f"Skipped: {path}",
+                current=index,
+                total=len(plan.files),
+            )
 
     return EmissionResult(
         plan=plan,
@@ -379,7 +421,10 @@ def _selected_item(context: TemplateContext, path_config: Any) -> Any:
     return context.get(folder.alias)
 
 
-def _item_dependencies(context: TemplateContext, path_config: Any) -> tuple[TemplateDependency, ...]:
+def _item_dependencies(
+    context: TemplateContext,
+    path_config: Any,
+) -> tuple[TemplateDependency, ...]:
     item = _selected_item(context, path_config)
     dependencies = _dependencies_from_item(item)
     return _unique_dependencies(dependencies)
@@ -390,7 +435,9 @@ def _dependencies_from_item(item: Any) -> tuple[TemplateDependency, ...]:
     return tuple(getattr(emit, "dependencies", ()))
 
 
-def _unique_dependencies(dependencies: tuple[TemplateDependency, ...]) -> tuple[TemplateDependency, ...]:
+def _unique_dependencies(
+    dependencies: tuple[TemplateDependency, ...],
+) -> tuple[TemplateDependency, ...]:
     seen: set[tuple[str, str]] = set()
     unique: list[TemplateDependency] = []
     for dependency in dependencies:

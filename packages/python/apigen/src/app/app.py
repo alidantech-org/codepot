@@ -13,6 +13,7 @@ from app.models import (
     InferOutput,
     InspectInput,
     InspectOutput,
+    ProgressSink,
     ValidateInput,
     ValidateOutput,
 )
@@ -82,6 +83,7 @@ class GeneratorApp:
         refresh: bool = False,
         skip_before: bool = False,
         skip_after: bool = False,
+        progress: ProgressSink | None = None,
     ) -> GenerateOutput:
         """Run CodepotFile-driven generation."""
         return run_generate(
@@ -94,6 +96,7 @@ class GeneratorApp:
                 refresh=refresh,
                 skip_before=skip_before,
                 skip_after=skip_after,
+                progress=progress,
             )
         )
 

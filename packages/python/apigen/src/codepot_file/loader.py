@@ -46,23 +46,53 @@ def load_codepot_file(config_path: Path | None = None) -> CodepotFile:
     path = resolve_codepot_file(config_path)
     root = path.parent
 
+    raw = load_codepot_file_yaml(path)
+
+    allow = raw.get("allow") is True
+    defaults_raw = raw.get("defaults") or {}
+    if not isinstance(defaults_raw, dict):
+        raise ConfigError("CodepotFile defaults must be an object.")
+
+    tasks_raw = raw.get("tasks")
+    if not isinstance(tasks_raw, dict) or not tasks_raw:
+        raise ConfigError("CodepotFile must define a non-empty tasks object.")
+
+    tasks = tuple(
+        _task_from_yaml(
+            name=str(name),
+            raw=_merge_defaults(defaults_raw, value),
+            root=root,
+        )
+        for name, value in tasks_raw.items()
+    )
+
+    return CodepotFile(
+        path=path,
+        root=root,
+        allow=allow,
+        defaults=dict(defaults_raw),
+        tasks=tasks,
+    )
+
+
+def load_codepot_file_yaml(path: Path) -> dict[str, Any]:
+    """Read a CodepotFile YAML object without resolving tasks."""
     with path.open("r", encoding="utf-8") as file:
         raw = yaml.safe_load(file) or {}
 
     if not isinstance(raw, dict):
         raise ConfigError("CodepotFile root must be an object.")
 
-    allow = raw.get("allow") is True
-    tasks_raw = raw.get("tasks")
-    if not isinstance(tasks_raw, dict) or not tasks_raw:
-        raise ConfigError("CodepotFile must define a non-empty tasks object.")
+    return raw
 
-    tasks = tuple(
-        _task_from_yaml(name=str(name), raw=value, root=root)
-        for name, value in tasks_raw.items()
-    )
 
-    return CodepotFile(path=path, root=root, allow=allow, tasks=tasks)
+def _merge_defaults(defaults: dict[str, Any], task_raw: Any) -> dict[str, Any]:
+    if not isinstance(task_raw, dict):
+        return task_raw
+
+    merged = dict(defaults)
+    merged.update(task_raw)
+    return merged
 
 
 def _task_from_yaml(name: str, raw: Any, root: Path) -> CodepotTask:
