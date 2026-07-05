@@ -24,6 +24,8 @@ import type {
   EntityRelationsInput,
   EntitySearchQueryOptions,
 } from './entity.types.js';
+import { normalizeInfo } from '../info/normalize-info.js';
+import type { InfoInput } from '../info/info.types.js';
 
 export interface DefineEntitiesOptions extends OptionalResourceContext {
   readonly name: string;
@@ -169,6 +171,7 @@ function normalizeEntityDefinition(
       schema: base.schema,
       extends: base.extends,
       fields: buildFieldMetadata(base.fields),
+      info: normalizeInfo(base.info),
       owner,
       ref,
     };
@@ -189,6 +192,7 @@ function normalizeEntityDefinition(
     backend: concrete.backend,
     fields: buildFieldMetadata(concrete.fields),
     constraints: concrete.constraints?.(createConstraintBuilder()),
+    info: normalizeInfo(concrete.info),
     owner,
     ref,
   };
@@ -227,6 +231,7 @@ function createEntityFieldBuilder(initial: EntityFieldMetadata = {}): EntityFiel
       const query = callback(createEntityFieldQueryBuilder());
       return createEntityFieldBuilder({ ...metadata, query: getEntityFieldQueryMetadata(query) });
     },
+    info: (info: InfoInput) => createEntityFieldBuilder({ ...metadata, info: normalizeInfo(info) }),
     __metadata: metadata,
   } as EntityFieldBuilder & { readonly __metadata: EntityFieldMetadata };
 }

@@ -98,6 +98,10 @@ class EmissionContextBuilder:
             "schemas": self.contract.schemas,
             "operations": self.contract.operations,
             "entities": self.contract.entities,
+            "frontends": self.contract.frontends,
+            "selected_frontend": self.contract.selected_frontend,
+            "selected_frontends": self.contract.selected_frontends,
+            "frontend_count": self.contract.frontend_count,
             "file": self.contract.file,
         }
 

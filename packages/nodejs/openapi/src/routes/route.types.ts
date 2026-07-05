@@ -7,6 +7,7 @@ import type { CodegenMetadata, CodegenOperationEffects, CodegenUiInput } from '.
 import type { AccessRef } from '../access/access.types.js';
 import type { ContentTypeInput } from '../openapi/content-type.js';
 import type { RuntimeRouteConfig } from '../hooks/runtime-hooks.types.js';
+import type { InfoInput, NormalizedInfo } from '../info/info.types.js';
 
 export interface RouteCacheInvalidationConfig {
   readonly operations: readonly string[];
@@ -119,10 +120,12 @@ export interface RouteDefinition {
   readonly cache?: RouteCacheConfig;
   readonly source?: RouteSourceMapInput;
   readonly sources?: Record<string, RouteSourceDefinition>;
+  readonly info?: NormalizedInfo;
 }
 
-export type RouteDefinitionInput = Omit<RouteDefinition, 'operationId' | 'meta' | 'sources'> & {
+export type RouteDefinitionInput = Omit<RouteDefinition, 'operationId' | 'meta' | 'sources' | 'info'> & {
   readonly source?: RouteSourceMapInput;
+  readonly info?: InfoInput;
 };
 
 export type DefineRoutesInput = {
@@ -154,6 +157,7 @@ export interface RouteOperationBuilder {
   cache(configure: (cache: RouteCacheBuilder) => RouteCacheInvalidateBuilder | RouteCacheBuilder): RouteOperationBuilder;
   tags(tags: readonly string[]): RouteOperationBuilder;
   source(responseField: string, configure: (source: RouteSourceSelector) => RouteSourceSelector): RouteOperationBuilder;
+  info(info: InfoInput): RouteOperationBuilder;
   build(): RouteDefinition;
 }
 

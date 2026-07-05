@@ -116,6 +116,7 @@ export function compilePaths(
           cache: resolveOperationCache(route, operationIds),
           tags: mergeTags(contract.tags, resource.context.tags, route.codegenTags),
           sources: resolveOperationSources(route, resolver, contract),
+          info: route.info,
         });
 
         if (isPublicAccess(access)) {

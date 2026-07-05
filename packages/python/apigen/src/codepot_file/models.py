@@ -31,6 +31,7 @@ class CodepotTask:
     after: tuple[CodepotCommand, ...] = ()
     env: dict[str, str] = field(default_factory=dict)
     description: str = ""
+    frontend: str | None = None
 
 
 @dataclass(frozen=True)

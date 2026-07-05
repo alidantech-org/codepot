@@ -83,6 +83,9 @@ def _resource(
         docs=TemplateDocs(),
         meta=TemplateResourceMeta(
             operations_count=resource.operations_count,
+            info=resource.meta.get("x-codegen", {}).get("info", {})
+            if isinstance(resource.meta.get("x-codegen"), dict)
+            else {},
         ),
     )
 

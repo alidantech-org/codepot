@@ -28,6 +28,8 @@ import type {
   ConcreteEntityDefinitionInput,
   EntityRegistry,
 } from '../entities/entity.types.js';
+import { defineFrontend } from '../frontend/define-frontend.js';
+import type { DefineFrontendOptions, FrontendBuilder } from '../frontend/frontend.types.js';
 
 export interface DefineVersionContractOptions {
   info: VersionInfo;
@@ -42,6 +44,7 @@ export interface DefineVersionContractOptions {
   accessComponents?: AccessRegistry[];
   baseEntityComponents?: EntityRegistry[];
   entityComponents?: EntityRegistry[];
+  frontends?: FrontendBuilder[];
   defaultResponses?: Record<number, RouteResponseInput>;
 }
 
@@ -52,6 +55,7 @@ export interface VersionBuilder {
   readonly accessComponents: AccessRegistry[];
   readonly baseEntityComponents: EntityRegistry[];
   readonly entityComponents: EntityRegistry[];
+  readonly frontends: FrontendBuilder[];
   defineResource(options: DefineResourceOptions): ResourceBuilder;
   addResource(resource: ResourceBuilder): VersionBuilder;
   addProperties(properties: PropertyRegistry): VersionBuilder;
@@ -83,6 +87,7 @@ export interface VersionBuilder {
   defineEntities<const TInput extends Record<string, ConcreteEntityDefinitionInput>>(
     input: TInput | EntityDefinitionFactory<TInput>,
   ): EntityRegistry<TInput>;
+  defineFrontend(options: DefineFrontendOptions): FrontendBuilder;
   tags(tags: readonly string[]): VersionBuilder;
   setDefaultResponses(responses: Record<number, RouteResponseInput>): VersionBuilder;
 }
@@ -108,6 +113,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     accessComponents: [...(options.accessComponents ?? [])],
     baseEntityComponents: [...(options.baseEntityComponents ?? [])],
     entityComponents: [...(options.entityComponents ?? [])],
+    frontends: [...(options.frontends ?? [])],
     defaultResponses: { ...(options.defaultResponses ?? {}) },
   };
 
@@ -133,6 +139,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
   const accessComponents = contract.accessComponents;
   const baseEntityComponents = contract.baseEntityComponents;
   const entityComponents = contract.entityComponents;
+  const frontends = contract.frontends;
 
   function defineVersionProperties<TName extends string, TFields extends ZodPropertyDefinitionFieldMap>(
     name: TName,
@@ -245,6 +252,16 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     return registry;
   }
 
+  function defineVersionFrontend(frontendOptions: DefineFrontendOptions): FrontendBuilder {
+    if (frontends.some((frontend) => frontend.context.name === frontendOptions.name)) {
+      throw new Error(`Duplicate frontend "${frontendOptions.name}". Frontend names must be unique in a version contract.`);
+    }
+
+    const frontend = defineFrontend(frontendOptions);
+    frontends.push(frontend);
+    return frontend;
+  }
+
   const builder: VersionBuilder = {
     contract,
     schemas: rootSchemas,
@@ -252,6 +269,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     accessComponents,
     baseEntityComponents,
     entityComponents,
+    frontends,
     defineResource: defineVersionResource,
     addResource,
     addProperties,
@@ -263,6 +281,7 @@ export function defineVersionContract(options: DefineVersionContractOptions): Ve
     defineAccess: defineVersionAccess,
     defineBaseEntities: defineVersionBaseEntities,
     defineEntities: defineVersionEntities,
+    defineFrontend: defineVersionFrontend,
     tags: setTags,
     setDefaultResponses,
   };

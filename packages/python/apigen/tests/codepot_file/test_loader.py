@@ -37,6 +37,28 @@ tasks:
     assert loaded.tasks[0].input == (tmp_path / "openapi.yaml").resolve()
     assert loaded.tasks[0].template_dir == (tmp_path / "templates").resolve()
     assert loaded.tasks[0].output == (tmp_path / "lib").resolve()
+    assert loaded.tasks[0].frontend is None
+
+
+def test_task_frontend_option_is_parsed(tmp_path: Path) -> None:
+    config = tmp_path / "CodepotFile.yml"
+    config.write_text(
+        """
+allow: true
+tasks:
+  admin-frontend:
+    input: ./openapi.yaml
+    language: typescript
+    templateDir: ./templates
+    output: ./admin
+    frontend: admin
+""".strip(),
+        encoding="utf-8",
+    )
+
+    task = load_codepot_file(config).tasks[0]
+
+    assert task.frontend == "admin"
 
 
 def test_codepot_file_yaml_loading_parses_yaml(tmp_path: Path) -> None:

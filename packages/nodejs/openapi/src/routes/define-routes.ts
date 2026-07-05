@@ -8,6 +8,8 @@ import type { RuntimeRouteConfig } from '../hooks/runtime-hooks.types.js';
 import { RefKind } from '../refs/ref-kind.js';
 import type { RouteRef } from '../refs/ref.types.js';
 import { HttpMethod } from './http-method.js';
+import { normalizeInfo } from '../info/normalize-info.js';
+import type { InfoInput } from '../info/info.types.js';
 import type {
   DefineRoutesBuilderInput,
   DefineRoutesInput,
@@ -36,6 +38,11 @@ type MutableRouteDefinition = {
   -readonly [K in keyof RouteDefinition]: RouteDefinition[K];
 };
 
+type NormalizedDefineRoutesInput = {
+  readonly params?: RouteParameterRegistry;
+  readonly routes: Record<string, RouteDefinition>;
+};
+
 export interface DefineRoutesOptions extends OptionalResourceContext {
   name: string;
 }
@@ -48,7 +55,7 @@ export function defineRoutes(options: DefineRoutesOptions, input?: DefineRoutesI
   return createRouteRegistry(options, normalizeRoutesInput(input));
 }
 
-function createRouteRegistry(options: DefineRoutesOptions, normalized: DefineRoutesInput): RouteRegistry {
+function createRouteRegistry(options: DefineRoutesOptions, normalized: NormalizedDefineRoutesInput): RouteRegistry {
   const normalizedRoutes = Object.fromEntries(
     Object.entries(normalized.routes).map(([key, route]) => [key, withRouteMeta(options, key, route)]),
   );
@@ -65,7 +72,7 @@ function createRouteRegistry(options: DefineRoutesOptions, normalized: DefineRou
   return registry;
 }
 
-function normalizeRoutesInput(input: DefineRoutesInputLike): DefineRoutesInput {
+function normalizeRoutesInput(input: DefineRoutesInputLike): NormalizedDefineRoutesInput {
   if ('routes' in input) {
     return {
       params: input.params,
@@ -91,6 +98,7 @@ function normalizeRouteDefinition(key: string, route: RouteDefinitionInput): Rou
     ...rest,
     codegenTags: route.codegenTags ?? tags,
     sources: normalizeSourceMap(route.source),
+    info: normalizeInfo(route.info),
   };
 }
 
@@ -221,6 +229,11 @@ class FluentRouteOperationBuilder implements RouteOperationBuilder {
         ...configure(new FluentRouteSourceSelector()).build(),
       },
     };
+    return this;
+  }
+
+  info(info: InfoInput): RouteOperationBuilder {
+    this.route.info = normalizeInfo(info);
     return this;
   }
 

@@ -119,6 +119,70 @@ export const userRoutes = users.defineRoutes().routes((r) => ({
 }));
 ```
 
+## Explicit Frontend Example
+
+Resources and routes do not create frontend screens. Define frontend components and screens explicitly, and pass refs instead of string names.
+
+```ts
+export const adminFrontend = v1.defineFrontend({
+  name: 'admin',
+  title: 'Admin',
+  routePrefix: '/admin',
+  folders: ['admin'],
+});
+
+export const adminComponentsRef = adminFrontend
+  .defineComponents()
+  .components((c) => ({
+    UsersTable: c
+      .component()
+      .props({
+        users: userSchemasRef.User.partial().array(),
+      })
+      .uses({
+        findUsers: userRoutes.ref.findUsers,
+      }),
+  })).ref;
+
+export const adminScreensRef = adminFrontend
+  .defineScreens()
+  .screens((s) => ({
+    UsersListScreen: s
+      .screen('/users')
+      .title('Users')
+      .uses({
+        findUsers: userRoutes.ref.findUsers,
+      })
+      .components({
+        table: adminComponentsRef.UsersTable,
+      }),
+  })).ref;
+```
+
+## Reusable Info Example
+
+```ts
+export const platformInfo = {
+  apiKeySecurity: {
+    security: [
+      'Never store API keys in raw form.',
+      'Store only keyHash and expose only keyPrefix.',
+    ],
+    implement: ['Return the raw secret only once during key creation.'],
+  },
+};
+
+export const apps = v1
+  .defineResource({
+    name: 'apps',
+    route: '/platform/apps',
+    info: {
+      explain: 'Platform app management API.',
+    },
+  })
+  .info((i) => i.custom('tenantSafety', 'Always scope app reads by tenant context.'));
+```
+
 ## Runtime Hook Example
 
 ```ts

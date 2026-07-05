@@ -192,6 +192,7 @@ def _operation(
             tags=_operation_tags(operation),
             cache=_operation_cache(operation),
             source=_operation_sources(operation),
+            info=x_codegen.get("info", {}) if isinstance(x_codegen.get("info"), dict) else {},
             payload_type=f"{use_case_base}Payload",
             use_case_interface=f"{use_case_base}UseCase",
             use_case_class=f"{use_case_base}UseCase",

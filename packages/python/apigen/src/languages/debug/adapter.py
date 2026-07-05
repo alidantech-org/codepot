@@ -61,6 +61,7 @@ from contracts.template import (
 )
 from languages.debug.context.path_values import safe_file_name, safe_path_parts
 from languages.decorators import language_adapter
+from inference.frontends import all_template_frontends, template_frontends
 
 
 @language_adapter(name="debug", aliases=("txt", "md"), template_name="debug")
@@ -78,6 +79,7 @@ class DebugLanguageAdapter:
         output_path: Path,
         template_root: Path | None = None,
         dry_run: bool = False,
+        frontend: str | None = None,
         progress: ProgressSink | None = None,
     ) -> TemplateContract:
         """Build deterministic debug template variables."""
@@ -88,6 +90,9 @@ class DebugLanguageAdapter:
         schema_resource_paths = _schema_resource_paths(api.schemas.all, resource_paths)
         operations = tuple(_operation(operation, schema_by_ref, resource_paths) for operation in api.operations)
         schemas = _schema_groups(api, schema_by_ref, schema_resource_paths)
+        all_frontends = all_template_frontends(api.meta.get("x-codegen", {}))
+        selected_frontends = template_frontends(api.meta.get("x-codegen", {}), selected=frontend)
+        selected_frontend = selected_frontends[0] if frontend and frontend != "*" and selected_frontends else None
 
         return TemplateContract(
             project=TemplateProject(
@@ -129,6 +134,10 @@ class DebugLanguageAdapter:
             resources=tuple(_resource(resource, schemas=schemas, operations=operations) for resource in api.resources),
             schemas=schemas,
             operations=operations,
+            frontends=all_frontends,
+            selected_frontend=selected_frontend,
+            selected_frontends=selected_frontends,
+            frontend_count=len(all_frontends),
             meta=TemplateContractMeta(
                 debug=True,
                 schema_count=len(api.schemas.all),

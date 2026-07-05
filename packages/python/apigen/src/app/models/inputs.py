@@ -42,6 +42,7 @@ class EmitInput:
     output_path: Path
     dry_run: bool = False
     templates_path: Path | None = None
+    frontend: str | None = None
     progress: ProgressSink | None = None
 
 

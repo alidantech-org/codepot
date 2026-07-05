@@ -15,6 +15,7 @@ import { collectAccessMetadataFromContract } from './access-metadata.js';
 import { compileEntityMetadata } from './entity-metadata.js';
 import type { RefResolver } from './refs/ref-resolver.types.js';
 import { compileAccessRegistryMetadata } from './access-registry-metadata.js';
+import { compileFrontendMetadata } from './frontend-metadata.js';
 
 export function compileOpenApi(contract: VersionContract, options: CompileOptions = {}, context: CompilerContext = {}): CompileResult {
   const resolvedContext = resolveCompilerContext(context);
@@ -93,8 +94,10 @@ function createDocumentCodegenMetadata(contract: VersionContract, resolver: RefR
   const entities = compileEntityMetadata(contract, resolver);
   const accessRegistry = compileAccessRegistryMetadata(contract, resolver);
   const resources = compileResourceRegistry(contract, accessRegistry.resourceAccess);
+  const frontends = compileFrontendMetadata(contract, resolver);
   const metadata = cleanObject({
     resources,
+    frontends,
     access: accessRegistry.access,
     ...entities,
   });
@@ -134,6 +137,7 @@ function compileResourceRegistry(
       route: resource.context.route,
       tags: resource.context.tags,
       ui: resource.context.ui,
+      info: resource.context.info,
       hooks: Object.keys(hooks).length > 0 ? hooks : undefined,
       access: resourceAccess[key] && Object.keys(resourceAccess[key]).length > 0 ? resourceAccess[key] : undefined,
     });

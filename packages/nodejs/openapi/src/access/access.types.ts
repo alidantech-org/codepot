@@ -1,6 +1,7 @@
 import type { ComponentRef, PropertyRef } from '../refs/ref.types.js';
 import type { RefWithUsageMethods } from '../refs/ref-usage.types.js';
 import type { XCodegenResourceMeta } from '../codegen/codegen-extension.types.js';
+import type { InfoInput, NormalizedInfo } from '../info/info.types.js';
 
 export type AccessAllowMap<TValue extends string = string> = Partial<Record<TValue, true>>;
 
@@ -33,6 +34,7 @@ export interface AccessDefinitionObject {
   readonly roles?: AccessRoleSources;
   readonly tags?: readonly string[];
   readonly description?: string;
+  readonly info?: InfoInput | NormalizedInfo;
 }
 
 export interface AccessDefinitionBuilder {

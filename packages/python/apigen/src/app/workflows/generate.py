@@ -132,6 +132,7 @@ def _run_task(
             output_path=task.output,
             dry_run=request.dry_run,
             templates_path=task.template_dir,
+            frontend=task.frontend,
             progress=request.progress,
         )
     )

@@ -33,6 +33,7 @@ from languages.dart.operations import template_operations
 from languages.dart.resources import feature_resources, resource_paths, template_resources
 from languages.dart.schemas import template_schema_groups
 from languages.dart.urls import default_base_url
+from inference.frontends import all_template_frontends, template_frontends
 from languages.decorators import language_adapter
 
 
@@ -55,6 +56,7 @@ class DartLanguageAdapter:
         output_path: Path,
         template_root: Path | None = None,
         dry_run: bool = False,
+        frontend: str | None = None,
         progress: ProgressSink | None = None,
     ) -> TemplateContract:
         """Build deterministic Dart template variables."""
@@ -88,6 +90,9 @@ class DartLanguageAdapter:
             }
             for server in api.servers
         )
+        all_frontends = all_template_frontends(api.meta.get("x-codegen", {}))
+        selected_frontends = template_frontends(api.meta.get("x-codegen", {}), selected=frontend)
+        selected_frontend = selected_frontends[0] if frontend and frontend != "*" and selected_frontends else None
 
         return TemplateContract(
             project=TemplateProject(
@@ -119,6 +124,10 @@ class DartLanguageAdapter:
             features=features,
             schemas=schemas,
             operations=operations,
+            frontends=all_frontends,
+            selected_frontend=selected_frontend,
+            selected_frontends=selected_frontends,
+            frontend_count=len(all_frontends),
             lang=TemplateLanguage(
                 name=self.name,
                 framework=TemplateFramework(name=FLUTTER_FRAMEWORK_NAME),

@@ -365,6 +365,83 @@ users.defineRoutes().routes((r) => ({
 
 Route cache support is invalidation-only. `cache.invalidate.on(...)` takes an operation ID, and the compiler validates that the operation ID exists.
 
+### Frontends
+
+Frontends are explicit authoring constructs for future frontend generators. Resources and operations never create screens automatically. A screen or frontend component exists only when you define it.
+
+Define components first, then screens reference component refs:
+
+```ts
+const adminFrontend = v1.defineFrontend({
+  name: 'admin',
+  title: 'Admin',
+  routePrefix: '/admin',
+  folders: ['admin'],
+});
+
+const adminComponentsRef = adminFrontend
+  .defineComponents()
+  .components((c) => ({
+    AppsTable: c
+      .component()
+      .props({
+        apps: appProjectionSchemasRef.AppPartial.array(),
+      })
+      .uses({
+        findApps: appRoutes.ref.findApps,
+      }),
+  })).ref;
+
+adminFrontend
+  .defineScreens()
+  .screens((s) => ({
+    AppsListScreen: s
+      .screen('/apps')
+      .title('Apps')
+      .uses({
+        findApps: appRoutes.ref.findApps,
+      })
+      .components({
+        table: adminComponentsRef.AppsTable,
+      }),
+  }));
+```
+
+Component props compile into normal `components.schemas` using deterministic names such as `AdminAppsTableProps`. Frontend metadata is emitted under root `x-codegen.frontends`, and a later generator can choose one frontend by name.
+
+### Info Metadata
+
+Use `info` for implementation guidance that generators, docs, and AI prompts can consume. It never changes runtime behavior.
+
+```ts
+const platformInfo = {
+  apiKeySecurity: {
+    security: [
+      'Never store API keys in raw form.',
+      'Expose only keyPrefix, never keyHash.',
+    ],
+    implement: ['Return the raw secret only once during creation.'],
+  },
+};
+
+apps
+  .info((i) =>
+    i
+      .explain('Platform apps resource.')
+      .use(platformInfo.apiKeySecurity)
+      .custom('tenantSafety', 'Always scope reads by tenant context.'),
+  );
+
+apps.defineRoutes().routes((r) => ({
+  createApp: r
+    .post('/')
+    .response(appResponseSchemasRef.AppResponse)
+    .info((i) => i.implement('Create app records transactionally.')),
+}));
+```
+
+Info values compile under existing `x-codegen.info` locations as arrays of strings. Custom categories are allowed and duplicate messages are deduped.
+
 ### Runtime Hooks
 
 Hooks are defined once on a resource and routes reference hook refs. Full hook definitions are emitted under `x-codegen.resources.<resource>.hooks`. Operation runtime hook usages are `$ref` pointers, so generators can resolve them without duplicated metadata.
@@ -418,6 +495,7 @@ Useful `x-codegen` metadata includes:
 
 ```txt
 x-codegen.resources
+x-codegen.frontends
 x-codegen.baseEntities
 x-codegen.entities
 x-codegen.access

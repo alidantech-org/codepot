@@ -77,6 +77,7 @@ function resolveAccessPolicy(definition: NormalizedAccessDefinition, resolver: R
     roles: resolveAccessRoles(definition, resolver),
     tags: definition.tags,
     description: definition.description,
+    info: definition.info,
   });
 }
 

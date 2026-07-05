@@ -30,6 +30,7 @@ export function compileComponents(contract: VersionContract, context: CompilerCo
     contract.parameterComponents,
     contract.requestBodyComponents,
     contract.responseComponents,
+    contract.frontends,
     context,
   );
 
@@ -50,6 +51,10 @@ export function compileComponents(contract: VersionContract, context: CompilerCo
     emitResourceParameterComponents(resource.parameterComponents, parameters, resolver);
     emitResourceRequestBodies(resource.requestBodyComponents, requestBodies, resolver);
     emitResourceResponses(resource.responseComponents, responses, resolver);
+  }
+
+  for (const frontend of contract.frontends) {
+    emitResourceSchemaComponents(frontend.schemaComponents, schemas, resolver, context);
   }
 
   return {

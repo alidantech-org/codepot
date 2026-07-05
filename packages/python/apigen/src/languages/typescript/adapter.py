@@ -34,6 +34,7 @@ from languages.typescript.operations import template_operations
 from languages.typescript.resources import resource_paths, template_resources
 from languages.typescript.schemas import template_schema_groups
 from languages.typescript.urls import default_base_url
+from inference.frontends import all_template_frontends, template_frontends
 
 
 @language_adapter(
@@ -55,6 +56,7 @@ class TypeScriptLanguageAdapter:
         output_path: Path,
         template_root: Path | None = None,
         dry_run: bool = False,
+        frontend: str | None = None,
         progress: ProgressSink | None = None,
     ) -> TemplateContract:
         """Build deterministic TypeScript template variables."""
@@ -99,6 +101,9 @@ class TypeScriptLanguageAdapter:
             }
             for server in api.servers
         )
+        all_frontends = all_template_frontends(api.meta.get("x-codegen", {}))
+        selected_frontends = template_frontends(api.meta.get("x-codegen", {}), selected=frontend)
+        selected_frontend = selected_frontends[0] if frontend and frontend != "*" and selected_frontends else None
 
         return TemplateContract(
             project=TemplateProject(
@@ -129,6 +134,10 @@ class TypeScriptLanguageAdapter:
             schemas=schemas,
             operations=operations,
             entities=entities,
+            frontends=all_frontends,
+            selected_frontend=selected_frontend,
+            selected_frontends=selected_frontends,
+            frontend_count=len(all_frontends),
             lang=TemplateLanguage(
                 name=self.name,
                 framework=TemplateFramework(name=NODE_FRAMEWORK_NAME),

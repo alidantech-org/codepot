@@ -120,7 +120,16 @@ def _task_from_yaml(name: str, raw: Any, root: Path) -> CodepotTask:
         after=_commands(raw.get("after", ()), root, task_name=name, field_name="after"),
         env=_env(raw.get("env"), task_name=name, field_name="env"),
         description=str(raw.get("description", "") or ""),
+        frontend=_frontend(raw.get("frontend"), task_name=name),
     )
+
+
+def _frontend(raw: Any, *, task_name: str) -> str | None:
+    if raw in (None, ""):
+        return None
+    if not isinstance(raw, str) or not raw.strip():
+        raise ConfigError(f"Task '{task_name}' field frontend must be a string.")
+    return raw.strip()
 
 
 def _required_path(raw: dict[str, Any], field_name: str, task_name: str, root: Path) -> Path:

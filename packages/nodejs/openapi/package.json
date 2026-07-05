@@ -1,6 +1,6 @@
 {
   "name": "codepot-openapi",
-  "version": "0.0.3",
+  "version": "0.0.6",
   "description": "Typed OpenAPI contract engine for TypeScript projects.",
   "type": "module",
   "homepage": "https://code.alidantech.org/",

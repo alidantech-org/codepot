@@ -38,6 +38,8 @@ import type {
   EntityRelationRegistry,
   EntityRelationsInput,
 } from '../entities/entity.types.js';
+import type { InfoInput } from '../info/info.types.js';
+import { normalizeInfo } from '../info/normalize-info.js';
 
 export interface DefineResourceOptions {
   /**
@@ -88,6 +90,8 @@ export interface DefineResourceOptions {
    * Resource-level access policy inherited by operations.
    */
   access?: AccessRef;
+
+  info?: InfoInput;
 }
 
 export interface ResourceBuilder {
@@ -144,6 +148,7 @@ export interface ResourceBuilder {
 
   defineRoutes(): RoutesDefinitionBuilder;
   defineRoutes(routes: DefineRoutesInputLike, name?: string): RouteRegistry;
+  info(info: InfoInput): ResourceBuilder;
 }
 
 function normalizeFolders(folders?: readonly string[]): readonly string[] {
@@ -160,6 +165,7 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     alias: options.alias ?? options.name,
     ui: normalizeCodegenUiInput(options.ui),
     access: options.access,
+    info: normalizeInfo(options.info),
   };
 
   const properties: PropertyRegistry[] = [];
@@ -346,7 +352,16 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     } satisfies typeof result;
   }
 
-  return {
+  function setInfo(info: InfoInput): ResourceBuilder {
+    const next = normalizeInfo(info);
+    (context as ResourceContext & { info?: ReturnType<typeof normalizeInfo> }).info = normalizeInfo([
+      ...(context.info ? [context.info] : []),
+      ...(next ? [next] : []),
+    ]);
+    return resourceBuilder;
+  }
+
+  const resourceBuilder: ResourceBuilder = {
     context,
     properties,
     schemas,
@@ -371,5 +386,8 @@ export function defineResource(options: DefineResourceOptions): ResourceBuilder 
     defineEntities: defineResourceEntities,
     defineEntityRelations: defineResourceEntityRelations,
     defineRoutes: defineResourceRoutes,
+    info: setInfo,
   };
+
+  return resourceBuilder;
 }

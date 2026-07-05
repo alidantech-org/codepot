@@ -46,6 +46,7 @@ class LanguageAdapter(Protocol):
         output_path: Path,
         template_root: Path | None = None,
         dry_run: bool = False,
+        frontend: str | None = None,
         progress: ProgressSink | None = None,
     ) -> TemplateContract:
         """Build deterministic template variables for this language."""

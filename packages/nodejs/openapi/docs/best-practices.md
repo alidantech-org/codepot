@@ -233,6 +233,7 @@ Templates should read semantic metadata such as:
 
 ```txt
 x-codegen.resources
+x-codegen.frontends
 x-codegen.baseEntities
 x-codegen.entities
 x-codegen.access
@@ -246,7 +247,56 @@ cache.invalidate.operations
 
 Resource-owned definitions live in `x-codegen.resources`. Operation-level access and runtime hook usages are `$ref` pointers into the resource/global registries. Keep `operation.role` and `parameters.target` unchanged.
 
-## 18. Export Only Reused Contract Parts
+## 18. Author Frontends Explicitly
+
+Do not infer frontend screens from backend resources or routes. Components and screens are frontend authoring constructs:
+
+```ts
+const adminFrontend = v1.defineFrontend({ name: 'admin' });
+
+const adminComponentsRef = adminFrontend
+  .defineComponents()
+  .components((c) => ({
+    UsersTable: c.component().uses({ findUsers: userRoutes.ref.findUsers }),
+  })).ref;
+
+adminFrontend.defineScreens().screens((s) => ({
+  UsersListScreen: s.screen('/users').components({
+      table: adminComponentsRef.UsersTable,
+    }),
+}));
+```
+
+Components should be defined before screens, and screens should reference component refs from the same frontend.
+
+## 19. Use Info Metadata For Guidance
+
+Use `info` for docs, generated comments, and implementation prompts. It should describe intent and constraints without changing runtime behavior.
+
+```ts
+const apiKeyInfo = {
+  security: [
+    'Never store API keys in raw form.',
+    'Expose only keyPrefix, never keyHash.',
+  ],
+};
+
+createAppApiKey: r
+  .post('/:id/api-keys')
+  .info((i) =>
+    i
+      .use(apiKeyInfo)
+      .implement('Return the raw secret only once during key creation.'),
+  ),
+```
+
+Custom categories are allowed:
+
+```ts
+.info((i) => i.custom('tenantSafety', 'Always scope reads by tenant context.'))
+```
+
+## 20. Export Only Reused Contract Parts
 
 Export refs and route registries that other modules need. Local-only schemas can remain local.
 

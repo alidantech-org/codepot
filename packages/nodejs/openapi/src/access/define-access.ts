@@ -1,4 +1,5 @@
 import type { AccessDefinitionInput, AccessOwner, AccessRegistry, NormalizedAccessDefinition } from './access.types.js';
+import { normalizeInfo } from '../info/normalize-info.js';
 
 export interface DefineAccessOptions {
   readonly owner: AccessOwner;
@@ -34,11 +35,12 @@ export function defineAccess<const TInput extends Record<string, AccessDefinitio
 }
 
 function normalizeAccessDefinition(definition: AccessDefinitionInput): Omit<NormalizedAccessDefinition, 'key' | 'owner'> {
-  if (isAccessDefinitionBuilder(definition)) {
-    return definition.build();
-  }
+  const normalized = isAccessDefinitionBuilder(definition) ? definition.build() : definition;
 
-  return definition;
+  return {
+    ...normalized,
+    info: normalizeInfo(normalized.info as Parameters<typeof normalizeInfo>[0]),
+  };
 }
 
 function isAccessDefinitionBuilder(value: AccessDefinitionInput): value is { build(): Omit<NormalizedAccessDefinition, 'key' | 'owner'> } {

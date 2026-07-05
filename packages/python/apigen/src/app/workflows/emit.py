@@ -64,6 +64,7 @@ def run_emit(request: EmitInput) -> EmitOutput:
         output_path=request.output_path,
         template_root=template_root,
         dry_run=request.dry_run,
+        frontend=request.frontend,
         progress=request.progress,
     )
 

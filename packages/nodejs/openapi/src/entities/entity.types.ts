@@ -1,6 +1,7 @@
 import type { ComponentRef, PropertyRef } from '../refs/ref.types.js';
 import type { RefUsage } from '../refs/ref-usage.types.js';
 import type { XCodegenResourceMeta } from '../codegen/codegen-extension.types.js';
+import type { InfoInput, NormalizedInfo } from '../info/info.types.js';
 
 export type EntityOwner = { readonly global: true } | { readonly resource: XCodegenResourceMeta };
 
@@ -43,6 +44,7 @@ export interface EntityFieldMetadata {
   readonly role?: EntityFieldRole;
   readonly generated?: EntityGeneratedStrategy;
   readonly query?: EntityFieldQueryMetadata;
+  readonly info?: NormalizedInfo;
 }
 
 export interface EntityFieldBuilder {
@@ -56,6 +58,7 @@ export interface EntityFieldBuilder {
   role(role: EntityFieldRole): EntityFieldBuilder;
   generated(strategy: EntityGeneratedStrategy): EntityFieldBuilder;
   query(callback: (query: EntityFieldQueryBuilder) => EntityFieldQueryBuilder): EntityFieldBuilder;
+  info(info: InfoInput): EntityFieldBuilder;
 }
 
 export interface EntityFieldQueryBuilder {
@@ -126,6 +129,7 @@ export interface BaseEntityDefinitionInput {
   readonly schema: ComponentRef;
   readonly extends?: EntityRef;
   readonly fields?: EntityFieldsDefinition;
+  readonly info?: InfoInput;
 }
 
 export interface ConcreteEntityDefinitionInput {
@@ -136,6 +140,7 @@ export interface ConcreteEntityDefinitionInput {
   readonly backend?: EntityBackendFields;
   readonly fields?: EntityFieldsDefinition;
   readonly constraints?: EntityConstraintsDefinition;
+  readonly info?: InfoInput;
 }
 
 export type EntityDefinitionInput = BaseEntityDefinitionInput | ConcreteEntityDefinitionInput;
@@ -149,6 +154,7 @@ export interface EntityDefinition {
   readonly backend?: EntityBackendFields;
   readonly fields: Record<string, EntityFieldMetadata>;
   readonly constraints?: Record<string, EntityConstraintDefinition>;
+  readonly info?: NormalizedInfo;
   readonly owner: EntityOwner;
   readonly ref: EntityRef;
 }

@@ -27,6 +27,7 @@ def create_environment(template_root: Path) -> Environment:
     environment.filters["yesno"] = yesno
     environment.filters["csv"] = csv
     environment.filters["value"] = value
+    environment.filters["info_comment"] = info_comment
 
     return environment
 
@@ -88,3 +89,29 @@ def csv(items: Any, default: str = "-") -> str:
         return default
 
     return ", ".join(values)
+
+
+def info_comment(info: Any, prefix: str = " * ") -> str:
+    """Render normalized info metadata as comment body lines."""
+    if not isinstance(info, dict):
+        return ""
+
+    lines: list[str] = []
+    for category, items in info.items():
+        if not isinstance(items, Iterable) or isinstance(items, str):
+            continue
+        values = [str(item) for item in items if str(item)]
+        if not values:
+            continue
+        lines.append(f"{prefix}{_info_title(str(category))}:")
+        lines.extend(f"{prefix}- {item}" for item in values)
+        lines.append(prefix.rstrip())
+
+    while lines and not lines[-1].strip("* "):
+        lines.pop()
+
+    return "\n".join(lines)
+
+
+def _info_title(category: str) -> str:
+    return category.replace("_", " ").replace("-", " ").title()

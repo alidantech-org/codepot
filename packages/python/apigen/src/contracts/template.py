@@ -402,6 +402,7 @@ class TemplateResourceMeta:
     tags: tuple[str, ...] = ()
     access_ref: str | None = None
     ui: MetaMap = field(default_factory=dict)
+    info: MetaMap = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -449,6 +450,7 @@ class TemplateOperationMeta:
     tags: tuple[str, ...] = ()
     cache: MetaMap = field(default_factory=dict)
     source: MetaMap = field(default_factory=dict)
+    info: MetaMap = field(default_factory=dict)
     payload_type: str = "-"
     use_case_interface: str = "-"
     use_case_class: str = "-"
@@ -513,6 +515,7 @@ class TemplateEntityFieldMeta:
     column_options: str = "-"
     backend_only: bool = False
     raw: MetaMap = field(default_factory=dict)
+    info: MetaMap = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -566,6 +569,7 @@ class TemplateEntityMeta:
     file_name: str = "-"
     schema_constant: str | None = None
     raw: MetaMap = field(default_factory=dict)
+    info: MetaMap = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -582,6 +586,70 @@ class TemplateEntity:
     emit: TemplateItemEmit | None = None
     docs: TemplateDocs = field(default_factory=TemplateDocs)
     meta: TemplateEntityMeta = field(default_factory=TemplateEntityMeta)
+
+
+@dataclass(frozen=True)
+class TemplateFrontendOperationUse:
+    """Operation use metadata referenced by frontend components/screens."""
+
+    alias: str
+    operation_id: str = "-"
+    method: str = "-"
+    path: str = "-"
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TemplateFrontendComponent:
+    """Explicit frontend component metadata."""
+
+    name: NameSet
+    frontend: TemplateFrontend | None = None
+    title: str = "-"
+    description: str = "-"
+    props_ref: str | None = None
+    uses: tuple[TemplateFrontendOperationUse, ...] = ()
+    schemas: tuple[str, ...] = ()
+    tags: tuple[str, ...] = ()
+    info: MetaMap = field(default_factory=dict)
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TemplateFrontendScreen:
+    """Explicit frontend screen metadata."""
+
+    name: NameSet
+    frontend: TemplateFrontend | None = None
+    title: str = "-"
+    description: str = "-"
+    route: str = "-"
+    full_route: str = "-"
+    params_ref: str | None = None
+    query_ref: str | None = None
+    components: MetaMap = field(default_factory=dict)
+    uses: tuple[TemplateFrontendOperationUse, ...] = ()
+    tags: tuple[str, ...] = ()
+    info: MetaMap = field(default_factory=dict)
+    meta: MetaMap = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TemplateFrontend:
+    """Explicit frontend metadata."""
+
+    name: NameSet
+    title: str = "-"
+    route_prefix: str = ""
+    folders: tuple[str, ...] = ()
+    tags: tuple[str, ...] = ()
+    description: str = "-"
+    info: MetaMap = field(default_factory=dict)
+    components: tuple[TemplateFrontendComponent, ...] = ()
+    screens: tuple[TemplateFrontendScreen, ...] = ()
+    operations: tuple[TemplateFrontendOperationUse, ...] = ()
+    schemas: tuple[str, ...] = ()
+    meta: MetaMap = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -726,5 +794,9 @@ class TemplateContract:
     schemas: TemplateSchemaGroups = field(default_factory=TemplateSchemaGroups)
     operations: tuple[TemplateOperation, ...] = ()
     entities: tuple[TemplateEntity, ...] = ()
+    frontends: tuple[TemplateFrontend, ...] = ()
+    selected_frontend: TemplateFrontend | None = None
+    selected_frontends: tuple[TemplateFrontend, ...] = ()
+    frontend_count: int = 0
     file: TemplateFile | None = None
     meta: TemplateContractMeta = field(default_factory=TemplateContractMeta)

@@ -7,6 +7,7 @@ import { componentRefToSchemaName } from '../../naming/ref-schema-name.js';
 import type { PropertyRefGroup, PropertyRegistry, PropertyRegistryRef } from '../../properties/property.types.js';
 import type { PropertyRef } from '../../refs/ref.types.js';
 import type { ResourceBuilder } from '../../resource/define-resource.js';
+import type { FrontendBuilder } from '../../frontend/frontend.types.js';
 import type { RefResolver } from '../refs/ref-resolver.types.js';
 import { toSchemaName } from '../../naming/schema-name.js';
 
@@ -17,6 +18,7 @@ export function buildSchemaResolver(
   parameterComponents: readonly ParameterComponentRegistry[],
   requestBodyComponents: readonly RequestBodyComponentRegistry[],
   responseComponents: readonly ResponseComponentRegistry[],
+  frontends: readonly FrontendBuilder[] = [],
   context?: CompilerContext,
 ): RefResolver {
   const schemas = new Map<string, string>();
@@ -63,6 +65,12 @@ export function buildSchemaResolver(
 
     for (const registry of resource.responseComponents) {
       registerRefRegistry(registry.ref, responses);
+    }
+  }
+
+  for (const frontend of frontends) {
+    for (const registry of frontend.schemaComponents) {
+      registerComponentRegistry(registry, schemas);
     }
   }
 

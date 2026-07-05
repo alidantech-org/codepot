@@ -107,6 +107,9 @@ def _entity(
             class_name=class_name,
             file_name=file_name,
             raw=entity.meta.get("x-codegen", {}),
+            info=entity.meta.get("x-codegen", {}).get("info", {})
+            if isinstance(entity.meta.get("x-codegen"), dict)
+            else {},
         ),
     )
 
@@ -168,6 +171,7 @@ def _field(
             column_options=_column_options(field, enum_type),
             backend_only=bool(field.meta.get("backend_only")),
             raw=raw if isinstance(raw, dict) else {},
+            info=raw.get("info", {}) if isinstance(raw, dict) and isinstance(raw.get("info"), dict) else {},
         ),
     )
 

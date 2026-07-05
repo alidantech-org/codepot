@@ -56,6 +56,16 @@ def stringify_value(value: Any) -> str:
 
 
 def _resolve_part(current: Any, part: str, expression: str) -> Any:
+    if isinstance(current, Sequence) and not isinstance(current, bytes | bytearray | str):
+        values: list[Any] = []
+        for item in current:
+            resolved = _resolve_part(item, part, expression)
+            if isinstance(resolved, Sequence) and not isinstance(resolved, bytes | bytearray | str):
+                values.extend(resolved)
+            elif resolved is not None:
+                values.append(resolved)
+        return tuple(values)
+
     if isinstance(current, Mapping):
         if part not in current:
             raise VariableResolutionError(expression)

@@ -17,6 +17,7 @@ import { VersionBuilder } from './version/define-version-contract.js';
 
 export { defineVersionContract } from './version/define-version-contract.js';
 export { defineResource } from './resource/define-resource.js';
+export { defineFrontend } from './frontend/define-frontend.js';
 export { defineAccess } from './access/define-access.js';
 export { defineHooks } from './hooks/define-hooks.js';
 export { defineBaseEntities, defineEntities, defineEntityRelations } from './entities/define-entities.js';
@@ -24,6 +25,7 @@ export type { EntityDefinitionFactory } from './entities/define-entities.js';
 
 export type { VersionContract as OpenApiVersionContract } from './version/version-contract.types.js';
 export type { ResourceBuilder as OpenApiResourceContract } from './resource/define-resource.js';
+export type { FrontendBuilder as OpenApiFrontendContract } from './frontend/frontend.types.js';
 export type {
   AccessAllowMap,
   AccessDefinition,
@@ -297,6 +299,35 @@ export type {
   CompositeSchemaField,
   PrimitiveSchemaField,
 };
+
+/* =========================================================
+ * Frontend authoring
+ * ========================================================= */
+
+export type {
+  DefineFrontendOptions,
+  DefineFrontendComponentsInput,
+  DefineFrontendScreensInput,
+  FrontendBuilder,
+  FrontendComponentBuilder,
+  FrontendComponentBuilderMap,
+  FrontendComponentDefinition,
+  FrontendComponentFactoryRoot,
+  FrontendComponentRef,
+  FrontendComponentRegistry,
+  FrontendComponentsDefinitionBuilder,
+  FrontendScreenBuilder,
+  FrontendScreenBuilderMap,
+  FrontendScreenDefinition,
+  FrontendScreenFactoryRoot,
+  FrontendScreenRef,
+  FrontendScreenRegistry,
+  FrontendScreensDefinitionBuilder,
+} from './frontend/frontend.types.js';
+
+export { createInfoBuilder, normalizeInfo } from './info/normalize-info.js';
+
+export type { InfoBuilder, InfoInput, InfoObject, InfoValue, NormalizedInfo } from './info/info.types.js';
 
 /* =========================================================
  * Output and writer

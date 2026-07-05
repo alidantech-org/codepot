@@ -8,6 +8,7 @@ import type { RouteResponseInput } from '../routes/route.types.js';
 import type { ContentTypeInput } from '../openapi/content-type.js';
 import type { AccessRegistry } from '../access/access.types.js';
 import type { EntityRegistry } from '../entities/entity.types.js';
+import type { FrontendBuilder } from '../frontend/frontend.types.js';
 
 export interface VersionLicense {
   readonly name: string;
@@ -40,5 +41,6 @@ export interface VersionContract {
   readonly accessComponents: AccessRegistry[];
   readonly baseEntityComponents: EntityRegistry[];
   readonly entityComponents: EntityRegistry[];
+  readonly frontends: FrontendBuilder[];
   readonly defaultResponses: Record<number, RouteResponseInput>;
 }

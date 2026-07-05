@@ -172,6 +172,7 @@ function compileEntity(
     fields,
     relations,
     constraints,
+    info: definition.info,
   });
 }
 

@@ -61,6 +61,51 @@ tasks:
       - run: pnpm prettier --write lib
 ```
 
+Frontend Tasks
+--------------
+
+If the OpenAPI document includes explicit `x-codegen.frontends`, a task can
+select one frontend by name:
+
+```yaml
+tasks:
+  admin-frontend:
+    input: ./openapi.yaml
+    language: typescript
+    templateDir: ./templates/next
+    output: ../admin
+    frontend: admin
+```
+
+Use `frontend: "*"` to expose every authored frontend. If `frontend` is omitted,
+old backend/API generation behavior is unchanged. CodepotX does not infer
+screens from resources or operations; templates only see explicitly authored
+frontend components and screens.
+
+Frontend-aware templates can select:
+
+```yaml
+folders:
+  frontend_screens:
+    mode: immutable
+    select: selected_frontend.screens
+    as: screen
+    parts: [src, screens]
+```
+
+Info Metadata
+-------------
+
+`x-codegen.info` metadata is preserved for templates on operations, entities,
+frontends, screens, and components. The `info_comment` Jinja filter can render
+normalized info categories into comment body lines:
+
+```jinja
+/**
+{{ operation.meta.info | info_comment }}
+ */
+```
+
 Template Write Safety
 ---------------------
 

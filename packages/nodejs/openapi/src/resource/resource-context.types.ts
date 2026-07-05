@@ -1,6 +1,7 @@
 import type { ZodSourceRegistry } from '../zod/zod-source-registry.js';
 import type { CodegenUiMeta } from '../codegen/codegen-extension.types.js';
 import type { AccessRef } from '../access/access.types.js';
+import type { NormalizedInfo } from '../info/info.types.js';
 
 export interface ResourceContext {
   /**
@@ -51,6 +52,8 @@ export interface ResourceContext {
    * Resource-level access policy inherited by routes.
    */
   readonly access?: AccessRef;
+
+  readonly info?: NormalizedInfo;
 }
 
 export interface OptionalResourceContext {
