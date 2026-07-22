@@ -1,0 +1,37 @@
+"use client";
+
+import { Monitor, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+
+export function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  function toggleTheme() {
+    if (theme === "light") setTheme("dark");
+    else if (theme === "dark") setTheme("system");
+    else setTheme("light");
+  }
+
+  const icon = !mounted || theme === "light"
+    ? <Sun className="h-4 w-4" />
+    : theme === "dark"
+      ? <Moon className="h-4 w-4" />
+      : <Monitor className="h-4 w-4" />;
+  const label = !mounted ? "Loading theme..." : theme === "light" ? "Light mode" : theme === "dark" ? "Dark mode" : "System theme";
+
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      className="rounded-lg p-2.5 text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground"
+      title={label}
+      aria-label={label}
+    >
+      {icon}
+    </button>
+  );
+}
