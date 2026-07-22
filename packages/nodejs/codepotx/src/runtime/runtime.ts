@@ -132,12 +132,12 @@ export class CodepotRuntime implements CodepotRuntimePort {
       case 'templating.context.validate': return this.#dependencies.templating.validateContext(request.input as never);
       case 'templating.render': return this.#dependencies.templating.render(request.input as never);
       case 'generation.file.load': return this.#dependencies.generation.load(request.input as never);
-      case 'generation.plan': return this.#dependencies.generation.plan(request.input as never);
-      case 'generation.render': return this.#dependencies.generation.render(request.input as never);
-      case 'generation.write': return this.#dependencies.generation.write(request.input as never);
-      case 'generation.clean': return this.#dependencies.generation.clean(request.input as never);
-      case 'generation.commands': return this.#dependencies.generation.runCommands(request.input as never);
-      case 'generation.execute': return this.#dependencies.generation.execute(request.input as never);
+      case 'generation.plan': return this.#dependencies.generation.plan(this.#generationInput(request.input));
+      case 'generation.render': return this.#dependencies.generation.render(this.#generationInput(request.input));
+      case 'generation.write': return this.#dependencies.generation.write(this.#generationInput(request.input));
+      case 'generation.clean': return this.#dependencies.generation.clean(this.#generationInput(request.input));
+      case 'generation.commands': return this.#dependencies.generation.runCommands(this.#generationInput(request.input));
+      case 'generation.execute': return this.#dependencies.generation.execute(this.#generationInput(request.input));
       case 'runtime.features':
         return {
           success: true,
@@ -145,6 +145,14 @@ export class CodepotRuntime implements CodepotRuntimePort {
           diagnostics: [],
         };
     }
+  }
+
+  #generationInput(input: unknown): never {
+    const signal = this.#contexts.current()?.signal;
+    if (!signal || !input || typeof input !== 'object' || Array.isArray(input) || 'signal' in input) {
+      return input as never;
+    }
+    return { ...input, signal } as never;
   }
 
   #selectFeatures(query: RuntimeFeatureQuery): readonly RuntimeFeature[] {
