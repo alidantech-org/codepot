@@ -5,7 +5,7 @@
 | Order | Phase | Status | Issue | Gate |
 |---|---|---|---|---|
 | 00 | Agent guides and task system | [x] | #2 closed | Complete |
-| 01 | Shared contract and stable artifacts | [ ] | #3 | Phase 00 complete |
+| 01 | Shared contract and stable artifacts | [x] | #3 closed | Complete |
 | 02 | Runtime and platform adapters | [ ] | Open when ready | Phase 01 complete |
 | 03 | Authoring parity and canonical compiler | [ ] | Open when ready | Required Phase 01/02 ports complete |
 | 04 | Templating and Handlebars migration | [ ] | Open when ready | Stable artifacts and platform ports complete |
@@ -45,6 +45,20 @@ Validation: GitHub content reads verified `AGENTS.md`, this roadmap, and `01-con
 - [x] Files committed to `chatgpt/codepotx-restart`.
 - [x] Paths and contents verified from GitHub.
 - [x] Issue #2 closed.
+
+## Phase 01 validation
+
+Status: [x]
+Issue: #3 closed as completed
+Depends on: Phase 00
+Commits: `b5b2624a356c902ab4185f59bc2d2f37aefefa4f`, `7d5b44d9ee5f55e351db1d8bd96b2ee85006f71a`
+Validation: strict TypeScript typecheck and declaration emission passed; GitHub comparisons and content reads verified all stable artifact, request, result, port, event, runtime, package-export, and build-entry changes.
+
+- [x] Stable authoring, template-pack, generation-plan, and rendered-generation artifacts defined.
+- [x] Authoring, templating, generation, platform, event, and runtime ports defined.
+- [x] Runtime operation mapping covers every engine operation.
+- [x] `codepotx/contract` export configured.
+- [x] Issue #3 closed.
 
 ## Global completion conditions
 
