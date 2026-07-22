@@ -19,6 +19,11 @@ export {
   planCommands,
   planFiles,
 } from './planning';
+export {
+  readRenderedGenerationCache,
+  renderCacheKey,
+  writeRenderedGenerationCache,
+} from './render-cache';
 export { countGenerationFiles, createGenerationReport } from './report';
 export { GenerationFileTransaction } from './transaction';
 export type * from './generation.types';
