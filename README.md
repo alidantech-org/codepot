@@ -1,458 +1,130 @@
-# codepot
+# Codepot
 
-> Semantic metadata inference engine + template compiler for generating architecture artifacts from typed domain configs.
+Codepot is a user-controlled authoring and code-generation system.
 
----
+It lets people describe reusable software contracts once, combine them with reusable template packs, and generate source code into one or many consumer projects. The specification author, template author, and target project each retain control over their own part of the process.
 
-# What is codepot?
+## Core model
 
-- semantic metadata DSL
-- normalized manifest compiler
-- inference engine
-- template-driven code generator
+Codepot is built around three separate layers.
 
-You define **facts** about your domain.
+### 1. Authoring source
 
-codepot infers:
+```text
+codepot.config.ts
+```
 
-- query capabilities
-- mutation semantics
-- relation groups
-- workflows
-- validation groups
-- reusable template contexts
+The authoring layer is currently written in TypeScript. It defines the contracts and semantic information that generators consume, including schemas, entities, resources, operations, access metadata, frontend metadata, OpenAPI information, and other generator-facing facts.
 
-Templates decide final architecture output.
+Authoring is reusable and shareable. A single authoring source can generate different outputs for different projects by being combined with different template packs and task rules.
 
----
+An authoring source may be local, packaged, or resolved from a Git repository using a branch, tag, or commit reference.
 
-# Core Philosophy
+### 2. Template pack
 
-```txt id="8zfr52"
-Configs define facts
+```text
+paths.yml
+*.hbs
+```
+
+A template pack determines how authored information becomes source code.
+
+`paths.yml` controls the emitted folders, files, filenames, context selections, aliases, and supported write behavior. Handlebars templates control the contents of generated files. Static files may also be distributed as part of a pack.
+
+Template packs own framework and architecture decisions. Codepot must not force a specific backend framework, frontend framework, ORM, SDK structure, naming convention, or folder structure.
+
+Template packs are reusable independently from authoring and may be shared locally, through Git, through packages, or through a future template marketplace.
+
+### 3. Consumer project
+
+```text
+CodepotFile.yml
+```
+
+`CodepotFile.yml` lives in the project receiving generated code. It combines an authoring source, a template-pack source, output rules, and named generation tasks.
+
+The consumer project controls:
+
+- where authoring comes from;
+- where templates come from;
+- where generated files are written;
+- which paths may be cleaned;
+- commands that run before generation;
+- commands that run after generation;
+- command working directories and environment values;
+- optional and required project automation.
+
+Commands are a first-class part of Codepot. They allow the target project to refresh contracts, format generated files, remove unused imports, type-check output, build code, or run any other user-defined workflow. `allow: true` is the project’s explicit permission to execute its configured generation tasks and commands.
+
+## How generation works
+
+```text
+CodepotFile.yml
         ↓
-Inference engine derives semantics
+resolve authoring source
         ↓
-Normalized context is generated
+load and compile codepot.config.ts
         ↓
-codepot templates render output
-```
-
-codepot does **not** hardcode:
-
-- NestJS
-- TypeORM
-- FastAPI
-- GraphQL
-- React
-- REST
-- DTO patterns
-- folder structures
-
-All architecture styles are implemented through templates.
-
----
-
-# Features
-
-- Strongly typed TypeScript configs
-- Semantic metadata inference
-- codepot-based generation
-- Framework agnostic
-- Runtime metadata compilation
-- Query/mutation capability inference
-- Typed enum transitions/workflows
-- Semantic validation rule AST
-- Relation graph inference
-- JSON-safe normalized manifests
-- Extensible template ecosystem
-
----
-
-# Example Use Cases
-
-Generate:
-
-- DTOs
-- ORM entities
-- repositories
-- GraphQL schemas
-- Zod schemas
-- Pydantic models
-- React forms
-- OpenAPI specs
-- validation layers
-- constants
-- metadata registries
-- query builders
-- admin panels
-- SDKs
-
-from a single semantic source of truth.
-
----
-
-# Installation
-
-```bash
-npm install codepot
-```
-
----
-
-# Quick Example
-
-## Entity Config
-
-```ts
-import {
-  EntityConfigBase,
-  stringField,
-  enumField,
-  query,
-  mutation,
-  transition,
-} from "codepot";
-
-export default class UserEntityConfig extends EntityConfigBase {
-  key = "user";
-
-  fields = this.defineFields({
-    email: stringField({
-      length: 255,
-
-      query: query().select().defaultSelect().search().sort().build(),
-
-      mutation: mutation().apiWritable().build(),
-    }),
-
-    status: enumField(["active", "suspended", "deleted"] as const, {
-      default: "active",
-    }),
-  });
-
-  transitions = [
-    transition({
-      field: () => this.fields.status,
-
-      initial: this.fields.status.values.active,
-
-      terminal: [this.fields.status.values.deleted],
-
-      transitions: {
-        [this.fields.status.values.active]: [
-          this.fields.status.values.suspended,
-          this.fields.status.values.deleted,
-        ],
-
-        [this.fields.status.values.suspended]: [
-          this.fields.status.values.active,
-          this.fields.status.values.deleted,
-        ],
-
-        [this.fields.status.values.deleted]: [],
-      },
-    }),
-  ];
-
-  templates = [
-    "dto.create",
-    "dto.update",
-    "typeorm.entity",
-    "schema.zod",
-  ] as const;
-}
-```
-
----
-
-# Semantic Inference
-
-codepot automatically infers semantic groups from metadata.
-
-You never manually define groups.
-
-For example:
-
-```ts
-query().select().defaultSelect().search().build();
-```
-
-automatically contributes the field into:
-
-```txt id="i0j75l"
-entity.fields.query.select
-entity.fields.query.default_select
-entity.fields.query.search
-```
-
-Likewise:
-
-```ts
-mutation().apiWritable().immutableAfterCreate().build();
-```
-
-automatically contributes the field into:
-
-```txt id="vs7rmi"
-entity.fields.mutation.api_create
-entity.fields.mutation.immutable_after_create
-```
-
----
-
-# codepot Templates
-
-codepot uses codepot for rendering generated artifacts.
-
-Templates receive a normalized semantic context.
-
----
-
-# Example Template
-
-## `dto.create.codepot`
-
-```codepot
-export class Create{{entity.pascal_case_key}}Dto {
-{{#each entity.fields.mutation.api_create}}
-  {{snake_case_key}}!:
-  {{typescript_type}};
-{{/each}}
-}
-```
-
----
-
-# Example Generated Output
-
-```ts
-export class CreateUserDto {
-  email!: string;
-  status!: UserStatus;
-}
-```
-
----
-
-# Template Context
-
-All exposed template variables are normalized to `snake_case`.
-
-Example context:
-
-```json
-{
-  "entity": {
-    "key": "user",
-
-    "pascal_case_key": "User",
-
-    "fields": {
-      "all": [],
-
-      "strings": [],
-
-      "enums": [],
-
-      "query": {
-        "select": [],
-        "default_select": [],
-        "search": [],
-        "sort": []
-      },
-
-      "mutation": {
-        "api_create": [],
-        "api_update": [],
-        "immutable": [],
-        "generated": []
-      }
-    },
-
-    "relations": {
-      "all": []
-    },
-
-    "checks": {
-      "all": []
-    },
-
-    "indexes": {
-      "all": []
-    }
-  }
-}
-```
-
----
-
-# Query Builder
-
-Semantic query capabilities are defined fluently.
-
-```ts
-query().select().defaultSelect().sort().search().build();
-```
-
----
-
-# Mutation Builder
-
-Mutation semantics describe API/system behavior.
-
-```ts
-mutation().apiWritable().immutableAfterCreate().build();
-```
-
-Supported semantics include:
-
-- api writable
-- system writable
-- readonly
-- immutable
-- immutable after create
-- generated
-- computed
-- persisted
-
----
-
-# Relations
-
-Relations are fully typed semantic metadata.
-
-```ts
-relationField(this, AppEntityConfig, {
-  relation: {
-    kind: "one_to_many",
-
-    remote_field: () => new AppEntityConfig().fields.ownerId,
-
-    cascade: true,
-  },
-
-  query: {
-    select: true,
-  },
-});
-```
-
----
-
-# Semantic Validation Rules
-
-Checks are represented as semantic ASTs.
-
-No raw SQL.
-
-```ts
-checks = [
-  {
-    name: "email_not_empty",
-
-    rule: field(() => this.fields.email).notEmpty(),
-  },
-];
-```
-
----
-
-# Workflows / Transitions
-
-Transitions are defined independently from enum fields.
-
-```ts
-transition({
-  field: () => this.fields.status,
-
-  initial: this.fields.status.values.active,
-
-  terminal: [this.fields.status.values.deleted],
-
-  transitions: {
-    active: ["suspended", "deleted"],
-    suspended: ["active", "deleted"],
-    deleted: [],
-  },
-});
-```
-
----
-
-# Compiler Pipeline
-
-```txt id="urvq4h"
-TypeScript Configs
+resolve template-pack source
         ↓
-Runtime Metadata Extraction
+load paths.yml and Handlebars templates
         ↓
-Semantic Inference Engine
+plan and emit generated files
         ↓
-Normalized Manifest
-        ↓
-codepot Template Compilation
-        ↓
-Generated Source Code
+run project-owned after commands
 ```
 
----
+This separation allows:
 
-# Design Goals
+- one authoring source to generate into many projects;
+- one authoring source to use many architecture-specific template packs;
+- one template pack to work with many authored specifications;
+- each consumer project to control its own output, cleanup, and command lifecycle;
+- authoring and template sources to be shared through local paths, packages, or Git repositories.
 
-## codepot SHOULD:
+## Repository status
 
-- infer semantic groups automatically
-- remain architecture agnostic
-- support multiple output ecosystems
-- expose normalized template context
-- prioritize metadata semantics over implementation details
+This repository is being restarted around the three-layer model above.
 
-## codepot SHOULD NOT:
+### `packages/nodejs/codepotx`
 
-- hardcode framework architecture
-- assume NestJS patterns
-- assume ORM implementations
-- force a specific folder structure
-- expose raw database concerns directly
+The active TypeScript implementation.
 
----
+It is intended to provide one npm package and CLI for TypeScript authoring, OpenAPI generation, source resolution, `CodepotFile.yml` tasks, `paths.yml`, Handlebars generation, file emission, cleanup, dry runs, diagnostics, and user-authored commands.
 
-# Long-Term Vision
+The package currently contains its product README only. Its internal architecture will be planned before implementation begins.
 
-codepot aims to become a universal semantic metadata compiler capable of generating:
+### `packages/nodejs/codepotx-old`
 
-- backend architectures
-- frontend forms
-- APIs
-- SDKs
-- validation layers
-- schemas
-- admin systems
-- documentation
-- infrastructure metadata
+The preserved previous Node.js authoring and OpenAPI implementation.
 
-from a single semantic domain definition.
+It remains available as reference code while the new `codepotx` direction is designed and implemented. New work should not be added there unless it is specifically required for migration analysis.
 
----
+### `packages/python/codepotg`
 
-# Example Future Ecosystem
+The deprecated Python and Jinja generator.
 
-```txt id="phl2a6"
-codepot
-@codepot/compiler
-@codepot/runtime
-@codepot/templates
-@codepot/typeorm
-@codepot/graphql
-@codepot/zod
-@codepot/react-form
-@codepot/openapi
-@codepot/fastapi
-```
+It is no longer the supported implementation, but it remains an important behavioral reference for generation tasks, command execution, `paths.yml`, template contexts, language adaptation, imports, dependency planning, write lifecycle, cleanup, dry runs, and reporting.
 
----
+Its package and command identity should be `codepotg`. New users should use the Node.js `codepotx` direction once it becomes available.
 
-# License
+### `codepot_lang`
+
+The separate Rust language and compiler project remains the most ambitious long-term language direction. It is experimental and does not replace the active TypeScript authoring and generation restart in this repository.
+
+## Guiding principles
+
+- Users own their authoring source.
+- Template authors own generated architecture and source style.
+- Consumer projects own output rules and automation commands.
+- Authoring and templates must remain independently reusable.
+- Local, package, and Git-backed sources are part of the intended model.
+- `paths.yml` is the template pack’s source of output structure.
+- `CodepotFile.yml` is the consumer project’s generation binding and task runner.
+- Handlebars is the active template direction for the Node.js generator.
+- The deprecated Python generator must be studied and migrated carefully rather than discarded.
+- The new package structure and implementation architecture will be planned before code is added.
+
+## License
 
 MIT
