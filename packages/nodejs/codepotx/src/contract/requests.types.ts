@@ -131,6 +131,8 @@ export interface CodepotTaskConfig {
   readonly environment: Readonly<Record<string, string>>;
   readonly variables?: JsonObject;
   readonly frontend?: string;
+  readonly transactional: boolean;
+  readonly manifest?: PortablePath;
 }
 
 export interface CompiledCodepotFile {
