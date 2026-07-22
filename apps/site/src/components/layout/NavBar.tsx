@@ -3,16 +3,28 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Code, Menu, Package, Search } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { GitHubIcon } from "@/components/icons/GitHubIcon";
 import { MobileSidebar } from "@/components/layout/MobileSidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Command } from "@/components/ui/command";
+import { DOC_INDEX } from "@/generated/docs";
 
 export function NavBar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const results = useMemo(() => {
+    const value = query.trim().toLowerCase();
+    if (!value) return DOC_INDEX.slice(0, 6);
+    return DOC_INDEX.filter((item) => item.searchText.includes(value)).slice(0, 8);
+  }, [query]);
+
+  function closeSearch() {
+    setSearchOpen(false);
+    setQuery("");
+  }
 
   return (
     <>
@@ -55,15 +67,29 @@ export function NavBar() {
       </nav>
 
       {searchOpen && (
-        <div className="fixed inset-0 z-60 bg-background/80 p-4 backdrop-blur-sm" onClick={() => setSearchOpen(false)}>
+        <div className="fixed inset-0 z-60 bg-background/80 p-4 backdrop-blur-sm" onClick={closeSearch}>
           <div className="mx-auto mt-20 w-full max-w-xl sm:mt-28" onClick={(event) => event.stopPropagation()}>
             <Command className="overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
               <div className="flex items-center border-b border-border px-4">
                 <Search className="mr-3 h-4 w-4 shrink-0 text-muted-foreground" />
-                <input placeholder="Search documentation..." className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground" autoFocus />
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  onKeyDown={(event) => { if (event.key === "Escape") closeSearch(); }}
+                  placeholder="Search documentation..."
+                  className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  autoFocus
+                />
               </div>
-              <div className="max-h-[50vh] overflow-y-auto p-3">
-                <Link href="/docs" onClick={() => setSearchOpen(false)} className="block rounded-xl px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground">Browse Codepot documentation</Link>
+              <div className="max-h-[50vh] overflow-y-auto p-3 scrollbar-thin">
+                {results.length ? results.map((item) => (
+                  <Link key={item.slug} href={`/docs/${item.slug}`} onClick={closeSearch} className="block rounded-xl px-4 py-3 transition-colors hover:bg-card-muted">
+                    <span className="block text-sm font-medium text-foreground">{item.title}</span>
+                    <span className="mt-1 block text-xs text-muted-foreground">{item.section}{item.description ? ` · ${item.description}` : ""}</span>
+                  </Link>
+                )) : (
+                  <div className="rounded-xl px-4 py-3 text-sm text-muted-foreground">No documentation matches “{query}”.</div>
+                )}
               </div>
             </Command>
           </div>
