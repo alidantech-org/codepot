@@ -16,7 +16,8 @@ export type ArtifactKind =
   | 'codepot.templates'
   | 'codepot.template-variables'
   | 'codepot.generation-plan'
-  | 'codepot.rendered-generation';
+  | 'codepot.rendered-generation'
+  | 'codepot.generation-manifest';
 
 export interface ArtifactProducer {
   readonly name: string;
