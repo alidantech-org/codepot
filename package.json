@@ -13,7 +13,8 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "typecheck": "turbo run typecheck",
-    "check": "turbo run typecheck package:lint",
+    "test": "turbo run test",
+    "check": "turbo run typecheck test package:lint",
     "clean": "turbo run clean && node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('.turbo', { recursive: true, force: true });\""
   },
   "devDependencies": {
