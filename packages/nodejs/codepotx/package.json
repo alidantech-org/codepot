@@ -43,6 +43,10 @@
       "types": "./dist/authoring/index.d.ts",
       "import": "./dist/authoring/index.js"
     },
+    "./templating": {
+      "types": "./dist/templating/index.d.ts",
+      "import": "./dist/templating/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -65,6 +69,7 @@
     "prepublishOnly": "pnpm check"
   },
   "dependencies": {
+    "handlebars": "4.7.9",
     "tsx": "4.23.1",
     "yaml": "2.9.0",
     "zod": "4.4.3"

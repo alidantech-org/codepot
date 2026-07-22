@@ -7,6 +7,7 @@ export default defineConfig({
     'src/runtime/index.ts',
     'src/platform/index.ts',
     'src/authoring/index.ts',
+    'src/templating/index.ts',
   ],
   root: 'src',
   outDir: 'dist',
@@ -14,9 +15,7 @@ export default defineConfig({
   platform: 'node',
   target: 'node22',
   tsconfig: 'tsconfig.json',
-  dts: {
-    sourcemap: true,
-  },
+  dts: { sourcemap: true },
   sourcemap: true,
   clean: true,
   minify: false,
