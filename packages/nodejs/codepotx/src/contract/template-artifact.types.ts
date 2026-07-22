@@ -8,6 +8,10 @@ import type {
 } from './common.types';
 import type { Diagnostic } from './diagnostics.types';
 import type { ResolvedSource, SourceFileReference } from './sources.types';
+import type {
+  TemplateReference,
+  TemplateVariableRequirement,
+} from './template-variables.types';
 
 export type TemplateSelectionMode = 'each' | 'group' | 'once';
 export type FileLifecycleMode = 'managed' | 'immutable';
@@ -41,11 +45,13 @@ export interface CompiledWritePolicy {
 export interface CompiledTemplateDescriptor {
   readonly id: CodepotId;
   readonly path: PortablePath;
-  readonly kind: 'handlebars' | 'raw';
+  readonly kind: 'handlebars' | 'partial' | 'raw';
   readonly group: string;
   readonly outputTokens: readonly CompiledPathToken[];
+  readonly partialName?: string;
   readonly lifecycle?: FileLifecycleMode | undefined;
   readonly compareMode: FileCompareMode;
+  readonly references: readonly TemplateReference[];
   readonly text?: string;
   readonly dataBase64?: string;
   readonly digest: ContentDigest;
@@ -59,7 +65,11 @@ export interface TemplatePackManifest {
   readonly templateExtension: string;
   readonly stripTemplateExtension: boolean;
   readonly allowRawFiles: boolean;
+  readonly includeHidden: boolean;
+  readonly ignore: readonly string[];
   readonly helpers: readonly string[];
+  readonly partials: readonly string[];
+  readonly variableRequirements: readonly TemplateVariableRequirement[];
   readonly metadata?: JsonObject;
 }
 
