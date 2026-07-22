@@ -6,7 +6,7 @@
 |---|---|---|---|---|
 | 00 | Agent guides and task system | [x] | #2 closed | Complete |
 | 01 | Shared contract and stable artifacts | [x] | #3 closed | Complete |
-| 02 | Runtime and platform adapters | [ ] | Open when ready | Phase 01 complete |
+| 02 | Runtime and platform adapters | [~] | #4 | In progress |
 | 03 | Authoring parity and canonical compiler | [ ] | Open when ready | Required Phase 01/02 ports complete |
 | 04 | Templating and Handlebars migration | [ ] | Open when ready | Stable artifacts and platform ports complete |
 | 05 | Generation and CodepotFile orchestration | [ ] | Open when ready | Authoring and templating ports usable |
