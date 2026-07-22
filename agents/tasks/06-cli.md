@@ -3,8 +3,8 @@
 Status: [x]
 Issue: #8
 Depends on: Stable runtime generation flow
-Commits: pending
-Validation: focused CLI tests cover argument parsing and direct typed runtime request mapping. The CLI dynamically prefers the project-local `codepotx/runtime` export and falls back to its declared compatible dependency.
+Commits: `61e2dcc3ffafa1022438bf9ad5dc0c395208dba2`, `e9285cec55e767b9cf0b07bcc355d8f74ebfba77`
+Validation: focused CLI tests cover argument parsing and direct typed runtime request mapping. The CLI dynamically prefers the project-local `codepotx/runtime` export and falls back to its declared compatible dependency. Full installed-package and binary execution is included in Phase 07.
 
 ## Completed
 
