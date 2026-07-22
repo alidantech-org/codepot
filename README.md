@@ -92,7 +92,9 @@ The active TypeScript implementation.
 
 It is intended to provide one npm package and CLI for TypeScript authoring, OpenAPI generation, source resolution, `CodepotFile.yml` tasks, `paths.yml`, Handlebars generation, file emission, cleanup, dry runs, diagnostics, and user-authored commands.
 
-The package currently contains its product README only. Its internal architecture will be planned before implementation begins.
+The package now contains its modern pnpm, Turbo, TypeScript, tsdown, packaging, and validation foundation plus a minimal `src/index.ts`. Its internal feature architecture remains intentionally unplanned until the next design step.
+
+The public schema API will be owned by Codepot. Users will import builders such as `schema` from `codepotx`; Zod remains an internal dependency and is not exposed as a peer dependency or authoring requirement.
 
 ### `packages/nodejs/codepotx-old`
 
@@ -106,7 +108,7 @@ The deprecated Python and Jinja generator.
 
 It is no longer the supported implementation, but it remains an important behavioral reference for generation tasks, command execution, `paths.yml`, template contexts, language adaptation, imports, dependency planning, write lifecycle, cleanup, dry runs, and reporting.
 
-Its PyPI distribution, Python import namespace, and CLI command are all named `codepotg`. New users should use the Node.js `codepotx` direction once it becomes available.
+Its package and command identity is `codepotg`. New users should use the Node.js `codepotx` direction once it becomes available.
 
 ### `codepot_lang`
 
@@ -123,7 +125,7 @@ The separate Rust language and compiler project remains the most ambitious long-
 - `CodepotFile.yml` is the consumer project’s generation binding and task runner.
 - Handlebars is the active template direction for the Node.js generator.
 - The deprecated Python generator must be studied and migrated carefully rather than discarded.
-- The new package structure and implementation architecture will be planned before code is added.
+- The new package structure and implementation architecture will be planned before feature code is added.
 
 ## License
 

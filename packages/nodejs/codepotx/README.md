@@ -88,6 +88,45 @@ run the project-owned after commands
 
 The same authoring source can be combined with multiple template packs and consumer projects. The same template pack can also be reused with many authoring sources.
 
+## Schema authoring boundary
+
+Users will import Codepot-owned schema builders from `codepotx`:
+
+```ts
+import { schema } from 'codepotx';
+```
+
+The public authoring API will provide only the Zod-like capabilities that Codepot deliberately supports. Users will not import Zod to author Codepot contracts and will not need to install or coordinate a Zod peer dependency.
+
+Codepot may use Zod internally to validate definitions and extract metadata, but Zod remains an implementation dependency. Zod classes, types, internals, and package-version requirements must not become part of the public Codepot API.
+
+## Package foundation
+
+The restart uses a modern TypeScript package baseline:
+
+- ESM-only package output;
+- Node.js 22.18 or newer at runtime;
+- Node.js 24 LTS for repository development;
+- pnpm workspaces and Turbo task orchestration;
+- TypeScript with `module: preserve` and `moduleResolution: bundler`;
+- extensionless imports in TypeScript source;
+- tsdown for bundled JavaScript and declarations;
+- `tsx` reserved for loading project-owned TypeScript authoring configuration;
+- Publint and Are The Types Wrong checks before publishing;
+- Zod as a normal internal dependency, never a peer dependency.
+
+### Import aliases
+
+Codepot source may use internal imports such as:
+
+```ts
+import { value } from '@/some-module';
+```
+
+The package TypeScript configuration maps `@/*` to `src/*`. tsdown resolves and bundles those imports, so the alias does not appear in published JavaScript or declarations and cannot interfere with a consumer project.
+
+When project configuration loading is implemented, `codepotx` will load `codepot.config.ts` with the consumer project’s own `tsconfig.json`. This allows users to keep their own aliases, including `@/*`, without inheriting Codepot’s internal alias configuration.
+
 ## What `codepotx` will own
 
 The active Node.js package is intended to provide one installation and CLI for:
@@ -103,7 +142,7 @@ The active Node.js package is intended to provide one installation and CLI for:
 - user-authored before and after commands;
 - structured diagnostics, dry runs, and progress reporting.
 
-The CLI will be installed as:
+The CLI will eventually be installed as:
 
 ```bash
 npm install --global codepotx
@@ -119,6 +158,8 @@ The active generator will use Handlebars rather than Jinja. The migration must p
 
 ## Current status
 
-This directory is a clean restart and currently contains documentation only.
+This directory now contains only the package and workspace infrastructure plus a minimal `src/index.ts` entrypoint.
 
-The previous Node.js authoring and OpenAPI implementation is preserved in `../codepotx-old`. No internal folder structure or runtime architecture has been committed for the new package yet; that design will be planned before implementation starts.
+No authoring, compiler, generator, CLI, source resolver, or template-engine folder architecture has been committed. That structure will be designed as the next step before feature implementation begins.
+
+The previous Node.js authoring and OpenAPI implementation remains preserved in `../codepotx-old`.

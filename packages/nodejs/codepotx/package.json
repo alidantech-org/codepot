@@ -1,0 +1,72 @@
+{
+  "name": "codepotx",
+  "version": "0.0.0",
+  "description": "TypeScript authoring and code-generation engine for Codepot.",
+  "type": "module",
+  "license": "MIT",
+  "author": {
+    "name": "AlidanTech",
+    "url": "https://alidantech.org"
+  },
+  "homepage": "https://code.alidantech.org/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alidantech-org/codepot.git",
+    "directory": "packages/nodejs/codepotx"
+  },
+  "bugs": {
+    "url": "https://github.com/alidantech-org/codepot/issues"
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\"",
+    "package:lint": "publint && attw --pack . --profile esm-only",
+    "check": "pnpm typecheck && pnpm build && pnpm package:lint",
+    "prepublishOnly": "pnpm check"
+  },
+  "dependencies": {
+    "tsx": "4.23.1",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
+    "@types/node": "22.20.1",
+    "publint": "0.3.21",
+    "tsdown": "0.22.12",
+    "typescript": "7.0.2"
+  },
+  "keywords": [
+    "codepot",
+    "codegen",
+    "typescript",
+    "openapi",
+    "contracts",
+    "schema",
+    "templates",
+    "handlebars",
+    "cli"
+  ]
+}

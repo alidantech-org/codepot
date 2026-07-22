@@ -1,0 +1,5 @@
+packages:
+  - packages/nodejs/codepotx
+
+onlyBuiltDependencies:
+  - esbuild

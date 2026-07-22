@@ -1,8 +1,24 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build and task output
+dist/
+coverage/
+.turbo/
+*.tsbuildinfo
+*.tgz
+
+# Environment
 .env
+.env.*
+!.env.example
+
+# System and editor
 .DS_Store
-coverage
-.codepot/cache
-.codepot/backups
-.build
+Thumbs.db
+
+# Codepot runtime data
+.codepot/cache/
+.codepot/backups/
+.build/
