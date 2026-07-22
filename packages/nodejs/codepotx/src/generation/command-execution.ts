@@ -1,4 +1,5 @@
 import type {
+  CancellationSignal,
   CodepotTaskConfig,
   CommandExecutionOutcome,
   Diagnostic,
@@ -14,6 +15,7 @@ export interface ExecuteCommandsRequest {
   readonly commands: readonly PlannedCommand[];
   readonly dryRun: boolean;
   readonly verbose: boolean;
+  readonly signal?: CancellationSignal;
 }
 
 export interface ExecuteCommandsResult {
@@ -29,6 +31,7 @@ export async function executePlannedCommands(
   const outcomes: CommandExecutionOutcome[] = [];
   const diagnostics: Diagnostic[] = [];
   for (const command of request.commands) {
+    request.signal?.throwIfAborted();
     const result = await dependencies.commands.run({
       command: command.command,
       cwd: command.cwd,
@@ -36,7 +39,9 @@ export async function executePlannedCommands(
       optional: command.optional,
       dryRun: request.dryRun,
       verbose: request.verbose,
+      ...(request.signal ? { signal: request.signal } : {}),
     });
+    request.signal?.throwIfAborted();
     const outcome: CommandExecutionOutcome = {
       id: command.id,
       phase: command.phase,
