@@ -50,6 +50,8 @@ export function buildTemplateContext(request: TemplateContextRequest): JsonObjec
       examples: [],
     },
   };
+  const dependencies: readonly JsonObject[] = [];
+  const imports: readonly JsonObject[] = [];
 
   return {
     project,
@@ -64,8 +66,10 @@ export function buildTemplateContext(request: TemplateContextRequest): JsonObjec
     variables: request.variables ?? {},
     language: request.language ?? {},
     lang: request.language ?? {},
-    emit: request.emit ?? {},
-    file: request.file ?? null,
+    emit: request.emit ?? generationEmitPlaceholder(),
+    file: request.file ?? generationFilePlaceholder(),
+    dependencies,
+    imports,
     frontendCount: frontends.length,
     frontend_count: frontends.length,
     meta: {
@@ -123,6 +127,7 @@ function enrichNamedItem<T extends CompiledNamedItem>(item: T): JsonObject {
     key: item.key,
     name: createNameSet(item.name),
     docs,
+    emit: generationEmitPlaceholder(item.id),
   };
 }
 
@@ -161,6 +166,11 @@ function enrichSchema(schema: CompiledSchema): JsonObject {
       role: schema.role ?? null,
       entityRef: schema.entityRef ?? null,
       dependencyRefs: refs,
+    },
+    emit: {
+      ...generationEmitPlaceholder(schema.id),
+      dependencyRefs: refs,
+      dependency_refs: refs,
     },
   };
 }
@@ -265,6 +275,42 @@ function classifySchemas(all: readonly JsonObject[]): ClassifiedSchemas {
     emit_models: models,
     emit_dtos: dtos,
     emit_enums: enums,
+  };
+}
+
+function generationEmitPlaceholder(ref: string | null = null): JsonObject {
+  return {
+    group: '',
+    path: '',
+    fileName: '',
+    file_name: '',
+    folderPath: '',
+    folder_path: '',
+    resourcePath: '',
+    resource_path: '',
+    ref,
+    dependencyRefs: [],
+    dependency_refs: [],
+    dependencies: [],
+    imports: [],
+  };
+}
+
+function generationFilePlaceholder(): JsonObject {
+  return {
+    templateId: '',
+    group: '',
+    path: '',
+    outputPath: '',
+    directory: '',
+    name: '',
+    stem: '',
+    extension: '',
+    depth: 0,
+    rootPrefix: './',
+    subjectRefs: [],
+    dependencies: [],
+    imports: [],
   };
 }
 
