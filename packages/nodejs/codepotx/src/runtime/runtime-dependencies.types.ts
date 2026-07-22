@@ -5,12 +5,13 @@ import type {
   GenerationPort,
   IdPort,
   RuntimeFeature,
+  TemplateIntrospectionPort,
   TemplatingPort,
 } from '@/contract/index';
 
 export interface RuntimeDependencies {
   readonly authoring: AuthoringPort;
-  readonly templating: TemplatingPort;
+  readonly templating: TemplatingPort & TemplateIntrospectionPort;
   readonly generation: GenerationPort;
   readonly events: EventBusPort;
   readonly clock: ClockPort;
