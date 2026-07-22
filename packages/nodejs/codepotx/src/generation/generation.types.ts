@@ -1,5 +1,6 @@
 import type {
   AuthoringPort,
+  CachePort,
   ClockPort,
   CommandRunnerPort,
   DataCodecPort,
@@ -28,6 +29,7 @@ export interface GenerationDependencies {
   readonly sources: SourceResolverPort;
   readonly commands: CommandRunnerPort;
   readonly hashes: HashPort;
+  readonly cache: CachePort;
   readonly ids: IdPort;
   readonly clock: ClockPort;
   readonly events: EventBusPort;
