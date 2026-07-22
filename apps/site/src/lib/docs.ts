@@ -55,10 +55,6 @@ function extractHeadings(content: string): Heading[] {
   return headings;
 }
 
-function groupForSlug(slug: string): string | undefined {
-  return NAVIGATION.sections.find((section) => section.items.some((item) => item.slug === slug))?.title;
-}
-
 function loadDoc(slug: DocSlug): Doc {
   const parsed = matter(DOCS[slug]);
   const frontmatter = parsed.data as DocFrontmatter;
@@ -74,17 +70,16 @@ function loadDoc(slug: DocSlug): Doc {
 
 export function getAllDocs(): DocItem[] {
   return NAVIGATION.sections.flatMap((section) =>
-    section.items
-      .filter((item): item is { readonly title: string; readonly slug: DocSlug } => item.slug in DOCS)
-      .map((item) => {
-        const doc = loadDoc(item.slug);
-        return {
-          slug: doc.slug,
-          title: doc.title,
-          ...(doc.description ? { description: doc.description } : {}),
-          group: section.title,
-        };
-      }),
+    section.items.flatMap((item) => {
+      if (!(item.slug in DOCS)) return [];
+      const doc = loadDoc(item.slug as DocSlug);
+      return [{
+        slug: doc.slug,
+        title: doc.title,
+        ...(doc.description ? { description: doc.description } : {}),
+        group: section.title,
+      }];
+    }),
   );
 }
 
@@ -122,8 +117,4 @@ export function searchDocs(query: string): DocItem[] {
       .toLowerCase()
       .includes(value);
   });
-}
-
-export function getDocGroup(slug: string): string | undefined {
-  return groupForSlug(slug);
 }
