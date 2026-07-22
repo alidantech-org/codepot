@@ -59,7 +59,7 @@ export class CodepotRuntime implements CodepotRuntimePort {
           timestamp: this.#dependencies.clock.now(),
         } as CodepotEvent);
       } catch {
-        // Events are observational and may not alter required runtime control flow.
+        // Event listeners are observational and cannot alter required control flow.
       }
     };
 
@@ -86,11 +86,7 @@ export class CodepotRuntime implements CodepotRuntimePort {
             durationMs: this.#dependencies.clock.monotonicMilliseconds() - startedAt,
           },
         });
-        return {
-          kind: request.kind,
-          runId,
-          result,
-        } as RuntimeResponse<TKind>;
+        return { kind: request.kind, runId, result } as RuntimeResponse<TKind>;
       } catch (error) {
         const diagnostic: Diagnostic = {
           code: context.signal?.aborted ? 'RUNTIME_CANCELLED' : 'RUNTIME_UNHANDLED_ERROR',
@@ -98,10 +94,7 @@ export class CodepotRuntime implements CodepotRuntimePort {
           layer: 'runtime',
           message: errorMessage(error),
         };
-        const result: OperationResult<never> = {
-          success: false,
-          diagnostics: [diagnostic],
-        };
+        const result: OperationResult<never> = { success: false, diagnostics: [diagnostic] };
         await publish({
           source: 'runtime',
           type: 'runtime.failed',
@@ -111,19 +104,13 @@ export class CodepotRuntime implements CodepotRuntimePort {
             diagnostics: [diagnostic],
           },
         });
-        return {
-          kind: request.kind,
-          runId,
-          result,
-        } as RuntimeResponse<TKind>;
+        return { kind: request.kind, runId, result } as RuntimeResponse<TKind>;
       }
     });
   }
 
   async features(query: RuntimeFeatureQuery = {}): Promise<RuntimeFeatureResult> {
-    return {
-      features: this.#selectFeatures(query),
-    };
+    return { features: this.#selectFeatures(query) };
   }
 
   currentContext(): RunContext | undefined {
@@ -132,40 +119,25 @@ export class CodepotRuntime implements CodepotRuntimePort {
 
   async #dispatch(request: RuntimeRequest): Promise<OperationResult<unknown>> {
     switch (request.kind) {
-      case 'authoring.compile':
-        return this.#dependencies.authoring.compile(request.input as never);
-      case 'authoring.validate':
-        return this.#dependencies.authoring.validate(request.input as never);
-      case 'authoring.inspect':
-        return this.#dependencies.authoring.inspect(request.input as never);
-      case 'authoring.artifact.load':
-        return this.#dependencies.authoring.loadArtifact(request.input as never);
-      case 'authoring.cache':
-        return this.#dependencies.authoring.cache(request.input as never);
-      case 'templating.load':
-        return this.#dependencies.templating.load(request.input as never);
-      case 'templating.validate':
-        return this.#dependencies.templating.validate(request.input as never);
-      case 'templating.compile':
-        return this.#dependencies.templating.compile(request.input as never);
-      case 'templating.context':
-        return this.#dependencies.templating.createContext(request.input as never);
-      case 'templating.render':
-        return this.#dependencies.templating.render(request.input as never);
-      case 'generation.file.load':
-        return this.#dependencies.generation.load(request.input as never);
-      case 'generation.plan':
-        return this.#dependencies.generation.plan(request.input as never);
-      case 'generation.render':
-        return this.#dependencies.generation.render(request.input as never);
-      case 'generation.write':
-        return this.#dependencies.generation.write(request.input as never);
-      case 'generation.clean':
-        return this.#dependencies.generation.clean(request.input as never);
-      case 'generation.commands':
-        return this.#dependencies.generation.runCommands(request.input as never);
-      case 'generation.execute':
-        return this.#dependencies.generation.execute(request.input as never);
+      case 'authoring.compile': return this.#dependencies.authoring.compile(request.input as never);
+      case 'authoring.validate': return this.#dependencies.authoring.validate(request.input as never);
+      case 'authoring.inspect': return this.#dependencies.authoring.inspect(request.input as never);
+      case 'authoring.artifact.load': return this.#dependencies.authoring.loadArtifact(request.input as never);
+      case 'authoring.cache': return this.#dependencies.authoring.cache(request.input as never);
+      case 'templating.load': return this.#dependencies.templating.load(request.input as never);
+      case 'templating.validate': return this.#dependencies.templating.validate(request.input as never);
+      case 'templating.compile': return this.#dependencies.templating.compile(request.input as never);
+      case 'templating.context': return this.#dependencies.templating.createContext(request.input as never);
+      case 'templating.variables': return this.#dependencies.templating.variables(request.input as never);
+      case 'templating.context.validate': return this.#dependencies.templating.validateContext(request.input as never);
+      case 'templating.render': return this.#dependencies.templating.render(request.input as never);
+      case 'generation.file.load': return this.#dependencies.generation.load(request.input as never);
+      case 'generation.plan': return this.#dependencies.generation.plan(request.input as never);
+      case 'generation.render': return this.#dependencies.generation.render(request.input as never);
+      case 'generation.write': return this.#dependencies.generation.write(request.input as never);
+      case 'generation.clean': return this.#dependencies.generation.clean(request.input as never);
+      case 'generation.commands': return this.#dependencies.generation.runCommands(request.input as never);
+      case 'generation.execute': return this.#dependencies.generation.execute(request.input as never);
       case 'runtime.features':
         return {
           success: true,
