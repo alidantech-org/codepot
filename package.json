@@ -15,8 +15,9 @@
     "dev:site": "pnpm --filter @codepot/site dev",
     "build:site": "pnpm --filter @codepot/site build",
     "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
     "test": "turbo run test",
-    "check": "turbo run typecheck test package:lint",
+    "check": "turbo run typecheck lint test package:lint",
     "clean": "turbo run clean && node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('.turbo', { recursive: true, force: true });\""
   },
   "devDependencies": {
