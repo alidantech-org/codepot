@@ -3,6 +3,7 @@ import './authoring-refs-properties.test';
 import './authoring-schema.test';
 import './default-runtime.test';
 import './generation.test';
+import './generation-determinism.test';
 import './generation-hardening.test';
 import './platform.test';
 import './runtime.test';
