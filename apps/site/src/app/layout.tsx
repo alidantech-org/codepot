@@ -1,45 +1,52 @@
-import type { Metadata, Viewport } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import type { Metadata } from "next";
+import { Inter, JetBrains_Mono, Sora } from "next/font/google";
+import { ThemeProvider } from "next-themes";
 
-import { SiteHeader } from '@/components/site-header';
+import { Footer } from "@/components/layout/Footer";
+import { NavBar } from "@/components/layout/NavBar";
 
-import './globals.css';
+import "./globals.css";
 
-const sans = Inter({ subsets: ['latin'], variable: '--font-sans' });
-const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
+const fontSans = Inter({ variable: "--font-sans", subsets: ["latin"], display: "swap" });
+const fontHeading = Sora({ variable: "--font-heading", subsets: ["latin"], display: "swap" });
+const fontMono = JetBrains_Mono({ variable: "--font-mono", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://codepot.dev'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://codepot.dev"),
   title: {
-    default: 'Codepot — typed authoring and safe code generation',
-    template: '%s · Codepot',
+    default: "Codepot — a reliable foundation for AI-generated software",
+    template: "%s — Codepot",
   },
-  description: 'Author typed contracts once, validate reusable Handlebars template packs, and generate deterministic source code safely.',
-  openGraph: {
-    title: 'Codepot',
-    description: 'Typed authoring, reusable template packs, and production-grade code generation.',
-    type: 'website',
+  description:
+    "Define typed software contracts, choose reusable template packs, and generate consistent production code that gives developers and AI agents a shared source of truth.",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
   },
-};
-
-export const viewport: Viewport = {
-  colorScheme: 'dark light',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f7f8fb' },
-    { media: '(prefers-color-scheme: dark)', color: '#080b12' },
-  ],
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
-      <body>
-        <SiteHeader />
-        {children}
-        <footer className="site-footer">
-          <span>Codepot</span>
-          <span>Typed contracts. Reusable templates. Safe generation.</span>
-        </footer>
+    <html
+      lang="en"
+      className={`${fontSans.variable} ${fontHeading.variable} ${fontMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <body className="min-h-full bg-background text-foreground">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <div className="flex min-h-screen flex-col">
+            <div className="pointer-events-none fixed inset-0 z-0 bg-grid" />
+            <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+              <div className="absolute -left-32 -top-32 h-[600px] w-[600px] rounded-full bg-glow-blue opacity-20 blur-[80px]" />
+              <div className="absolute -right-48 top-1/3 h-[500px] w-[500px] rounded-full bg-glow-purple opacity-15 blur-[80px]" />
+              <div className="absolute bottom-24 left-1/3 h-[400px] w-[400px] rounded-full bg-glow-teal opacity-10 blur-[80px]" />
+            </div>
+            <NavBar />
+            <main className="relative z-10 w-full flex-1">{children}</main>
+            <Footer />
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );
