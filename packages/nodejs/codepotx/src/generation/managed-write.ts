@@ -1,4 +1,5 @@
 import type {
+  CancellationSignal,
   Diagnostic,
   FileWriteOutcome,
   GenerationManifest,
@@ -28,6 +29,7 @@ export interface ManagedWriteRequest {
   readonly rendered: RenderedGeneration;
   readonly dryRun: boolean;
   readonly transactional: boolean;
+  readonly signal?: CancellationSignal;
 }
 
 export interface ManagedWriteResult {
@@ -58,6 +60,7 @@ export async function applyManagedWrite(
   request: ManagedWriteRequest,
   dependencies: Pick<GenerationDependencies, 'files' | 'writer' | 'data' | 'hashes'>,
 ): Promise<ManagedWriteResult> {
+  request.signal?.throwIfAborted();
   const selectedManifestPath = manifestPath(request.projectRoot, request.task, request.configuredManifest);
   const previous = await loadGenerationManifest(selectedManifestPath, dependencies);
   const manifest = await buildGenerationManifest(
@@ -80,6 +83,7 @@ export async function applyManagedWrite(
   }
 
   try {
+    request.signal?.throwIfAborted();
     const diagnostics: Diagnostic[] = [];
     const outcomes: FileWriteOutcome[] = [];
     const cleaned: PortablePath[] = [];
@@ -93,8 +97,10 @@ export async function applyManagedWrite(
       atomic: true,
       dryRun: request.dryRun,
     }));
+    request.signal?.throwIfAborted();
 
     for (const record of stale) {
+      request.signal?.throwIfAborted();
       const path = joinPath(request.outputRoot, record.path);
       const digest = await currentFileDigest(request.outputRoot, record, dependencies);
       if (digest === null) continue;
@@ -129,6 +135,7 @@ export async function applyManagedWrite(
       cleaned.push(path);
     }
 
+    request.signal?.throwIfAborted();
     if (!request.dryRun) await writeGenerationManifest(selectedManifestPath, manifest, dependencies);
     return {
       manifest,
