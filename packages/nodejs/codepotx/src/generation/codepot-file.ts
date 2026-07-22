@@ -40,6 +40,7 @@ function normalizeTask(
 ): CodepotTaskConfig {
   const authoringInput: SourceInput = task.authoring ?? task.input ?? './codepotx.config.ts';
   const templateInput: SourceInput = task.templates ?? task.template_dir ?? './templates';
+  const defaultTransactional = typeof defaults.transactional === 'boolean' ? defaults.transactional : true;
   return {
     name,
     ...(task.description ? { description: task.description } : {}),
@@ -52,6 +53,8 @@ function normalizeTask(
     environment: { ...(task.env ?? {}), ...(task.environment ?? {}) },
     ...(task.variables ? { variables: task.variables } : {}),
     ...(task.frontend ? { frontend: task.frontend } : {}),
+    transactional: task.transactional ?? defaultTransactional,
+    ...(task.manifest ? { manifest: task.manifest } : {}),
   };
 }
 
