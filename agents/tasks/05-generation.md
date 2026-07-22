@@ -3,8 +3,8 @@
 Status: [x]
 Issue: #7
 Depends on: Authoring and templating ports
-Commit: pending
-Validation: focused memory-only tests cover `CodepotFile.yml`, stable-artifact planning, deterministic selection, in-memory rendering, changed-aware writing, and unsafe clean refusal.
+Commit: `ffa5a53c3492205b13e72a2dbc8fbb08771d32b4`
+Validation: focused memory-only tests cover `CodepotFile.yml`, stable-artifact planning, deterministic selection, in-memory rendering, changed-aware writing, and unsafe clean refusal. Full dependency-installed execution remains part of the Phase 07 package gate.
 
 ## Completed
 
