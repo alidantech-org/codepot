@@ -49,10 +49,12 @@ export function planFiles(
     const folder = folders.get(template.group);
     for (const selected of contextsFor(folder, baseContext, diagnostics)) {
       try {
-        const initialPath = resolveOutputTokens(template.outputTokens, selected.context as Record<string, unknown>);
-        const outputPath = normalizePath(initialPath);
-        const refusalReason = unsafeRelativePath(outputPath) ? `Unsafe output path: ${outputPath}` : undefined;
-        const context = attachFileContext(selected, template.id, template.group, outputPath);
+        const outputPath = normalizePath(
+          resolveOutputTokens(template.outputTokens, selected.context as Record<string, unknown>),
+        );
+        const refusalReason = unsafeRelativePath(outputPath)
+          ? `Unsafe output path: ${outputPath}`
+          : undefined;
         candidates.push({
           id: `planned:${template.id}:${candidates.length}`,
           templateId: template.id,
@@ -60,7 +62,7 @@ export function planFiles(
           group: template.group,
           lifecycle: template.lifecycle ?? templates.writePolicy.defaultMode,
           compareMode: template.compareMode,
-          context,
+          context: attachFileContext(selected, template.id, template.group, outputPath),
           dependencies: [],
           ...(refusalReason ? { refusalReason } : {}),
         });
@@ -71,50 +73,57 @@ export function planFiles(
   }
 
   refuseDuplicatePaths(candidates, diagnostics);
-  const index = buildOutputIndex(candidates);
-  const imports = dependencies?.imports ?? createRelativeImportAdapter();
-  const planned = candidates.map((file) => {
-    if (file.refusalReason) return file;
-    const resolved = resolveDependencies(file, index, imports, diagnostics);
-    return {
-      ...file,
-      dependencies: resolved.dependencies,
-      context: attachDependencyContext(file.context, resolved.dependencies, resolved.imports),
-      ...(resolved.refusalReason ? { refusalReason: resolved.refusalReason } : {}),
-    };
-  });
-
-  return planned.sort((left, right) => left.outputPath.localeCompare(right.outputPath));
+  const outputIndex = buildOutputIndex(candidates);
+  const importAdapter = dependencies?.imports ?? createRelativeImportAdapter();
+  return candidates
+    .map((file) => {
+      if (file.refusalReason) return file;
+      const resolved = resolveDependencies(file, outputIndex, importAdapter, diagnostics);
+      return {
+        ...file,
+        dependencies: resolved.dependencies,
+        context: attachDependencyContext(file.context, resolved.dependencies, resolved.imports),
+        ...(resolved.refusalReason ? { refusalReason: resolved.refusalReason } : {}),
+      };
+    })
+    .sort((left, right) => left.outputPath.localeCompare(right.outputPath));
 }
 
+/** Command IDs are derived from task content so plan digests are reproducible. */
 export function planCommands(
   task: CodepotTaskConfig,
   root: string,
   skipBefore: boolean | undefined,
   skipAfter: boolean | undefined,
-  ids: GenerationDependencies['ids'],
+  _ids?: GenerationDependencies['ids'],
 ): PlannedCommand[] {
   const output: PlannedCommand[] = [];
-  if (!skipBefore) output.push(...task.before.map((command) => commandPlan('before', command, task, root, ids)));
-  if (!skipAfter) output.push(...task.after.map((command) => commandPlan('after', command, task, root, ids)));
+  if (!skipBefore) {
+    output.push(...task.before.map((command, index) => commandPlan('before', index, command, task, root)));
+  }
+  if (!skipAfter) {
+    output.push(...task.after.map((command, index) => commandPlan('after', index, command, task, root)));
+  }
   return output;
 }
 
+/** Clean plan IDs are stable and clean paths remain policy checked. */
 export function planClean(
   task: CodepotTaskConfig,
   outputRoot: string,
   templates: CompiledTemplatePack,
-  ids: GenerationDependencies['ids'],
+  _ids?: GenerationDependencies['ids'],
 ): PlannedCleanOperation[] {
-  return task.clean.map((path) => {
+  return task.clean.map((path, index) => {
     const full = joinPath(outputRoot, path);
     const relative = normalizePath(path);
-    const protectedRoot = templates.writePolicy.protectedRoots.some((root) => containsPath(relative, normalizePath(root)));
+    const protectedRoot = templates.writePolicy.protectedRoots
+      .some((root) => containsPath(relative, normalizePath(root)));
     const cleanAllowed = templates.writePolicy.cleanRoots.length === 0
       || templates.writePolicy.cleanRoots.some((root) => containsPath(relative, normalizePath(root)));
     const allowed = !unsafeRelativePath(relative) && !protectedRoot && cleanAllowed;
     return {
-      id: ids.create('clean'),
+      id: `clean:${index}:${relative}`,
       path: full,
       allowed,
       ...(allowed ? {} : { refusalReason: `Clean path is not allowed: ${path}` }),
@@ -149,7 +158,10 @@ function contextsFor(
   if (!folder?.select || folder.mode === 'once') return [{ context: base }];
   const selected = resolveExpression(base as Record<string, unknown>, folder.select);
   if (selected === undefined) {
-    diagnostics.push(error('GENERATION_SELECTION_MISSING', `Template selection "${folder.select}" did not resolve.`));
+    diagnostics.push(error(
+      'GENERATION_SELECTION_MISSING',
+      `Template selection "${folder.select}" did not resolve.`,
+    ));
     return [];
   }
   const alias = folder.alias ?? folder.name;
@@ -211,7 +223,7 @@ function attachFileContext(
 
 function resolveDependencies(
   file: PlannedFile,
-  index: ReturnType<typeof buildOutputIndex>,
+  outputIndex: ReturnType<typeof buildOutputIndex>,
   imports: NonNullable<GenerationDependencies['imports']>,
   diagnostics: Diagnostic[],
 ): {
@@ -223,7 +235,8 @@ function resolveDependencies(
   const importFacts: JsonObject[] = [];
   let refusalReason: string | undefined;
   for (const ref of dependencyRefs(file.context)) {
-    const targets = findOutputByRef(index, ref).filter((target) => target.plannedFileId !== file.id);
+    const targets = findOutputByRef(outputIndex, ref)
+      .filter((target) => target.plannedFileId !== file.id);
     if (targets.length === 0) {
       diagnostics.push({
         code: 'GENERATION_DEPENDENCY_NOT_EMITTED',
@@ -242,7 +255,11 @@ function resolveDependencies(
         severity: 'error',
         layer: 'generation',
         message: `${refusalReason} ${targets.map((item) => item.outputPath).join(', ')}`,
-        details: { ref, outputPath: file.outputPath, targets: targets.map((item) => item.outputPath) },
+        details: {
+          ref,
+          outputPath: file.outputPath,
+          targets: targets.map((item) => item.outputPath),
+        },
       });
       continue;
     }
@@ -290,9 +307,15 @@ function attachDependencyContext(
     ...context,
     dependencies: dependencies as unknown as never,
     imports: imports as unknown as never,
-    file: { ...file, dependencies: dependencies as unknown as never, imports: imports as unknown as never },
+    file: {
+      ...file,
+      dependencies: dependencies as unknown as never,
+      imports: imports as unknown as never,
+    },
   };
-  for (const alias of ['model', 'dto', 'enum', 'schema', 'entity', 'operation', 'resource', 'frontend']) {
+  for (const alias of [
+    'model', 'dto', 'enum', 'schema', 'entity', 'operation', 'resource', 'frontend',
+  ]) {
     const selected = asObject(next[alias]);
     if (!selected) continue;
     next[alias] = {
@@ -333,13 +356,13 @@ function refuseDuplicatePaths(files: PlannedFile[], diagnostics: Diagnostic[]): 
 
 function commandPlan(
   phase: 'before' | 'after',
+  index: number,
   command: CodepotCommandConfig,
   task: CodepotTaskConfig,
   root: string,
-  ids: GenerationDependencies['ids'],
 ): PlannedCommand {
   return {
-    id: ids.create('command'),
+    id: `command:${phase}:${index}:${stableSegment(command.name ?? command.run)}`,
     phase,
     ...(command.name ? { name: command.name } : {}),
     command: command.run,
@@ -347,6 +370,10 @@ function commandPlan(
     optional: command.optional ?? false,
     environment: { ...task.environment, ...(command.environment ?? {}) },
   };
+}
+
+function stableSegment(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'command';
 }
 
 function unsafeRelativePath(path: string): boolean {
@@ -363,5 +390,7 @@ function normalizePath(path: string): string {
 }
 
 function asObject(value: unknown): JsonObject | undefined {
-  return value && typeof value === 'object' && !Array.isArray(value) ? value as JsonObject : undefined;
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as JsonObject
+    : undefined;
 }
