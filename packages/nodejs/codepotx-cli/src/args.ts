@@ -2,7 +2,16 @@ import { parseArgs } from 'node:util';
 
 import type { CliCommand, CliOptions } from './cli.types';
 
-const COMMANDS = new Set<CliCommand>(['generate', 'plan', 'validate', 'inspect', 'features', 'help', 'version']);
+const COMMANDS = new Set<CliCommand>([
+  'generate',
+  'plan',
+  'validate',
+  'inspect',
+  'variables',
+  'features',
+  'help',
+  'version',
+]);
 
 export function parseCliArguments(argv: readonly string[], cwd = process.cwd()): CliOptions {
   const commandValue = argv[0] ?? 'help';
