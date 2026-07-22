@@ -34,13 +34,18 @@ export async function buildTemplateVariableCatalog(
   templates: CompiledTemplatePack,
   dependencies: TemplateCatalogDependencies,
 ): Promise<TemplateVariableCatalog> {
-  const entries = collectVariableEntries(context);
+  const baseEntries = collectVariableEntries(context);
+  const entries = expandFolderAliases(baseEntries, templates);
   const partials = collectPartials(templates);
   const helpers = mergeHelpers(templates.manifest.helpers);
   const requirements = templates.manifest.variableRequirements;
   const diagnostics = validateRequirements(requirements, entries);
   const dataVariables = handlebarsDataVariables();
-  const roots = Object.keys(context).sort();
+  const roots = [...new Set([
+    ...Object.keys(context),
+    ...templates.folders.flatMap((folder) => folder.alias ?? folder.name),
+    ...(templates.folders.some((folder) => folder.mode === 'group') ? ['items'] : []),
+  ])].sort();
   const body = { roots, entries, helpers, partials, dataVariables, requirements, diagnostics } as const;
   const contentDigest = await dependencies.hashes.text(dependencies.data.stringifyJson(body));
   return {
@@ -130,6 +135,74 @@ export function collectVariableEntries(context: JsonObject): readonly TemplateVa
   };
   for (const root of Object.keys(context).sort()) visit(root, context[root]!, true);
   return [...entries.values()].sort((left, right) => left.path.localeCompare(right.path));
+}
+
+/**
+ * A folder selector such as `schemas.models` exposes one selected item as
+ * `model`. Clone the selected variable subtree so validation and documentation
+ * describe the exact per-file alias that template authors use.
+ */
+function expandFolderAliases(
+  baseEntries: readonly TemplateVariableEntry[],
+  templates: CompiledTemplatePack,
+): readonly TemplateVariableEntry[] {
+  const output = new Map(baseEntries.map((entry) => [entry.path, entry]));
+  for (const folder of templates.folders) {
+    if (!folder.select || folder.mode === 'once') continue;
+    const alias = folder.alias ?? folder.name;
+    const selectedRoot = folder.mode === 'each' ? `${folder.select}[]` : folder.select;
+    const matches = baseEntries.filter((entry) =>
+      entry.path === selectedRoot || entry.path.startsWith(`${selectedRoot}.`));
+    for (const entry of matches) {
+      const suffix = entry.path.slice(selectedRoot.length);
+      mergeEntry(output, {
+        ...entry,
+        path: `${alias}${suffix}`,
+        name: suffix ? entry.name : alias,
+        required: true,
+        origins: uniqueOrigins([
+          ...entry.origins,
+          {
+            layer: 'derived',
+            path: folder.select,
+            description: `Per-file alias declared by template folder ${folder.name}.`,
+          },
+        ]),
+      });
+      if (folder.mode === 'group') {
+        mergeEntry(output, {
+          ...entry,
+          path: `items${suffix}`,
+          name: suffix ? entry.name : 'items',
+          required: true,
+          origins: uniqueOrigins([
+            ...entry.origins,
+            {
+              layer: 'derived',
+              path: folder.select,
+              description: `Grouped items declared by template folder ${folder.name}.`,
+            },
+          ]),
+        });
+      }
+    }
+    if (!matches.length) {
+      mergeEntry(output, {
+        path: alias,
+        name: alias,
+        kind: folder.mode === 'group' ? 'array' : 'unknown',
+        scope: scopeForAlias(alias),
+        required: true,
+        nullable: false,
+        origins: [{
+          layer: 'derived',
+          path: folder.select,
+          description: `Alias declared by template folder ${folder.name}; selector has no current sample values.`,
+        }],
+      });
+    }
+  }
+  return [...output.values()].sort((left, right) => left.path.localeCompare(right.path));
 }
 
 function variableEntry(path: string, value: JsonValue, required: boolean): TemplateVariableEntry {
@@ -246,6 +319,15 @@ function commonArrayKind(values: readonly JsonValue[]): TemplateVariableKind {
   return kinds.size === 1 ? [...kinds][0]! : 'unknown';
 }
 
+function scopeForAlias(alias: string): TemplateVariableScope {
+  if (alias.includes('model') || alias === 'dto' || alias.includes('schema') || alias.includes('enum')) return 'schema';
+  if (alias.includes('operation') || alias.includes('route')) return 'operation';
+  if (alias.includes('resource') || alias.includes('feature')) return 'resource';
+  if (alias.includes('entity')) return 'entity';
+  if (alias.includes('frontend') || alias.includes('screen')) return 'frontend';
+  return 'root';
+}
+
 function scopeForPath(path: string): TemplateVariableScope {
   if (path.startsWith('project')) return 'project';
   if (path.startsWith('authoring') || path.startsWith('api')) return 'authoring';
@@ -277,7 +359,7 @@ function originForPath(path: string): TemplateVariableOrigin {
 }
 
 function descriptionForPath(path: string): string | undefined {
-  return ({
+  const descriptions: Readonly<Record<string, string>> = {
     project: 'Project/package metadata prepared for templates.',
     api: 'Compatibility alias for the stable authoring artifact.',
     authoring: 'Complete stable authoring artifact.',
@@ -293,13 +375,9 @@ function descriptionForPath(path: string): string | undefined {
     emit: 'Generation and output metadata.',
     file: 'Current output-file metadata.',
     meta: 'Derived counts and context metadata.',
-  } as const)[path as keyof typeof descriptions];
+  };
+  return descriptions[path];
 }
-
-const descriptions = {
-  project: '', api: '', authoring: '', resources: '', features: '', schemas: '', operations: '',
-  entities: '', frontends: '', variables: '', language: '', lang: '', emit: '', file: '', meta: '',
-} as const;
 
 function uniqueOrigins(origins: readonly TemplateVariableOrigin[]): readonly TemplateVariableOrigin[] {
   const seen = new Set<string>();
