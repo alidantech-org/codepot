@@ -1,3 +1,5 @@
+import type { CodepotEvent } from 'codepotx/contract';
+
 import { parseCliArguments } from './args';
 import { executeCliCommand } from './commands';
 import type { CliIo, CliOptions } from './cli.types';
@@ -22,7 +24,7 @@ export async function runCli(
   }
   try {
     const runtime = await loadProjectRuntime(options.projectRoot);
-    const subscription = runtime.events.subscribe((event) => presenter.event(event));
+    const subscription = runtime.events.subscribe((event: CodepotEvent) => presenter.event(event));
     try {
       const result = await executeCliCommand(runtime, options);
       return typeof result === 'string' ? (presenter.text(result), 0) : presenter.result(result);
