@@ -6,3 +6,4 @@ import './generation.test';
 import './platform.test';
 import './runtime.test';
 import './templating.test';
+import './template-variables.test';
