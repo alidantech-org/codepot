@@ -25,7 +25,7 @@ export interface CompiledTemplateFolder {
   readonly select?: string;
   readonly alias?: string;
   readonly mode: TemplateSelectionMode;
-  readonly lifecycle?: FileLifecycleMode;
+  readonly lifecycle?: FileLifecycleMode | undefined;
   readonly description?: string;
   readonly metadata?: JsonObject;
 }
@@ -44,7 +44,7 @@ export interface CompiledTemplateDescriptor {
   readonly kind: 'handlebars' | 'raw';
   readonly group: string;
   readonly outputTokens: readonly CompiledPathToken[];
-  readonly lifecycle?: FileLifecycleMode;
+  readonly lifecycle?: FileLifecycleMode | undefined;
   readonly compareMode: FileCompareMode;
   readonly text?: string;
   readonly dataBase64?: string;
