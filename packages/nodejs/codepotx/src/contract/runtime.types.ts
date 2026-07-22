@@ -33,12 +33,16 @@ import type {
   GenerationWriteResult,
   TemplateContextRequest,
   TemplateContextResult,
+  TemplateContextValidateRequest,
+  TemplateContextValidateResult,
   TemplateRenderRequest,
   TemplateRenderResult,
+  TemplateVariablesRequest,
+  TemplateVariablesResult,
   TemplatingCompileRequest,
+  TemplatingCompileResult,
   TemplatingLoadRequest,
   TemplatingLoadResult,
-  TemplatingCompileResult,
   TemplatingValidateRequest,
   TemplatingValidateResult,
 } from './requests.types';
@@ -72,78 +76,26 @@ export interface RunContext {
 }
 
 export interface RuntimeOperationMap {
-  readonly 'authoring.compile': {
-    readonly request: AuthoringCompileRequest;
-    readonly result: AuthoringCompileResult;
-  };
-  readonly 'authoring.validate': {
-    readonly request: AuthoringValidateRequest;
-    readonly result: AuthoringValidateResult;
-  };
-  readonly 'authoring.inspect': {
-    readonly request: AuthoringInspectRequest;
-    readonly result: AuthoringInspectResult;
-  };
-  readonly 'authoring.artifact.load': {
-    readonly request: AuthoringArtifactLoadRequest;
-    readonly result: AuthoringArtifactLoadResult;
-  };
-  readonly 'authoring.cache': {
-    readonly request: AuthoringCacheRequest;
-    readonly result: AuthoringCacheResult;
-  };
-  readonly 'templating.load': {
-    readonly request: TemplatingLoadRequest;
-    readonly result: TemplatingLoadResult;
-  };
-  readonly 'templating.validate': {
-    readonly request: TemplatingValidateRequest;
-    readonly result: TemplatingValidateResult;
-  };
-  readonly 'templating.compile': {
-    readonly request: TemplatingCompileRequest;
-    readonly result: TemplatingCompileResult;
-  };
-  readonly 'templating.context': {
-    readonly request: TemplateContextRequest;
-    readonly result: TemplateContextResult;
-  };
-  readonly 'templating.render': {
-    readonly request: TemplateRenderRequest;
-    readonly result: TemplateRenderResult;
-  };
-  readonly 'generation.file.load': {
-    readonly request: CodepotFileLoadRequest;
-    readonly result: CodepotFileLoadResult;
-  };
-  readonly 'generation.plan': {
-    readonly request: GenerationPlanRequest;
-    readonly result: GenerationPlanResult;
-  };
-  readonly 'generation.render': {
-    readonly request: GenerationRenderRequest;
-    readonly result: GenerationRenderResult;
-  };
-  readonly 'generation.write': {
-    readonly request: GenerationWriteRequest;
-    readonly result: GenerationWriteResult;
-  };
-  readonly 'generation.clean': {
-    readonly request: GenerationCleanRequest;
-    readonly result: GenerationCleanResult;
-  };
-  readonly 'generation.commands': {
-    readonly request: GenerationCommandRequest;
-    readonly result: GenerationCommandResult;
-  };
-  readonly 'generation.execute': {
-    readonly request: GenerationExecuteRequest;
-    readonly result: GenerationExecuteResult;
-  };
-  readonly 'runtime.features': {
-    readonly request: RuntimeFeatureQuery;
-    readonly result: OperationResult<RuntimeFeatureResult>;
-  };
+  readonly 'authoring.compile': { readonly request: AuthoringCompileRequest; readonly result: AuthoringCompileResult };
+  readonly 'authoring.validate': { readonly request: AuthoringValidateRequest; readonly result: AuthoringValidateResult };
+  readonly 'authoring.inspect': { readonly request: AuthoringInspectRequest; readonly result: AuthoringInspectResult };
+  readonly 'authoring.artifact.load': { readonly request: AuthoringArtifactLoadRequest; readonly result: AuthoringArtifactLoadResult };
+  readonly 'authoring.cache': { readonly request: AuthoringCacheRequest; readonly result: AuthoringCacheResult };
+  readonly 'templating.load': { readonly request: TemplatingLoadRequest; readonly result: TemplatingLoadResult };
+  readonly 'templating.validate': { readonly request: TemplatingValidateRequest; readonly result: TemplatingValidateResult };
+  readonly 'templating.compile': { readonly request: TemplatingCompileRequest; readonly result: TemplatingCompileResult };
+  readonly 'templating.context': { readonly request: TemplateContextRequest; readonly result: TemplateContextResult };
+  readonly 'templating.variables': { readonly request: TemplateVariablesRequest; readonly result: TemplateVariablesResult };
+  readonly 'templating.context.validate': { readonly request: TemplateContextValidateRequest; readonly result: TemplateContextValidateResult };
+  readonly 'templating.render': { readonly request: TemplateRenderRequest; readonly result: TemplateRenderResult };
+  readonly 'generation.file.load': { readonly request: CodepotFileLoadRequest; readonly result: CodepotFileLoadResult };
+  readonly 'generation.plan': { readonly request: GenerationPlanRequest; readonly result: GenerationPlanResult };
+  readonly 'generation.render': { readonly request: GenerationRenderRequest; readonly result: GenerationRenderResult };
+  readonly 'generation.write': { readonly request: GenerationWriteRequest; readonly result: GenerationWriteResult };
+  readonly 'generation.clean': { readonly request: GenerationCleanRequest; readonly result: GenerationCleanResult };
+  readonly 'generation.commands': { readonly request: GenerationCommandRequest; readonly result: GenerationCommandResult };
+  readonly 'generation.execute': { readonly request: GenerationExecuteRequest; readonly result: GenerationExecuteResult };
+  readonly 'runtime.features': { readonly request: RuntimeFeatureQuery; readonly result: OperationResult<RuntimeFeatureResult> };
 }
 
 export type RuntimeOperationKind = keyof RuntimeOperationMap;
