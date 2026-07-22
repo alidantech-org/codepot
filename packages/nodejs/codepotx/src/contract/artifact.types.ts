@@ -14,6 +14,7 @@ export type CodepotArtifactVersion = typeof CODEPOT_ARTIFACT_VERSION;
 export type ArtifactKind =
   | 'codepot.authoring'
   | 'codepot.templates'
+  | 'codepot.template-variables'
   | 'codepot.generation-plan'
   | 'codepot.rendered-generation';
 
