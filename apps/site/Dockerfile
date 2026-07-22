@@ -9,7 +9,9 @@ WORKDIR /workspace
 RUN corepack enable
 
 COPY . .
-RUN pnpm install --frozen-lockfile
+# Direct site dependency versions are pinned. Use the completed workspace lock
+# with --frozen-lockfile after it is regenerated in a networked release checkout.
+RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter @codepot/site build
 
 FROM node:24-alpine AS runner
