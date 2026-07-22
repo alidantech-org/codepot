@@ -1,8 +1,8 @@
 # Phase 02 — Runtime and platform adapters
 
-Status: [ ]
-Issue: open when Phase 01 is complete
-Depends on: Phase 01
+Status: [~]
+Issue: #4
+Depends on: Phase 01 complete
 Commit: pending
 Validation: pending
 
@@ -17,16 +17,16 @@ Implement the composition root and reusable infrastructure behind the approved p
 - [ ] Implement source hashing and deterministic source-graph fingerprints.
 - [ ] Implement memory and filesystem cache adapters.
 - [ ] Implement TypeScript module loading with consumer `tsconfig.json` support.
-- [ ] Implement local, package, Git, and artifact source resolution.
+- [ ] Implement local, package, Git, artifact, and memory source resolution.
 - [ ] Implement command execution with cwd, env, optional failures, output capture, cancellation, and dry run.
 - [ ] Implement changed-aware atomic writing and text/binary comparison modes.
 - [ ] Implement deterministic clock and ID test adapters.
 
 ## 02.2 Runtime
 
-- [ ] Define runtime interfaces and method contracts before implementation.
+- [x] Runtime interfaces and method contracts were completed in Phase 01.
 - [ ] Implement explicit factory-based dependency injection.
-- [ ] Implement per-run context and `AbortSignal` propagation.
+- [ ] Implement per-run context and cancellation propagation.
 - [ ] Implement typed request dispatch without a generic service locator.
 - [ ] Implement feature/capability discovery.
 - [ ] Implement a typed event bus for observation only.
