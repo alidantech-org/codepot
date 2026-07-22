@@ -10,9 +10,10 @@ import type {
   HashPort,
   ManagedFileRecord,
   RenderedGeneration,
+  VirtualFile,
 } from '@/contract/index';
 
-import { artifactReference, joinPath } from './planning';
+import { joinPath } from './planning';
 
 export interface ManifestDependencies {
   readonly files: FileSystemPort;
@@ -46,16 +47,18 @@ export async function buildGenerationManifest(
   rendered: RenderedGeneration,
   dependencies: Pick<ManifestDependencies, 'data' | 'hashes'>,
 ): Promise<GenerationManifest> {
-  const files: ManagedFileRecord[] = rendered.files
-    .map((file) => ({
+  const files: ManagedFileRecord[] = [];
+  for (const file of rendered.files) {
+    files.push({
       path: normalizePath(file.path),
-      contentDigest: file.contentDigest,
+      contentDigest: await normalizedContentDigest(file, dependencies.hashes),
       encoding: file.content.encoding,
       lifecycle: file.lifecycle,
       compareMode: file.compareMode,
       templateId: String(file.metadata?.templateId ?? file.id),
-    }))
-    .sort((left, right) => left.path.localeCompare(right.path));
+    });
+  }
+  files.sort((left, right) => left.path.localeCompare(right.path));
   const body = { task, projectRoot, outputRoot, plan, files } as const;
   const contentDigest = await dependencies.hashes.text(dependencies.data.stringifyJson(body));
   return {
@@ -103,8 +106,15 @@ export async function currentFileDigest(
     : dependencies.hashes.text(await dependencies.files.readText(path));
 }
 
-export function renderedPlanReference(rendered: RenderedGeneration): ArtifactReference {
-  return artifactReference(rendered);
+async function normalizedContentDigest(file: VirtualFile, hashes: HashPort): Promise<string> {
+  if (file.content.encoding === 'base64') return hashes.base64(file.content.data);
+  const text = file.compareMode === 'raw' ? file.content.text : normalizeText(file.content.text);
+  return hashes.text(text);
+}
+
+function normalizeText(value: string): string {
+  const normalized = value.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+  return normalized ? `${normalized.replace(/\n+$/u, '')}\n` : '';
 }
 
 function normalizePath(path: string): string {
