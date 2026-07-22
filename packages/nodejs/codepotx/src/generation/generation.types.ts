@@ -1,5 +1,6 @@
 import type {
   AuthoringPort,
+  ClockPort,
   CommandRunnerPort,
   DataCodecPort,
   EventBusPort,
@@ -12,12 +13,15 @@ import type {
   JsonValue,
   SourceDescriptor,
   SourceResolverPort,
+  TemplateIntrospectionPort,
   TemplatingPort,
 } from '@/contract/index';
 
+import type { GenerationImportAdapter } from './imports.types';
+
 export interface GenerationDependencies {
   readonly authoring: AuthoringPort;
-  readonly templating: TemplatingPort;
+  readonly templating: TemplatingPort & TemplateIntrospectionPort;
   readonly files: FileSystemPort;
   readonly writer: FileWriterPort;
   readonly data: DataCodecPort;
@@ -25,7 +29,9 @@ export interface GenerationDependencies {
   readonly commands: CommandRunnerPort;
   readonly hashes: HashPort;
   readonly ids: IdPort;
+  readonly clock: ClockPort;
   readonly events: EventBusPort;
+  readonly imports?: GenerationImportAdapter;
 }
 
 export interface GenerationEngine extends GenerationPort {}
@@ -73,6 +79,8 @@ export interface CodepotTaskInput {
   readonly env?: Readonly<Record<string, string>>;
   readonly variables?: JsonObject;
   readonly frontend?: string;
+  readonly transactional?: boolean;
+  readonly manifest?: string;
 }
 
 export interface SelectionContext extends Record<string, unknown> {
