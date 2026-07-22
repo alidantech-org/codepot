@@ -6,84 +6,128 @@ import type {
   CompiledAccessDefinition,
   CompiledAuthoringArtifact,
   CompiledEntity,
-  CompiledEntityConstraint,
   CompiledField,
   CompiledFrontend,
   CompiledHook,
   CompiledInlineSchema,
-  CompiledMediaTypeSchema,
   CompiledOperation,
-  CompiledParameter,
-  CompiledPrimitiveKind,
   CompiledPropertyGroup,
-  CompiledRequestBody,
   CompiledResource,
-  CompiledResponse,
   CompiledSchema,
-  CompiledSchemaConstraint,
   CompiledSchemaUse,
   Diagnostic,
   JsonObject,
   JsonValue,
 } from '@/contract/index';
 import type { AccessRegistry } from '../access/access.types';
-import type { SchemaComponentDefinition, SchemaComponentRegistry } from '../components/component.types';
+import type {
+  SchemaComponentDefinition,
+  SchemaComponentRegistry,
+} from '../components/component.types';
 import type { EntityDefinition, EntityRegistry } from '../entities/entity.types';
 import type { RuntimeHookRegistry } from '../hooks/hooks.types';
-import type { PropertyDefinition, PropertyRegistry } from '../properties/property.types';
+import type { PropertyRegistry } from '../properties/property.types';
 import { isRefUsage } from '../refs/ref-methods';
 import { RefKind } from '../refs/ref-kind';
-import type { EngineRef, RequestBodyRef, ResponseRef } from '../refs/ref.types';
-import type { RefUsage } from '../refs/ref-usage.types';
+import type { EngineRef } from '../refs/ref.types';
 import type { ResourceBuilder } from '../resource/resource.types';
-import type { RouteBodyInput, RouteDefinition, RouteQueryInput, RouteResponseInput } from '../routes/route.types';
+import type { RouteDefinition } from '../routes/route.types';
 import { SchemaKind } from '../schema/schema-kind';
 import type { SchemaField } from '../schema/schema.types';
 import type { VersionBuilder, VersionContract } from '../version/version.types';
-import type { AuthoringCompileInput, AuthoringCompileOutput, AuthoringCompiler, AuthoringCompilerDependencies } from './compiler.types';
+import type {
+  AuthoringCompileInput,
+  AuthoringCompileOutput,
+  AuthoringCompiler,
+  AuthoringCompilerDependencies,
+} from './compiler.types';
 
+interface SchemaEntry {
+  readonly group: string;
+  readonly definition: SchemaComponentDefinition;
+  readonly id: string;
+}
+
+/** Compiles user builders into the stable, JSON-safe authoring artifact. */
 export class DefaultAuthoringCompiler implements AuthoringCompiler {
   readonly #dependencies: AuthoringCompilerDependencies;
-  constructor(dependencies: AuthoringCompilerDependencies) { this.#dependencies = dependencies; }
+
+  constructor(dependencies: AuthoringCompilerDependencies) {
+    this.#dependencies = dependencies;
+  }
+
   async compile(input: AuthoringCompileInput): Promise<AuthoringCompileOutput> {
     const diagnostics: Diagnostic[] = [];
     const contracts = input.config.contracts.map(toContract);
-    if (contracts.length === 0) diagnostics.push(error('AUTHORING_NO_CONTRACTS', 'codepotx.config.ts must define at least one contract.'));
+
+    if (contracts.length === 0) {
+      diagnostics.push(diagnostic(
+        'AUTHORING_NO_CONTRACTS',
+        'error',
+        'codepotx.config.ts must define at least one contract.',
+      ));
+    }
+
     const properties = contracts.flatMap((contract) => compileProperties(contract.properties));
-    const schemaDefinitions = collectSchemaDefinitions(contracts);
-    const schemas = compileSchemas(schemaDefinitions);
-    const schemaByRef = new Map(schemas.map((schema) => [schema.id, schema]));
+    const schemas = compileSchemas(collectSchemas(contracts));
+    const schemaFields = new Map<string, readonly CompiledField[]>(
+      schemas.map((schema) => [
+        schema.id,
+        schema.schema.kind === 'object' ? schema.schema.fields : [],
+      ]),
+    );
     const entities = contracts.flatMap((contract) => [
-      ...compileEntities(contract.baseEntityComponents, schemaByRef),
-      ...compileEntities(contract.entityComponents, schemaByRef),
-      ...contract.resources.flatMap((resource) => compileEntities(resource.entityComponents, schemaByRef)),
+      ...compileEntities(contract.baseEntityComponents, schemaFields),
+      ...compileEntities(contract.entityComponents, schemaFields),
+      ...contract.resources.flatMap((resource) =>
+        compileEntities(resource.entityComponents, schemaFields),
+      ),
     ]);
-    const relations = contracts.flatMap((contract) => contract.resources.flatMap((resource) => resource.entityRelationComponents.flatMap((registry) => registry.definitions.map((relation) => ({
-      id: `relation:${relation.source}:${relation.name}`,
-      key: relation.name,
-      name: relation.name,
-      sourceEntity: relation.source,
-      targetEntity: relation.target.id,
-      sourceField: relation.local,
-      targetField: relation.foreign,
-      cardinality: mapCardinality(relation.cardinality),
-      required: relation.onDelete?.setNull !== true,
-      ...(relation.onDelete ? { deleteBehavior: Object.keys(relation.onDelete).find((key) => relation.onDelete?.[key as keyof typeof relation.onDelete]) } : {}),
-    })))));
+    const relations = contracts.flatMap((contract) =>
+      contract.resources.flatMap((resource) =>
+        resource.entityRelationComponents.flatMap((registry) =>
+          registry.definitions.map((relation) => ({
+            id: `relation:${relation.source}:${relation.name}`,
+            key: relation.name,
+            name: relation.name,
+            sourceEntity: relation.source,
+            targetEntity: relation.target.id,
+            sourceField: relation.local,
+            targetField: relation.foreign,
+            cardinality: cardinality(relation.cardinality),
+            required: relation.onDelete?.setNull !== true,
+            ...(deleteBehavior(relation.onDelete)
+              ? { deleteBehavior: deleteBehavior(relation.onDelete) }
+              : {}),
+          })),
+        ),
+      ),
+    );
     const access = contracts.flatMap((contract) => [
       ...compileAccess(contract.accessComponents),
-      ...contract.resources.flatMap((resource) => compileAccess(resource.accessComponents)),
+      ...contract.resources.flatMap((resource) =>
+        compileAccess(resource.accessComponents),
+      ),
     ]);
-    const hooks = contracts.flatMap((contract) => contract.resources.flatMap((resource) => compileHooks(resource.hookComponents)));
-    const frontends = contracts.flatMap((contract) => contract.frontends.map((frontend) => ({
-      id: `frontend:${frontend.context.name}`,
-      key: frontend.context.name,
-      name: frontend.context.name,
-      components: frontend.components,
-      screens: frontend.screens,
-      ...(frontend.context.info ? { docs: frontend.context.info } : {}),
-      ...(frontend.context.metadata ? { metadata: frontend.context.metadata } : {}),
-    } satisfies CompiledFrontend)));
+    const hooks = contracts.flatMap((contract) =>
+      contract.resources.flatMap((resource) =>
+        compileHooks(resource.hookComponents),
+      ),
+    );
+    const frontends = contracts.flatMap((contract) =>
+      contract.frontends.map((frontend) => ({
+        id: `frontend:${frontend.context.name}`,
+        key: frontend.context.name,
+        name: frontend.context.name,
+        components: frontend.components,
+        screens: frontend.screens,
+        ...(docs(frontend.context.info) ? { docs: docs(frontend.context.info) } : {}),
+        ...(frontend.context.metadata
+          ? { metadata: frontend.context.metadata }
+          : {}),
+      } satisfies CompiledFrontend)),
+    );
+
     const resources: CompiledResource[] = [];
     const operations: CompiledOperation[] = [];
     for (const contract of contracts) {
@@ -93,21 +137,21 @@ export class DefaultAuthoringCompiler implements AuthoringCompiler {
         operations.push(...compiled.operations);
       }
     }
-    validateOperationIds(operations, diagnostics);
-    validateCacheInvalidations(operations, diagnostics);
-    const projectContract = contracts[0];
-    const project = {
-      name: projectContract?.info.title ?? 'Codepot',
-      version: projectContract?.info.version ?? '0.0.0',
-      ...(projectContract?.info.description ? { description: projectContract.info.description } : {}),
-      ...(projectContract?.info.license ? { license: toJsonObject(projectContract.info.license) } : {}),
-      tags: [...new Set(contracts.flatMap((contract) => contract.tags))],
-      defaults: toJsonObject(projectContract?.defaults ?? {}),
-      ...(input.config.metadata ? { metadata: input.config.metadata } : {}),
-    };
+
+    validateOperations(operations, diagnostics);
+
+    const first = contracts[0];
     const body = {
       source: input.source,
-      project,
+      project: {
+        name: first?.info.title ?? 'Codepot',
+        version: first?.info.version ?? '0.0.0',
+        ...(first?.info.description ? { description: first.info.description } : {}),
+        ...(first?.info.license ? { license: jsonObject(first.info.license) } : {}),
+        tags: [...new Set(contracts.flatMap((contract) => contract.tags))],
+        defaults: jsonObject(first?.defaults ?? {}),
+        ...(input.config.metadata ? { metadata: input.config.metadata } : {}),
+      },
       properties,
       schemas,
       entities,
@@ -135,19 +179,726 @@ export class DefaultAuthoringCompiler implements AuthoringCompiler {
       },
       ...body,
     };
+
     return { artifact, diagnostics };
   }
 }
 
-function toContract(value: VersionBuilder | VersionContract): VersionContract { return 'contract' in value ? value.contract : value; }
-function collectSchemaDefinitions(contracts: readonly VersionContract[]): Array<{ readonly group: string; readonly definition: SchemaComponentDefinition; readonly refId: string }> {
-  const output: Array<{ readonly group: string; readonly definition: SchemaComponentDefinition; readonly refId: string }> = [];
-  const pushRegistry = (registry: SchemaComponentRegistry): void => { for (const definition of registry.definitions) { const ref = registry.ref[definition.name]; output.push({ group: registry.name, definition, refId: ref?.id ?? `component:schema:${definition.name}` }); } };
+function toContract(value: VersionBuilder | VersionContract): VersionContract {
+  return 'contract' in value ? value.contract : value;
+}
+
+function collectSchemas(contracts: readonly VersionContract[]): SchemaEntry[] {
+  const output: SchemaEntry[] = [];
+  const append = (registry: SchemaComponentRegistry): void => {
+    for (const definition of registry.definitions) {
+      output.push({
+        group: registry.name,
+        definition,
+        id: registry.ref[definition.name]?.id
+          ?? `component:schema:${definition.name}`,
+      });
+    }
+  };
+
   for (const contract of contracts) {
-    contract.schemaComponents.forEach(pushRegistry);
-    for (const resource of contract.resources) resource.schemaComponents.forEach(pushRegistry);
+    contract.schemaComponents.forEach(append);
+    for (const resource of contract.resources) {
+      resource.schemaComponents.forEach(append);
+    }
   }
   return output;
 }
-function compileProperties(registries: readonly PropertyRegistry[]): CompiledPropertyGroup[] {
-  return registries.flatMap((registry) => registry.definitions.map((definition) => ({ id: ²È="24ÁÉ¥µ¥Ñ¥Ù”œ°ÁÉ¥µ¥Ñ¥Ù”è€Õ¹­¹½Ý¸œ°½¹ÍÑÉ…¥¹ÑÌèmtôì)ô)™Õ¹Ñ¥½¸½µÁ¥±•i½¡Í¡•µ„èÕ¹­¹½Ý¸¤è½µÁ¥±•‘%¹±¥¹•M¡•µ„ì(€½¹ÍÐ‘•˜€ôé½‘•˜¡Í¡•µ„¤ì(€½¹ÍÐÑåÁ”€ôMÑÉ¥¹œ¡‘•˜ü¹ÑåÁ”€üü€Õ¹­¹½Ý¸œ¤ì(€¥˜€¡ÑåÁ”€ôôô€½ÁÑ¥½¹…°œñðÑåÁ”€ôôô€¹Õ±±…‰±”œñðÑåÁ”€ôôô€‘•™…Õ±ÐœñðÑåÁ”€ôôô€É•…‘½¹±äœñðÑåÁ”€ôôô€…Ñ œ¤É•ÑÕÉ¸½µÁ¥±•i½¡‘•˜ü¹¥¹¹•ÉQåÁ”¤ì(€¥˜€¡ÑåÁ”€ôôô€…ÉÉ…äœ¤É•ÑÕÉ¸ì­¥¹è€…ÉÉ…äœ°¥Ñ•µÌè½µÁ¥±•UÍ”¡‘•˜ü¹•±•µ•¹Ð¤°½¹ÍÑÉ…¥¹ÑÌè½µÁ¥±•¡•­Ì¡‘•˜¤ôì(€¥˜€¡ÑåÁ”€ôôô€½‰©•Ðœ¤ì½¹ÍÐÍ¡…Á”€ôÑåÁ•½˜‘•˜ü¹Í¡…Á”€ôôô€™Õ¹Ñ¥½¸œ€ü‘•˜¹Í¡…Á” ¤€è‘•˜ü¹Í¡…Á”€üüíôìÉ•ÑÕÉ¸ì­¥¹è€½‰©•Ðœ°™¥•±‘Ìè=‰©•Ð¹•¹ÑÉ¥•Ì¡Í¡…Á”…ÌI•½ÉñÍÑÉ¥¹œ°Õ¹­¹½Ý¸ø¤¹µ…À ¡m­•ä°™¥•±‘t¤€ôø½µÁ¥±•¥•±¡™¥•±è‘í­•åõ€°­•ä°™¥•±¤¤°•áÑ•¹‘Ìèmt°…‘‘¥Ñ¥½¹…±AÉ½Á•ÉÑ¥•Ìè™…±Í”ôìô(€¥˜€¡ÑåÁ”€ôôô€ÑÕÁ±”œ¤É•ÑÕÉ¸ì­¥¹è€ÑÕÁ±”œ°¥Ñ•µÌè€¡‘•˜ü¹¥Ñ•µÌ…ÌÕ¹­¹½Ý¹mt€üümt¤¹µ…À¡½µÁ¥±•UÍ”¤ôì(€¥˜€¡ÑåÁ”€ôôô€Õ¹¥½¸œ¤É•ÑÕÉ¸ì­¥¹è€Õ¹¥½¸œ°µ½‘”è€Õ¹¥½¸œ°Ù…É¥…¹ÑÌè€¡‘•˜ü¹½ÁÑ¥½¹Ì…ÌÕ¹­¹½Ý¹mt€üümt¤¹µ…À¡½µÁ¥±•UÍ”¤ôì(€¥˜€¡ÑåÁ”€ôôô€¥¹Ñ•ÉÍ•Ñ¥½¸œ¤É•ÑÕÉ¸ì­¥¹è€Õ¹¥½¸œ°µ½‘”è€…±±=˜œ…Ì€Õ¹¥½¸œ°Ù…É¥…¹ÑÌèm½µÁ¥±•UÍ”¡‘•˜ü¹±•™Ð¤°½µÁ¥±•UÍ”¡‘•˜ü¹É¥¡Ð¥tôì(€¥˜€¡ÑåÁ”€ôôô€É•½Éœ¤É•ÑÕÉ¸ì­¥¹è€É•½Éœ°€¸¸¸¡‘•˜ü¹­•åQåÁ”€üì­•åÌè½µÁ¥±•UÍ”¡‘•˜¹­•åQåÁ”¤ô€èíô¤°Ù…±Õ•Ìè½µÁ¥±•UÍ”¡‘•˜ü¹Ù…±Õ•QåÁ”¤ôì(€¥˜€¡ÑåÁ”€ôôô€±¥Ñ•É…°œ¤ì½¹ÍÐÙ…±Õ•Ì€ô€¡‘•˜ü¹Ù…±Õ•Ì…ÌÕ¹­¹½Ý¹mtðÕ¹‘•™¥¹•¤€üüm‘•˜ü¹Ù…±Õ•tìÉ•ÑÕÉ¸Ù…±Õ•Ì¹±•¹Ñ €ôôô€Ä€üì­¥¹è€±¥Ñ•É…°œ°Ù…±Õ”èÑ½)Í½¹Y…±Õ”¡Ù…±Õ•ÍlÁt¤ô€èì­¥¹è€•¹Õ´œ°Ù…±Õ•QåÁ”èÑåÁ•½˜Ù…±Õ•ÍlÁt€ôôô€¹Õµ‰•Èœ€ü€¹Õµ‰•Èœ€è€ÍÑÉ¥¹œœ°½ÁÑ¥½¹ÌèÙ…±Õ•Ì¹µ…À ¡¥Ñ•´¤€ôø€¡ì­•äèMÑÉ¥¹œ¡¥Ñ•´¤°Ù…±Õ”èÑåÁ•½˜¥Ñ•´€ôôô€¹Õµ‰•Èœ€ü¥Ñ•´€èMÑÉ¥¹œ¡¥Ñ•´¤ô¤¤ôìô(€¥˜€¡ÑåÁ”€ôôô€•¹Õ´œ¤ì½¹ÍÐ•¹ÑÉ¥•Ì€ô‘•˜ü¹•¹ÑÉ¥•Ì…ÌI•½ÉñÍÑÉ¥¹œ°ÍÑÉ¥¹œð¹Õµ‰•ÈøðÕ¹‘•™¥¹•ì½¹ÍÐÙ…±Õ•Ì€ô•¹ÑÉ¥•Ì€ül¸¸¹¹•ÜM•Ð¡=‰©•Ð¹Ù…±Õ•Ì¡•¹ÑÉ¥•Ì¤¥t€èmtìÉ•ÑÕÉ¸ì­¥¹è€•¹Õ´œ°Ù…±Õ•QåÁ”èÑåÁ•½˜Ù…±Õ•ÍlÁt€ôôô€¹Õµ‰•Èœ€ü€¹Õµ‰•Èœ€è€ÍÑÉ¥¹œœ°½ÁÑ¥½¹ÌèÙ…±Õ•Ì¹µ…À ¡¥Ñ•´¤€ôø€¡ì­•äèMÑÉ¥¹œ¡¥Ñ•´¤°Ù…±Õ”è¥Ñ•´ô¤¤ôìô(€½¹ÍÐÁÉ¥µ¥Ñ¥Ù”€ôÁÉ¥µ¥Ñ¥Ù•½È¡ÑåÁ”°½µÁ¥±•¡•­Ì¡‘•˜¤¤ì(€É•ÑÕÉ¸ì­¥¹è€ÁÉ¥µ¥Ñ¥Ù”œ°ÁÉ¥µ¥Ñ¥Ù”èÁÉ¥µ¥Ñ¥Ù”¹­¥¹°€¸¸¸¡ÁÉ¥µ¥Ñ¥Ù”¹™½Éµ…Ð€üì™½Éµ…ÐèÁÉ¥µ¥Ñ¥Ù”¹™½Éµ…Ðô€èíô¤°½¹ÍÑÉ…¥¹ÑÌè½µÁ¥±•¡•­Ì¡‘•˜¤ôì)ô)™Õ¹Ñ¥½¸ÁÉ¥µ¥Ñ¥Ù•½È¡ÑåÁ”èÍÑÉ¥¹œ°¡•­ÌèÉ•…‘½¹±ä½µÁ¥±•‘M¡•µ…½¹ÍÑÉ…¥¹Ñmt¤èìÉ•…‘½¹±ä­¥¹è½µÁ¥±•‘AÉ¥µ¥Ñ¥Ù•-¥¹ìÉ•…‘½¹±ä™½Éµ…ÐüèÍÑÉ¥¹œôì¥˜€¡ÑåÁ”€ôôô€ÍÑÉ¥¹œœ¤ì½¹ÍÐ™½Éµ…Ð€ô¡•­Ì¹™¥¹ ¡¡•¬¤€ôø¡•¬¹­¥¹€ôôô€ÍÑÉ¥¹}™½Éµ…Ðœ¤ü¹µ•Ñ…‘…Ñ„ü¹™½Éµ…ÐìÉ•ÑÕÉ¸ì­¥¹è€ÍÑÉ¥¹œœ°€¸¸¸¡ÑåÁ•½˜™½Éµ…Ð€ôôô€ÍÑÉ¥¹œœ€üì™½Éµ…Ðô€èíô¤ôìô¥˜€¡ÑåÁ”€ôôô€¹Õµ‰•Èœ¤É•ÑÕÉ¸ì­¥¹è¡•­Ì¹Í½µ” ¡¡•¬¤€ôø¡•¬¹­¥¹€ôôô€¥¹Ñ••Èœ¤€ü€¥¹Ñ••Èœ€è€¹Õµ‰•Èœôì¥˜€¡ÑåÁ”€ôôô€‰½½±•…¸œ¤É•ÑÕÉ¸ì­¥¹è€‰½½±•…¸œôì¥˜€¡ÑåÁ”€ôôô€‰¥¥¹Ðœ¤É•ÑÕÉ¸ì­¥¹è€‰¥¥¹Ðœôì¥˜€¡ÑåÁ”€ôôô€‘…Ñ”œ¤É•ÑÕÉ¸ì­¥¹è€‘…Ñ”œôì¥˜€¡ÑåÁ”€ôôô€¹Õ±°œ¤É•ÑÕÉ¸ì­¥¹è€¹Õ±°œôìÉ•ÑÕÉ¸ì­¥¹è€Õ¹­¹½Ý¸œôìô)™Õ¹Ñ¥½¸½µÁ¥±•¡•­Ì¡‘•˜èI•½ÉñÍÑÉ¥¹œ°Õ¹­¹½Ý¸øðÕ¹‘•™¥¹•¤è½µÁ¥±•‘M¡•µ…½¹ÍÑÉ…¥¹ÑmtìÉ•ÑÕÉ¸€ ¡‘•˜ü¹¡•­Ì…ÌÕ¹­¹½Ý¹mtðÕ¹‘•™¥¹•¤€üümt¤¹µ…À ¡¡•¬¤€ôøì½¹ÍÐÙ…±Õ”€ôé½‘•˜¡¡•¬¤€üü¡•¬…ÌI•½ÉñÍÑÉ¥¹œ°Õ¹­¹½Ý¸øì½¹ÍÐ­¥¹€ôMÑÉ¥¹œ¡Ù…±Õ”¹¡•¬€üüÙ…±Õ”¹ÑåÁ”€üü€¡•¬œ¤ì½¹ÍÐµ•Ñ…‘…Ñ„èI•½ÉñÍÑÉ¥¹œ°)Í½¹Y…±Õ”ø€ôíôì™½È€¡½¹ÍÐ­•ä½˜l™½Éµ…Ðœ°€Á…ÑÑ•É¸œ°€µ¥¹¥µÕ´œ°€µ…á¥µÕ´œ°€¥¹±ÕÍ¥Ù”t¤ì½¹ÍÐ¥Ñ•´€ôÙ…±Õ•m­•åtì¥˜€¡ÑåÁ•½˜¥Ñ•´€ôôô€ÍÑÉ¥¹œœñðÑåÁ•½˜¥Ñ•´€ôôô€¹Õµ‰•ÈœñðÑåÁ•½˜¥Ñ•´€ôôô€‰½½±•…¸œñð¥Ñ•´€ôôô¹Õ±°¤µ•Ñ…‘…Ñ…m­•åt€ô¥Ñ•´ìôÉ•ÑÕÉ¸ì­¥¹°€¸¸¸¡Ù…±Õ”¹Ù…±Õ”€„ôôÕ¹‘•™¥¹•€üìÙ…±Õ”èÑ½)Í½¹Y…±Õ”¡Ù…±Õ”¹Ù…±Õ”¤ô€èíô¤°€¸¸¸¡=‰©•Ð¹­•åÌ¡µ•Ñ…‘…Ñ„¤¹±•¹Ñ €üìµ•Ñ…‘…Ñ„èµ•Ñ…‘…Ñ„…Ì)Í½¹=‰©•Ðô€èíô¤ôìô¤ìô)™Õ¹Ñ¥½¸é½‘•˜¡Ù…±Õ”èÕ¹­¹½Ý¸¤èI•½ÉñÍÑÉ¥¹œ°Õ¹­¹½Ý¸øðÕ¹‘•™¥¹•ì¥˜€ …Ù…±Õ”ñðÑåÁ•½˜Ù…±Õ”€„ôô€½‰©•Ðœ¤É•ÑÕÉ¸Õ¹‘•™¥¹•ì½¹ÍÐÍ¡•µ„€ôÙ…±Õ”…ÌìÉ•…‘½¹±ä}é½üèìÉ•…‘½¹±ä‘•˜üèI•½ÉñÍÑÉ¥¹œ°Õ¹­¹½Ý¸øôìÉ•…‘½¹±ä}‘•˜üèI•½ÉñÍÑÉ¥¹œ°Õ¹­¹½Ý¸øôìÉ•ÑÕÉ¸Í¡•µ„¹}é½ü¹‘•˜€üüÍ¡•µ„¹}‘•˜ìô)™Õ¹Ñ¥½¸¥Íi½¡Ù…±Õ”èÕ¹­¹½Ý¸¤è‰½½±•…¸ìÉ•ÑÕÉ¸	½½±•…¸¡é½‘•˜¡Ù…±Õ”¤¤ìô)™Õ¹Ñ¥½¸Í¡•µ…I•ÅÕ¥É•¡Ù…±Õ”èÕ¹­¹½Ý¸¤è‰½½±•…¸ì½¹ÍÐÑåÁ”€ôé½‘•˜¡Ù…±Õ”¤ü¹ÑåÁ”ì¥˜€¡ÑåÁ”€ôôô€½ÁÑ¥½¹…°œ¤É•ÑÕÉ¸™…±Í”ì¥˜€¡Ù…±Õ”€˜˜ÑåÁ•½˜Ù…±Õ”€ôôô€½‰©•Ðœ€˜˜€É•ÅÕ¥É•œ¥¸Ù…±Õ”€˜˜€¡Ù…±Õ”…ÌìÉ•…‘½¹±äÉ•ÅÕ¥É•üè‰½½±•…¸ô¤¹É•ÅÕ¥É•€ôôô™…±Í”¤É•ÑÕÉ¸™…±Í”ìÉ•ÑÕÉ¸ÑÉÕ”ìô)™Õ¹Ñ¥½¸Í¡•µ…9Õ±±…‰±”¡Ù…±Õ”èÕ¹­¹½Ý¸¤è‰½½±•…¸ì½¹ÍÐÑåÁ”€ôé½‘•˜¡Ù…±Õ”¤ü¹ÑåÁ”ì¥˜€¡ÑåÁ”€ôôô€¹Õ±±…‰±”œ¤É•ÑÕÉ¸ÑÉÕ”ì¥˜€¡Ù…±Õ”€˜˜ÑåÁ•½˜Ù…±Õ”€ôôô€½‰©•Ðœ€˜˜€¹Õ±±…‰±”œ¥¸Ù…±Õ”¤É•ÑÕÉ¸€¡Ù…±Õ”…ÌìÉ•…‘½¹±ä¹Õ±±…‰±”üè‰½½±•…¸ô¤¹¹Õ±±…‰±”€ôôôÑÉÕ”ìÉ•ÑÕÉ¸™…±Í”ìô)™Õ¹Ñ¥½¸¥ÍA±…¥¹5…À¡Ù…±Õ”èÕ¹­¹½Ý¸¤èÙ…±Õ”¥ÌI•½ÉñÍÑÉ¥¹œ°Õ¹­¹½Ý¸øìÉ•ÑÕÉ¸	½½±•…¸¡Ù…±Õ”€˜˜ÑåÁ•½˜Ù…±Õ”€ôôô€½‰©•Ðœ€˜˜€…ÉÉ…ä¹¥ÍÉÉ…ä¡Ù…±Õ”¤€˜˜€„ ­¥¹œ¥¸Ù…±Õ”¤€˜˜€„ É•˜œ¥¸Ù…±Õ”¤€˜˜€…¥Íi½¡Ù…±Õ”¤¤ìô)™Õ¹Ñ¥½¸¥Í¹¥¹•I•˜¡Ù…±Õ”èÕ¹­¹½Ý¸¤èÙ…±Õ”¥Ì¹¥¹•I•˜ìÉ•ÑÕÉ¸	½½±•…¸¡Ù…±Õ”€˜˜ÑåÁ•½˜Ù…±Õ”€ôôô€½‰©•Ðœ€˜˜€¥œ¥¸Ù…±Õ”€˜˜€­¥¹œ¥¸Ù…±Õ”€˜˜=‰©•Ð¹Ù…±Õ•Ì¡I•™-¥¹¤¹¥¹±Õ‘•Ì ¡Ù…±Õ”…Ì¹¥¹•I•˜¤¹­¥¹¤¤ìô)™Õ¹Ñ¥½¸ÅÕ•ÉåI•˜¡Ù…±Õ”è¹¥¹•I•˜ðI•™UÍ…”¤è¹¥¹•I•˜ìÉ•ÑÕÉ¸¥ÍI•™UÍ…”¡Ù…±Õ”¤€üÙ…±Õ”¹É•˜€èÙ…±Õ”ìô)™Õ¹Ñ¥½¸¥ÍI•ÅÕ•ÍÑ	½‘åI•˜¡Ù…±Õ”èÕ¹­¹½Ý¸¤èÙ…±Õ”¥ÌI•ÅÕ•ÍÑ	½‘åI•˜ìÉ•ÑÕÉ¸¥Í¹¥¹•I•˜¡Ù…±Õ”¤€˜˜Ù…±Õ”¹­¥¹€ôôôI•™-¥¹¹É•ÅÕ•ÍÑ	½‘äìô)™Õ¹Ñ¥½¸¥ÍI•ÍÁ½¹Í•I•˜¡Ù…±Õ”èÕ¹­¹½Ý¸¤èÙ…±Õ”¥ÌI•ÍÁ½¹Í•I•˜ìÉ•ÑÕÉ¸¥Í¹¥¹•I•˜¡Ù…±Õ”¤€˜˜Ù…±Õ”¹­¥¹€ôôôI•™-¥¹¹É•ÍÁ½¹Í”ìô)™Õ¹Ñ¥½¸¥ÍM¡•µ…¹Ù•±½Á”¡Ù…±Õ”èÕ¹­¹½Ý¸¤èÙ…±Õ”¥ÌìÉ•…‘½¹±äÍ¡•µ„èÕ¹­¹½Ý¸ìÉ•…‘½¹±äÉ•ÅÕ¥É•üè‰½½±•…¸ìÉ•…‘½¹±ä‘•ÍÉ¥ÁÑ¥½¸üèÍÑÉ¥¹œìÉ•…‘½¹±ä½¹Ñ•¹ÑQåÁ”üèÍÑÉ¥¹œðÉ•…‘½¹±äÍÑÉ¥¹mtôìÉ•ÑÕÉ¸	½½±•…¸¡Ù…±Õ”€˜˜ÑåÁ•½˜Ù…±Õ”€ôôô€½‰©•Ðœ€˜˜€Í¡•µ„œ¥¸Ù…±Õ”¤ìô)™Õ¹Ñ¥½¸©½¥¹I½ÕÑ”¡‰…Í”èÍÑÉ¥¹œ°Á…Ñ èÍÑÉ¥¹œ¤èÍÑÉ¥¹œì½¹ÍÐ©½¥¹•€ô€‘í‰…Í”¹É•Á±…” ½p¼¼°€œœ¥ô¼‘íÁ…Ñ ¹É•Á±…” ½yp¼¼°€œœ¥õ€ìÉ•ÑÕÉ¸©½¥¹•¹ÍÑ…ÉÑÍ]¥Ñ  œ¼œ¤€ü©½¥¹•€è€¼‘í©½¥¹•‘õ€ìô)™Õ¹Ñ¥½¸µ…Á…É‘¥¹…±¥Ñä¡Ù…±Õ”èÍÑÉ¥¹œ¤è€½¹•Q½=¹”œð€½¹•Q½5…¹äœð€µ…¹åQ½=¹”œð€µ…¹åQ½5…¹äœì¥˜€¡Ù…±Õ”€ôôô€¡…Í=¹”œ¤É•ÑÕÉ¸€½¹•Q½=¹”œì¥˜€¡Ù…±Õ”€ôôô€¡…Í5…¹äœ¤É•ÑÕÉ¸€½¹•Q½5…¹äœì¥˜€¡Ù…±Õ”€ôôô€‰•±½¹ÍQ¼œ¤É•ÑÕÉ¸€µ…¹åQ½=¹”œìÉ•ÑÕÉ¸€µ…¹åQ½5…¹äœìô)™Õ¹Ñ¥½¸Ù…±¥‘…Ñ•=Á•É…Ñ¥½¹%‘Ì¡½Á•É…Ñ¥½¹ÌèÉ•…‘½¹±ä½µÁ¥±•‘=Á•É…Ñ¥½¹mt°‘¥…¹½ÍÑ¥Ìè¥…¹½ÍÑ¥mt¤èÙ½¥ì½¹ÍÐÍ••¸€ô¹•ÜM•ÐñÍÑÉ¥¹œø ¤ì™½È€¡½¹ÍÐ½Á•É…Ñ¥½¸½˜½Á•É…Ñ¥½¹Ì¤ì¥˜€¡Í••¸¹¡…Ì¡½Á•É…Ñ¥½¸¹½Á•É…Ñ¥½¹%¤¤‘¥…¹½ÍÑ¥Ì¹ÁÕÍ ¡•ÉÉ½È UQ!=I%9}UA1%Q}=AIQ%=8œ°ÕÁ±¥…Ñ”½Á•É…Ñ¥½¸%€ˆ‘í½Á•É…Ñ¥½¸¹½Á•É…Ñ¥½¹%‘ôˆ¹€¤¤ìÍ••¸¹…‘¡½Á•É…Ñ¥½¸¹½Á•É…Ñ¥½¹%¤ìôô)™Õ¹Ñ¥½¸Ù…±¥‘…Ñ•…¡•%¹Ù…±¥‘…Ñ¥½¹Ì¡½Á•É…Ñ¥½¹ÌèÉ•…‘½¹±ä½µÁ¥±•‘=Á•É…Ñ¥½¹mt°‘¥…¹½ÍÑ¥Ìè¥…¹½ÍÑ¥mt¤èÙ½¥ì½¹ÍÐ¥‘Ì€ô¹•ÜM•Ð¡½Á•É…Ñ¥½¹Ì¹µ…À ¡½Á•É…Ñ¥½¸¤€ôø½Á•É…Ñ¥½¸¹½Á•É…Ñ¥½¹%¤¤ì™½È€¡½¹ÍÐ½Á•É…Ñ¥½¸½˜½Á•É…Ñ¥½¹Ì¤™½È€¡½¹ÍÐÑ…É•Ð½˜½Á•É…Ñ¥½¸¹…¡•%¹Ù…±¥‘…Ñ•Ì¤¥˜€ …¥‘Ì¹¡…Ì¡Ñ…É•Ð¤¤‘¥…¹½ÍÑ¥Ì¹ÁÕÍ ¡•ÉÉ½È UQ!=I%9}!}=AIQ%=9}5%MM%9œ°=Á•É…Ñ¥½¸€ˆ‘í½Á•É…Ñ¥½¸¹½Á•É…Ñ¥½¹%‘ôˆ¥¹Ù…±¥‘…Ñ•ÌÕ¹­¹½Ý¸½Á•É…Ñ¥½¸€ˆ‘íÑ…É•Ñôˆ¹€¤¤ìô)™Õ¹Ñ¥½¸•ÉÉ½È¡½‘”èÍÑÉ¥¹œ°µ•ÍÍ…”èÍÑÉ¥¹œ¤è¥…¹½ÍÑ¥ŒìÉ•ÑÕÉ¸ì½‘”°Í•Ù•É¥Ñäè€•ÉÉ½Èœ°±…å•Èè€…ÕÑ¡½É¥¹œœ°µ•ÍÍ…”ôìô)™Õ¹Ñ¥½¸Ý…É¹¥¹œ¡½‘”èÍÑÉ¥¹œ°µ•ÍÍ…”èÍÑÉ¥¹œ¤è¥…¹½ÍÑ¥ŒìÉ•ÑÕÉ¸ì½‘”°Í•Ù•É¥Ñäè€Ý…É¹¥¹œœ°±…å•Èè€…ÕÑ¡½É¥¹œœ°µ•ÍÍ…”ôìô)™Õ¹Ñ¥½¸Ñ½)Í½¹Y…±Õ”¡Ù…±Õ”èÕ¹­¹½Ý¸¤è)Í½¹Y…±Õ”ì¥˜€¡Ù…±Õ”€ôôôÕ¹‘•™¥¹•¤É•ÑÕÉ¸¹Õ±°ìÉ•ÑÕÉ¸)M=8¹Á…ÉÍ”¡)M=8¹ÍÑÉ¥¹¥™ä¡Ù…±Õ”¤¤…Ì)Í½¹Y…±Õ”ìô)™Õ¹Ñ¥½¸Ñ½)Í½¹=‰©•Ð¡Ù…±Õ”èÕ¹­¹½Ý¸¤è)Í½¹=‰©•Ðì½¹ÍÐ½¹Ù•ÉÑ•€ôÑ½)Í½¹Y…±Õ”¡Ù…±Õ”¤ìÉ•ÑÕÉ¸½¹Ù•ÉÑ•€„ôô¹Õ±°€˜˜ÑåÁ•½˜½¹Ù•ÉÑ•€ôôô€½‰©•Ðœ€˜˜€…ÉÉ…ä¹¥ÍÉÉ…ä¡½¹Ù•ÉÑ•¤€ü½¹Ù•ÉÑ•…Ì)Í½¹=‰©•Ð€èìÙ…±Õ”è½¹Ù•ÉÑ•ôìô(
+
+function compileProperties(
+  registries: readonly PropertyRegistry[],
+): CompiledPropertyGroup[] {
+  return registries.flatMap((registry) =>
+    registry.definitions.map((definition) => ({
+      id: `property-group:${registry.name}:${definition.name}`,
+      key: definition.name,
+      name: definition.name,
+      properties: Object.entries(definition.fields).map(([key, value]) =>
+        field(
+          key,
+          value,
+          propertyRefId(registry, key)
+            ?? `property:${definition.name}:${key}`,
+        ),
+      ),
+      metadata: jsonObject({
+        kind: definition.kind,
+        emitSchema: definition.emitSchema ?? null,
+        abstract: definition.abstract ?? null,
+      }),
+    })),
+  );
+}
+
+function propertyRefId(
+  registry: PropertyRegistry,
+  key: string,
+): string | undefined {
+  const candidate = registry.ref[key];
+  return record(candidate) && typeof candidate.id === 'string'
+    ? candidate.id
+    : undefined;
+}
+
+function compileSchemas(entries: readonly SchemaEntry[]): CompiledSchema[] {
+  return entries.map(({ group, definition, id }) => ({
+    id,
+    key: definition.name,
+    name: definition.name,
+    group,
+    schema: namedSchema(definition.value),
+    ...(docs(definition.info) ? { docs: docs(definition.info) } : {}),
+    ...(definition.projection
+      ? { metadata: jsonObject({ projection: definition.projection }) }
+      : {}),
+  }));
+}
+
+function namedSchema(value: unknown): CompiledInlineSchema {
+  if (isProjection(value)) {
+    return {
+      kind: 'object',
+      fields: [],
+      extends: [value.sourceRefId],
+      additionalProperties: false,
+      metadata: jsonObject({
+        projection: {
+          source: value.source,
+          mode: value.mode,
+          fields: value.fields ?? [],
+          steps: value.steps ?? [],
+        },
+      }),
+    };
+  }
+  if (isRef(value)) {
+    return {
+      kind: 'object',
+      fields: [],
+      extends: [refId(value)],
+      additionalProperties: false,
+    };
+  }
+  if (isSchemaField(value)) return inlineSchema(value);
+  if (record(value) && !isZod(value)) return objectSchema(value);
+  return zodSchema(value);
+}
+
+function compileEntities(
+  registries: readonly EntityRegistry[],
+  schemaFields: ReadonlyMap<string, readonly CompiledField[]>,
+): CompiledEntity[] {
+  return registries.flatMap((registry) =>
+    registry.definitions.map((definition) =>
+      compileEntity(definition, schemaFields),
+    ),
+  );
+}
+
+function compileEntity(
+  definition: EntityDefinition,
+  schemaFields: ReadonlyMap<string, readonly CompiledField[]>,
+): CompiledEntity {
+  const source = schemaFields.get(definition.schema.id) ?? [];
+  const fields = source.map((item) => {
+    const metadata = definition.fields[item.key];
+    if (!metadata) return item;
+    return {
+      ...item,
+      lifecycle: {
+        selectable: metadata.select !== false,
+        editable: metadata.edit !== false
+          && metadata.readonly !== true
+          && metadata.managed !== true,
+        immutable: metadata.immutable === true,
+        managed: metadata.managed === true || metadata.readonly === true,
+      },
+      query: queryMetadata(metadata.query),
+      metadata: jsonObject({
+        index: metadata.index ?? false,
+        unique: metadata.unique ?? false,
+        role: metadata.role ?? null,
+        generated: metadata.generated ?? null,
+      }),
+    } satisfies CompiledField;
+  });
+
+  return {
+    id: definition.ref.id,
+    key: definition.key,
+    name: definition.key,
+    entityKind: definition.kind === 'abstract' ? 'base' : 'concrete',
+    fields,
+    ...(definition.extends ? { extends: definition.extends.id } : {}),
+    constraints: Object.entries(definition.constraints ?? {}).map(
+      ([key, constraint]) => ({
+        id: `entity-constraint:${definition.ref.id}:${key}`,
+        kind: constraint.kind,
+        fields: constraint.fields ?? [],
+        rules: constraint.rule ? [jsonObject(constraint.rule)] : [],
+      }),
+    ),
+    relationIds: [],
+    ...(definition.store ? { owner: definition.store } : {}),
+    ...(docs(definition.info) ? { docs: docs(definition.info) } : {}),
+  };
+}
+
+function compileAccess(
+  registries: readonly AccessRegistry[],
+): CompiledAccessDefinition[] {
+  return registries.flatMap((registry) =>
+    registry.definitions.map((definition) => ({
+      id: `access:${owner(definition.owner)}:${definition.key}`,
+      key: definition.key,
+      name: definition.key,
+      owner: owner(definition.owner),
+      roleSources: Object.entries(definition.roles ?? {}).map(
+        ([key, role]) => jsonObject({
+          key,
+          source: role.source.id,
+          allow: role.allow,
+        }),
+      ),
+      allow: jsonObject({
+        context: definition.context?.id ?? null,
+        roles: Object.fromEntries(
+          Object.entries(definition.roles ?? {}).map(
+            ([key, role]) => [key, role.allow],
+          ),
+        ),
+        tags: definition.tags ?? [],
+      }),
+      ...(docs(definition.info) ? { docs: docs(definition.info) } : {}),
+    })),
+  );
+}
+
+function compileHooks(registries: readonly RuntimeHookRegistry[]): CompiledHook[] {
+  return registries.flatMap((registry) =>
+    registry.definitions.map((definition) => ({
+      id: `hook:${owner(definition.owner)}:${definition.key}`,
+      key: definition.key,
+      name: definition.key,
+      owner: owner(definition.owner),
+      phase: definition.phase,
+      ...(definition.transport ? { transport: 'runtime' } : {}),
+      ...(definition.transport?.inbound
+        ? { inbound: jsonObject(definition.transport.inbound) }
+        : {}),
+      ...(definition.transport?.outbound
+        ? { outbound: jsonObject(definition.transport.outbound) }
+        : {}),
+      ...(docs(definition.info) ? { docs: docs(definition.info) } : {}),
+    })),
+  );
+}
+
+function compileResource(
+  resource: ResourceBuilder,
+  contract: VersionContract,
+  diagnostics: Diagnostic[],
+): { readonly resource: CompiledResource; readonly operations: readonly CompiledOperation[] } {
+  const operations = resource.routeRegistries.flatMap((registry) =>
+    Object.entries(registry.routes).map(([key, route]) =>
+      compileOperation(key, route, resource, contract, diagnostics),
+    ),
+  );
+
+  return {
+    resource: {
+      id: `resource:${resource.context.name}`,
+      key: resource.context.name,
+      name: resource.context.alias,
+      route: resource.context.route,
+      folders: resource.context.folders,
+      tags: resource.context.tags,
+      operationIds: operations.map((operation) => operation.id),
+      ...(accessRef(resource.context.access)
+        ? { accessRef: accessRef(resource.context.access) }
+        : {}),
+      hookRefs: resource.hookComponents.flatMap((registry) =>
+        registry.definitions.map((hook) =>
+          `hook:${owner(hook.owner)}:${hook.key}`,
+        ),
+      ),
+      ...(resource.context.ui ? { frontend: resource.context.ui } : {}),
+      ...(docs(resource.context.info) ? { docs: docs(resource.context.info) } : {}),
+    },
+    operations,
+  };
+}
+
+function compileOperation(
+  key: string,
+  route: RouteDefinition,
+  resource: ResourceBuilder,
+  contract: VersionContract,
+  diagnostics: Diagnostic[],
+): CompiledOperation {
+  const operationId = route.operationId ?? key;
+  const path = joinPath(resource.context.route, route.path);
+  const responses = new Map<number, unknown>();
+  for (const [status, response] of Object.entries(contract.defaultResponses)) {
+    responses.set(Number(status), response);
+  }
+  for (const [status, response] of Object.entries(route.responses ?? {})) {
+    responses.set(Number(status), response);
+  }
+  if (route.response) responses.set(200, route.response);
+  if (responses.size === 0) {
+    diagnostics.push(diagnostic(
+      'AUTHORING_OPERATION_NO_RESPONSE',
+      'warning',
+      `Operation ${operationId} does not declare a response.`,
+    ));
+  }
+
+  return {
+    id: `operation:${operationId}`,
+    key,
+    name: operationId,
+    operationId,
+    resourceId: `resource:${resource.context.name}`,
+    method: route.method,
+    path,
+    tags: [...new Set([...resource.context.tags, ...(route.tags ?? [])])],
+    parameters: pathParameters(path),
+    ...(route.body
+      ? {
+          requestBody: {
+            id: `request-body:${operationId}`,
+            key: `${operationId}:body`,
+            name: `${operationId}:body`,
+            required: required(route.body),
+            content: [{
+              mediaType: 'application/json',
+              schema: schemaUse(bodySchema(route.body)),
+            }],
+          },
+        }
+      : {}),
+    responses: [...responses.entries()]
+      .sort(([left], [right]) => left - right)
+      .map(([status, response]) => ({
+        id: `response:${operationId}:${status}`,
+        key: String(status),
+        name: String(status),
+        status,
+        content: noContent(response)
+          ? []
+          : [{ mediaType: 'application/json', schema: schemaUse(responseSchema(response)) }],
+        headers: [],
+      })),
+    ...(route.access
+      ? { accessRef: `access:${owner(route.access.owner)}:${route.access.key}` }
+      : {}),
+    hookRefs: Object.values(route.runtime?.hooks ?? {}).map((hook) =>
+      `hook:${owner(hook.definition.owner)}:${hook.key}`,
+    ),
+    effects: Object.entries(route.effects ?? {}).map(([kind, value]) => ({
+      kind,
+      value: jsonValue(value),
+    })),
+    cacheInvalidates: route.cache?.invalidate?.operations ?? [],
+    ...(docs(route.info) ? { docs: docs(route.info) } : {}),
+    metadata: jsonObject({
+      codegenTags: route.codegenTags ?? [],
+      meta: route.meta ?? {},
+      ui: route.ui ?? null,
+      sources: route.sources ?? {},
+    }),
+  };
+}
+
+function pathParameters(path: string): CompiledOperation['parameters'] {
+  return Array.from(path.matchAll(/:([A-Za-z_][A-Za-z0-9_]*)/g), (match) => match[1])
+    .filter((name): name is string => name !== undefined)
+    .map((name) => ({
+      id: `parameter:path:${name}`,
+      key: name,
+      name,
+      location: 'path',
+      schema: inlineUse({ kind: 'primitive', primitive: 'string', constraints: [] }),
+      required: true,
+    }));
+}
+
+function field(key: string, value: unknown, id: string): CompiledField {
+  return {
+    id,
+    key,
+    name: key,
+    wireName: key,
+    schema: schemaUse(value),
+    lifecycle: {
+      selectable: true,
+      editable: true,
+      immutable: false,
+      managed: false,
+    },
+    query: queryMetadata(undefined),
+  };
+}
+
+function schemaUse(value: unknown): CompiledSchemaUse {
+  const usage = isRefUsage(value) ? value.usage : undefined;
+  const source = isRefUsage(value) ? value.ref : value;
+  const requiredValue = usage?.required ?? true;
+  const nullable = usage?.nullable ?? false;
+  const base = isEngineRef(source)
+    ? ({ kind: 'ref', ref: source.id, required: requiredValue, nullable } as const)
+    : ({
+        kind: 'inline',
+        schema: isSchemaField(source)
+          ? inlineSchema(source)
+          : record(source) && !isZod(source)
+            ? objectSchema(source)
+            : zodSchema(source),
+        required: requiredValue,
+        nullable,
+      } as const);
+
+  if (!usage?.array) return base;
+  return inlineUse({ kind: 'array', items: base, constraints: [] }, requiredValue, nullable);
+}
+
+function inlineSchema(value: SchemaField): CompiledInlineSchema {
+  switch (value.kind) {
+    case SchemaKind.primitive:
+      return zodSchema(value.zod);
+    case SchemaKind.composite:
+      return objectSchema(value.fields);
+    case SchemaKind.ref:
+      return {
+        kind: 'object',
+        fields: [],
+        extends: [refId(value.ref)],
+        additionalProperties: false,
+      };
+    case SchemaKind.record:
+      return { kind: 'record', values: schemaUse(value.value) };
+    case SchemaKind.literal:
+      return { kind: 'literal', value: value.value };
+    case SchemaKind.oneOf:
+      return {
+        kind: 'union',
+        mode: 'oneOf',
+        variants: value.values.map(schemaUse),
+      };
+    case SchemaKind.anyOf:
+      return {
+        kind: 'union',
+        mode: 'anyOf',
+        variants: value.values.map(schemaUse),
+      };
+    case SchemaKind.file:
+      return { kind: 'file', mediaTypes: ['application/octet-stream'] };
+    case SchemaKind.noContent:
+      return { kind: 'noContent' };
+  }
+}
+
+function objectSchema(value: Readonly<Record<string, unknown>>): CompiledInlineSchema {
+  return {
+    kind: 'object',
+    fields: Object.entries(value).map(([key, item]) =>
+      field(key, item, isRef(item) ? refId(item) : `field:${key}`),
+    ),
+    extends: [],
+    additionalProperties: false,
+  };
+}
+
+function zodSchema(value: unknown): CompiledInlineSchema {
+  if (!isZod(value)) {
+    return { kind: 'primitive', primitive: primitive(value), constraints: [] };
+  }
+  const definition = zodDefinition(value);
+  const kind = String(
+    definition.type ?? definition.typeName ?? value.constructor.name,
+  ).toLowerCase();
+  if (kind.includes('array')) {
+    return {
+      kind: 'array',
+      items: inlineUse(zodSchema(definition.element ?? definition.type)),
+      constraints: [],
+    };
+  }
+  if (kind.includes('enum')) {
+    const entries = record(definition.entries) ? definition.entries : {};
+    const values = Object.values(entries).filter(
+      (item): item is string | number =>
+        typeof item === 'string' || typeof item === 'number',
+    );
+    return {
+      kind: 'enum',
+      valueType: values.some((item) => typeof item === 'number')
+        ? 'number'
+        : 'string',
+      options: values.map((item) => ({ key: String(item), value: item })),
+    };
+  }
+  if (kind.includes('literal')) {
+    return {
+      kind: 'literal',
+      value: jsonValue(
+        definition.value
+          ?? (Array.isArray(definition.values) ? definition.values[0] : null),
+      ),
+    };
+  }
+  return {
+    kind: 'primitive',
+    primitive: kind.includes('string')
+      ? 'string'
+      : kind.includes('boolean')
+        ? 'boolean'
+        : kind.includes('bigint')
+          ? 'bigint'
+          : kind.includes('int')
+            ? 'integer'
+            : kind.includes('number')
+              ? 'number'
+              : kind.includes('date')
+                ? 'date'
+                : 'unknown',
+    constraints: [],
+    ...(typeof definition.format === 'string'
+      ? { format: definition.format }
+      : {}),
+  };
+}
+
+function queryMetadata(value: unknown): CompiledField['query'] {
+  const query = record(value) ? value : {};
+  const operators = [
+    query.exact ? 'exact' : undefined,
+    query.oneOf ? 'oneOf' : undefined,
+    query.range ? 'range' : undefined,
+    query.date ? 'date' : undefined,
+    query.search ? 'search' : undefined,
+  ].filter((item): item is string => item !== undefined);
+  return {
+    enabled: operators.length > 0 || query.sort === true,
+    filterable: operators.some((item) => item !== 'search'),
+    searchable: query.search !== undefined,
+    sortable: query.sort === true,
+    operators,
+  };
+}
+
+function inlineUse(
+  schema: CompiledInlineSchema,
+  requiredValue = true,
+  nullable = false,
+): CompiledSchemaUse {
+  return {
+    kind: 'inline',
+    schema,
+    required: requiredValue,
+    nullable,
+  };
+}
+
+function validateOperations(
+  operations: readonly CompiledOperation[],
+  diagnostics: Diagnostic[],
+): void {
+  const ids = new Set<string>();
+  for (const operation of operations) {
+    if (ids.has(operation.operationId)) {
+      diagnostics.push(diagnostic(
+        'AUTHORING_DUPLICATE_OPERATION_ID',
+        'error',
+        `Duplicate operation ID: ${operation.operationId}.`,
+      ));
+    }
+    ids.add(operation.operationId);
+  }
+  for (const operation of operations) {
+    for (const target of operation.cacheInvalidates) {
+      if (!ids.has(target)) {
+        diagnostics.push(diagnostic(
+          'AUTHORING_UNKNOWN_CACHE_OPERATION',
+          'error',
+          `Operation ${operation.operationId} invalidates unknown operation ${target}.`,
+        ));
+      }
+    }
+  }
+}
+
+function diagnostic(
+  code: string,
+  severity: Diagnostic['severity'],
+  message: string,
+): Diagnostic {
+  return { code, severity, layer: 'authoring', message };
+}
+
+function docs(
+  value: unknown,
+): { readonly summary?: string; readonly description?: string } | undefined {
+  if (!record(value)) return undefined;
+  const summary = typeof value.summary === 'string' ? value.summary : undefined;
+  const description = typeof value.description === 'string'
+    ? value.description
+    : undefined;
+  return summary || description
+    ? {
+        ...(summary ? { summary } : {}),
+        ...(description ? { description } : {}),
+      }
+    : undefined;
+}
+
+function owner(value: unknown): string {
+  if (!record(value)) return 'global';
+  if (value.global === true) return 'global';
+  return record(value.resource) && typeof value.resource.name === 'string'
+    ? value.resource.name
+    : 'global';
+}
+
+function accessRef(value: unknown): string | undefined {
+  return record(value) && typeof value.key === 'string' && 'owner' in value
+    ? `access:${owner(value.owner)}:${value.key}`
+    : undefined;
+}
+
+function required(value: unknown): boolean {
+  if (isRefUsage(value)) return value.usage.required ?? true;
+  return record(value) && typeof value.required === 'boolean'
+    ? value.required
+    : true;
+}
+
+function bodySchema(value: unknown): unknown {
+  return record(value) && 'schema' in value ? value.schema : value;
+}
+
+function responseSchema(value: unknown): unknown {
+  return record(value) && 'schema' in value ? value.schema : value;
+}
+
+function noContent(value: unknown): boolean {
+  const schema = responseSchema(value);
+  return isSchemaField(schema) && schema.kind === SchemaKind.noContent;
+}
+
+function joinPath(base: string, path: string): string {
+  const left = base === '/' ? '' : base.replace(/\/$/, '');
+  const right = path === '/' ? '' : path.replace(/^\//, '');
+  return `${left}/${right}`.replace(/\/+/g, '/') || '/';
+}
+
+function cardinality(
+  value: string,
+): 'oneToOne' | 'oneToMany' | 'manyToOne' | 'manyToMany' {
+  if (value === 'belongsTo') return 'manyToOne';
+  if (value === 'hasMany') return 'oneToMany';
+  if (value === 'manyToMany') return 'manyToMany';
+  return 'oneToOne';
+}
+
+function deleteBehavior(value: unknown): string | undefined {
+  if (!record(value)) return undefined;
+  return Object.keys(value).find((key) => value[key] === true);
+}
+
+function refId(value: unknown): string {
+  if (isRefUsage(value)) return value.ref.id;
+  return isEngineRef(value) ? value.id : 'unknown';
+}
+
+function isRef(value: unknown): boolean {
+  return isRefUsage(value) || isEngineRef(value);
+}
+
+function isEngineRef(value: unknown): value is EngineRef {
+  return record(value)
+    && typeof value.id === 'string'
+    && typeof value.name === 'string'
+    && Object.values(RefKind).includes(value.kind as never);
+}
+
+function isSchemaField(value: unknown): value is SchemaField {
+  return record(value)
+    && typeof value.kind === 'string'
+    && Object.values(SchemaKind).includes(value.kind as never);
+}
+
+function isProjection(value: unknown): value is {
+  readonly source: string;
+  readonly sourceRefId: string;
+  readonly mode: string;
+  readonly fields?: readonly string[];
+  readonly steps?: readonly unknown[];
+} {
+  return record(value)
+    && value.kind === 'schema-projection-definition'
+    && typeof value.source === 'string'
+    && typeof value.sourceRefId === 'string'
+    && typeof value.mode === 'string';
+}
+
+function isZod(value: unknown): value is object {
+  return record(value)
+    && ('_zod' in value || '_def' in value || typeof value.safeParse === 'function');
+}
+
+function zodDefinition(value: object): Record<string, unknown> {
+  const source = value as Record<string, unknown>;
+  const zod = record(source._zod) ? source._zod : undefined;
+  if (zod && record(zod.def)) return zod.def;
+  return record(source._def) ? source._def : {};
+}
+
+function primitive(value: unknown): 'string' | 'number' | 'integer' | 'boolean' | 'bigint' | 'date' | 'null' | 'unknown' {
+  if (value === null) return 'null';
+  if (typeof value === 'string') return 'string';
+  if (typeof value === 'number') return Number.isInteger(value) ? 'integer' : 'number';
+  if (typeof value === 'boolean') return 'boolean';
+  if (typeof value === 'bigint') return 'bigint';
+  if (value instanceof Date) return 'date';
+  return 'unknown';
+}
+
+function jsonObject(value: unknown): JsonObject {
+  const result = jsonValue(value);
+  return record(result) ? result as JsonObject : {};
+}
+
+function jsonValue(value: unknown): JsonValue {
+  if (
+    value === null
+    || typeof value === 'string'
+    || typeof value === 'number'
+    || typeof value === 'boolean'
+  ) return value;
+  if (typeof value === 'bigint') return value.toString();
+  if (Array.isArray(value)) return value.map(jsonValue);
+  if (value instanceof Date) return value.toISOString();
+  if (record(value)) {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([, item]) =>
+          item !== undefined
+          && typeof item !== 'function'
+          && typeof item !== 'symbol',
+        )
+        .map(([key, item]) => [key, jsonValue(item)]),
+    );
+  }
+  return String(value);
+}
+
+function record(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
