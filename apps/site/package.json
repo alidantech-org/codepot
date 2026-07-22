@@ -4,12 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "validate:docs": "node scripts/validate-docs.mjs",
     "sync:docs": "node scripts/sync-docs.mjs",
-    "predev": "pnpm sync:docs",
+    "prepare:docs": "pnpm validate:docs && pnpm sync:docs",
+    "predev": "pnpm prepare:docs",
     "dev": "next dev",
-    "prebuild": "pnpm sync:docs",
+    "prebuild": "pnpm prepare:docs",
     "build": "next build",
-    "pretypecheck": "pnpm sync:docs",
+    "pretypecheck": "pnpm prepare:docs",
     "typecheck": "tsc --noEmit",
     "start": "next start",
     "clean": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('.next', { recursive: true, force: true }); rmSync('src/generated', { recursive: true, force: true });\""
