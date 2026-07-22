@@ -4,13 +4,21 @@ import { notFound } from "next/navigation";
 import { DocsPager } from "@/components/docs/DocsPager";
 import { MarkdownRenderer } from "@/components/docs/MarkdownRenderer";
 import { TocRenderer } from "@/components/docs/TocRenderer";
-import { generateDocMetadata, generateStaticParams, getDocBySlug } from "@/lib/docs";
+import {
+  generateDocMetadata,
+  generateStaticParams as generatePublicDocParams,
+  getDocBySlug,
+} from "@/lib/docs";
 
 interface DocPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export { generateStaticParams };
+export const dynamicParams = false;
+
+export function generateStaticParams(): { slug: string }[] {
+  return generatePublicDocParams();
+}
 
 export async function generateMetadata({ params }: DocPageProps): Promise<Metadata> {
   const { slug } = await params;
