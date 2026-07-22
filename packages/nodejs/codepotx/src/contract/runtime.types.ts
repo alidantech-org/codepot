@@ -9,6 +9,8 @@ import type { EventBusPort } from './ports.types';
 import type {
   AuthoringArtifactLoadRequest,
   AuthoringArtifactLoadResult,
+  AuthoringCacheRequest,
+  AuthoringCacheResult,
   AuthoringCompileRequest,
   AuthoringCompileResult,
   AuthoringInspectRequest,
@@ -17,6 +19,10 @@ import type {
   AuthoringValidateResult,
   CodepotFileLoadRequest,
   CodepotFileLoadResult,
+  GenerationCleanRequest,
+  GenerationCleanResult,
+  GenerationCommandRequest,
+  GenerationCommandResult,
   GenerationExecuteRequest,
   GenerationExecuteResult,
   GenerationPlanRequest,
@@ -30,6 +36,8 @@ import type {
   TemplateRenderRequest,
   TemplateRenderResult,
   TemplatingCompileRequest,
+  TemplatingLoadRequest,
+  TemplatingLoadResult,
   TemplatingCompileResult,
   TemplatingValidateRequest,
   TemplatingValidateResult,
@@ -80,6 +88,14 @@ export interface RuntimeOperationMap {
     readonly request: AuthoringArtifactLoadRequest;
     readonly result: AuthoringArtifactLoadResult;
   };
+  readonly 'authoring.cache': {
+    readonly request: AuthoringCacheRequest;
+    readonly result: AuthoringCacheResult;
+  };
+  readonly 'templating.load': {
+    readonly request: TemplatingLoadRequest;
+    readonly result: TemplatingLoadResult;
+  };
   readonly 'templating.validate': {
     readonly request: TemplatingValidateRequest;
     readonly result: TemplatingValidateResult;
@@ -111,6 +127,14 @@ export interface RuntimeOperationMap {
   readonly 'generation.write': {
     readonly request: GenerationWriteRequest;
     readonly result: GenerationWriteResult;
+  };
+  readonly 'generation.clean': {
+    readonly request: GenerationCleanRequest;
+    readonly result: GenerationCleanResult;
+  };
+  readonly 'generation.commands': {
+    readonly request: GenerationCommandRequest;
+    readonly result: GenerationCommandResult;
   };
   readonly 'generation.execute': {
     readonly request: GenerationExecuteRequest;

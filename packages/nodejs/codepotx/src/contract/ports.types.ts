@@ -124,9 +124,9 @@ export interface FileWriterPort {
 
 export interface DataCodecPort {
   parseJson<T = JsonValue>(text: string): T;
-  stringifyJson(value: JsonValue, options?: { readonly pretty?: boolean }): string;
+  stringifyJson(value: unknown, options?: { readonly pretty?: boolean }): string;
   parseYaml<T = JsonValue>(text: string): T;
-  stringifyYaml(value: JsonValue): string;
+  stringifyYaml(value: unknown): string;
 }
 
 export interface ModuleLoadOptions {
@@ -168,17 +168,22 @@ export interface HashPort {
   values(values: readonly JsonValue[]): Promise<ContentDigest>;
 }
 
-export interface CacheEntry<TValue extends JsonValue = JsonValue> {
+export interface CachePayload {
+  readonly encoding: 'utf8' | 'base64';
+  readonly data: string;
+}
+
+export interface CacheEntry {
   readonly key: string;
-  readonly value: TValue;
+  readonly value: CachePayload;
   readonly digest?: ContentDigest;
   readonly createdAt: IsoTimestamp;
   readonly expiresAt?: IsoTimestamp;
 }
 
 export interface CachePort {
-  get<TValue extends JsonValue = JsonValue>(key: string): Promise<CacheEntry<TValue> | null>;
-  set<TValue extends JsonValue = JsonValue>(entry: CacheEntry<TValue>): Promise<void>;
+  get(key: string): Promise<CacheEntry | null>;
+  set(entry: CacheEntry): Promise<void>;
   delete(key: string): Promise<boolean>;
   clear(namespace?: string): Promise<void>;
 }
