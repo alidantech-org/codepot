@@ -1,7 +1,7 @@
 # Phase 03 — Authoring parity and canonical compiler
 
-Status: [ ]
-Issue: open when required Phase 01/02 ports are complete
+Status: [~]
+Issue: #5
 Depends on: Shared contracts, module loader, source resolver, cache, hashing, diagnostics, events
 Commit: pending
 Validation: pending
