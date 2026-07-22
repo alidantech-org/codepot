@@ -13,6 +13,7 @@
     "build": "next build",
     "pretypecheck": "pnpm prepare:docs",
     "typecheck": "tsc --noEmit",
+    "prelint": "pnpm prepare:docs",
     "lint": "eslint .",
     "test": "pnpm validate:docs",
     "start": "next start",
