@@ -9,6 +9,10 @@ import type {
   VirtualFile,
 } from './generation-artifact.types';
 import type { CompiledTemplatePack } from './template-artifact.types';
+import type {
+  TemplateContextValidation,
+  TemplateVariableCatalog,
+} from './template-variables.types';
 import type { OperationResult, ValidationResult } from './diagnostics.types';
 import type { SourceDescriptor } from './sources.types';
 
@@ -62,7 +66,6 @@ export interface TemplatingLoadRequest {
 }
 
 export interface TemplatingValidateRequest extends TemplatingLoadRequest {}
-
 export interface TemplatingCompileRequest extends TemplatingLoadRequest {}
 
 export interface TemplateContextRequest {
@@ -71,6 +74,18 @@ export interface TemplateContextRequest {
   readonly project?: JsonObject;
   readonly selectedFrontend?: string;
   readonly variables?: JsonObject;
+  readonly language?: JsonObject;
+  readonly emit?: JsonObject;
+  readonly file?: JsonObject;
+}
+
+export interface TemplateVariablesRequest extends TemplateContextRequest {
+  readonly format?: 'object' | 'json' | 'markdown';
+  readonly pretty?: boolean;
+}
+
+export interface TemplateContextValidateRequest extends TemplateContextRequest {
+  readonly strict?: boolean;
 }
 
 export interface TemplateRenderRequest {
@@ -86,6 +101,8 @@ export type TemplatingLoadResult = OperationResult<CompiledTemplatePack>;
 export type TemplatingValidateResult = OperationResult<ValidationResult>;
 export type TemplatingCompileResult = OperationResult<CompiledTemplatePack>;
 export type TemplateContextResult = OperationResult<JsonObject>;
+export type TemplateVariablesResult = OperationResult<TemplateVariableCatalog | string>;
+export type TemplateContextValidateResult = OperationResult<TemplateContextValidation>;
 export type TemplateRenderResult = OperationResult<readonly VirtualFile[]>;
 
 export interface CodepotFileLoadRequest {
