@@ -1,0 +1,32 @@
+{
+  "name": "codepotx-cli",
+  "version": "0.0.0",
+  "description": "External command-line frontend for the Codepot runtime.",
+  "type": "module",
+  "license": "MIT",
+  "private": false,
+  "engines": { "node": ">=22.18.0" },
+  "bin": { "codepotx": "./dist/index.js" },
+  "exports": {
+    ".": { "types": "./dist/public.d.ts", "import": "./dist/public.js" },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "test": "tsx --test tests/cli.test.ts",
+    "package:lint": "publint && attw --pack . --profile esm-only",
+    "check": "pnpm typecheck && pnpm test && pnpm build && pnpm package:lint",
+    "clean": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\""
+  },
+  "dependencies": { "codepotx": "workspace:*" },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
+    "@types/node": "22.20.1",
+    "publint": "0.3.21",
+    "tsdown": "0.22.12",
+    "tsx": "4.23.1",
+    "typescript": "7.0.2"
+  }
+}

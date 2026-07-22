@@ -1,8 +1,9 @@
 packages:
   - packages/nodejs/codepotx
+  - packages/nodejs/codepotx-cli
 
 allowBuilds:
-  esbuild: set this to true or false
+  esbuild: true
 
 onlyBuiltDependencies:
   - esbuild
