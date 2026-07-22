@@ -39,6 +39,10 @@
       "types": "./dist/platform/index.d.ts",
       "import": "./dist/platform/index.js"
     },
+    "./authoring": {
+      "types": "./dist/authoring/index.d.ts",
+      "import": "./dist/authoring/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

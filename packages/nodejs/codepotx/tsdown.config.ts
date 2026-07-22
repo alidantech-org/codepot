@@ -6,6 +6,7 @@ export default defineConfig({
     'src/contract/index.ts',
     'src/runtime/index.ts',
     'src/platform/index.ts',
+    'src/authoring/index.ts',
   ],
   root: 'src',
   outDir: 'dist',
