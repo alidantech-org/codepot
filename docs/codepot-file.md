@@ -25,7 +25,7 @@ sources:
     type: package
     package: '@example/codepot-typescript'
 
- tasks:
+tasks:
   sdk:
     authoring: contracts
     templates: templates
