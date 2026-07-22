@@ -8,6 +8,7 @@ export default defineConfig({
     'src/platform/index.ts',
     'src/authoring/index.ts',
     'src/templating/index.ts',
+    'src/generation/index.ts',
   ],
   root: 'src',
   outDir: 'dist',

@@ -4,60 +4,26 @@
   "description": "TypeScript authoring and code-generation engine for Codepot.",
   "type": "module",
   "license": "MIT",
-  "author": {
-    "name": "AlidanTech",
-    "url": "https://alidantech.org"
-  },
+  "author": { "name": "AlidanTech", "url": "https://alidantech.org" },
   "homepage": "https://code.alidantech.org/",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/alidantech-org/codepot.git",
-    "directory": "packages/nodejs/codepotx"
-  },
-  "bugs": {
-    "url": "https://github.com/alidantech-org/codepot/issues"
-  },
-  "engines": {
-    "node": ">=22.18.0"
-  },
+  "repository": { "type": "git", "url": "git+https://github.com/alidantech-org/codepot.git", "directory": "packages/nodejs/codepotx" },
+  "bugs": { "url": "https://github.com/alidantech-org/codepot/issues" },
+  "engines": { "node": ">=22.18.0" },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./contract": {
-      "types": "./dist/contract/index.d.ts",
-      "import": "./dist/contract/index.js"
-    },
-    "./runtime": {
-      "types": "./dist/runtime/index.d.ts",
-      "import": "./dist/runtime/index.js"
-    },
-    "./platform": {
-      "types": "./dist/platform/index.d.ts",
-      "import": "./dist/platform/index.js"
-    },
-    "./authoring": {
-      "types": "./dist/authoring/index.d.ts",
-      "import": "./dist/authoring/index.js"
-    },
-    "./templating": {
-      "types": "./dist/templating/index.d.ts",
-      "import": "./dist/templating/index.js"
-    },
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./contract": { "types": "./dist/contract/index.d.ts", "import": "./dist/contract/index.js" },
+    "./runtime": { "types": "./dist/runtime/index.d.ts", "import": "./dist/runtime/index.js" },
+    "./platform": { "types": "./dist/platform/index.d.ts", "import": "./dist/platform/index.js" },
+    "./authoring": { "types": "./dist/authoring/index.d.ts", "import": "./dist/authoring/index.js" },
+    "./templating": { "types": "./dist/templating/index.d.ts", "import": "./dist/templating/index.js" },
+    "./generation": { "types": "./dist/generation/index.d.ts", "import": "./dist/generation/index.js" },
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "README.md", "LICENSE"],
   "sideEffects": false,
-  "publishConfig": {
-    "access": "public"
-  },
+  "publishConfig": { "access": "public" },
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
@@ -68,28 +34,7 @@
     "check": "pnpm typecheck && pnpm test && pnpm build && pnpm package:lint",
     "prepublishOnly": "pnpm check"
   },
-  "dependencies": {
-    "handlebars": "4.7.9",
-    "tsx": "4.23.1",
-    "yaml": "2.9.0",
-    "zod": "4.4.3"
-  },
-  "devDependencies": {
-    "@arethetypeswrong/cli": "0.18.5",
-    "@types/node": "22.20.1",
-    "publint": "0.3.21",
-    "tsdown": "0.22.12",
-    "typescript": "7.0.2"
-  },
-  "keywords": [
-    "codepot",
-    "codegen",
-    "typescript",
-    "openapi",
-    "contracts",
-    "schema",
-    "templates",
-    "handlebars",
-    "cli"
-  ]
+  "dependencies": { "handlebars": "4.7.9", "tsx": "4.23.1", "yaml": "2.9.0", "zod": "4.4.3" },
+  "devDependencies": { "@arethetypeswrong/cli": "0.18.5", "@types/node": "22.20.1", "publint": "0.3.21", "tsdown": "0.22.12", "typescript": "7.0.2" },
+  "keywords": ["codepot", "codegen", "typescript", "openapi", "contracts", "schema", "templates", "handlebars", "cli"]
 }
