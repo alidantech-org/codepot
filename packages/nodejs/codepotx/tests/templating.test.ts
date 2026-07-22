@@ -53,7 +53,19 @@ folders:
 test('templating context is created from stable artifacts only', async () => {
   const platform = createMemoryPlatformServices();
   const engine = createTemplatingEngine(platform);
-  const authoring = { frontends: [{ name: 'web' }] } as unknown as CompiledAuthoringArtifact;
+  const authoring = {
+    header: {
+      kind: 'codepot.authoring', protocolVersion: 1, artifactVersion: 1,
+      producer: { name: 'test', version: '1' }, contentDigest: 'a', sourceDigest: 'a',
+    },
+    source: {
+      id: 'a', descriptor: { kind: 'memory', id: 'a' }, root: '/', entry: '/config.ts', digest: 'a', files: [],
+    },
+    project: { name: 'Demo', version: '1', tags: [], defaults: {} },
+    properties: [], schemas: [], entities: [], relations: [], resources: [], operations: [],
+    access: [], hooks: [], frontends: [{ id: 'web', key: 'web', name: 'web', components: [], screens: [] }],
+    metadata: {}, diagnostics: [],
+  } as CompiledAuthoringArtifact;
   const context = await engine.createContext({ authoring, templates: {} as never, selectedFrontend: 'web', variables: { package: 'demo' } });
   assert.equal(context.success, true);
   if (context.success) assert.deepEqual(context.value.variables, { package: 'demo' });
