@@ -39,6 +39,16 @@ export interface ManagedWriteResult {
   readonly transaction?: GenerationFileTransaction;
 }
 
+export class ManagedWriteError extends Error {
+  readonly rollback: readonly FileWriteOutcome[];
+
+  constructor(message: string, options: { readonly cause?: unknown; readonly rollback?: readonly FileWriteOutcome[] } = {}) {
+    super(message, { cause: options.cause });
+    this.name = 'ManagedWriteError';
+    this.rollback = options.rollback ?? [];
+  }
+}
+
 /**
  * Apply rendered output as one reversible task. The function never recursively
  * deletes a configured folder; stale cleanup is limited to verified manifest
@@ -69,64 +79,69 @@ export async function applyManagedWrite(
     await transaction.captureText(selectedManifestPath);
   }
 
-  const diagnostics: Diagnostic[] = [];
-  const outcomes: FileWriteOutcome[] = [];
-  const cleaned: PortablePath[] = [];
-  const files = request.rendered.files.map((file) => ({
-    ...file,
-    path: joinPath(request.outputRoot, file.path),
-  }));
-  outcomes.push(...await dependencies.writer.writeBatch({
-    files,
-    root: request.outputRoot,
-    atomic: true,
-    dryRun: request.dryRun,
-  }));
+  try {
+    const diagnostics: Diagnostic[] = [];
+    const outcomes: FileWriteOutcome[] = [];
+    const cleaned: PortablePath[] = [];
+    const files = request.rendered.files.map((file) => ({
+      ...file,
+      path: joinPath(request.outputRoot, file.path),
+    }));
+    outcomes.push(...await dependencies.writer.writeBatch({
+      files,
+      root: request.outputRoot,
+      atomic: true,
+      dryRun: request.dryRun,
+    }));
 
-  for (const record of stale) {
-    const path = joinPath(request.outputRoot, record.path);
-    const digest = await currentFileDigest(request.outputRoot, record, dependencies);
-    if (digest === null) continue;
-    if (digest !== record.contentDigest) {
-      outcomes.push({
-        path,
-        status: 'refused',
-        lifecycle: record.lifecycle,
-        reason: 'stale-file-modified-by-user',
-      });
-      diagnostics.push({
-        code: 'GENERATION_STALE_FILE_MODIFIED',
-        severity: 'warning',
-        layer: 'generation',
-        message: `Stale managed file was preserved because its content changed: ${path}`,
-        details: { path, previousDigest: record.contentDigest, currentDigest: digest },
-      });
-      continue;
-    }
-    if (request.dryRun) {
-      outcomes.push({
-        path,
-        status: 'skipped',
-        lifecycle: record.lifecycle,
-        reason: 'dry-run:delete-stale-managed',
-      });
+    for (const record of stale) {
+      const path = joinPath(request.outputRoot, record.path);
+      const digest = await currentFileDigest(request.outputRoot, record, dependencies);
+      if (digest === null) continue;
+      if (digest !== record.contentDigest) {
+        outcomes.push({
+          path,
+          status: 'refused',
+          lifecycle: record.lifecycle,
+          reason: 'stale-file-modified-by-user',
+        });
+        diagnostics.push({
+          code: 'GENERATION_STALE_FILE_MODIFIED',
+          severity: 'warning',
+          layer: 'generation',
+          message: `Stale managed file was preserved because its content changed: ${path}`,
+          details: { path, previousDigest: record.contentDigest, currentDigest: digest },
+        });
+        continue;
+      }
+      if (request.dryRun) {
+        outcomes.push({
+          path,
+          status: 'skipped',
+          lifecycle: record.lifecycle,
+          reason: 'dry-run:delete-stale-managed',
+        });
+        cleaned.push(path);
+        continue;
+      }
+      await dependencies.files.remove(path, { force: true });
+      outcomes.push({ path, status: 'deleted', lifecycle: record.lifecycle, reason: 'stale-managed' });
       cleaned.push(path);
-      continue;
     }
-    await dependencies.files.remove(path, { force: true });
-    outcomes.push({ path, status: 'deleted', lifecycle: record.lifecycle, reason: 'stale-managed' });
-    cleaned.push(path);
-  }
 
-  if (!request.dryRun) await writeGenerationManifest(selectedManifestPath, manifest, dependencies);
-  return {
-    manifest,
-    manifestPath: selectedManifestPath,
-    files: outcomes,
-    cleaned,
-    diagnostics,
-    ...(transaction ? { transaction } : {}),
-  };
+    if (!request.dryRun) await writeGenerationManifest(selectedManifestPath, manifest, dependencies);
+    return {
+      manifest,
+      manifestPath: selectedManifestPath,
+      files: outcomes,
+      cleaned,
+      diagnostics,
+      ...(transaction ? { transaction } : {}),
+    };
+  } catch (caught) {
+    const rollback = transaction ? await transaction.rollback() : [];
+    throw new ManagedWriteError('Generation write transaction failed.', { cause: caught, rollback });
+  }
 }
 
 function cleanScopeAllows(plan: GenerationPlan, outputRoot: string, relativePath: string): boolean {
