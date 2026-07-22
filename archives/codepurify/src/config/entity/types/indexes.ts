@@ -1,4 +1,4 @@
-// ─── codepurify/types/indexes.ts ─────────────────────────────────────────────────
+// ─── codepot/types/indexes.ts ─────────────────────────────────────────────────
 
 export interface IndexConfig {
   fields: readonly (() => any)[];

@@ -1,8 +1,8 @@
 {
-  "name": "codepurify-templates",
-  "displayName": "Codepurify Templates",
+  "name": "codepot-templates",
+  "displayName": "codepot Templates",
   "version": "0.0.2",
-  "description": "Template language support for deterministic Codepurify code generation with syntax highlighting, autocomplete, hover documentation, and validation.",
+  "description": "Template language support for deterministic codepot code generation with syntax highlighting, autocomplete, hover documentation, and validation.",
   "publisher": "alidantechorg",
   "engines": {
     "vscode": "^1.80.0"
@@ -11,7 +11,7 @@
     "Programming Languages"
   ],
   "keywords": [
-    "codepurify",
+    "codepot",
     "code generation",
     "templates",
     "syntax highlighting",
@@ -25,366 +25,366 @@
   "icon": "icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/alidantech-org/codepurify.git"
+    "url": "https://github.com/alidantech-org/codepot.git"
   },
   "main": "./out/extension.js",
   "activationEvents": [],
   "contributes": {
     "languages": [
       {
-        "id": "codepurify",
+        "id": "codepot",
         "aliases": [
-          "Codepurify",
-          "codepurify"
+          "codepot",
+          "codepot"
         ],
         "extensions": [
-          ".codepurify",
+          ".codepot",
           ".code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-javascript",
+        "id": "codepot-javascript",
         "aliases": [
-          "Codepurify JavaScript"
+          "codepot JavaScript"
         ],
         "extensions": [
-          ".js.codepurify",
+          ".js.codepot",
           ".js.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-jsx",
+        "id": "codepot-jsx",
         "aliases": [
-          "Codepurify JavaScript React"
+          "codepot JavaScript React"
         ],
         "extensions": [
-          ".jsx.codepurify",
+          ".jsx.codepot",
           ".jsx.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-typescript",
+        "id": "codepot-typescript",
         "aliases": [
-          "Codepurify TypeScript"
+          "codepot TypeScript"
         ],
         "extensions": [
-          ".ts.codepurify",
+          ".ts.codepot",
           ".ts.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-tsx",
+        "id": "codepot-tsx",
         "aliases": [
-          "Codepurify TypeScript React"
+          "codepot TypeScript React"
         ],
         "extensions": [
-          ".tsx.codepurify",
+          ".tsx.codepot",
           ".tsx.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-sql",
+        "id": "codepot-sql",
         "aliases": [
-          "Codepurify SQL"
+          "codepot SQL"
         ],
         "extensions": [
-          ".sql.codepurify",
+          ".sql.codepot",
           ".sql.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-java",
+        "id": "codepot-java",
         "aliases": [
-          "Codepurify Java"
+          "codepot Java"
         ],
         "extensions": [
-          ".java.codepurify",
+          ".java.codepot",
           ".java.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-go",
+        "id": "codepot-go",
         "aliases": [
-          "Codepurify Go"
+          "codepot Go"
         ],
         "extensions": [
-          ".go.codepurify",
+          ".go.codepot",
           ".go.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-rust",
+        "id": "codepot-rust",
         "aliases": [
-          "Codepurify Rust"
+          "codepot Rust"
         ],
         "extensions": [
-          ".rs.codepurify",
+          ".rs.codepot",
           ".rs.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-python",
+        "id": "codepot-python",
         "aliases": [
-          "Codepurify Python"
+          "codepot Python"
         ],
         "extensions": [
-          ".py.codepurify",
+          ".py.codepot",
           ".py.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-csharp",
+        "id": "codepot-csharp",
         "aliases": [
-          "Codepurify C#"
+          "codepot C#"
         ],
         "extensions": [
-          ".cs.codepurify",
+          ".cs.codepot",
           ".cs.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-cpp",
+        "id": "codepot-cpp",
         "aliases": [
-          "Codepurify C++"
+          "codepot C++"
         ],
         "extensions": [
-          ".cpp.codepurify",
+          ".cpp.codepot",
           ".cpp.code",
-          ".cc.codepurify",
+          ".cc.codepot",
           ".cc.code",
-          ".cxx.codepurify",
+          ".cxx.codepot",
           ".cxx.code",
-          ".hpp.codepurify",
+          ".hpp.codepot",
           ".hpp.code",
-          ".h.codepurify",
+          ".h.codepot",
           ".h.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-c",
+        "id": "codepot-c",
         "aliases": [
-          "Codepurify C"
+          "codepot C"
         ],
         "extensions": [
-          ".c.codepurify",
+          ".c.codepot",
           ".c.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-php",
+        "id": "codepot-php",
         "aliases": [
-          "Codepurify PHP"
+          "codepot PHP"
         ],
         "extensions": [
-          ".php.codepurify",
+          ".php.codepot",
           ".php.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-ruby",
+        "id": "codepot-ruby",
         "aliases": [
-          "Codepurify Ruby"
+          "codepot Ruby"
         ],
         "extensions": [
-          ".rb.codepurify",
+          ".rb.codepot",
           ".rb.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-kotlin",
+        "id": "codepot-kotlin",
         "aliases": [
-          "Codepurify Kotlin"
+          "codepot Kotlin"
         ],
         "extensions": [
-          ".kt.codepurify",
+          ".kt.codepot",
           ".kt.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-swift",
+        "id": "codepot-swift",
         "aliases": [
-          "Codepurify Swift"
+          "codepot Swift"
         ],
         "extensions": [
-          ".swift.codepurify",
+          ".swift.codepot",
           ".swift.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-html",
+        "id": "codepot-html",
         "aliases": [
-          "Codepurify HTML"
+          "codepot HTML"
         ],
         "extensions": [
-          ".html.codepurify",
+          ".html.codepot",
           ".html.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-css",
+        "id": "codepot-css",
         "aliases": [
-          "Codepurify CSS"
+          "codepot CSS"
         ],
         "extensions": [
-          ".css.codepurify",
+          ".css.codepot",
           ".css.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-scss",
+        "id": "codepot-scss",
         "aliases": [
-          "Codepurify SCSS"
+          "codepot SCSS"
         ],
         "extensions": [
-          ".scss.codepurify",
+          ".scss.codepot",
           ".scss.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-json",
+        "id": "codepot-json",
         "aliases": [
-          "Codepurify JSON"
+          "codepot JSON"
         ],
         "extensions": [
-          ".json.codepurify",
+          ".json.codepot",
           ".json.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-yaml",
+        "id": "codepot-yaml",
         "aliases": [
-          "Codepurify YAML"
+          "codepot YAML"
         ],
         "extensions": [
-          ".yaml.codepurify",
+          ".yaml.codepot",
           ".yaml.code",
-          ".yml.codepurify",
+          ".yml.codepot",
           ".yml.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-markdown",
+        "id": "codepot-markdown",
         "aliases": [
-          "Codepurify Markdown"
+          "codepot Markdown"
         ],
         "extensions": [
-          ".md.codepurify",
+          ".md.codepot",
           ".md.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-dockerfile",
+        "id": "codepot-dockerfile",
         "aliases": [
-          "Codepurify Dockerfile"
+          "codepot Dockerfile"
         ],
         "extensions": [
-          ".dockerfile.codepurify",
+          ".dockerfile.codepot",
           ".dockerfile.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-shell",
+        "id": "codepot-shell",
         "aliases": [
-          "Codepurify Shell"
+          "codepot Shell"
         ],
         "extensions": [
-          ".sh.codepurify",
+          ".sh.codepot",
           ".sh.code",
-          ".bash.codepurify",
+          ".bash.codepot",
           ".bash.code",
-          ".zsh.codepurify",
+          ".zsh.codepot",
           ".zsh.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-dart",
+        "id": "codepot-dart",
         "aliases": [
-          "Codepurify Dart"
+          "codepot Dart"
         ],
         "extensions": [
-          ".dart.codepurify",
+          ".dart.codepot",
           ".dart.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-vue",
+        "id": "codepot-vue",
         "aliases": [
-          "Codepurify Vue"
+          "codepot Vue"
         ],
         "extensions": [
-          ".vue.codepurify",
+          ".vue.codepot",
           ".vue.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-svelte",
+        "id": "codepot-svelte",
         "aliases": [
-          "Codepurify Svelte"
+          "codepot Svelte"
         ],
         "extensions": [
-          ".svelte.codepurify",
+          ".svelte.codepot",
           ".svelte.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-xml",
+        "id": "codepot-xml",
         "aliases": [
-          "Codepurify XML"
+          "codepot XML"
         ],
         "extensions": [
-          ".xml.codepurify",
+          ".xml.codepot",
           ".xml.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-toml",
+        "id": "codepot-toml",
         "aliases": [
-          "Codepurify TOML"
+          "codepot TOML"
         ],
         "extensions": [
-          ".toml.codepurify",
+          ".toml.codepot",
           ".toml.code"
         ],
         "configuration": "./config/language-configuration.json"
       },
       {
-        "id": "codepurify-graphql",
+        "id": "codepot-graphql",
         "aliases": [
-          "Codepurify GraphQL"
+          "codepot GraphQL"
         ],
         "extensions": [
-          ".graphql.codepurify",
+          ".graphql.codepot",
           ".graphql.code",
-          ".gql.codepurify",
+          ".gql.codepot",
           ".gql.code"
         ],
         "configuration": "./config/language-configuration.json"
@@ -392,252 +392,252 @@
     ],
     "grammars": [
       {
-        "language": "codepurify",
-        "scopeName": "source.codepurify",
-        "path": "./syntaxes/codepurify.tmLanguage.json"
+        "language": "codepot",
+        "scopeName": "source.codepot",
+        "path": "./syntaxes/codepot.tmLanguage.json"
       },
       {
-        "language": "codepurify-javascript",
-        "scopeName": "source.js.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-javascript.tmLanguage.json"
+        "language": "codepot-javascript",
+        "scopeName": "source.js.codepot",
+        "path": "./syntaxes/wrappers/codepot-javascript.tmLanguage.json"
       },
       {
-        "language": "codepurify-jsx",
-        "scopeName": "source.jsx.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-jsx.tmLanguage.json"
+        "language": "codepot-jsx",
+        "scopeName": "source.jsx.codepot",
+        "path": "./syntaxes/wrappers/codepot-jsx.tmLanguage.json"
       },
       {
-        "language": "codepurify-typescript",
-        "scopeName": "source.ts.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-typescript.tmLanguage.json"
+        "language": "codepot-typescript",
+        "scopeName": "source.ts.codepot",
+        "path": "./syntaxes/wrappers/codepot-typescript.tmLanguage.json"
       },
       {
-        "language": "codepurify-tsx",
-        "scopeName": "source.tsx.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-tsx.tmLanguage.json"
+        "language": "codepot-tsx",
+        "scopeName": "source.tsx.codepot",
+        "path": "./syntaxes/wrappers/codepot-tsx.tmLanguage.json"
       },
       {
-        "language": "codepurify-sql",
-        "scopeName": "source.sql.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-sql.tmLanguage.json"
+        "language": "codepot-sql",
+        "scopeName": "source.sql.codepot",
+        "path": "./syntaxes/wrappers/codepot-sql.tmLanguage.json"
       },
       {
-        "language": "codepurify-java",
-        "scopeName": "source.java.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-java.tmLanguage.json"
+        "language": "codepot-java",
+        "scopeName": "source.java.codepot",
+        "path": "./syntaxes/wrappers/codepot-java.tmLanguage.json"
       },
       {
-        "language": "codepurify-go",
-        "scopeName": "source.go.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-go.tmLanguage.json"
+        "language": "codepot-go",
+        "scopeName": "source.go.codepot",
+        "path": "./syntaxes/wrappers/codepot-go.tmLanguage.json"
       },
       {
-        "language": "codepurify-rust",
-        "scopeName": "source.rust.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-rust.tmLanguage.json"
+        "language": "codepot-rust",
+        "scopeName": "source.rust.codepot",
+        "path": "./syntaxes/wrappers/codepot-rust.tmLanguage.json"
       },
       {
-        "language": "codepurify-python",
-        "scopeName": "source.python.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-python.tmLanguage.json"
+        "language": "codepot-python",
+        "scopeName": "source.python.codepot",
+        "path": "./syntaxes/wrappers/codepot-python.tmLanguage.json"
       },
       {
-        "language": "codepurify-csharp",
-        "scopeName": "source.cs.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-csharp.tmLanguage.json"
+        "language": "codepot-csharp",
+        "scopeName": "source.cs.codepot",
+        "path": "./syntaxes/wrappers/codepot-csharp.tmLanguage.json"
       },
       {
-        "language": "codepurify-cpp",
-        "scopeName": "source.cpp.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-cpp.tmLanguage.json"
+        "language": "codepot-cpp",
+        "scopeName": "source.cpp.codepot",
+        "path": "./syntaxes/wrappers/codepot-cpp.tmLanguage.json"
       },
       {
-        "language": "codepurify-c",
-        "scopeName": "source.c.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-c.tmLanguage.json"
+        "language": "codepot-c",
+        "scopeName": "source.c.codepot",
+        "path": "./syntaxes/wrappers/codepot-c.tmLanguage.json"
       },
       {
-        "language": "codepurify-php",
-        "scopeName": "source.php.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-php.tmLanguage.json"
+        "language": "codepot-php",
+        "scopeName": "source.php.codepot",
+        "path": "./syntaxes/wrappers/codepot-php.tmLanguage.json"
       },
       {
-        "language": "codepurify-ruby",
-        "scopeName": "source.ruby.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-ruby.tmLanguage.json"
+        "language": "codepot-ruby",
+        "scopeName": "source.ruby.codepot",
+        "path": "./syntaxes/wrappers/codepot-ruby.tmLanguage.json"
       },
       {
-        "language": "codepurify-kotlin",
-        "scopeName": "source.kotlin.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-kotlin.tmLanguage.json"
+        "language": "codepot-kotlin",
+        "scopeName": "source.kotlin.codepot",
+        "path": "./syntaxes/wrappers/codepot-kotlin.tmLanguage.json"
       },
       {
-        "language": "codepurify-swift",
-        "scopeName": "source.swift.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-swift.tmLanguage.json"
+        "language": "codepot-swift",
+        "scopeName": "source.swift.codepot",
+        "path": "./syntaxes/wrappers/codepot-swift.tmLanguage.json"
       },
       {
-        "language": "codepurify-html",
-        "scopeName": "text.html.basic.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-html.tmLanguage.json"
+        "language": "codepot-html",
+        "scopeName": "text.html.basic.codepot",
+        "path": "./syntaxes/wrappers/codepot-html.tmLanguage.json"
       },
       {
-        "language": "codepurify-css",
-        "scopeName": "source.css.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-css.tmLanguage.json"
+        "language": "codepot-css",
+        "scopeName": "source.css.codepot",
+        "path": "./syntaxes/wrappers/codepot-css.tmLanguage.json"
       },
       {
-        "language": "codepurify-scss",
-        "scopeName": "source.css.scss.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-scss.tmLanguage.json"
+        "language": "codepot-scss",
+        "scopeName": "source.css.scss.codepot",
+        "path": "./syntaxes/wrappers/codepot-scss.tmLanguage.json"
       },
       {
-        "language": "codepurify-json",
-        "scopeName": "source.json.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-json.tmLanguage.json"
+        "language": "codepot-json",
+        "scopeName": "source.json.codepot",
+        "path": "./syntaxes/wrappers/codepot-json.tmLanguage.json"
       },
       {
-        "language": "codepurify-yaml",
-        "scopeName": "source.yaml.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-yaml.tmLanguage.json"
+        "language": "codepot-yaml",
+        "scopeName": "source.yaml.codepot",
+        "path": "./syntaxes/wrappers/codepot-yaml.tmLanguage.json"
       },
       {
-        "language": "codepurify-markdown",
-        "scopeName": "text.html.markdown.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-markdown.tmLanguage.json"
+        "language": "codepot-markdown",
+        "scopeName": "text.html.markdown.codepot",
+        "path": "./syntaxes/wrappers/codepot-markdown.tmLanguage.json"
       },
       {
-        "language": "codepurify-dockerfile",
-        "scopeName": "source.dockerfile.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-dockerfile.tmLanguage.json"
+        "language": "codepot-dockerfile",
+        "scopeName": "source.dockerfile.codepot",
+        "path": "./syntaxes/wrappers/codepot-dockerfile.tmLanguage.json"
       },
       {
-        "language": "codepurify-shell",
-        "scopeName": "source.shell.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-shell.tmLanguage.json"
+        "language": "codepot-shell",
+        "scopeName": "source.shell.codepot",
+        "path": "./syntaxes/wrappers/codepot-shell.tmLanguage.json"
       },
       {
-        "language": "codepurify-dart",
-        "scopeName": "source.dart.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-dart.tmLanguage.json"
+        "language": "codepot-dart",
+        "scopeName": "source.dart.codepot",
+        "path": "./syntaxes/wrappers/codepot-dart.tmLanguage.json"
       },
       {
-        "language": "codepurify-vue",
-        "scopeName": "source.vue.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-vue.tmLanguage.json"
+        "language": "codepot-vue",
+        "scopeName": "source.vue.codepot",
+        "path": "./syntaxes/wrappers/codepot-vue.tmLanguage.json"
       },
       {
-        "language": "codepurify-svelte",
-        "scopeName": "source.svelte.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-svelte.tmLanguage.json"
+        "language": "codepot-svelte",
+        "scopeName": "source.svelte.codepot",
+        "path": "./syntaxes/wrappers/codepot-svelte.tmLanguage.json"
       },
       {
-        "language": "codepurify-xml",
-        "scopeName": "text.xml.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-xml.tmLanguage.json"
+        "language": "codepot-xml",
+        "scopeName": "text.xml.codepot",
+        "path": "./syntaxes/wrappers/codepot-xml.tmLanguage.json"
       },
       {
-        "language": "codepurify-toml",
-        "scopeName": "source.toml.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-toml.tmLanguage.json"
+        "language": "codepot-toml",
+        "scopeName": "source.toml.codepot",
+        "path": "./syntaxes/wrappers/codepot-toml.tmLanguage.json"
       },
       {
-        "language": "codepurify-graphql",
-        "scopeName": "source.graphql.codepurify",
-        "path": "./syntaxes/wrappers/codepurify-graphql.tmLanguage.json"
+        "language": "codepot-graphql",
+        "scopeName": "source.graphql.codepot",
+        "path": "./syntaxes/wrappers/codepot-graphql.tmLanguage.json"
       }
     ],
     "snippets": [
       {
-        "language": "codepurify",
-        "path": "./snippets/codepurify.json"
+        "language": "codepot",
+        "path": "./snippets/codepot.json"
       }
     ],
     "configuration": {
-      "title": "Codepurify",
+      "title": "codepot",
       "type": "object",
       "properties": {
-        "codepurify.theme.enabled": {
+        "codepot.theme.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable Codepurify theme customizations."
+          "description": "Enable codepot theme customizations."
         },
-        "codepurify.theme.entityColor": {
+        "codepot.theme.entityColor": {
           "type": "string",
           "default": "#50fa7b",
           "description": "Color for entity variables."
         },
-        "codepurify.theme.fieldColor": {
+        "codepot.theme.fieldColor": {
           "type": "string",
           "default": "#8be9fd",
           "description": "Color for field variables."
         },
-        "codepurify.theme.relationColor": {
+        "codepot.theme.relationColor": {
           "type": "string",
           "default": "#bd93f9",
           "description": "Color for relation variables."
         },
-        "codepurify.theme.globalColor": {
+        "codepot.theme.globalColor": {
           "type": "string",
           "default": "#ffb86c",
           "description": "Color for global variables."
         },
-        "codepurify.theme.templateColor": {
+        "codepot.theme.templateColor": {
           "type": "string",
           "default": "#ff5555",
           "description": "Color for template variables."
         },
-        "codepurify.theme.delimiterColor": {
+        "codepot.theme.delimiterColor": {
           "type": "string",
           "default": "#ff79c6",
           "description": "Color for `{| |}` template delimiters."
         },
-        "codepurify.theme.casingColor": {
+        "codepot.theme.casingColor": {
           "type": "string",
           "default": "#a6e22e",
           "description": "Color for casing constants."
         },
-        "codepurify.theme.backgroundColor": {
+        "codepot.theme.backgroundColor": {
           "type": "string",
           "default": "rgba(255, 121, 198, 0.1)",
           "description": "Background color for `{| ... |}` expressions."
         },
-        "codepurify.theme.borderColor": {
+        "codepot.theme.borderColor": {
           "type": "string",
           "default": "rgba(255, 121, 198, 0.3)",
           "description": "Border color for `{| ... |}` expressions."
         },
-        "codepurify.theme.errorColor": {
+        "codepot.theme.errorColor": {
           "type": "string",
           "default": "rgba(255, 85, 85, 0.2)",
           "description": "Background color for validation errors."
         },
-        "codepurify.validation.enabled": {
+        "codepot.validation.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable real-time validation."
         },
-        "codepurify.validation.strict": {
+        "codepot.validation.strict": {
           "type": "boolean",
           "default": false,
           "description": "Enable strict validation mode."
         },
-        "codepurify.completion.enabled": {
+        "codepot.completion.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable intelligent autocomplete."
         },
-        "codepurify.hover.enabled": {
+        "codepot.hover.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable hover documentation."
         },
-        "codepurify.decorations.enabled": {
+        "codepot.decorations.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable visual decorations and backgrounds."
         },
-        "codepurify.decorations.opacity": {
+        "codepot.decorations.opacity": {
           "type": "number",
           "default": 0.15,
           "minimum": 0,

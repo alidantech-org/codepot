@@ -1,18 +1,18 @@
 /**
- * Codepurify Error Helpers
+ * codepot Error Helpers
  *
  * Centralized error wrapping and handling utilities.
  */
 
-import { CodepurifyError, CodepurifyErrorCode } from '@/core/errors';
+import { codepotError, codepotErrorCode } from '@/core/errors';
 
 /**
- * Wrap unknown errors in CodepurifyError with consistent message format.
+ * Wrap unknown errors in codepotError with consistent message format.
  */
-export function wrapCodepurifyError(actionName: string, error: unknown): CodepurifyError {
-  if (error instanceof CodepurifyError) {
+export function wrapcodepotError(actionName: string, error: unknown): codepotError {
+  if (error instanceof codepotError) {
     return error;
   }
 
-  return new CodepurifyError(CodepurifyErrorCode.GENERATION_FAILED, `${actionName} failed`, { cause: error });
+  return new codepotError(codepotErrorCode.GENERATION_FAILED, `${actionName} failed`, { cause: error });
 }

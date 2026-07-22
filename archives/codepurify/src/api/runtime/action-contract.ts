@@ -1,25 +1,25 @@
 /**
- * Codepurify Action Contract
+ * codepot Action Contract
  *
- * Defines the standard shape for all Codepurify actions.
+ * Defines the standard shape for all codepot actions.
  * Provides a unified interface for action execution with consistent error handling.
  */
 
 import { performance } from 'node:perf_hooks';
 
-import type { BaseCodepurifyResult } from '@/api/types';
-import type { CodepurifyRuntime } from './codepurify-runtime';
-import { CodepurifyError, CodepurifyErrorCode } from '@/core/errors';
+import type { BasecodepotResult } from '@/api/types';
+import type { codepotRuntime } from './codepot-runtime';
+import { codepotError, codepotErrorCode } from '@/core/errors';
 
 /**
- * Standard contract for all Codepurify actions.
+ * Standard contract for all codepot actions.
  *
  * Every action must define:
  * - name: Human-readable action name
  * - defaults: Default result values for failure cases
  * - run: Core action logic that returns partial result data
  */
-export interface CodepurifyAction<TOptions, TResult extends BaseCodepurifyResult> {
+export interface codepotAction<TOptions, TResult extends BasecodepotResult> {
   /**
    * Human-readable name for the action (used in error messages).
    */
@@ -29,29 +29,29 @@ export interface CodepurifyAction<TOptions, TResult extends BaseCodepurifyResult
    * Returns default values for the result when action fails.
    * This ensures consistent failure result structure.
    */
-  defaults(options: TOptions): Omit<TResult, keyof BaseCodepurifyResult>;
+  defaults(options: TOptions): Omit<TResult, keyof BasecodepotResult>;
 
   /**
    * Core action logic.
-   * Returns partial result data (without BaseCodepurifyResult fields).
+   * Returns partial result data (without BasecodepotResult fields).
    */
-  run(runtime: CodepurifyRuntime, options: TOptions): Promise<Omit<TResult, keyof BaseCodepurifyResult>>;
+  run(runtime: codepotRuntime, options: TOptions): Promise<Omit<TResult, keyof BasecodepotResult>>;
 }
 
 /**
- * Normalizes unknown errors into CodepurifyError instances.
+ * Normalizes unknown errors into codepotError instances.
  *
  * @param actionName - Name of the action for error context
  * @param error - Unknown error to normalize
- * @returns Normalized CodepurifyError
+ * @returns Normalized codepotError
  */
-export function normalizeCodepurifyError(actionName: string, error: unknown): CodepurifyError {
-  if (error instanceof CodepurifyError) {
+export function normalizecodepotError(actionName: string, error: unknown): codepotError {
+  if (error instanceof codepotError) {
     return error;
   }
 
-  // Create a new CodepurifyError with the original error as cause
-  const normalizedError = new CodepurifyError(CodepurifyErrorCode.GENERATION_FAILED, `${actionName} failed`);
+  // Create a new codepotError with the original error as cause
+  const normalizedError = new codepotError(codepotErrorCode.GENERATION_FAILED, `${actionName} failed`);
 
   // Set the cause property directly for proper error reporting
   (normalizedError as any).cause = error;
@@ -60,16 +60,16 @@ export function normalizeCodepurifyError(actionName: string, error: unknown): Co
 }
 
 /**
- * Executes a Codepurify action with standardized timing, error handling, and result structure.
+ * Executes a codepot action with standardized timing, error handling, and result structure.
  *
- * @param runtime - Codepurify runtime instance
+ * @param runtime - codepot runtime instance
  * @param action - Action contract to execute
  * @param options - Action options
  * @returns Complete action result with timing and error handling
  */
-export async function executeAction<TOptions, TResult extends BaseCodepurifyResult>(
-  runtime: CodepurifyRuntime,
-  action: CodepurifyAction<TOptions, TResult>,
+export async function executeAction<TOptions, TResult extends BasecodepotResult>(
+  runtime: codepotRuntime,
+  action: codepotAction<TOptions, TResult>,
   options: TOptions,
 ): Promise<TResult> {
   const start = performance.now();
@@ -85,7 +85,7 @@ export async function executeAction<TOptions, TResult extends BaseCodepurifyResu
       ...data,
     } as unknown as TResult;
   } catch (error) {
-    const normalized = normalizeCodepurifyError(action.name, error);
+    const normalized = normalizecodepotError(action.name, error);
 
     return {
       success: false,

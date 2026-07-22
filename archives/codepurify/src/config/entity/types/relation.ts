@@ -1,4 +1,4 @@
-// ─── codepurify/fields/relation.ts ─────────────────────────────────────────────────
+// ─── codepot/fields/relation.ts ─────────────────────────────────────────────────
 
 import type { FieldConfig } from './base';
 import { IEntityConfig } from './entity';

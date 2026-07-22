@@ -1,6 +1,6 @@
 ---
 title: Context Overview
-description: Understanding Codepurify's structured context system
+description: Understanding codepot's structured context system
 ---
 
 # Context Overview
@@ -22,7 +22,7 @@ Context provides deterministic, type-safe data to templates through a hierarchic
 
 Context is predictable and unambiguous:
 
-```codepurify
+```codepot
 {| entity.names.casing.pascal |} // Always available {| field.flags.is_string |}
 // Available in field loops {| relation.kind |} // Available in relation loops
 ```
@@ -73,7 +73,7 @@ No runtime ambiguity - context paths are validated before generation.
 
 Templates access context through dot notation:
 
-```codepurify
+```codepot
 export class {| entity.names.casing.pascal |}DTO { {|#each
 entity.fields.arrays.all.items as field|} {|field.names.casing.camel|}: {|#if
 field.flags.is_string}string{|/if|}; {|/each|} }

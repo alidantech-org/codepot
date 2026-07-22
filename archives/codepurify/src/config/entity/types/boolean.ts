@@ -1,4 +1,4 @@
-// ─── codepurify/fields/boolean.ts ─────────────────────────────────────────────────
+// ─── codepot/fields/boolean.ts ─────────────────────────────────────────────────
 
 import type { BaseFieldConfig, ToggleState } from './base';
 

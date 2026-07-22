@@ -1,113 +1,113 @@
 {
-  "name": "Codepurify Java",
-  "scopeName": "source.java.codepurify",
+  "name": "codepot Java",
+  "scopeName": "source.java.codepot",
   "patterns": [
     {
-      "include": "#codepurify-comments"
+      "include": "#codepot-comments"
     },
     {
-      "include": "#codepurify-tags"
+      "include": "#codepot-tags"
     },
     {
       "include": "source.java"
     }
   ],
   "repository": {
-    "codepurify-comments": {
+    "codepot-comments": {
       "patterns": [
         {
-          "name": "comment.block.documentation.codepurify",
+          "name": "comment.block.documentation.codepot",
           "begin": "\\{\\|\\*",
           "end": "\\*\\|\\}",
           "beginCaptures": {
             "0": {
-              "name": "punctuation.definition.comment.begin.codepurify"
+              "name": "punctuation.definition.comment.begin.codepot"
             }
           },
           "endCaptures": {
             "0": {
-              "name": "punctuation.definition.comment.end.codepurify"
+              "name": "punctuation.definition.comment.end.codepot"
             }
           }
         },
         {
-          "name": "comment.block.codepurify",
+          "name": "comment.block.codepot",
           "begin": "\\{\\|#",
           "end": "#\\|\\}",
           "beginCaptures": {
             "0": {
-              "name": "punctuation.definition.comment.begin.codepurify"
+              "name": "punctuation.definition.comment.begin.codepot"
             }
           },
           "endCaptures": {
             "0": {
-              "name": "punctuation.definition.comment.end.codepurify"
+              "name": "punctuation.definition.comment.end.codepot"
             }
           }
         }
       ]
     },
-    "codepurify-tags": {
+    "codepot-tags": {
       "patterns": [
         {
-          "name": "meta.embedded.codepurify",
+          "name": "meta.embedded.codepot",
           "begin": "\\{\\|",
           "beginCaptures": {
             "0": {
-              "name": "punctuation.definition.template.codepurify"
+              "name": "punctuation.definition.template.codepot"
             }
           },
           "end": "\\|\\}",
           "endCaptures": {
             "0": {
-              "name": "punctuation.definition.template.codepurify"
+              "name": "punctuation.definition.template.codepot"
             }
           },
           "patterns": [
             {
-              "name": "keyword.control.end.codepurify",
+              "name": "keyword.control.end.codepot",
               "match": "\\/(if|unless|loop|with|ignore)\\b"
             },
             {
-              "name": "keyword.control.conditional.codepurify",
+              "name": "keyword.control.conditional.codepot",
               "match": "\\b(if|unless|else)\\b"
             },
             {
-              "name": "keyword.control.repeat.codepurify",
+              "name": "keyword.control.repeat.codepot",
               "match": "\\b(loop)\\b"
             },
             {
-              "name": "keyword.control.context.codepurify",
+              "name": "keyword.control.context.codepot",
               "match": "\\b(with|ignore)\\b"
             },
             {
-              "name": "keyword.operator.word.codepurify",
+              "name": "keyword.operator.word.codepot",
               "match": "\\b(in|as|and|or|not|is)\\b"
             },
             {
-              "name": "keyword.operator.comparison.codepurify",
+              "name": "keyword.operator.comparison.codepot",
               "match": "==|!=|<=|>=|<|>|!"
             },
             {
-              "name": "constant.language.boolean.codepurify",
+              "name": "constant.language.boolean.codepot",
               "match": "\\b(true|false|null|undefined)\\b"
             },
             {
-              "name": "constant.numeric.codepurify",
+              "name": "constant.numeric.codepot",
               "match": "\\b\\d+(\\.\\d+)?\\b"
             },
             {
-              "name": "string.quoted.single.codepurify",
+              "name": "string.quoted.single.codepot",
               "begin": "'",
               "end": "'"
             },
             {
-              "name": "string.quoted.double.codepurify",
+              "name": "string.quoted.double.codepot",
               "begin": "\"",
               "end": "\""
             },
             {
-              "name": "variable.other.codepurify",
+              "name": "variable.other.codepot",
               "match": "\\b[a-zA-Z_$][a-zA-Z0-9_$.]*\\b"
             }
           ]

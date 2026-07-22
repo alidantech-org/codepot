@@ -62,7 +62,7 @@ export function Examples({
         <div className="rounded-xl border-border bg-card  p-6 px-3">
           <h3 className="mb-3 font-semibold text-foreground">Template Logic</h3>
           <p className="mb-4 text-sm text-muted-foreground">
-            Simple Codepurify templates render your deterministic context
+            Simple codepot templates render your deterministic context
           </p>
           <CodeBlock example={templateCode} />
         </div>

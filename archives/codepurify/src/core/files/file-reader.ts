@@ -2,13 +2,13 @@ import { readFile, stat } from 'node:fs/promises';
 
 import { hashContent } from './file-hash';
 import { relativeFromRoot, resolveInsideRoot } from './file-paths';
-import type { CodepurifyFileInfo, CodepurifyReadResult } from './file-types';
-import type { CodepurifyFileDb } from './file-db';
+import type { codepotFileInfo, codepotReadResult } from './file-types';
+import type { codepotFileDb } from './file-db';
 
-export class CodepurifyFileReader {
+export class codepotFileReader {
   constructor(
     private readonly rootDir: string,
-    private readonly db: CodepurifyFileDb,
+    private readonly db: codepotFileDb,
   ) {}
 
   async exists(path: string): Promise<boolean> {
@@ -24,7 +24,7 @@ export class CodepurifyFileReader {
     }
   }
 
-  async read(path: string, options: { hash?: boolean } = {}): Promise<CodepurifyReadResult> {
+  async read(path: string, options: { hash?: boolean } = {}): Promise<codepotReadResult> {
     const absolutePath = resolveInsideRoot(this.rootDir, path);
     const relativePath = relativeFromRoot(this.rootDir, absolutePath);
     const record = await this.db.get(relativePath);
@@ -59,7 +59,7 @@ export class CodepurifyFileReader {
     }
   }
 
-  async info(path: string): Promise<CodepurifyFileInfo> {
+  async info(path: string): Promise<codepotFileInfo> {
     const absolutePath = resolveInsideRoot(this.rootDir, path);
     const relativePath = relativeFromRoot(this.rootDir, absolutePath);
     const record = await this.db.get(relativePath);

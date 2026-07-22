@@ -1,56 +1,56 @@
 /**
- * Codepurify Templates Definition Helper
+ * codepot Templates Definition Helper
  *
  * Type-safe helper for defining template registry files.
  */
 
-import type { CodepurifyTemplatesFile, CodepurifyTemplateRegistration } from '../types/codepurify.templates.types';
+import type { codepotTemplatesFile, codepotTemplateRegistration } from '../types/codepot.templates.types';
 
 /**
  * Helper type to extract template names from an array of templates
  */
-type TemplateNames<T extends readonly CodepurifyTemplateRegistration[]> = T[number]['name'];
+type TemplateNames<T extends readonly codepotTemplateRegistration[]> = T[number]['name'];
 
 /**
  * Enhanced templates interface with strongly typed filtering methods
  */
-interface EnhancedCodepurifyTemplatesFile<T extends readonly CodepurifyTemplateRegistration[]> extends CodepurifyTemplatesFile {
+interface EnhancedcodepotTemplatesFile<T extends readonly codepotTemplateRegistration[]> extends codepotTemplatesFile {
   /**
    * Filter templates by type 'entity'
    */
-  entity(): CodepurifyTemplatesFile;
+  entity(): codepotTemplatesFile;
 
   /**
    * Filter templates by type 'resource'
    */
-  resource(): CodepurifyTemplatesFile;
+  resource(): codepotTemplatesFile;
 
   /**
    * Pick specific templates by name (strongly typed)
    */
-  pick<K extends TemplateNames<T>>(names: readonly K[]): CodepurifyTemplatesFile;
+  pick<K extends TemplateNames<T>>(names: readonly K[]): codepotTemplatesFile;
 
   /**
    * Omit specific templates by name (strongly typed)
    */
-  omit<K extends TemplateNames<T>>(names: readonly K[]): CodepurifyTemplatesFile;
+  omit<K extends TemplateNames<T>>(names: readonly K[]): codepotTemplatesFile;
 }
 
 /**
- * Define a Codepurify templates registry file.
+ * Define a codepot templates registry file.
  *
  * Example:
  * ```ts
- * export default defineCodepurifyTemplates({
- *   rootDir: './codepurify/templates',
+ * export default definecodepotTemplates({
+ *   rootDir: './codepot/templates',
  *   templates: [dtoCreateTemplate, dtoUpdateTemplate],
  * });
  * ```
  *
  * Usage with filtering:
  * ```ts
- * const templates = defineCodepurifyTemplates({
- *   rootDir: './codepurify/templates',
+ * const templates = definecodepotTemplates({
+ *   rootDir: './codepot/templates',
  *   templates: [dtoCreateTemplate, dtoUpdateTemplate],
  * });
  *
@@ -67,39 +67,39 @@ interface EnhancedCodepurifyTemplatesFile<T extends readonly CodepurifyTemplateR
  * const filteredTemplates = templates.omit(['dto.create', 'dto.update']);
  * ```
  */
-export function defineCodepurifyTemplates<T extends readonly CodepurifyTemplateRegistration[]>(
-  config: CodepurifyTemplatesFile & { templates: T },
-): EnhancedCodepurifyTemplatesFile<T> {
+export function definecodepotTemplates<T extends readonly codepotTemplateRegistration[]>(
+  config: codepotTemplatesFile & { templates: T },
+): EnhancedcodepotTemplatesFile<T> {
   // Create enhanced templates object with filtering methods
-  const enhancedTemplates: EnhancedCodepurifyTemplatesFile<T> = {
+  const enhancedTemplates: EnhancedcodepotTemplatesFile<T> = {
     ...config,
 
-    // Add template filtering methods that return new CodepurifyTemplatesFile objects
+    // Add template filtering methods that return new codepotTemplatesFile objects
     entity() {
       return {
         rootDir: this.rootDir,
-        templates: this.templates.filter((template: CodepurifyTemplateRegistration) => template.type === 'entity'),
+        templates: this.templates.filter((template: codepotTemplateRegistration) => template.type === 'entity'),
       };
     },
 
     resource() {
       return {
         rootDir: this.rootDir,
-        templates: this.templates.filter((template: CodepurifyTemplateRegistration) => template.type === 'resource'),
+        templates: this.templates.filter((template: codepotTemplateRegistration) => template.type === 'resource'),
       };
     },
 
     pick<K extends TemplateNames<T>>(names: readonly K[]) {
       return {
         rootDir: this.rootDir,
-        templates: this.templates.filter((template: CodepurifyTemplateRegistration) => names.includes(template.name as K)),
+        templates: this.templates.filter((template: codepotTemplateRegistration) => names.includes(template.name as K)),
       };
     },
 
     omit<K extends TemplateNames<T>>(names: readonly K[]) {
       return {
         rootDir: this.rootDir,
-        templates: this.templates.filter((template: CodepurifyTemplateRegistration) => !names.includes(template.name as K)),
+        templates: this.templates.filter((template: codepotTemplateRegistration) => !names.includes(template.name as K)),
       };
     },
   };

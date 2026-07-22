@@ -384,7 +384,7 @@ export function generateDocMetadata(doc: Doc): {
   description: string;
 } {
   return {
-    title: `${doc.title} - CodePurify Documentation`,
+    title: `${doc.title} - codepot Documentation`,
     description: doc.description ?? `Documentation for ${doc.title}`,
   };
 }

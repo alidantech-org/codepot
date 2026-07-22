@@ -1,24 +1,19 @@
 /**
- * Codepurify Template Types
+ * codepot Template Types
  *
  * Types for template registration.
  */
 
-import { CodepurifyOutputFileName, CodepurifyOutputFolder } from '../helpers/template-paths';
+import { codepotOutputFileName, codepotOutputFolder } from '../helpers/template-paths';
 
-export type {
-  CodepurifyPathToken,
-  CodepurifyOutputFolderPart,
-  CodepurifyOutputFolder,
-  CodepurifyOutputFileName,
-} from '../helpers/template-paths';
+export type { codepotPathToken, codepotOutputFolderPart, codepotOutputFolder, codepotOutputFileName } from '../helpers/template-paths';
 
 export { paths, file } from '../helpers/template-paths';
 
 /**
  * A user-registered template.
  */
-export interface CodepurifyTemplateRegistration {
+export interface codepotTemplateRegistration {
   /**
    * Unique template name used by entity configs.
    */
@@ -39,7 +34,7 @@ export interface CodepurifyTemplateRegistration {
    *   'dto',
    * ]
    */
-  outputFolder: CodepurifyOutputFolder;
+  outputFolder: codepotOutputFolder;
 
   /**
    * File name definition.
@@ -50,7 +45,7 @@ export interface CodepurifyTemplateRegistration {
    *   .suffix('.dto')
    *   .ext('ts')
    */
-  fileName: CodepurifyOutputFileName;
+  fileName: codepotOutputFileName;
 
   /**
    * Optional description for tooling/debug output.
@@ -66,7 +61,7 @@ export interface CodepurifyTemplateRegistration {
 /**
  * Template registry file shape.
  */
-export interface CodepurifyTemplatesFile {
+export interface codepotTemplatesFile {
   /**
    * Root directory containing template files.
    */
@@ -75,13 +70,13 @@ export interface CodepurifyTemplatesFile {
   /**
    * Registered template definitions.
    */
-  templates: readonly CodepurifyTemplateRegistration[];
+  templates: readonly codepotTemplateRegistration[];
 }
 
 /**
  * Resolved template registration.
  */
-export interface ResolvedCodepurifyTemplateRegistration extends CodepurifyTemplateRegistration {
+export interface ResolvedcodepotTemplateRegistration extends codepotTemplateRegistration {
   absoluteTemplatePath: string;
   resolvedOutputFolderPattern: string;
   resolvedFileNamePattern: string;
@@ -91,7 +86,7 @@ export interface ResolvedCodepurifyTemplateRegistration extends CodepurifyTempla
 /**
  * Resolved templates file.
  */
-export interface ResolvedCodepurifyTemplatesFile {
+export interface ResolvedcodepotTemplatesFile {
   rootDir: string;
-  templates: readonly ResolvedCodepurifyTemplateRegistration[];
+  templates: readonly ResolvedcodepotTemplateRegistration[];
 }

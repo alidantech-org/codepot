@@ -25,9 +25,9 @@ const fontMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Codepurify - Semantic Metadata Inference Engine",
+  title: "codepot - Semantic Metadata Inference Engine",
   description:
-    "Template compiler for generating architecture artifacts from typed domain configs. Define facts about your domain, and Codepurify infers query capabilities, mutation semantics, relation groups, workflows, and validation rules.",
+    "Template compiler for generating architecture artifacts from typed domain configs. Define facts about your domain, and codepot infers query capabilities, mutation semantics, relation groups, workflows, and validation rules.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

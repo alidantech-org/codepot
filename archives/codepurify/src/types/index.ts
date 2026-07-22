@@ -1,7 +1,7 @@
 /**
- * Codepurify Types Barrel Export
+ * codepot Types Barrel Export
  *
- * Central exports for all Codepurify type definitions.
+ * Central exports for all codepot type definitions.
  * Provides a clean import interface for the shared contract layer.
  */
 

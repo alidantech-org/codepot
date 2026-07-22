@@ -1,4 +1,4 @@
-// ─── codepurify/fields/workflow.ts ─────────────────────────────────────────────────
+// ─── codepot/fields/workflow.ts ─────────────────────────────────────────────────
 
 import type { FieldConfig } from './base';
 

@@ -11,13 +11,13 @@ The extension provides intelligent autocomplete inside template expressions.
 
 Type `entity.` to see available properties:
 
-```codepurify
+```codepot
 {| entity. |} // ↓ Shows: // - names // - fields // - relations
 ```
 
 Continue typing for nested suggestions:
 
-```codepurify
+```codepot
 {| entity.names. |} // ↓ Shows: // - original // - casing // - singular // -
 plural
 ```
@@ -26,7 +26,7 @@ plural
 
 Control flow keywords appear automatically:
 
-```codepurify
+```codepot
 {|# |} // ↓ Shows: // - if // - each // - raw
 ```
 
@@ -34,7 +34,7 @@ Control flow keywords appear automatically:
 
 Inside field loops, get field-specific suggestions:
 
-```codepurify
+```codepot
 {|#each entity.fields.arrays.all.items as field|} {| field. |} // ↓ Shows: // -
 names // - flags // - typescript {|/each|}
 ```
@@ -47,7 +47,7 @@ Common patterns expand with snippets:
 
 Type `dto` + Tab:
 
-```codepurify
+```codepot
 export class {| entity.names.casing.pascal |}DTO { {|#each
 entity.fields.arrays.all.items as field|} {|field.names.casing.camel|}: {|#if
 field.flags.is_string}string{|/if|}; {|/each|} }
@@ -57,7 +57,7 @@ field.flags.is_string}string{|/if|}; {|/each|} }
 
 Type `val` + Tab:
 
-```codepurify
+```codepot
 {|#if field.flags.is_string|} @IsString() {|/if|} {|field.names.casing.camel|}:
 string;
 ```

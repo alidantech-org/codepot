@@ -37,14 +37,14 @@ export function NavBar() {
             <Link href="/" className="flex min-w-0 items-center gap-0.5">
               <Image
                 src="/logo.svg"
-                alt="Codepurify Logo"
+                alt="codepot Logo"
                 width={34}
                 height={34}
                 className="shrink-0"
               />
 
               <span className="truncate bg-linear-to-r from-primary to-secondary bg-clip-text text-lg font-bold tracking-tight text-transparent">
-                CodePurify
+                codepot
               </span>
             </Link>
 
@@ -92,7 +92,7 @@ export function NavBar() {
 
             <div className="hidden items-center gap-1 md:flex">
               <a
-                href="https://github.com/alidantech-org/codepurify"
+                href="https://github.com/alidantech-org/codepot"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm text-foreground transition-colors hover:bg-card-muted"
@@ -102,7 +102,7 @@ export function NavBar() {
               </a>
 
               <a
-                href="https://www.npmjs.com/package/codepurify"
+                href="https://www.npmjs.com/package/codepot"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm text-foreground transition-colors hover:bg-card-muted"
@@ -112,7 +112,7 @@ export function NavBar() {
               </a>
 
               <a
-                href="https://marketplace.visualstudio.com/items?itemName=alidantechorg.codepurify-templates&ssr=false#overview"
+                href="https://marketplace.visualstudio.com/items?itemName=alidantechorg.codepot-templates&ssr=false#overview"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm text-foreground transition-colors hover:bg-card-muted"

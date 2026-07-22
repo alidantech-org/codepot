@@ -1,10 +1,10 @@
-# Codepurify
+# codepot
 
 > Semantic metadata inference engine + template compiler for generating architecture artifacts from typed domain configs.
 
 ---
 
-# What is Codepurify?
+# What is codepot?
 
 - semantic metadata DSL
 - normalized manifest compiler
@@ -13,7 +13,7 @@
 
 You define **facts** about your domain.
 
-Codepurify infers:
+codepot infers:
 
 - query capabilities
 - mutation semantics
@@ -35,10 +35,10 @@ Inference engine derives semantics
         ↓
 Normalized context is generated
         ↓
-Codepurify templates render output
+codepot templates render output
 ```
 
-Codepurify does **not** hardcode:
+codepot does **not** hardcode:
 
 - NestJS
 - TypeORM
@@ -57,7 +57,7 @@ All architecture styles are implemented through templates.
 
 - Strongly typed TypeScript configs
 - Semantic metadata inference
-- Codepurify-based generation
+- codepot-based generation
 - Framework agnostic
 - Runtime metadata compilation
 - Query/mutation capability inference
@@ -95,7 +95,7 @@ from a single semantic source of truth.
 # Installation
 
 ```bash
-npm install codepurify
+npm install codepot
 ```
 
 ---
@@ -112,7 +112,7 @@ import {
   query,
   mutation,
   transition,
-} from "codepurify";
+} from "codepot";
 
 export default class UserEntityConfig extends EntityConfigBase {
   key = "user";
@@ -168,7 +168,7 @@ export default class UserEntityConfig extends EntityConfigBase {
 
 # Semantic Inference
 
-Codepurify automatically infers semantic groups from metadata.
+codepot automatically infers semantic groups from metadata.
 
 You never manually define groups.
 
@@ -201,9 +201,9 @@ entity.fields.mutation.immutable_after_create
 
 ---
 
-# Codepurify Templates
+# codepot Templates
 
-Codepurify uses Codepurify for rendering generated artifacts.
+codepot uses codepot for rendering generated artifacts.
 
 Templates receive a normalized semantic context.
 
@@ -211,9 +211,9 @@ Templates receive a normalized semantic context.
 
 # Example Template
 
-## `dto.create.codepurify`
+## `dto.create.codepot`
 
-```codepurify
+```codepot
 export class Create{{entity.pascal_case_key}}Dto {
 {{#each entity.fields.mutation.api_create}}
   {{snake_case_key}}!:
@@ -391,7 +391,7 @@ Semantic Inference Engine
         ↓
 Normalized Manifest
         ↓
-Codepurify Template Compilation
+codepot Template Compilation
         ↓
 Generated Source Code
 ```
@@ -400,7 +400,7 @@ Generated Source Code
 
 # Design Goals
 
-## Codepurify SHOULD:
+## codepot SHOULD:
 
 - infer semantic groups automatically
 - remain architecture agnostic
@@ -408,7 +408,7 @@ Generated Source Code
 - expose normalized template context
 - prioritize metadata semantics over implementation details
 
-## Codepurify SHOULD NOT:
+## codepot SHOULD NOT:
 
 - hardcode framework architecture
 - assume NestJS patterns
@@ -420,7 +420,7 @@ Generated Source Code
 
 # Long-Term Vision
 
-Codepurify aims to become a universal semantic metadata compiler capable of generating:
+codepot aims to become a universal semantic metadata compiler capable of generating:
 
 - backend architectures
 - frontend forms
@@ -439,16 +439,16 @@ from a single semantic domain definition.
 # Example Future Ecosystem
 
 ```txt id="phl2a6"
-codepurify
-@codepurify/compiler
-@codepurify/runtime
-@codepurify/templates
-@codepurify/typeorm
-@codepurify/graphql
-@codepurify/zod
-@codepurify/react-form
-@codepurify/openapi
-@codepurify/fastapi
+codepot
+@codepot/compiler
+@codepot/runtime
+@codepot/templates
+@codepot/typeorm
+@codepot/graphql
+@codepot/zod
+@codepot/react-form
+@codepot/openapi
+@codepot/fastapi
 ```
 
 ---

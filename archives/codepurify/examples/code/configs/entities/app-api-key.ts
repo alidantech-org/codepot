@@ -1,6 +1,6 @@
-import * as cpy from 'codepurify';
+import * as cpy from 'codepot';
 import AppEntityConfig from './app';
-import codepurifyTemplates from '../../../codepurify.templates';
+import codepotTemplates from '../../../codepot.templates';
 
 export default class AppApiKeyEntityConfig implements cpy.IEntityConfig {
   base = null;
@@ -107,5 +107,5 @@ export default class AppApiKeyEntityConfig implements cpy.IEntityConfig {
   ];
 
   options = { timestamps: true, audit: true };
-  templates = [codepurifyTemplates.pick(['types.context', 'constants', 'schema.entity'])];
+  templates = [codepotTemplates.pick(['types.context', 'constants', 'schema.entity'])];
 }

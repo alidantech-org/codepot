@@ -1,4 +1,4 @@
-// ─── codepurify/helpers/index.ts ─────────────────────────────────────────────────
+// ─── codepot/helpers/index.ts ─────────────────────────────────────────────────
 
 // Export all helper functions
 export * from './entity';

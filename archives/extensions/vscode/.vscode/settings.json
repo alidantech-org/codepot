@@ -1,12 +1,12 @@
 {
       "material-icon-theme.folders.associations": {
-            "codepurify": "tools",
+            "codepot": "tools",
             "templates": "template",
             "entities": "database",
             "generators": "gear"
       },
       "material-icon-theme.files.associations": {
-            "*.codepurify": "settings",
+            "*.codepot": "settings",
             "*.code": "settings"
       }
 }

@@ -4,7 +4,7 @@
   "printWidth": 140,
   "overrides": [
     {
-      "files": "*.codepurify",
+      "files": "*.codepot",
       "options": {
         "parser": "glimmer"
       }

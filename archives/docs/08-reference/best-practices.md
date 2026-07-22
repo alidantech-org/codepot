@@ -9,27 +9,27 @@ description: Guidelines for writing clean and maintainable templates
 
 ### Use Flags Instead of Raw Conditions
 
-```codepurify
+```codepot
 {|#if field.flags.is_string|} @IsString() {|/if|}
 ```
 
 ### Use Casing Helpers
 
-```codepurify
+```codepot
 export class {| entity.names.casing.pascal |} { {|field.names.casing.camel|}:
 string; }
 ```
 
 ### Keep Templates Simple
 
-```codepurify
+```codepot
 {|#each entity.fields.arrays.all.items as field|} {|field.names.casing.camel|}:
 {|#if field.flags.is_string}string{|/if|}; {|/each|}
 ```
 
 ### Use Descriptive Aliases
 
-```codepurify
+```codepot
 {|#each entity.relations.arrays.one_to_many.items as relation|}
 {|relation.names.casing.pascal|} {|/each|}
 ```
@@ -40,14 +40,14 @@ string; }
 
 ❌ Bad:
 
-```codepurify
+```codepot
 {|#if (field.flags.is_string and field.flags.is_required) or
 field.flags.is_primary|}
 ```
 
 ✅ Good:
 
-```codepurify
+```codepot
 {|#if field.flags.is_required|} @IsNotEmpty() {|/if|}
 ```
 
@@ -55,14 +55,14 @@ field.flags.is_primary|}
 
 ❌ Bad:
 
-```codepurify
+```codepot
 {|#if field.flags.is_string|} {|#if field.flags.is_nullable|} {|#if
 field.flags.is_unique|} @IsUnique() {|/if|} {|/if|} {|/if|}
 ```
 
 ✅ Good:
 
-```codepurify
+```codepot
 {|#if field.flags.is_string|} {|#if field.flags.is_nullable|} @IsOptional()
 {|/if|} @IsString() {|#if field.flags.is_unique|} @IsUnique() {|/if|} {|/if|}
 ```
@@ -71,13 +71,13 @@ field.flags.is_unique|} @IsUnique() {|/if|} {|/if|} {|/if|}
 
 ❌ Bad:
 
-```codepurify
+```codepot
 export class User {
 ```
 
 ✅ Good:
 
-```codepurify
+```codepot
 export class {| entity.names.casing.pascal |} {
 ```
 
@@ -85,14 +85,14 @@ export class {| entity.names.casing.pascal |} {
 
 ❌ Bad:
 
-```codepurify
+```codepot
 {|#if field.flags.is_string|} import { IsString } from 'class-validator';
 {|/each|}
 ```
 
 ✅ Good:
 
-```codepurify
+```codepot
 import { IsString } from 'class-validator'; {|#each
 entity.fields.arrays.all.items as field|} {|#if field.flags.is_string|}
 @IsString() {|/if|} {|/each|}

@@ -1,17 +1,15 @@
 {
-  "name": "codepurify-templates",
-  "displayName": "Codepurify Templates",
+  "name": "codepot-templates",
+  "displayName": "codepot Templates",
   "version": "0.0.2",
-  "description": "Template language support for deterministic Codepurify code generation with syntax highlighting, autocomplete, hover documentation, and validation.",
+  "description": "Template language support for deterministic codepot code generation with syntax highlighting, autocomplete, hover documentation, and validation.",
   "publisher": "alidantechorg",
   "engines": {
     "vscode": "^1.80.0"
   },
-  "categories": [
-    "Programming Languages"
-  ],
+  "categories": ["Programming Languages"],
   "keywords": [
-    "codepurify",
+    "codepot",
     "code generation",
     "templates",
     "syntax highlighting",
@@ -25,123 +23,117 @@
   "icon": "icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/alidantech-org/codepurify.git"
+    "url": "https://github.com/alidantech-org/codepot.git"
   },
   "main": "./out/extension.js",
   "activationEvents": [],
   "contributes": {
     "languages": [
       {
-        "id": "codepurify",
-        "aliases": [
-          "Codepurify",
-          "codepurify"
-        ],
-        "extensions": [
-          ".codepurify",
-          ".code"
-        ],
+        "id": "codepot",
+        "aliases": ["codepot", "codepot"],
+        "extensions": [".codepot", ".code"],
         "configuration": "./config/language-configuration.json"
       }
     ],
     "grammars": [
       {
-        "language": "codepurify",
-        "scopeName": "source.codepurify",
-        "path": "./syntaxes/codepurify.tmLanguage.json"
+        "language": "codepot",
+        "scopeName": "source.codepot",
+        "path": "./syntaxes/codepot.tmLanguage.json"
       }
     ],
     "snippets": [
       {
-        "language": "codepurify",
-        "path": "./snippets/codepurify.json"
+        "language": "codepot",
+        "path": "./snippets/codepot.json"
       }
     ],
     "configuration": {
-      "title": "Codepurify",
+      "title": "codepot",
       "type": "object",
       "properties": {
-        "codepurify.theme.enabled": {
+        "codepot.theme.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable Codepurify theme customizations."
+          "description": "Enable codepot theme customizations."
         },
-        "codepurify.theme.entityColor": {
+        "codepot.theme.entityColor": {
           "type": "string",
           "default": "#50fa7b",
           "description": "Color for entity variables."
         },
-        "codepurify.theme.fieldColor": {
+        "codepot.theme.fieldColor": {
           "type": "string",
           "default": "#8be9fd",
           "description": "Color for field variables."
         },
-        "codepurify.theme.relationColor": {
+        "codepot.theme.relationColor": {
           "type": "string",
           "default": "#bd93f9",
           "description": "Color for relation variables."
         },
-        "codepurify.theme.globalColor": {
+        "codepot.theme.globalColor": {
           "type": "string",
           "default": "#ffb86c",
           "description": "Color for global variables."
         },
-        "codepurify.theme.templateColor": {
+        "codepot.theme.templateColor": {
           "type": "string",
           "default": "#ff5555",
           "description": "Color for template variables."
         },
-        "codepurify.theme.delimiterColor": {
+        "codepot.theme.delimiterColor": {
           "type": "string",
           "default": "#ff79c6",
           "description": "Color for `{| |}` template delimiters."
         },
-        "codepurify.theme.casingColor": {
+        "codepot.theme.casingColor": {
           "type": "string",
           "default": "#a6e22e",
           "description": "Color for casing constants."
         },
-        "codepurify.theme.backgroundColor": {
+        "codepot.theme.backgroundColor": {
           "type": "string",
           "default": "rgba(255, 121, 198, 0.1)",
           "description": "Background color for `{| ... |}` expressions."
         },
-        "codepurify.theme.borderColor": {
+        "codepot.theme.borderColor": {
           "type": "string",
           "default": "rgba(255, 121, 198, 0.3)",
           "description": "Border color for `{| ... |}` expressions."
         },
-        "codepurify.theme.errorColor": {
+        "codepot.theme.errorColor": {
           "type": "string",
           "default": "rgba(255, 85, 85, 0.2)",
           "description": "Background color for validation errors."
         },
-        "codepurify.validation.enabled": {
+        "codepot.validation.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable real-time validation."
         },
-        "codepurify.validation.strict": {
+        "codepot.validation.strict": {
           "type": "boolean",
           "default": false,
           "description": "Enable strict validation mode."
         },
-        "codepurify.completion.enabled": {
+        "codepot.completion.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable intelligent autocomplete."
         },
-        "codepurify.hover.enabled": {
+        "codepot.hover.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable hover documentation."
         },
-        "codepurify.decorations.enabled": {
+        "codepot.decorations.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable visual decorations and backgrounds."
         },
-        "codepurify.decorations.opacity": {
+        "codepot.decorations.opacity": {
           "type": "number",
           "default": 0.15,
           "minimum": 0,

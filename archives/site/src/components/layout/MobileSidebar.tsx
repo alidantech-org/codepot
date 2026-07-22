@@ -39,7 +39,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 cp
               </span>
               <span className="text-xl font-bold tracking-tight bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
-                CodePurify
+                codepot
               </span>
             </Link>
             <button
@@ -89,7 +89,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 Links
               </div>
               <a
-                href="https://github.com/alidantech-org/codepurify"
+                href="https://github.com/alidantech-org/codepot"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground hover:bg-card-muted"
@@ -98,7 +98,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 GitHub
               </a>
               <a
-                href="https://www.npmjs.com/package/codepurify"
+                href="https://www.npmjs.com/package/codepot"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground hover:bg-card-muted"
@@ -107,7 +107,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 NPM
               </a>
               <a
-                href="https://marketplace.visualstudio.com/items?itemName=alidantechorg.codepurify-templates&ssr=false#overview"
+                href="https://marketplace.visualstudio.com/items?itemName=alidantechorg.codepot-templates&ssr=false#overview"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground hover:bg-card-muted"

@@ -12,5 +12,5 @@ export const CLEAN_LOG_MESSAGES = {
 } as const;
 
 export const CLEAN_PATHS = {
-  cacheDir: '.codepurify/cache',
+  cacheDir: '.codepot/cache',
 } as const;

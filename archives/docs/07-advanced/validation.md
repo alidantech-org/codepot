@@ -1,6 +1,6 @@
 ---
 title: Context Validation
-description: Validating context data in Codepurify
+description: Validating context data in codepot
 ---
 
 # Context Validation
@@ -10,7 +10,7 @@ Ensure context data meets expected schemas and constraints.
 ## Validation Schema
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 const EntitySchema = z.object({
   names: z.object({
@@ -19,17 +19,17 @@ const EntitySchema = z.object({
       camel: z.string(),
       pascal: z.string(),
       snake: z.string(),
-      kebab: z.string()
-    })
+      kebab: z.string(),
+    }),
   }),
   fields: z.object({
     arrays: z.object({
       all: z.object({
         items: z.array(FieldSchema),
-        length: z.number()
-      })
-    })
-  })
+        length: z.number(),
+      }),
+    }),
+  }),
 });
 
 const FieldSchema = z.object({
@@ -37,22 +37,22 @@ const FieldSchema = z.object({
     original: z.string(),
     casing: z.object({
       camel: z.string(),
-      pascal: z.string()
-    })
+      pascal: z.string(),
+    }),
   }),
   flags: z.object({
     is_string: z.boolean(),
     is_number: z.boolean(),
     is_nullable: z.boolean(),
-    is_required: z.boolean()
-  })
+    is_required: z.boolean(),
+  }),
 });
 ```
 
 ## Validation Middleware
 
 ```typescript
-import { ValidationMiddleware } from '@codepurify/core';
+import { ValidationMiddleware } from "@codepot/core";
 
 class ContextValidator extends ValidationMiddleware {
   validate(context: Context): ValidationResult {
@@ -60,9 +60,9 @@ class ContextValidator extends ValidationMiddleware {
       EntitySchema.parse(context.entity);
       return { valid: true };
     } catch (error) {
-      return { 
-        valid: false, 
-        errors: error.errors 
+      return {
+        valid: false,
+        errors: error.errors,
       };
     }
   }
@@ -77,9 +77,14 @@ class CustomValidator {
     // Ensure field names follow conventions
     return /^[a-z][a-zA-Z0-9]*$/.test(field.names.original);
   }
-  
+
   validateRelationType(relation: Relation): boolean {
-    const validTypes = ['one-to-one', 'one-to-many', 'many-to-one', 'many-to-many'];
+    const validTypes = [
+      "one-to-one",
+      "one-to-many",
+      "many-to-one",
+      "many-to-many",
+    ];
     return validTypes.includes(relation.kind);
   }
 }
@@ -105,11 +110,11 @@ interface ValidationError {
 ```typescript
 app.use((context, next) => {
   const validation = validator.validate(context);
-  
+
   if (!validation.valid) {
     throw new ValidationError(validation.errors);
   }
-  
+
   return next();
 });
 ```

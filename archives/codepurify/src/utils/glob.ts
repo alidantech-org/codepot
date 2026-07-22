@@ -1,5 +1,5 @@
 /**
- * Codepurify Glob Utilities
+ * codepot Glob Utilities
  *
  * Provides file system operations using fast-glob for pattern matching.
  * Includes directory operations and file existence checks.

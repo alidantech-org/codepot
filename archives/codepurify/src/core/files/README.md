@@ -1,4 +1,4 @@
-# Codepurify Files Module
+# codepot Files Module
 
 Drop this folder into:
 
@@ -15,16 +15,16 @@ export * from './files';
 Use it inside your runtime:
 
 ```ts
-import { CodepurifyFiles } from '@/core/files';
+import { codepotFiles } from '@/core/files';
 
-export class CodepurifyRuntime {
-  readonly files: CodepurifyFiles;
+export class codepotRuntime {
+  readonly files: codepotFiles;
 
-  constructor(options: CodepurifyOptions = {}) {
-    this.files = new CodepurifyFiles({
+  constructor(options: codepotOptions = {}) {
+    this.files = new codepotFiles({
       rootDir: this.cwd,
-      dbPath: '.codepurify/files.json',
-      backupDir: '.codepurify/backups',
+      dbPath: '.codepot/files.json',
+      backupDir: '.codepot/backups',
     });
   }
 }
@@ -48,4 +48,4 @@ Rollback should call:
 await runtime.files.rollbackLatest();
 ```
 
-The old `ManifestManager` concept is replaced by `CodepurifyFileDb`, which is the JSON DB behind `CodepurifyFiles`.
+The old `ManifestManager` concept is replaced by `codepotFileDb`, which is the JSON DB behind `codepotFiles`.

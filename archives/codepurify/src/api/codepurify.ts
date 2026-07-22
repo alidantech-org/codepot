@@ -1,5 +1,5 @@
 /**
- * Codepurify Public API Facade
+ * codepot Public API Facade
  *
  * Thin public facade that delegates to specialized action handlers.
  * Provides a clean, minimal public interface while keeping implementation
@@ -8,22 +8,22 @@
 import { generateAction, initAction, rollbackAction } from './actions';
 import * as T from './types';
 import { executeAction } from './runtime';
-import { CodepurifyRuntime } from './runtime/codepurify-runtime';
+import { codepotRuntime } from './runtime/codepot-runtime';
 
 /**
- * Main Codepurify execution class.
+ * Main codepot execution class.
  *
- * Provides a reusable, embeddable runtime for Codepurify operations.
+ * Provides a reusable, embeddable runtime for codepot operations.
  * Can be used by CLI, VS Code extensions, UI integrations, and tests.
  *
  * This class acts as a thin facade - all actual implementation logic
  * is delegated to specialized action handlers.
  */
-export class Codepurify {
-  private readonly runtime: CodepurifyRuntime;
+export class codepot {
+  private readonly runtime: codepotRuntime;
 
-  constructor(options: T.CodepurifyOptions = {}) {
-    this.runtime = new CodepurifyRuntime(options);
+  constructor(options: T.codepotOptions = {}) {
+    this.runtime = new codepotRuntime(options);
   }
 
   /**
@@ -36,7 +36,7 @@ export class Codepurify {
   }
 
   /**
-   * Initialize Codepurify configuration and template registry files.
+   * Initialize codepot configuration and template registry files.
    */
   async init(options: T.InitOptions = {}): Promise<T.InitResult> {
     return await executeAction(this.runtime, initAction, options);

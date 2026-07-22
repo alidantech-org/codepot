@@ -1,7 +1,7 @@
 /**
- * Codepurify Utilities Module
+ * codepot Utilities Module
  *
- * Central exports for all Codepurify utility functions.
+ * Central exports for all codepot utility functions.
  * Provides path, JSON, glob, hash, shell, format, case, and object utilities.
  */
 

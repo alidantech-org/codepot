@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * Codepurify CLI
+ * codepot CLI
  *
- * Main entry point for the Codepurify command-line interface.
+ * Main entry point for the codepot command-line interface.
  * Provides commands for initializing, generating, checking, and rolling back entity files.
  */
 
@@ -15,12 +15,12 @@ import { createRollbackCommand } from './commands/rollback.command.js';
 import { createCleanCommand } from './commands/clean.command.js';
 
 /**
- * Creates and configures the Codepurify CLI program
+ * Creates and configures the codepot CLI program
  */
 function createProgram(): Command {
   const program = new Command();
 
-  program.name('codepurify').description('Codepurify - NestJS entity generation tool').version('0.1.0');
+  program.name('codepot').description('codepot - NestJS entity generation tool').version('0.1.0');
 
   // Register commands
   program.addCommand(createInitCommand());

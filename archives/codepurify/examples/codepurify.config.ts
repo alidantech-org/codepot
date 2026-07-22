@@ -1,11 +1,11 @@
-import { defineCodepurifyConfig } from 'codepurify';
+import { definecodepotConfig } from 'codepot';
 
-export default defineCodepurifyConfig({
+export default definecodepotConfig({
   rootDir: process.cwd(),
   outputDir: './src/generated',
-  manifestPath: './codepurify/manifest.json',
+  manifestPath: './codepot/manifest.json',
 
   // Config directories with dynamic inference
-  entitiesDir: '__CODEPURIFY_ENTITIES_DIR__',
-  resourcesDir: '__CODEPURIFY_RESOURCES_DIR__',
+  entitiesDir: '__codepot_ENTITIES_DIR__',
+  resourcesDir: '__codepot_RESOURCES_DIR__',
 });

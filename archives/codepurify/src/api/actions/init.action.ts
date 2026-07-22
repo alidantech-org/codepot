@@ -1,14 +1,14 @@
 /**
  * Init Action
  *
- * Initializes Codepurify by copying package init assets into the project.
+ * Initializes codepot by copying package init assets into the project.
  */
 
 import { mkdir } from 'node:fs/promises';
 
 import type { GeneratedFileResult, InitOptions, InitResult } from '@/api/types';
 
-import type { CodepurifyAction, CodepurifyRuntime } from '@/api/runtime';
+import type { codepotAction, codepotRuntime } from '@/api/runtime';
 
 import { FileAction } from '@/api/types';
 
@@ -24,7 +24,7 @@ import {
 
 import { debug, info, success } from '@/core/logger';
 
-async function ensureGitignoreEntries(runtime: CodepurifyRuntime): Promise<void> {
+async function ensureGitignoreEntries(runtime: codepotRuntime): Promise<void> {
   const existing = await runtime.files.read(INIT_OUTPUTS.gitignore);
 
   const lines = new Set(
@@ -47,7 +47,7 @@ async function ensureGitignoreEntries(runtime: CodepurifyRuntime): Promise<void>
   });
 }
 
-async function ensureConfigDirectories(runtime: CodepurifyRuntime): Promise<void> {
+async function ensureConfigDirectories(runtime: codepotRuntime): Promise<void> {
   // Create the config directories structure
   const directories = [INIT_CONFIG_DIRS.configsDir, INIT_CONFIG_DIRS.entitiesDir, INIT_CONFIG_DIRS.resourcesDir];
 
@@ -65,7 +65,7 @@ function applyInitTemplateSymbols(content: string): string {
     .replaceAll(INIT_TEMPLATE_SYMBOLS.resourcesDir, INIT_CONFIG_DIRS.resourcesDir);
 }
 
-export const initAction: CodepurifyAction<InitOptions, InitResult> = {
+export const initAction: codepotAction<InitOptions, InitResult> = {
   name: INIT_ACTION.name,
 
   defaults: () => ({

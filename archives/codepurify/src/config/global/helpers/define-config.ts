@@ -1,22 +1,22 @@
 /**
- * Codepurify Config Definition Helper
+ * codepot Config Definition Helper
  *
- * Provides the defineCodepurifyConfig helper function for users to define
- * their Codepurify configuration with type safety and validation.
+ * Provides the definecodepotConfig helper function for users to define
+ * their codepot configuration with type safety and validation.
  */
 
-import { CodepurifyConfig } from '../types/codepurify.config.types';
+import { codepotConfig } from '../types/codepot.config.types';
 
 /**
- * Helper function to define Codepurify configuration
+ * Helper function to define codepot configuration
  *
  * This function provides type safety and validation for user-defined
- * Codepurify configuration. It can be used in config files like:
+ * codepot configuration. It can be used in config files like:
  *
  * ```js
- * const { defineCodepurifyConfig } = require("codepurify");
+ * const { definecodepotConfig } = require("codepot");
  *
- * module.exports = defineCodepurifyConfig({
+ * module.exports = definecodepotConfig({
  *   project: {
  *     name: "my-app"
  *   }
@@ -26,10 +26,10 @@ import { CodepurifyConfig } from '../types/codepurify.config.types';
  * @param config - User configuration object
  * @returns Enhanced configuration object with template filtering methods
  */
-export function defineCodepurifyConfig(config: CodepurifyConfig): CodepurifyConfig {
+export function definecodepotConfig(config: codepotConfig): codepotConfig {
   // Basic validation to ensure config is an object
   if (typeof config !== 'object' || config === null) {
-    throw new Error('Codepurify config must be an object');
+    throw new Error('codepot config must be an object');
   }
 
   return config;

@@ -1,13 +1,13 @@
 /**
- * Codepurify Rollback Command
+ * codepot Rollback Command
  *
- * Restores files from backup sessions using the Codepurify API.
+ * Restores files from backup sessions using the codepot API.
  */
 
 import { Command } from 'commander';
 import { intro, outro, confirm, spinner } from '@clack/prompts';
 import { consola } from 'consola';
-import { Codepurify } from '@/api/codepurify';
+import { codepot } from '@/api/codepot';
 
 /**
  * Creates the rollback command
@@ -20,9 +20,9 @@ export function createRollbackCommand(): Command {
     .option('-t, --timestamp <timestamp>', 'Rollback to session before timestamp')
     .action(async (options) => {
       try {
-        intro('🔄 Codepurify Rollback');
+        intro('🔄 codepot Rollback');
 
-        const codepurify = new Codepurify();
+        const codepot = new codepot();
 
         // Confirm rollback
         if (!options.force) {
@@ -36,11 +36,11 @@ export function createRollbackCommand(): Command {
           }
         }
 
-        // Perform rollback using Codepurify API
+        // Perform rollback using codepot API
         const s = spinner();
         s.start('Rolling back files...');
 
-        const result = await codepurify.rollback({
+        const result = await codepot.rollback({
           backupId: options.id,
           timestamp: options.timestamp,
         });

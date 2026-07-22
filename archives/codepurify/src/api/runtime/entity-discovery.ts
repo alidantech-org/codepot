@@ -7,8 +7,8 @@
 import fastGlob from 'fast-glob';
 import { resolve, relative } from 'node:path';
 
-import type { CodepurifyRuntime } from './codepurify-runtime';
-import type { ResolvedCodepurifyConfig } from '@/config/global/types/codepurify.config.types';
+import type { codepotRuntime } from './codepot-runtime';
+import type { ResolvedcodepotConfig } from '@/config/global/types/codepot.config.types';
 
 export interface EntityDiscoveryOptions {
   /** Pattern to match entity config files */
@@ -31,7 +31,7 @@ export interface DiscoveredEntity {
 }
 
 export class EntityDiscovery {
-  constructor(private readonly runtime: CodepurifyRuntime) {}
+  constructor(private readonly runtime: codepotRuntime) {}
 
   /**
    * Discovers entity configuration files based on global config.
@@ -40,7 +40,7 @@ export class EntityDiscovery {
    * @param options - Discovery options
    * @returns Array of discovered entity files
    */
-  async discoverEntityConfigs(globalConfig: ResolvedCodepurifyConfig, options: EntityDiscoveryOptions = {}): Promise<DiscoveredEntity[]> {
+  async discoverEntityConfigs(globalConfig: ResolvedcodepotConfig, options: EntityDiscoveryOptions = {}): Promise<DiscoveredEntity[]> {
     const { pattern = '**/*.ts', recursive = true, keyPattern } = options;
 
     const entitiesDir = resolve(globalConfig.rootDir, globalConfig.entitiesDir);

@@ -1,15 +1,15 @@
 /**
- * Codepurify Result Types
+ * codepot Result Types
  *
- * Structured result objects for all Codepurify operations.
+ * Structured result objects for all codepot operations.
  */
 
-import type { CodepurifyError } from '@/core/errors';
+import type { codepotError } from '@/core/errors';
 
 /**
  * Base result interface for all operations.
  */
-export interface BaseCodepurifyResult {
+export interface BasecodepotResult {
   /**
    * Whether the operation was successful.
    */
@@ -23,7 +23,7 @@ export interface BaseCodepurifyResult {
   /**
    * Errors generated during the operation.
    */
-  errors: CodepurifyError[];
+  errors: codepotError[];
 
   /**
    * Operation duration in milliseconds.
@@ -64,7 +64,7 @@ export interface GeneratedFileResult {
 /**
  * Result for generate operation.
  */
-export interface GenerateResult extends BaseCodepurifyResult {
+export interface GenerateResult extends BasecodepotResult {
   /**
    * Files that were generated or processed.
    */
@@ -89,7 +89,7 @@ export interface GenerateResult extends BaseCodepurifyResult {
 /**
  * Result for check operation.
  */
-export interface CheckResult extends BaseCodepurifyResult {
+export interface CheckResult extends BasecodepotResult {
   /**
    * Configuration validation results.
    */
@@ -128,7 +128,7 @@ export interface CheckResult extends BaseCodepurifyResult {
 /**
  * Result for clean operation.
  */
-export interface CleanResult extends BaseCodepurifyResult {
+export interface CleanResult extends BasecodepotResult {
   /**
    * Files that were cleaned.
    */
@@ -153,7 +153,7 @@ export interface CleanResult extends BaseCodepurifyResult {
 /**
  * Result for rollback operation.
  */
-export interface RollbackResult extends BaseCodepurifyResult {
+export interface RollbackResult extends BasecodepotResult {
   /**
    * ID of the backup that was rolled back.
    */
@@ -183,7 +183,7 @@ export interface RollbackResult extends BaseCodepurifyResult {
 /**
  * Result for init operation.
  */
-export interface InitResult extends BaseCodepurifyResult {
+export interface InitResult extends BasecodepotResult {
   /**
    * Files that were created.
    */
@@ -198,7 +198,7 @@ export interface InitResult extends BaseCodepurifyResult {
 /**
  * Result for preview operation.
  */
-export interface PreviewResult extends BaseCodepurifyResult {
+export interface PreviewResult extends BasecodepotResult {
   /**
    * Files that would be generated.
    */

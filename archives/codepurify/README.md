@@ -1,10 +1,10 @@
-# Codepurify
+# codepot
 
 > Semantic metadata inference engine + template compiler for generating architecture artifacts from typed domain configs.
 
 ---
 
-# What is Codepurify?
+# What is codepot?
 
 - semantic metadata DSL
 - normalized manifest compiler
@@ -13,7 +13,7 @@
 
 You define **facts** about your domain.
 
-Codepurify infers:
+codepot infers:
 
 - query capabilities
 - mutation semantics
@@ -35,10 +35,10 @@ Inference engine derives semantics
         ↓
 Normalized context is generated
         ↓
-Codepurify templates render output
+codepot templates render output
 ```
 
-Codepurify does **not** hardcode:
+codepot does **not** hardcode:
 
 - NestJS
 - TypeORM
@@ -57,7 +57,7 @@ All architecture styles are implemented through templates.
 
 - Strongly typed TypeScript configs
 - Semantic metadata inference
-- Codepurify-based generation
+- codepot-based generation
 - Framework agnostic
 - Runtime metadata compilation
 - Query/mutation capability inference

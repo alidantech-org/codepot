@@ -1,13 +1,13 @@
 /**
- * Codepurify Init Command
+ * codepot Init Command
  *
- * Initializes a Codepurify project using the Codepurify API.
+ * Initializes a codepot project using the codepot API.
  */
 
 import { Command } from 'commander';
 import { intro, outro, confirm, spinner } from '@clack/prompts';
 import { consola } from 'consola';
-import { Codepurify } from '@/api/codepurify';
+import { codepot } from '@/api/codepot';
 import { INIT_OUTPUTS } from '@/api/constants';
 
 /**
@@ -15,25 +15,25 @@ import { INIT_OUTPUTS } from '@/api/constants';
  */
 export function createInitCommand(): Command {
   const command = new Command('init')
-    .description('Initialize Codepurify in your project')
-    .option('-f, --force', 'Force initialization even if Codepurify is already initialized')
+    .description('Initialize codepot in your project')
+    .option('-f, --force', 'Force initialization even if codepot is already initialized')
     .option('--dry-run', 'Show what would be created without writing files')
     .option('--debug', 'Show debug information for troubleshooting')
     .action(async (options) => {
       try {
-        intro('🚀 Codepurify Init');
+        intro('🚀 codepot Init');
 
-        const codepurify = new Codepurify();
+        const codepot = new codepot();
 
-        // Check if already initialized using Codepurify API
+        // Check if already initialized using codepot API
         if (!options.force) {
           try {
-            const codepurify = new Codepurify();
-            const configExists = await codepurify.files.exists(INIT_OUTPUTS.codeDir);
+            const codepot = new codepot();
+            const configExists = await codepot.files.exists(INIT_OUTPUTS.codeDir);
 
             if (configExists) {
               const shouldContinue = await confirm({
-                message: 'Codepurify is already initialized. Re-initialize?',
+                message: 'codepot is already initialized. Re-initialize?',
               });
 
               if (!shouldContinue) {
@@ -46,11 +46,11 @@ export function createInitCommand(): Command {
           }
         }
 
-        // Initialize using Codepurify API
+        // Initialize using codepot API
         const s = spinner();
-        s.start('Initializing Codepurify project...');
+        s.start('Initializing codepot project...');
 
-        const result = await codepurify.init({
+        const result = await codepot.init({
           force: options.force,
           dryRun: options.dryRun,
           debug: options.debug,
@@ -95,7 +95,7 @@ export function createInitCommand(): Command {
             consola.info(`  ✓ ${file.path}`);
           });
         } else {
-          consola.success(`Codepurify initialized successfully!`);
+          consola.success(`codepot initialized successfully!`);
           consola.info(`Created ${result.createdFiles.length} files`);
 
           result.createdFiles.forEach((file) => {
@@ -118,7 +118,7 @@ export function createInitCommand(): Command {
           });
         }
 
-        outro('✨ Ready to generate entities with: codepurify generate');
+        outro('✨ Ready to generate entities with: codepot generate');
       } catch (error) {
         consola.error('Initialization failed:', error);
         process.exit(1);

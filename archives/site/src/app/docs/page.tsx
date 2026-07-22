@@ -13,12 +13,12 @@ export default async function DocsPage() {
         </p>
 
         <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-          Codepurify Docs
+          codepot Docs
         </h1>
 
         <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
           Learn how to define typed domain configs, infer metadata, and generate
-          architecture artifacts with Codepurify.
+          architecture artifacts with codepot.
         </p>
       </section>
 

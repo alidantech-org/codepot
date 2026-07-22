@@ -1,16 +1,16 @@
 /**
- * Codepurify Logger
+ * codepot Logger
  *
  * Provides a simple wrapper around consola for consistent logging
- * throughout the Codepurify application.
+ * throughout the codepot application.
  */
 
 import { consola } from 'consola';
 
 /**
- * Codepurify logger instance
+ * codepot logger instance
  */
-export const logger = consola.withTag('codepurify');
+export const logger = consola.withTag('codepot');
 
 /**
  * Log an info message

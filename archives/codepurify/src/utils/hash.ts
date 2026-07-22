@@ -1,5 +1,5 @@
 /**
- * Codepurify Hash Utilities
+ * codepot Hash Utilities
  *
  * Provides cryptographic hashing using Node.js crypto module.
  * Supports content hashing and file hashing with SHA-256.

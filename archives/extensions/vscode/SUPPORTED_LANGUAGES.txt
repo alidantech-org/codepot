@@ -1,143 +1,143 @@
-Codepurify Supported Languages
+codepot Supported Languages
 
 Base extensions:
-- .codepurify
+- .codepot
 - .code
 
 Host language template extensions:
 
 JavaScript:
-- .js.codepurify
+- .js.codepot
 - .js.code
 
 JavaScript React:
-- .jsx.codepurify
+- .jsx.codepot
 - .jsx.code
 
 TypeScript:
-- .ts.codepurify
+- .ts.codepot
 - .ts.code
 
 TypeScript React:
-- .tsx.codepurify
+- .tsx.codepot
 - .tsx.code
 
 SQL:
-- .sql.codepurify
+- .sql.codepot
 - .sql.code
 
 Java:
-- .java.codepurify
+- .java.codepot
 - .java.code
 
 Go:
-- .go.codepurify
+- .go.codepot
 - .go.code
 
 Rust:
-- .rs.codepurify
+- .rs.codepot
 - .rs.code
 
 Python:
-- .py.codepurify
+- .py.codepot
 - .py.code
 
 C#:
-- .cs.codepurify
+- .cs.codepot
 - .cs.code
 
 C++:
-- .cpp.codepurify
+- .cpp.codepot
 - .cpp.code
-- .cc.codepurify
+- .cc.codepot
 - .cc.code
-- .cxx.codepurify
+- .cxx.codepot
 - .cxx.code
-- .hpp.codepurify
+- .hpp.codepot
 - .hpp.code
-- .h.codepurify
+- .h.codepot
 - .h.code
 
 C:
-- .c.codepurify
+- .c.codepot
 - .c.code
 
 PHP:
-- .php.codepurify
+- .php.codepot
 - .php.code
 
 Ruby:
-- .rb.codepurify
+- .rb.codepot
 - .rb.code
 
 Kotlin:
-- .kt.codepurify
+- .kt.codepot
 - .kt.code
 
 Swift:
-- .swift.codepurify
+- .swift.codepot
 - .swift.code
 
 HTML:
-- .html.codepurify
+- .html.codepot
 - .html.code
 
 CSS:
-- .css.codepurify
+- .css.codepot
 - .css.code
 
 SCSS:
-- .scss.codepurify
+- .scss.codepot
 - .scss.code
 
 JSON:
-- .json.codepurify
+- .json.codepot
 - .json.code
 
 YAML:
-- .yaml.codepurify
+- .yaml.codepot
 - .yaml.code
-- .yml.codepurify
+- .yml.codepot
 - .yml.code
 
 Markdown:
-- .md.codepurify
+- .md.codepot
 - .md.code
 
 Dockerfile:
-- .dockerfile.codepurify
+- .dockerfile.codepot
 - .dockerfile.code
 
 Shell:
-- .sh.codepurify
+- .sh.codepot
 - .sh.code
-- .bash.codepurify
+- .bash.codepot
 - .bash.code
-- .zsh.codepurify
+- .zsh.codepot
 - .zsh.code
 
 Dart:
-- .dart.codepurify
+- .dart.codepot
 - .dart.code
 
 Vue:
-- .vue.codepurify
+- .vue.codepot
 - .vue.code
 
 Svelte:
-- .svelte.codepurify
+- .svelte.codepot
 - .svelte.code
 
 XML:
-- .xml.codepurify
+- .xml.codepot
 - .xml.code
 
 TOML:
-- .toml.codepurify
+- .toml.codepot
 - .toml.code
 
 GraphQL:
-- .graphql.codepurify
+- .graphql.codepot
 - .graphql.code
-- .gql.codepurify
+- .gql.codepot
 - .gql.code

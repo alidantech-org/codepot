@@ -1,22 +1,22 @@
 {
-  "name": "codepurify",
+  "name": "codepot",
   "version": "0.1.2-beta",
   "description": "Semantic metadata inference engine + template compiler for generating architecture artifacts from typed domain configs",
   "type": "module",
   "homepage": "https://code.alidantech.org/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/alidantech-org/codepurify.git"
+    "url": "https://github.com/alidantech-org/codepot.git"
   },
   "bugs": {
-    "url": "https://github.com/alidantech-org/codepurify/issues"
+    "url": "https://github.com/alidantech-org/codepot/issues"
   },
   "author": {
     "name": "AlidanTech",
     "url": "https://alidantech.org"
   },
   "bin": {
-    "codepurify": "dist/cli/index.js"
+    "codepot": "dist/cli/index.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

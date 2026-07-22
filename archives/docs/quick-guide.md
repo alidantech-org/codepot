@@ -1,11 +1,11 @@
 ---
 title: Quick Guide
-description: Get started with Codepurify templates and syntax
+description: Get started with codepot templates and syntax
 ---
 
 # Quick Guide
 
-Welcome to Codepurify. This guide will help you quickly understand the core concepts and navigate the documentation.
+Welcome to codepot. This guide will help you quickly understand the core concepts and navigate the documentation.
 
 ---
 

@@ -1,36 +1,36 @@
 ---
 title: Installation
-description: Install Codepurify CLI and VS Code extension
+description: Install codepot CLI and VS Code extension
 ---
 
 # Installation
 
-Install Codepurify globally or locally in your project.
+Install codepot globally or locally in your project.
 
 ## Global Install
 
 ```bash
-npm install -g codepurify
+npm install -g codepot
 ```
 
 ## Local Install
 
 ```bash
-npm install --save-dev codepurify
+npm install --save-dev codepot
 ```
 
 ## Verify Installation
 
 ```bash
-codepurify --version
+codepot --version
 ```
 
 ## VS Code Extension
 
-Install the Codepurify extension for syntax highlighting and autocomplete:
+Install the codepot extension for syntax highlighting and autocomplete:
 
 1. Open VS Code
-2. Search "Codepurify Templates" in Extensions
+2. Search "codepot Templates" in Extensions
 3. Click Install
 
 The extension provides:

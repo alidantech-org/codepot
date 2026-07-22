@@ -21,8 +21,8 @@ export const ENTITY_CODE: CodeExample = {
 };
 
 export const TEMPLATE_CODE: CodeExample = {
-  filename: "dto.create.codepurify",
-  language: "codepurify",
+  filename: "dto.create.codepot",
+  language: "codepot",
   code: `type I{{entity.name.casing.pascal}} = {
 
   // Each field becomes a property

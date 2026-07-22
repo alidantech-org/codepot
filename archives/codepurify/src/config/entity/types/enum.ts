@@ -1,4 +1,4 @@
-// ─── codepurify/fields/enum.ts ─────────────────────────────────────────────────
+// ─── codepot/fields/enum.ts ─────────────────────────────────────────────────
 
 import type { BaseFieldConfig, TransitionState } from './base';
 

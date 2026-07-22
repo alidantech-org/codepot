@@ -12,7 +12,7 @@ export class FilePatternUtils {
   /**
    * Check if a path matches global config file patterns.
    *
-   * Global config files are typically in the root or .codepurify directory
+   * Global config files are typically in the root or .codepot directory
    * and contain project-wide configuration.
    */
   static isGlobalConfig(path: string): boolean {
@@ -21,9 +21,9 @@ export class FilePatternUtils {
 
     // Check for common global config patterns
     const globalConfigPatterns = [
-      /^codepurify\.config\.(ts|js|mjs)$/,
-      /^\.codepurify\/config\.(ts|js|mjs)$/,
-      /^\.codepurify\/templates\.(ts|js|mjs)$/,
+      /^codepot\.config\.(ts|js|mjs)$/,
+      /^\.codepot\/config\.(ts|js|mjs)$/,
+      /^\.codepot\/templates\.(ts|js|mjs)$/,
       /^tempurify\.config\.(ts|js|mjs)$/,
       /^tempurify\.(ts|js|mjs)$/,
     ];
@@ -43,7 +43,7 @@ export class FilePatternUtils {
     // Check for template registry patterns
     const templateRegistryPatterns = [
       /^templates\.(ts|js|mjs)$/,
-      /^\.codepurify\/templates\.(ts|js|mjs)$/,
+      /^\.codepot\/templates\.(ts|js|mjs)$/,
       /^src\/templates\/.*\.(ts|js|mjs)$/,
       /^templates\/.*\.(ts|js|mts)$/,
     ];

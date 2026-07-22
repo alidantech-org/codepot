@@ -1,7 +1,7 @@
 /**
  * Template Renderer Service
  *
- * Handles rendering of templates using Codepurify or other template engines.
+ * Handles rendering of templates using codepot or other template engines.
  */
 
 import { readFile } from 'node:fs/promises';
@@ -9,7 +9,7 @@ import { resolve } from 'node:path';
 
 import * as Eta from 'eta';
 
-import type { CodepurifyRuntime } from './codepurify-runtime';
+import type { codepotRuntime } from './codepot-runtime';
 import type { TemplateExecution } from './template-resolver';
 
 export interface RenderedTemplate {
@@ -34,17 +34,17 @@ export interface RenderedTemplate {
 
 export interface TemplateRendererOptions {
   /** Template engine to use */
-  engine?: 'eta' | 'codepurify';
+  engine?: 'eta' | 'codepot';
   /** Cache compiled templates */
   cache?: boolean;
 }
 
 export class TemplateRenderer {
   private readonly templateCache = new Map<string, Function>();
-  private readonly engine: 'eta' | 'codepurify';
+  private readonly engine: 'eta' | 'codepot';
 
   constructor(
-    private readonly runtime: CodepurifyRuntime,
+    private readonly runtime: codepotRuntime,
     options: TemplateRendererOptions = {},
   ) {
     this.engine = options.engine ?? 'eta';

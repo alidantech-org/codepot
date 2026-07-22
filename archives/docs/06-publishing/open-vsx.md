@@ -1,6 +1,6 @@
 ---
 title: Publish to Open VSX
-description: Publish Codepurify extension to Open VSX registry
+description: Publish codepot extension to Open VSX registry
 ---
 
 # Publish to Open VSX
@@ -10,6 +10,7 @@ Publish the extension to the Open VSX registry for broader editor support.
 ## What is Open VSX?
 
 Open VSX is a neutral extension registry:
+
 - Alternative to Microsoft's marketplace
 - Required for non-Microsoft editors
 - Used by Windsurf, Cursor, and others
@@ -31,6 +32,7 @@ npx ovsx publish
 ## Namespace Requirement
 
 Your extension needs a unique namespace:
+
 - Set in `package.json` under `publisher`
 - Must match your Open VSX account name
 
@@ -51,7 +53,7 @@ Your extension needs a unique namespace:
 ```bash
 $ npx ovsx publish
 Publisher: your-username
-Extension name: codepurify
+Extension name: codepot
 Version: 1.0.0
 
 Successfully published!
@@ -60,8 +62,9 @@ Successfully published!
 ## Post-Publishing
 
 Extension becomes available at:
+
 ```
-https://open-vsx.org/extension/your-username/codepurify
+https://open-vsx.org/extension/your-username/codepot
 ```
 
 Users can now install via their editor's extension marketplace.

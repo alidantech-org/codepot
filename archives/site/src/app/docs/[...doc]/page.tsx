@@ -31,7 +31,7 @@ export async function generateMetadata({
 
   if (!page) {
     return {
-      title: "Not Found - Codepurify Documentation",
+      title: "Not Found - codepot Documentation",
       description: "The requested documentation page was not found.",
     };
   }

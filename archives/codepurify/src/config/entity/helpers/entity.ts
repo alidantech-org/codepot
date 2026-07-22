@@ -1,4 +1,4 @@
-// ─── codepurify/fields/entity.ts ─────────────────────────────────────────────────
+// ─── codepot/fields/entity.ts ─────────────────────────────────────────────────
 
 import { FieldConfig, RelationConfigUnion, IndexConfig, IEntityConfig } from '../types';
 

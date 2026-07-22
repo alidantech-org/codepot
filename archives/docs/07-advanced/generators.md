@@ -1,16 +1,16 @@
 ---
 title: Custom Generators
-description: Building custom code generators for Codepurify
+description: Building custom code generators for codepot
 ---
 
 # Custom Generators
 
-Create custom generators to extend Codepurify's capabilities.
+Create custom generators to extend codepot's capabilities.
 
 ## Generator Structure
 
 ```typescript
-import { Generator, Context, Output } from "@codepurify/core";
+import { Generator, Context, Output } from "@codepot/core";
 
 export class CustomGenerator implements Generator {
   name = "custom-generator";
@@ -38,10 +38,10 @@ export class CustomGenerator implements Generator {
 ## Registration
 
 ```typescript
-import { Codepurify } from "@codepurify/core";
+import { codepot } from "@codepot/core";
 import { CustomGenerator } from "./generators/custom";
 
-const app = new Codepurify();
+const app = new codepot();
 app.registerGenerator(new CustomGenerator());
 ```
 
@@ -80,7 +80,7 @@ async generate(context: Context): Promise<Output[]> {
   const outputs: Output[] = [];
 
   // Read external files
-  const template = await fs.readFile('template.codepurify', 'utf-8');
+  const template = await fs.readFile('template.codepot', 'utf-8');
 
   // Process with external APIs
   const processed = await this.processWithAPI(context);

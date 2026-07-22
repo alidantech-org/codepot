@@ -1,6 +1,6 @@
 {
-  "name": "Codepurify",
-  "scopeName": "source.codepurify",
+  "name": "codepot",
+  "scopeName": "source.codepot",
   "patterns": [
     {
       "include": "#comments"
@@ -16,12 +16,12 @@
     "comments": {
       "patterns": [
         {
-          "name": "comment.block.documentation.codepurify",
+          "name": "comment.block.documentation.codepot",
           "begin": "\\{\\|\\*",
           "end": "\\*\\|\\}"
         },
         {
-          "name": "comment.block.codepurify",
+          "name": "comment.block.codepot",
           "begin": "\\{\\|#",
           "end": "#\\|\\}"
         }
@@ -30,20 +30,20 @@
     "blocks": {
       "patterns": [
         {
-          "name": "meta.block.codepurify",
+          "name": "meta.block.codepot",
           "begin": "\\{\\|\\s*(if|loop|raw|unless|with)\\b",
           "beginCaptures": {
             "0": {
-              "name": "meta.tag.template.begin.codepurify"
+              "name": "meta.tag.template.begin.codepot"
             },
             "1": {
-              "name": "keyword.control.codepurify"
+              "name": "keyword.control.codepot"
             }
           },
           "end": "\\|\\}",
           "endCaptures": {
             "0": {
-              "name": "punctuation.definition.template.end.codepurify"
+              "name": "punctuation.definition.template.end.codepot"
             }
           },
           "patterns": [
@@ -72,17 +72,17 @@
     "expressions": {
       "patterns": [
         {
-          "name": "meta.expression.codepurify",
+          "name": "meta.expression.codepot",
           "begin": "\\|",
           "end": "\\|\\}",
           "beginCaptures": {
             "0": {
-              "name": "punctuation.definition.template.begin.codepurify"
+              "name": "punctuation.definition.template.begin.codepot"
             }
           },
           "endCaptures": {
             "0": {
-              "name": "punctuation.definition.template.end.codepurify"
+              "name": "punctuation.definition.template.end.codepot"
             }
           },
           "patterns": [
@@ -111,19 +111,19 @@
     "keywords": {
       "patterns": [
         {
-          "name": "keyword.control.conditional.codepurify",
+          "name": "keyword.control.conditional.codepot",
           "match": "\\b(if|else|unless|with|raw)\\b"
         },
         {
-          "name": "keyword.control.repeat.codepurify",
+          "name": "keyword.control.repeat.codepot",
           "match": "\\b(loop|for)\\b"
         },
         {
-          "name": "keyword.control.end.codepurify",
+          "name": "keyword.control.end.codepot",
           "match": "\\/(if|loop|for|raw|unless|with)\\b"
         },
         {
-          "name": "keyword.operator.word.codepurify",
+          "name": "keyword.operator.word.codepot",
           "match": "\\b(as|in|not|and|or|is)\\b"
         }
       ]
@@ -131,11 +131,11 @@
     "operators": {
       "patterns": [
         {
-          "name": "keyword.operator.comparison.codepurify",
+          "name": "keyword.operator.comparison.codepot",
           "match": "(==|!=|<=|>=|<|>|!)"
         },
         {
-          "name": "keyword.operator.logical.codepurify",
+          "name": "keyword.operator.logical.codepot",
           "match": "(&&|\\|\\|)"
         }
       ]
@@ -143,20 +143,20 @@
     "literals": {
       "patterns": [
         {
-          "name": "constant.language.boolean.codepurify",
+          "name": "constant.language.boolean.codepot",
           "match": "\\b(true|false|null|undefined)\\b"
         },
         {
-          "name": "constant.numeric.codepurify",
+          "name": "constant.numeric.codepot",
           "match": "\\b\\d+(\\.\\d+)?\\b"
         },
         {
-          "name": "string.quoted.single.codepurify",
+          "name": "string.quoted.single.codepot",
           "begin": "'",
           "end": "'"
         },
         {
-          "name": "string.quoted.double.codepurify",
+          "name": "string.quoted.double.codepot",
           "begin": "\"",
           "end": "\""
         }
@@ -165,7 +165,7 @@
     "aliases": {
       "patterns": [
         {
-          "name": "variable.parameter.alias.codepurify",
+          "name": "variable.parameter.alias.codepot",
           "match": "(?<=\\bas\\s+)[a-zA-Z_$][a-zA-Z0-9_$]*"
         }
       ]
@@ -173,55 +173,55 @@
     "variables": {
       "patterns": [
         {
-          "name": "variable.other.path.entity.codepurify",
+          "name": "variable.other.path.entity.codepot",
           "match": "\\bentity\\.[a-zA-Z_$][a-zA-Z0-9_$]*(\\.[a-zA-Z_$][a-zA-Z0-9_$]*)*\\b"
         },
         {
-          "name": "variable.other.path.field.codepurify",
+          "name": "variable.other.path.field.codepot",
           "match": "\\bfield\\.[a-zA-Z_$][a-zA-Z0-9_$]*(\\.[a-zA-Z_$][a-zA-Z0-9_$]*)*\\b"
         },
         {
-          "name": "variable.other.path.relation.codepurify",
+          "name": "variable.other.path.relation.codepot",
           "match": "\\brelation\\.[a-zA-Z_$][a-zA-Z0-9_$]*(\\.[a-zA-Z_$][a-zA-Z0-9_$]*)*\\b"
         },
         {
-          "name": "variable.other.path.global.codepurify",
+          "name": "variable.other.path.global.codepot",
           "match": "\\bglobal\\.[a-zA-Z_$][a-zA-Z0-9_$]*(\\.[a-zA-Z_$][a-zA-Z0-9_$]*)*\\b"
         },
         {
-          "name": "variable.other.path.codepurify",
+          "name": "variable.other.path.codepot",
           "match": "\\b[a-zA-Z_$][a-zA-Z0-9_$]*(\\.[a-zA-Z_$][a-zA-Z0-9_$]*)+\\b"
         },
         {
-          "name": "variable.language.root.entity.codepurify",
+          "name": "variable.language.root.entity.codepot",
           "match": "\\bentity\\b"
         },
         {
-          "name": "variable.language.root.field.codepurify",
+          "name": "variable.language.root.field.codepot",
           "match": "\\bfield\\b"
         },
         {
-          "name": "variable.language.root.relation.codepurify",
+          "name": "variable.language.root.relation.codepot",
           "match": "\\brelation\\b"
         },
         {
-          "name": "variable.language.root.global.codepurify",
+          "name": "variable.language.root.global.codepot",
           "match": "\\bglobal\\b"
         },
         {
-          "name": "variable.language.root.resource.codepurify",
+          "name": "variable.language.root.resource.codepot",
           "match": "\\bresource\\b"
         },
         {
-          "name": "variable.language.root.template.codepurify",
+          "name": "variable.language.root.template.codepot",
           "match": "\\btemplate\\b"
         },
         {
-          "name": "variable.language.root.item.codepurify",
+          "name": "variable.language.root.item.codepot",
           "match": "\\b(item|index)\\b"
         },
         {
-          "name": "variable.other.identifier.codepurify",
+          "name": "variable.other.identifier.codepot",
           "match": "\\b[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
         }
       ]
@@ -229,103 +229,103 @@
     "properties": {
       "patterns": [
         {
-          "name": "support.type.namespace.name.codepurify",
+          "name": "support.type.namespace.name.codepot",
           "match": "\\bname\\b"
         },
         {
-          "name": "support.type.namespace.casing.codepurify",
+          "name": "support.type.namespace.casing.codepot",
           "match": "\\bcasing\\b"
         },
         {
-          "name": "support.type.namespace.validation.codepurify",
+          "name": "support.type.namespace.validation.codepot",
           "match": "\\bvalidation\\b"
         },
         {
-          "name": "support.type.namespace.array.codepurify",
+          "name": "support.type.namespace.array.codepot",
           "match": "\\barray\\b"
         },
         {
-          "name": "support.type.namespace.flags.codepurify",
+          "name": "support.type.namespace.flags.codepot",
           "match": "\\bflags\\b"
         },
         {
-          "name": "support.type.namespace.counts.codepurify",
+          "name": "support.type.namespace.counts.codepot",
           "match": "\\bcounts\\b"
         },
         {
-          "name": "support.type.namespace.maps.codepurify",
+          "name": "support.type.namespace.maps.codepot",
           "match": "\\bmaps\\b"
         },
         {
-          "name": "support.type.namespace.items.codepurify",
+          "name": "support.type.namespace.items.codepot",
           "match": "\\bitems\\b"
         },
         {
-          "name": "support.property.length.codepurify",
+          "name": "support.property.length.codepot",
           "match": "\\blength\\b"
         },
         {
-          "name": "support.property.original.codepurify",
+          "name": "support.property.original.codepot",
           "match": "\\boriginal\\b"
         },
         {
-          "name": "support.constant.casing.camel.codepurify",
+          "name": "support.constant.casing.camel.codepot",
           "match": "\\bcamel\\b"
         },
         {
-          "name": "support.constant.casing.pascal.codepurify",
+          "name": "support.constant.casing.pascal.codepot",
           "match": "\\bpascal\\b"
         },
         {
-          "name": "support.constant.casing.snake.codepurify",
+          "name": "support.constant.casing.snake.codepot",
           "match": "\\bsnake\\b"
         },
         {
-          "name": "support.constant.casing.kebab.codepurify",
+          "name": "support.constant.casing.kebab.codepot",
           "match": "\\bkebab\\b"
         },
         {
-          "name": "support.constant.casing.constant.codepurify",
+          "name": "support.constant.casing.constant.codepot",
           "match": "\\bconstant\\b"
         },
         {
-          "name": "support.constant.casing.dot.codepurify",
+          "name": "support.constant.casing.dot.codepot",
           "match": "\\bdot\\b"
         },
         {
-          "name": "support.constant.casing.slash.codepurify",
+          "name": "support.constant.casing.slash.codepot",
           "match": "\\bslash\\b"
         },
         {
-          "name": "support.constant.casing.path.codepurify",
+          "name": "support.constant.casing.path.codepot",
           "match": "\\bpath\\b"
         },
         {
-          "name": "support.constant.casing.lower.codepurify",
+          "name": "support.constant.casing.lower.codepot",
           "match": "\\blower\\b"
         },
         {
-          "name": "support.constant.casing.upper.codepurify",
+          "name": "support.constant.casing.upper.codepot",
           "match": "\\bupper\\b"
         },
         {
-          "name": "support.constant.casing.title.codepurify",
+          "name": "support.constant.casing.title.codepot",
           "match": "\\btitle\\b"
         },
         {
-          "name": "support.constant.casing.train.codepurify",
+          "name": "support.constant.casing.train.codepot",
           "match": "\\btrain\\b"
         },
         {
-          "name": "support.property.rules.codepurify",
+          "name": "support.property.rules.codepot",
           "match": "\\brules\\b"
         },
         {
-          "name": "support.property.type.codepurify",
+          "name": "support.property.type.codepot",
           "match": "\\btype\\b"
         },
         {
-          "name": "support.property.required.codepurify",
+          "name": "support.property.required.codepot",
           "match": "\\brequired\\b"
         }
       ]

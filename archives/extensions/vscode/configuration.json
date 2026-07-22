@@ -1,90 +1,90 @@
 {
-  "title": "Codepurify",
+  "title": "codepot",
   "type": "object",
   "default": {},
   "additionalProperties": false,
   "properties": {
-    "codepurify.theme.enabled": {
+    "codepot.theme.enabled": {
       "type": "boolean",
       "default": true,
-      "description": "Enable Codepurify theme customizations."
+      "description": "Enable codepot theme customizations."
     },
-    "codepurify.theme.entityColor": {
+    "codepot.theme.entityColor": {
       "type": "string",
       "default": "#50fa7b",
       "description": "Color for entity variables (hex)."
     },
-    "codepurify.theme.fieldColor": {
+    "codepot.theme.fieldColor": {
       "type": "string",
       "default": "#8be9fd",
       "description": "Color for field variables (hex)."
     },
-    "codepurify.theme.relationColor": {
+    "codepot.theme.relationColor": {
       "type": "string",
       "default": "#bd93f9",
       "description": "Color for relation variables (hex)."
     },
-    "codepurify.theme.globalColor": {
+    "codepot.theme.globalColor": {
       "type": "string",
       "default": "#ffb86c",
       "description": "Color for global variables (hex)."
     },
-    "codepurify.theme.templateColor": {
+    "codepot.theme.templateColor": {
       "type": "string",
       "default": "#ff5555",
       "description": "Color for template variables (hex)."
     },
-    "codepurify.theme.delimiterColor": {
+    "codepot.theme.delimiterColor": {
       "type": "string",
       "default": "#ff79c6",
       "description": "Color for template delimiters `{| |}` (hex)."
     },
-    "codepurify.theme.casingColor": {
+    "codepot.theme.casingColor": {
       "type": "string",
       "default": "#a6e22e",
       "description": "Color for casing constants (hex)."
     },
-    "codepurify.theme.backgroundColor": {
+    "codepot.theme.backgroundColor": {
       "type": "string",
       "default": "rgba(255, 121, 198, 0.1)",
       "description": "Background color for `{| ... |}` expressions (rgba)."
     },
-    "codepurify.theme.borderColor": {
+    "codepot.theme.borderColor": {
       "type": "string",
       "default": "rgba(255, 121, 198, 0.3)",
       "description": "Border color for `{| ... |}` expressions (rgba)."
     },
-    "codepurify.theme.errorColor": {
+    "codepot.theme.errorColor": {
       "type": "string",
       "default": "rgba(255, 85, 85, 0.2)",
       "description": "Background color for errors (rgba)."
     },
-    "codepurify.validation.enabled": {
+    "codepot.validation.enabled": {
       "type": "boolean",
       "default": true,
       "description": "Enable real-time validation."
     },
-    "codepurify.validation.strict": {
+    "codepot.validation.strict": {
       "type": "boolean",
       "default": false,
       "description": "Enable strict validation mode."
     },
-    "codepurify.completion.enabled": {
+    "codepot.completion.enabled": {
       "type": "boolean",
       "default": true,
       "description": "Enable intelligent auto-completion."
     },
-    "codepurify.hover.enabled": {
+    "codepot.hover.enabled": {
       "type": "boolean",
       "default": true,
       "description": "Enable hover documentation."
     },
-    "codepurify.decorations.enabled": {
+    "codepot.decorations.enabled": {
       "type": "boolean",
       "default": true,
       "description": "Enable visual decorations and backgrounds."
     },
-    "codepurify.decorations.opacity": {
+    "codepot.decorations.opacity": {
       "type": "number",
       "default": 0.15,
       "minimum": 0,

@@ -1,11 +1,11 @@
 ---
 title: Performance & Scaling
-description: Optimizing Codepurify for large-scale generation
+description: Optimizing codepot for large-scale generation
 ---
 
 # Performance & Scaling
 
-Optimize Codepurify for handling large projects and high-volume generation.
+Optimize codepot for handling large projects and high-volume generation.
 
 ## Caching Strategies
 
@@ -14,10 +14,10 @@ Optimize Codepurify for handling large projects and high-volume generation.
 ```typescript
 class TemplateCache {
   private cache = new Map<string, CompiledTemplate>();
-  
+
   getTemplate(path: string): CompiledTemplate {
     if (!this.cache.has(path)) {
-      const template = fs.readFileSync(path, 'utf-8');
+      const template = fs.readFileSync(path, "utf-8");
       const compiled = this.compile(template);
       this.cache.set(path, compiled);
     }
@@ -31,7 +31,7 @@ class TemplateCache {
 ```typescript
 class ContextCache {
   private cache = new Map<string, Context>();
-  
+
   getContext(entityId: string): Context {
     if (!this.cache.has(entityId)) {
       const context = this.buildContext(entityId);
@@ -45,26 +45,29 @@ class ContextCache {
 ## Parallel Processing
 
 ```typescript
-import { Worker, isMainThread, parentPort, workerData } from 'worker_threads';
+import { Worker, isMainThread, parentPort, workerData } from "worker_threads";
 
 class ParallelGenerator {
   async generateParallel(entities: Entity[]): Promise<Output[]> {
     const workers = this.createWorkers(os.cpus().length);
     const chunks = this.chunkArray(entities, workers.length);
-    
-    const promises = chunks.map((chunk, index) => 
-      this.processInWorker(workers[index], chunk)
+
+    const promises = chunks.map((chunk, index) =>
+      this.processInWorker(workers[index], chunk),
     );
-    
+
     const results = await Promise.all(promises);
     return results.flat();
   }
-  
-  private async processInWorker(worker: Worker, entities: Entity[]): Promise<Output[]> {
+
+  private async processInWorker(
+    worker: Worker,
+    entities: Entity[],
+  ): Promise<Output[]> {
     return new Promise((resolve, reject) => {
       worker.postMessage(entities);
-      worker.once('message', resolve);
-      worker.once('error', reject);
+      worker.once("message", resolve);
+      worker.once("error", reject);
     });
   }
 }
@@ -82,13 +85,13 @@ class StreamingGenerator {
         // Generate content in chunks
         const chunk = this.generateChunk();
         this.push(chunk);
-        
+
         if (this.isComplete()) {
           this.push(null);
         }
-      }
+      },
     });
-    
+
     return stream;
   }
 }
@@ -100,18 +103,21 @@ class StreamingGenerator {
 class ResourcePool<T> {
   private resources: T[] = [];
   private available: T[] = [];
-  
-  constructor(private factory: () => T, private size: number) {
+
+  constructor(
+    private factory: () => T,
+    private size: number,
+  ) {
     for (let i = 0; i < size; i++) {
       this.resources.push(factory());
       this.available.push(factory());
     }
   }
-  
+
   acquire(): T {
     return this.available.pop() || this.factory();
   }
-  
+
   release(resource: T): void {
     this.available.push(resource);
   }
@@ -125,7 +131,7 @@ class ResourcePool<T> {
 ```typescript
 class LazyContext {
   private _context: Context | null = null;
-  
+
   get context(): Context {
     if (!this._context) {
       this._context = this.buildContext();
@@ -140,20 +146,18 @@ class LazyContext {
 ```typescript
 class BatchProcessor {
   async processBatch<T, R>(
-    items: T[], 
+    items: T[],
     processor: (item: T) => Promise<R>,
-    batchSize: number = 100
+    batchSize: number = 100,
   ): Promise<R[]> {
     const results: R[] = [];
-    
+
     for (let i = 0; i < items.length; i += batchSize) {
       const batch = items.slice(i, i + batchSize);
-      const batchResults = await Promise.all(
-        batch.map(processor)
-      );
+      const batchResults = await Promise.all(batch.map(processor));
       results.push(...batchResults);
     }
-    
+
     return results;
   }
 }
@@ -164,23 +168,23 @@ class BatchProcessor {
 ```typescript
 class PerformanceMonitor {
   private metrics = new Map<string, number[]>();
-  
+
   startTimer(name: string): () => void {
     const start = performance.now();
-    
+
     return () => {
       const duration = performance.now() - start;
       this.recordMetric(name, duration);
     };
   }
-  
+
   private recordMetric(name: string, value: number): void {
     if (!this.metrics.has(name)) {
       this.metrics.set(name, []);
     }
     this.metrics.get(name)!.push(value);
   }
-  
+
   getAverage(name: string): number {
     const values = this.metrics.get(name) || [];
     return values.reduce((a, b) => a + b, 0) / values.length;

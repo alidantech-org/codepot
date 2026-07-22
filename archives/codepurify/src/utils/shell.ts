@@ -1,5 +1,5 @@
 /**
- * Codepurify Shell Utilities
+ * codepot Shell Utilities
  *
  * Provides shell command execution using execa.
  * Includes command existence checking and result handling.

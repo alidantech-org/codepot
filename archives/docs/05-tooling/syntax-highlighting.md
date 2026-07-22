@@ -1,17 +1,17 @@
 ---
 title: Syntax Highlighting
-description: Code highlighting for Codepurify templates
+description: Code highlighting for codepot templates
 ---
 
 # Syntax Highlighting
 
-The extension provides syntax highlighting for Codepurify template syntax.
+The extension provides syntax highlighting for codepot template syntax.
 
 ## Template Delimiters
 
 `{| ... |}` delimiters are highlighted with distinct colors:
 
-```codepurify
+```codepot
 export class {| entity.names.casing.pascal |} { {|#each
 entity.fields.arrays.all.items as field|} {|field.names.casing.camel|}: string;
 {|/each|} }
@@ -33,7 +33,7 @@ entity.fields.arrays.all.items as field|} {|field.names.casing.camel|}: string;
 
 ### Comments
 
-```codepurify
+```codepot
 {|# This is a comment |}
 ```
 
@@ -41,7 +41,7 @@ entity.fields.arrays.all.items as field|} {|field.names.casing.camel|}: string;
 
 ### Before Extension
 
-```codepurify
+```codepot
 export class { entity.names.casing.pascal } { {#each
 entity.fields.arrays.all.items as field} {field.names.casing.camel}: string;
 {/each} }

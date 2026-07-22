@@ -1,23 +1,23 @@
 import { Metadata } from "next";
 
 export const siteConfig = {
-  name: "Codepurify",
+  name: "codepot",
   description:
     "Semantic metadata inference engine and template compiler. Define facts once, generate infinite architecture outputs.",
-  url: "https://codepurify.dev",
-  ogImage: "https://codepurify.dev/og-image.png",
+  url: "https://codepot.dev",
+  ogImage: "https://codepot.dev/og-image.png",
   links: {
-    twitter: "https://twitter.com/codepurify",
-    github: "https://github.com/alidantech-org/codepurify",
-    docs: "https://github.com/alidantech-org/codepurify#readme",
-    npm: "https://www.npmjs.com/package/codepurify",
+    twitter: "https://twitter.com/codepot",
+    github: "https://github.com/alidantech-org/codepot",
+    docs: "https://github.com/alidantech-org/codepot#readme",
+    npm: "https://www.npmjs.com/package/codepot",
   },
 };
 
 export type SiteConfig = typeof siteConfig;
 
 export function generateMetadata(): Metadata {
-  const title = "Codepurify - Semantic Metadata Inference Engine";
+  const title = "codepot - Semantic Metadata Inference Engine";
   const description =
     "Define facts once, generate infinite architecture outputs. Strongly typed TypeScript configs, semantic metadata inference, and template compilation for modern development.";
 
@@ -47,7 +47,7 @@ export function generateMetadata(): Metadata {
       "metadata-driven",
       "code generation",
       "template engine",
-      "Codepurify",
+      "codepot",
       "GraphQL",
       "OpenAPI",
       "Zod",
@@ -87,7 +87,7 @@ export function generateMetadata(): Metadata {
           url: siteConfig.ogImage,
           width: 1200,
           height: 630,
-          alt: "Codepurify - Semantic Metadata Inference Engine",
+          alt: "codepot - Semantic Metadata Inference Engine",
         },
       ],
     },
@@ -96,8 +96,8 @@ export function generateMetadata(): Metadata {
       title,
       description,
       images: [siteConfig.ogImage],
-      creator: "@codepurify",
-      site: "@codepurify",
+      creator: "@codepot",
+      site: "@codepot",
     },
     robots: {
       index: true,
@@ -122,7 +122,7 @@ export function generateStructuredData() {
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "Codepurify",
+    name: "codepot",
     description:
       "Semantic metadata inference engine and template compiler. Define facts once, generate infinite architecture outputs.",
     url: siteConfig.url,
@@ -151,7 +151,7 @@ export function generateStructuredData() {
     featureList: [
       "Strongly typed TypeScript configs",
       "Semantic metadata inference",
-      "Codepurify-based generation",
+      "codepot-based generation",
       "Framework agnostic",
       "Runtime metadata compilation",
       "Query/mutation capability inference",
@@ -197,31 +197,31 @@ export function generateFAQStructuredData() {
     mainEntity: [
       {
         "@type": "Question",
-        name: "What is Codepurify?",
+        name: "What is codepot?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Codepurify is a semantic metadata inference engine and template compiler that allows you to define facts once and generate infinite architecture outputs.",
+          text: "codepot is a semantic metadata inference engine and template compiler that allows you to define facts once and generate infinite architecture outputs.",
         },
       },
       {
         "@type": "Question",
-        name: "What programming languages does Codepurify support?",
+        name: "What programming languages does codepot support?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Codepurify is built with TypeScript and can generate code for any language through Codepurify templates. It supports JavaScript, TypeScript, Python, Java, C#, and more.",
+          text: "codepot is built with TypeScript and can generate code for any language through codepot templates. It supports JavaScript, TypeScript, Python, Java, C#, and more.",
         },
       },
       {
         "@type": "Question",
-        name: "Is Codepurify open source?",
+        name: "Is codepot open source?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Yes, Codepurify is open source under the MIT license. You can contribute to the project on GitHub.",
+          text: "Yes, codepot is open source under the MIT license. You can contribute to the project on GitHub.",
         },
       },
       {
         "@type": "Question",
-        name: "What can I generate with Codepurify?",
+        name: "What can I generate with codepot?",
         acceptedAnswer: {
           "@type": "Answer",
           text: "You can generate ORM entities, repositories, DTOs, validation layers, query builders, GraphQL schemas, OpenAPI specs, Zod schemas, React forms, admin panels, SDKs, and more.",

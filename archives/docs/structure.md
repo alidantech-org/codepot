@@ -1,11 +1,11 @@
-# CodePurify Project Structure
+# codepot Project Structure
 
-This document outlines the current structure of the CodePurify project after the reorganization into a package-based layout.
+This document outlines the current structure of the codepot project after the reorganization into a package-based layout.
 
 ## Root Directory Structure
 
 ```
-codepurify/
+codepot/
 ├── .github/                 # GitHub workflows and configuration
 ├── .gitignore              # Git ignore rules
 ├── LICENSE                 # Project license
@@ -21,7 +21,8 @@ codepurify/
 ## Directory Details
 
 ### `packages/` - Core Packages
-Contains the main CodePurify implementations for different platforms:
+
+Contains the main codepot implementations for different platforms:
 
 ```
 packages/
@@ -35,6 +36,7 @@ packages/
 ```
 
 ### `extensions/` - IDE Extensions
+
 Contains IDE-specific extensions and plugins:
 
 ```
@@ -52,6 +54,7 @@ extensions/
 ```
 
 ### `site/` - Documentation Website
+
 Next.js-based documentation and marketing website:
 
 ```
@@ -70,6 +73,7 @@ site/
 ```
 
 ### `docs/` - Additional Documentation
+
 Contains supplementary documentation and project files:
 
 ```
@@ -86,6 +90,7 @@ The project has been restructured from a monolithic layout to a package-based ar
 - **New**: `packages/`, `extensions/`, `site/` directories
 
 This new structure provides:
+
 - Better separation of concerns
 - Platform-specific packaging
 - Easier maintenance and development
@@ -93,7 +98,7 @@ This new structure provides:
 
 ## Development Workflow
 
-1. **Core Development**: Work in `packages/nodejs/` for the main CodePurify functionality
+1. **Core Development**: Work in `packages/nodejs/` for the main codepot functionality
 2. **Extension Development**: Work in `extensions/vscode/` for VSCode-specific features
 3. **Documentation**: Work in `site/` for the website and documentation
 4. **Testing**: Use `docker-compose.yml` for local development and testing

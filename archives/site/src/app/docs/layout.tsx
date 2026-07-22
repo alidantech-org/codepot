@@ -5,9 +5,9 @@ import { MobileDocsBar } from "@/components/docs/MobileDocsBar";
 import { getAllDocs } from "@/lib/docs";
 
 export const metadata: Metadata = {
-  title: "Documentation - CodePurify",
+  title: "Documentation - codepot",
   description:
-    "Complete documentation for CodePurify semantic metadata inference engine",
+    "Complete documentation for codepot semantic metadata inference engine",
 };
 
 export default async function DocsLayout({

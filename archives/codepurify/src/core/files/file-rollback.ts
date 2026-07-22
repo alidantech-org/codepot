@@ -1,25 +1,25 @@
 import { copyFile, unlink } from 'node:fs/promises';
 
 import { relativeFromRoot } from './file-paths';
-import type { CodepurifyFileBackups } from './file-backups';
-import type { CodepurifyFileDb } from './file-db';
-import type { CodepurifyRollbackResult } from './file-types';
+import type { codepotFileBackups } from './file-backups';
+import type { codepotFileDb } from './file-db';
+import type { codepotRollbackResult } from './file-types';
 
-export class CodepurifyFileRollback {
+export class codepotFileRollback {
   constructor(
     private readonly rootDir: string,
-    private readonly db: CodepurifyFileDb,
-    private readonly backups: CodepurifyFileBackups,
+    private readonly db: codepotFileDb,
+    private readonly backups: codepotFileBackups,
   ) {}
 
-  async rollback(sessionId: string): Promise<CodepurifyRollbackResult> {
+  async rollback(sessionId: string): Promise<codepotRollbackResult> {
     const session = await this.backups.loadSession(sessionId);
 
     if (!session) {
       throw new Error(`Backup session not found: ${sessionId}`);
     }
 
-    const result: CodepurifyRollbackResult = {
+    const result: codepotRollbackResult = {
       sessionId,
       restoredFiles: [],
       deletedFiles: [],
@@ -60,11 +60,11 @@ export class CodepurifyFileRollback {
     return result;
   }
 
-  async rollbackLatest(): Promise<CodepurifyRollbackResult> {
+  async rollbackLatest(): Promise<codepotRollbackResult> {
     const sessions = await this.backups.listSessions();
 
     if (sessions.length === 0) {
-      throw new Error('No Codepurify backup sessions found.');
+      throw new Error('No codepot backup sessions found.');
     }
 
     return this.rollback(sessions[0].id);

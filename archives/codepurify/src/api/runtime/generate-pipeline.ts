@@ -4,11 +4,11 @@
  * Orchestrates the entire code generation pipeline from config loading to file writing.
  */
 
-import type { CodepurifyRuntime } from './codepurify-runtime';
-import type { ResolvedCodepurifyConfig } from '@/config/global/types/codepurify.config.types';
+import type { codepotRuntime } from './codepot-runtime';
+import type { ResolvedcodepotConfig } from '@/config/global/types/codepot.config.types';
 import type { WriteGeneratedFileInput } from '@/core/files/file-types';
 import type { FileAction } from '@/api/types';
-import type { CodepurifyBackupSession } from '@/core/files/file-types';
+import type { codepotBackupSession } from '@/core/files/file-types';
 import { ConfigLoader } from './config-loader';
 import { EntityDiscovery } from './entity-discovery';
 import { EntityLoader } from './entity-loader';
@@ -69,12 +69,12 @@ export interface GeneratePipelineOptions {
   };
   /** Template rendering options */
   rendering?: {
-    engine?: 'eta' | 'codepurify';
+    engine?: 'eta' | 'codepot';
     cache?: boolean;
   };
   /** File writing options */
   writing?: {
-    backupSession?: CodepurifyBackupSession;
+    backupSession?: codepotBackupSession;
     dryRun?: boolean;
   };
 }
@@ -104,7 +104,7 @@ export class GeneratePipeline {
   private readonly templateResolver: TemplateResolver;
   private readonly templateRenderer: TemplateRenderer;
 
-  constructor(private readonly runtime: CodepurifyRuntime) {
+  constructor(private readonly runtime: codepotRuntime) {
     this.configLoader = new ConfigLoader(runtime);
     this.entityDiscovery = new EntityDiscovery(runtime);
     this.entityLoader = new EntityLoader(runtime);

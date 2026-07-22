@@ -1,14 +1,14 @@
 /**
  * File Constants
  *
- * Constants and helpers for Codepurify file operations.
+ * Constants and helpers for codepot file operations.
  */
 
 export const FILE_DB_CONSTANTS = {
   /**
    * Default database file name.
    */
-  defaultFileName: '.codepurify/files.json',
+  defaultFileName: '.codepot/files.json',
 
   /**
    * Database version.
@@ -18,7 +18,7 @@ export const FILE_DB_CONSTANTS = {
   /**
    * Database generator identifier.
    */
-  generator: 'codepurify',
+  generator: 'codepot',
 
   /**
    * Temporary file suffix for atomic writes.
@@ -38,7 +38,7 @@ export const FILE_BACKUP_CONSTANTS = {
   /**
    * Default backup directory name.
    */
-  defaultDirName: '.codepurify/backups',
+  defaultDirName: '.codepot/backups',
 
   /**
    * Session file name.

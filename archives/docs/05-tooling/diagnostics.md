@@ -5,7 +5,7 @@ description: Real-time error detection and validation
 
 # Diagnostics
 
-The extension provides real-time error detection for Codepurify template syntax and context paths.
+The extension provides real-time error detection for codepot template syntax and context paths.
 
 ## Error Types
 

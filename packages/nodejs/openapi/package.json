@@ -6,11 +6,11 @@
   "homepage": "https://code.alidantech.org/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/alidantech-org/codepurify.git",
+    "url": "https://github.com/alidantech-org/codepot.git",
     "directory": "packages/nodejs/openapi"
   },
   "bugs": {
-    "url": "https://github.com/alidantech-org/codepurify/issues"
+    "url": "https://github.com/alidantech-org/codepot/issues"
   },
   "author": {
     "name": "AlidanTech",

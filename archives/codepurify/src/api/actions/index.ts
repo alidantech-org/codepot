@@ -1,7 +1,7 @@
 /**
- * Codepurify Actions Barrel Export
+ * codepot Actions Barrel Export
  *
- * Central exports for all Codepurify actions.
+ * Central exports for all codepot actions.
  */
 
 export { generateAction } from './generate.action';

@@ -1,7 +1,7 @@
 /**
  * File Action Types
  *
- * Type-safe enums for file actions in Codepurify operations.
+ * Type-safe enums for file actions in codepot operations.
  */
 
 /**

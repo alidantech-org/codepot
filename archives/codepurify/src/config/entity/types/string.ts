@@ -1,4 +1,4 @@
-// ─── codepurify/fields/string.ts ─────────────────────────────────────────────────
+// ─── codepot/fields/string.ts ─────────────────────────────────────────────────
 
 import type { BaseFieldConfig } from './base';
 

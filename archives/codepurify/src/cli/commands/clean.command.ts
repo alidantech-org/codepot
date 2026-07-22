@@ -1,29 +1,29 @@
 /**
- * Codepurify Clean Command
+ * codepot Clean Command
  *
- * Clears the .codepurify/cache directory.
+ * Clears the .codepot/cache directory.
  */
 import { Command } from 'commander';
 import { intro, outro, confirm, spinner, isCancel } from '@clack/prompts';
 import { consola } from 'consola';
 
-import { Codepurify } from '@/api/codepurify';
+import { codepot } from '@/api/codepot';
 import { CLEAN_PATHS, CLEAN_LOG_MESSAGES } from '@/api/constants';
 
 export function createCleanCommand(): Command {
   return new Command('clean')
-    .description('Clear the .codepurify/cache directory')
+    .description('Clear the .codepot/cache directory')
     .option('-f, --force', 'Force clean without confirmation')
     .action(async (options: { force?: boolean }) => {
-      intro('🧹 Codepurify Clean');
+      intro('🧹 codepot Clean');
 
       try {
-        const codepurify = new Codepurify({
+        const codepot = new codepot({
           cwd: process.cwd(),
         });
 
         const cacheDir = CLEAN_PATHS.cacheDir;
-        const cacheExists = await codepurify.files.exists(cacheDir);
+        const cacheExists = await codepot.files.exists(cacheDir);
 
         if (!cacheExists) {
           consola.warn(CLEAN_LOG_MESSAGES.cacheNotFound);
@@ -45,7 +45,7 @@ export function createCleanCommand(): Command {
         const s = spinner();
         s.start('Clearing cache');
 
-        await codepurify.files.deletePath(cacheDir);
+        await codepot.files.deletePath(cacheDir);
 
         s.stop('Cache cleared');
 

@@ -1,14 +1,14 @@
 /**
- * Codepurify Error System
+ * codepot Error System
  *
  * Provides structured error handling with error codes and detailed information.
- * All Codepurify errors should extend from CodepurifyError for consistent handling.
+ * All codepot errors should extend from codepotError for consistent handling.
  */
 
 /**
- * Error codes for different types of Codepurify errors
+ * Error codes for different types of codepot errors
  */
-export enum CodepurifyErrorCode {
+export enum codepotErrorCode {
   CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
   CONFIG_INVALID = 'CONFIG_INVALID',
   FILE_NOT_FOUND = 'FILE_NOT_FOUND',
@@ -23,20 +23,20 @@ export enum CodepurifyErrorCode {
 }
 
 /**
- * Base error class for all Codepurify errors
+ * Base error class for all codepot errors
  */
-export class CodepurifyError extends Error {
+export class codepotError extends Error {
   constructor(
-    public code: CodepurifyErrorCode,
+    public code: codepotErrorCode,
     message: string,
     public details?: Record<string, unknown>,
   ) {
     super(message);
-    this.name = 'CodepurifyError';
+    this.name = 'codepotError';
 
     // Maintains proper stack trace for where our error was thrown
     if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, CodepurifyError);
+      Error.captureStackTrace(this, codepotError);
     }
   }
 
@@ -71,23 +71,23 @@ export class CodepurifyError extends Error {
 }
 
 /**
- * Creates a CodepurifyError with the given code and message
+ * Creates a codepotError with the given code and message
  *
  * @param code - Error code
  * @param message - Error message
  * @param details - Optional error details
- * @returns CodepurifyError instance
+ * @returns codepotError instance
  */
-export function createCodepurifyError(code: CodepurifyErrorCode, message: string, details?: Record<string, unknown>): CodepurifyError {
-  return new CodepurifyError(code, message, details);
+export function createcodepotError(code: codepotErrorCode, message: string, details?: Record<string, unknown>): codepotError {
+  return new codepotError(code, message, details);
 }
 
 /**
- * Type guard to check if an error is a CodepurifyError
+ * Type guard to check if an error is a codepotError
  *
  * @param error - Error to check
- * @returns True if error is a CodepurifyError
+ * @returns True if error is a codepotError
  */
-export function isCodepurifyError(error: unknown): error is CodepurifyError {
-  return error instanceof CodepurifyError;
+export function iscodepotError(error: unknown): error is codepotError {
+  return error instanceof codepotError;
 }

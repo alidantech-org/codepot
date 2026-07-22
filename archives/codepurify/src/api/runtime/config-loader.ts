@@ -1,14 +1,14 @@
 /**
  * Config Loader Service
  *
- * Handles loading and validation of global Codepurify configuration.
+ * Handles loading and validation of global codepot configuration.
  */
 
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import type { CodepurifyRuntime } from './codepurify-runtime';
-import type { ResolvedCodepurifyConfig } from '@/config/global/types/codepurify.config.types';
+import type { codepotRuntime } from './codepot-runtime';
+import type { ResolvedcodepotConfig } from '@/config/global/types/codepot.config.types';
 import { importTsModule } from './ts-importer';
 
 export interface ConfigLoaderOptions {
@@ -16,16 +16,16 @@ export interface ConfigLoaderOptions {
 }
 
 export class ConfigLoader {
-  constructor(private readonly runtime: CodepurifyRuntime) {}
+  constructor(private readonly runtime: codepotRuntime) {}
 
   /**
-   * Loads the global Codepurify configuration.
+   * Loads the global codepot configuration.
    *
    * @param options - Configuration loading options
    * @returns Resolved global configuration
    */
-  async loadGlobalConfig(options: ConfigLoaderOptions = {}): Promise<ResolvedCodepurifyConfig> {
-    const configPath = options.configPath ?? this.runtime.configPath ?? 'codepurify.config.ts';
+  async loadGlobalConfig(options: ConfigLoaderOptions = {}): Promise<ResolvedcodepotConfig> {
+    const configPath = options.configPath ?? this.runtime.configPath ?? 'codepot.config.ts';
 
     console.debug(`Config loader - loading config from: ${configPath}`);
     console.debug(`Config loader - cwd: ${this.runtime.cwd}`);
@@ -59,7 +59,7 @@ export class ConfigLoader {
       console.error(`Config loader - Error: ${error}`);
       console.error(`Config loader - Error details:`, error);
       if (error instanceof Error && error.message.includes('Cannot find module')) {
-        throw new Error(`Configuration file not found: ${configPath}. Please run 'codepurify init' first.`);
+        throw new Error(`Configuration file not found: ${configPath}. Please run 'codepot init' first.`);
       }
       throw new Error(`Failed to load configuration: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -71,9 +71,9 @@ export class ConfigLoader {
    * @param config - Raw configuration object
    * @returns Resolved configuration
    */
-  private resolveConfig(config: any): ResolvedCodepurifyConfig {
+  private resolveConfig(config: any): ResolvedcodepotConfig {
     const rootDir = config.rootDir || process.cwd();
-    const manifestPath = config.manifestPath || './codepurify/manifest.json';
+    const manifestPath = config.manifestPath || './codepot/manifest.json';
     const outputDir = config.outputDir || './src/generated';
     const entitiesDir = config.entitiesDir || './code/configs/entities';
     const resourcesDir = config.resourcesDir || './code/configs/resources';

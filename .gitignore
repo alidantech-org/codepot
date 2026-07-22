@@ -3,6 +3,6 @@ dist
 .env
 .DS_Store
 coverage
-.codepurify/cache
-.codepurify/backups
+.codepot/cache
+.codepot/backups
 .build

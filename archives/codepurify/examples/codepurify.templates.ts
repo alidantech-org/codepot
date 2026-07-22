@@ -1,8 +1,8 @@
-import { paths, file } from 'codepurify';
-import { defineCodepurifyTemplates } from 'codepurify';
+import { paths, file } from 'codepot';
+import { definecodepotTemplates } from 'codepot';
 
-export default defineCodepurifyTemplates({
-  rootDir: '__CODEPURIFY_TEMPLATE_ROOT_DIR__',
+export default definecodepotTemplates({
+  rootDir: '__codepot_TEMPLATE_ROOT_DIR__',
   templates: [
     // ============================================================================
     // ENTITY TEMPLATES (Core entity definitions)
@@ -10,7 +10,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'constants',
-      templatePath: './code/constants/constants.ts.codepurify',
+      templatePath: './code/constants/constants.ts.codepot',
       outputFolder: [paths.entity.groupKey, paths.entity.name.kebab],
       fileName: file(paths.entity.name.kebab).suffix('.constants').ext('ts'),
       description: 'Creates entity constants.',
@@ -19,7 +19,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'entity',
-      templatePath: './code/entity.ts.codepurify',
+      templatePath: './code/entity.ts.codepot',
       outputFolder: [paths.entity.groupKey, paths.entity.name.kebab],
       fileName: file(paths.entity.name.kebab).suffix('.entity').ext('ts'),
       description: 'Creates a TypeORM entity.',
@@ -28,7 +28,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'schema.entity',
-      templatePath: './code/schema/entity.ts.codepurify',
+      templatePath: './code/schema/entity.ts.codepot',
       outputFolder: [paths.entity.groupKey, paths.entity.name.kebab],
       fileName: file(paths.entity.name.kebab).suffix('.schema').ext('ts'),
       description: 'Creates an entity schema.',
@@ -37,7 +37,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'dto.create',
-      templatePath: './code/dto.create.ts.codepurify',
+      templatePath: './code/dto.create.ts.codepot',
       outputFolder: [paths.entity.groupKey, paths.entity.name.kebab, 'dto'],
       fileName: file(paths.entity.name.kebab).prefix('create-').suffix('.dto').ext('ts'),
       description: 'Creates a create DTO.',
@@ -46,7 +46,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'dto.update',
-      templatePath: './code/dto.update.ts.codepurify',
+      templatePath: './code/dto.update.ts.codepot',
       outputFolder: [paths.entity.groupKey, paths.entity.name.kebab, 'dto'],
       fileName: file(paths.entity.name.kebab).prefix('update-').suffix('.dto').ext('ts'),
       description: 'Creates an update DTO.',
@@ -55,7 +55,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'types.context',
-      templatePath: './code/types/context.ts.codepurify',
+      templatePath: './code/types/context.ts.codepot',
       outputFolder: [paths.entity.groupKey, paths.entity.name.kebab],
       fileName: file(paths.entity.name.kebab).suffix('.types').ext('ts'),
       description: 'Creates type context.',
@@ -68,7 +68,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'controller',
-      templatePath: './code/controller.ts.codepurify',
+      templatePath: './code/controller.ts.codepot',
       outputFolder: [paths.entity.groupKey, paths.entity.name.kebab],
       fileName: file(paths.entity.name.kebab).suffix('.controller').ext('ts'),
       description: 'Creates a NestJS controller.',
@@ -77,7 +77,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'repository',
-      templatePath: './code/repository.ts.codepurify',
+      templatePath: './code/repository.ts.codepot',
       outputFolder: [paths.entity.groupKey, paths.entity.name.kebab],
       fileName: file(paths.entity.name.kebab).suffix('.repository').ext('ts'),
       description: 'Creates a TypeORM repository.',
@@ -86,7 +86,7 @@ export default defineCodepurifyTemplates({
 
     {
       name: 'service',
-      templatePath: './code/service.ts.codepurify',
+      templatePath: './code/service.ts.codepot',
       outputFolder: [paths.entity.groupKey, paths.entity.name.kebab],
       fileName: file(paths.entity.name.kebab).suffix('.service').ext('ts'),
       description: 'Creates a service.',

@@ -1,7 +1,7 @@
 /**
- * Codepurify Check Command
+ * codepot Check Command
  *
- * Checks generated files against the Codepurify file DB for drift detection.
+ * Checks generated files against the codepot file DB for drift detection.
  * Reports clean, changed, and missing files.
  */
 
@@ -10,24 +10,24 @@ import { intro, outro, spinner } from '@clack/prompts';
 import { consola } from 'consola';
 import Table from 'cli-table3';
 
-import { Codepurify } from '@/api/codepurify';
+import { codepot } from '@/api/codepot';
 
 export function createCheckCommand(): Command {
   return new Command('check')
-    .description('Check generated files against the Codepurify file DB for drift')
+    .description('Check generated files against the codepot file DB for drift')
     .option('--json', 'Output result as JSON')
     .action(async (options: { json?: boolean }) => {
-      intro('🔍 Codepurify Check');
+      intro('🔍 codepot Check');
 
       const s = spinner();
       s.start('Checking generated files...');
 
       try {
-        const codepurify = new Codepurify({
+        const codepot = new codepot({
           cwd: process.cwd(),
         });
 
-        const results = await codepurify.files.validate();
+        const results = await codepot.files.validate();
 
         const clean = results.filter((result) => result.exists && result.hashMatches);
 

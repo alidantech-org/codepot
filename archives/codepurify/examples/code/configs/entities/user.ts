@@ -1,6 +1,6 @@
-import * as cpy from 'codepurify';
+import * as cpy from 'codepot';
 import AppEntityConfig from './app';
-import codepurifyTemplates from '../../../codepurify.templates';
+import codepotTemplates from '../../../codepot.templates';
 
 export default class UserEntityConfig implements cpy.IEntityConfig {
   base = null;
@@ -8,7 +8,7 @@ export default class UserEntityConfig implements cpy.IEntityConfig {
   key = 'user';
   group_key = 'platform';
   options = { timestamps: true, audit: true, softDelete: true };
-  templates = [codepurifyTemplates];
+  templates = [codepotTemplates];
 
   fields = cpy.defineFields({
     id: cpy.uuidField({

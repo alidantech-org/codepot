@@ -1,4 +1,4 @@
-// ─── codepurify/fields/check.ts ─────────────────────────────────────────────────
+// ─── codepot/fields/check.ts ─────────────────────────────────────────────────
 
 import type { FieldConfig } from './base';
 

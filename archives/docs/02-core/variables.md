@@ -9,7 +9,7 @@ Variables use dot notation to access nested context data.
 
 ## Variable Paths
 
-```codepurify
+```codepot
 {| entity.names.casing.camel |} {| field.flags.is_string |} {|
 global.templates.current.name |}
 ```
@@ -20,7 +20,7 @@ global.templates.current.name |}
 
 Contains entity-level data like names, fields, relations.
 
-```codepurify
+```codepot
 {| entity.names.original |} {| entity.fields.counts.all |} {|
 entity.relations.arrays.one_to_many |}
 ```
@@ -29,7 +29,7 @@ entity.relations.arrays.one_to_many |}
 
 Available inside field loops, contains field-specific data.
 
-```codepurify
+```codepot
 {| field.names.casing.camel |} {| field.flags.is_nullable |} {| field.index |}
 ```
 
@@ -37,7 +37,7 @@ Available inside field loops, contains field-specific data.
 
 Available inside relation loops, contains relation metadata.
 
-```codepurify
+```codepot
 {| relation.names.casing.pascal |} {| relation.kind |} {| relation.target |}
 ```
 
@@ -45,19 +45,19 @@ Available inside relation loops, contains relation metadata.
 
 Contains system-wide data like templates and utilities.
 
-```codepurify
+```codepot
 {| global.templates.current.name |} {| global.templates.all.by_name.base_dto |}
 ```
 
 ## Simple Variables
 
-```codepurify
+```codepot
 {| entity.title |} {| entity.description |}
 ```
 
 ## Nested Variables
 
-```codepurify
+```codepot
 {| entity.fields.arrays.by_kind.string.items |} {|
 global.templates.all.arrays.items |}
 ```
@@ -73,19 +73,19 @@ global.templates.all.arrays.items |}
 
 ### Entity Name
 
-```codepurify
+```codepot
 // Input: entity.names.original = "userProfile" {| entity.names.casing.pascal |}
 // Output: "UserProfile"
 ```
 
 ### Field Type
 
-```codepurify
+```codepot
 // Inside field loop {| field.flags.is_string |} // Output: true/false
 ```
 
 ### Template Metadata
 
-```codepurify
+```codepot
 {| global.templates.current.name |} // Output: "user-dto"
 ```

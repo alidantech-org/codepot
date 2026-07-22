@@ -4,7 +4,7 @@
  * Handles loading and instantiation of entity configuration classes.
  */
 
-import type { CodepurifyRuntime } from './codepurify-runtime';
+import type { codepotRuntime } from './codepot-runtime';
 import type { IEntityConfig } from '@/config/entity/types/entity';
 import type { DiscoveredEntity } from './entity-discovery';
 import { writeFile, mkdir } from 'node:fs/promises';
@@ -35,7 +35,7 @@ export interface LoadedEntity {
 export class EntityLoader {
   private readonly entityCache = new Map<string, LoadedEntity>();
 
-  constructor(private readonly runtime: CodepurifyRuntime) {}
+  constructor(private readonly runtime: codepotRuntime) {}
 
   /**
    * Loads entity configuration instances from discovered files.
@@ -84,13 +84,13 @@ export class EntityLoader {
   }
 
   /**
-   * Saves JSON dumps of discovered entity contexts to .codepurify folder for audit.
+   * Saves JSON dumps of discovered entity contexts to .codepot folder for audit.
    *
    * @param loadedEntities - Array of loaded entities
    */
   private async saveEntityContextDumps(loadedEntities: LoadedEntity[]): Promise<void> {
     try {
-      const auditDir = join(this.runtime.cwd, '.codepurify', 'audit');
+      const auditDir = join(this.runtime.cwd, '.codepot', 'audit');
 
       for (const loadedEntity of loadedEntities) {
         // Create directory structure matching entity path

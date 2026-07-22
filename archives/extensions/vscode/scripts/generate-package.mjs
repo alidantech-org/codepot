@@ -122,18 +122,18 @@ await fs.mkdir(syntaxesDir, { recursive: true });
 
 const baseLanguages = [
   {
-    id: "codepurify",
-    aliases: ["Codepurify", "codepurify"],
-    extensions: [".codepurify", ".code"],
+    id: "codepot",
+    aliases: ["codepot", "codepot"],
+    extensions: [".codepot", ".code"],
     configuration: "./config/language-configuration.json",
   },
 ];
 
 const baseGrammars = [
   {
-    language: "codepurify",
-    scopeName: "source.codepurify",
-    path: "./syntaxes/codepurify.tmLanguage.json",
+    language: "codepot",
+    scopeName: "source.codepot",
+    path: "./syntaxes/codepot.tmLanguage.json",
   },
 ];
 
@@ -141,15 +141,15 @@ const generatedLanguages = [];
 const generatedGrammars = [];
 
 for (const lang of HOST_LANGUAGES) {
-  const languageId = `codepurify-${lang.id}`;
-  const scopeName = `${lang.scope}.codepurify`;
-  const grammarPath = `./syntaxes/wrappers/codepurify-${lang.id}.tmLanguage.json`;
+  const languageId = `codepot-${lang.id}`;
+  const scopeName = `${lang.scope}.codepot`;
+  const grammarPath = `./syntaxes/wrappers/codepot-${lang.id}.tmLanguage.json`;
 
   generatedLanguages.push({
     id: languageId,
-    aliases: [`Codepurify ${lang.label}`],
+    aliases: [`codepot ${lang.label}`],
     extensions: lang.extensions.flatMap((ext) => [
-      `.${ext}.codepurify`,
+      `.${ext}.codepot`,
       `.${ext}.code`,
     ]),
     configuration: "./config/language-configuration.json",
@@ -162,109 +162,109 @@ for (const lang of HOST_LANGUAGES) {
   });
 
   const grammar = {
-    name: `Codepurify ${lang.label}`,
+    name: `codepot ${lang.label}`,
     scopeName,
     patterns: [
-      { include: "#codepurify-comments" },
-      { include: "#codepurify-tags" },
+      { include: "#codepot-comments" },
+      { include: "#codepot-tags" },
       { include: lang.scope },
     ],
     repository: {
-      "codepurify-comments": {
+      "codepot-comments": {
         patterns: [
           {
-            name: "comment.block.documentation.codepurify",
+            name: "comment.block.documentation.codepot",
             begin: "\\{\\|\\*",
             end: "\\*\\|\\}",
             beginCaptures: {
               0: {
-                name: "punctuation.definition.comment.begin.codepurify",
+                name: "punctuation.definition.comment.begin.codepot",
               },
             },
             endCaptures: {
               0: {
-                name: "punctuation.definition.comment.end.codepurify",
+                name: "punctuation.definition.comment.end.codepot",
               },
             },
           },
           {
-            name: "comment.block.codepurify",
+            name: "comment.block.codepot",
             begin: "\\{\\|#",
             end: "#\\|\\}",
             beginCaptures: {
               0: {
-                name: "punctuation.definition.comment.begin.codepurify",
+                name: "punctuation.definition.comment.begin.codepot",
               },
             },
             endCaptures: {
               0: {
-                name: "punctuation.definition.comment.end.codepurify",
+                name: "punctuation.definition.comment.end.codepot",
               },
             },
           },
         ],
       },
-      "codepurify-tags": {
+      "codepot-tags": {
         patterns: [
           {
-            name: "meta.embedded.codepurify",
+            name: "meta.embedded.codepot",
             begin: "\\{\\|",
             beginCaptures: {
               0: {
-                name: "punctuation.definition.template.codepurify",
+                name: "punctuation.definition.template.codepot",
               },
             },
             end: "\\|\\}",
             endCaptures: {
               0: {
-                name: "punctuation.definition.template.codepurify",
+                name: "punctuation.definition.template.codepot",
               },
             },
             patterns: [
               {
-                name: "keyword.control.end.codepurify",
+                name: "keyword.control.end.codepot",
                 match: "\\/(if|unless|loop|with|ignore)\\b",
               },
               {
-                name: "keyword.control.conditional.codepurify",
+                name: "keyword.control.conditional.codepot",
                 match: "\\b(if|unless|else)\\b",
               },
               {
-                name: "keyword.control.repeat.codepurify",
+                name: "keyword.control.repeat.codepot",
                 match: "\\b(loop)\\b",
               },
               {
-                name: "keyword.control.context.codepurify",
+                name: "keyword.control.context.codepot",
                 match: "\\b(with|ignore)\\b",
               },
               {
-                name: "keyword.operator.word.codepurify",
+                name: "keyword.operator.word.codepot",
                 match: "\\b(in|as|and|or|not|is)\\b",
               },
               {
-                name: "keyword.operator.comparison.codepurify",
+                name: "keyword.operator.comparison.codepot",
                 match: "==|!=|<=|>=|<|>|!",
               },
               {
-                name: "constant.language.boolean.codepurify",
+                name: "constant.language.boolean.codepot",
                 match: "\\b(true|false|null|undefined)\\b",
               },
               {
-                name: "constant.numeric.codepurify",
+                name: "constant.numeric.codepot",
                 match: "\\b\\d+(\\.\\d+)?\\b",
               },
               {
-                name: "string.quoted.single.codepurify",
+                name: "string.quoted.single.codepot",
                 begin: "'",
                 end: "'",
               },
               {
-                name: "string.quoted.double.codepurify",
+                name: "string.quoted.double.codepot",
                 begin: '"',
                 end: '"',
               },
               {
-                name: "variable.other.codepurify",
+                name: "variable.other.codepot",
                 match: "\\b[a-zA-Z_$][a-zA-Z0-9_$.]*\\b",
               },
             ],
@@ -275,7 +275,7 @@ for (const lang of HOST_LANGUAGES) {
   };
 
   await fs.writeFile(
-    path.join(syntaxesDir, `codepurify-${lang.id}.tmLanguage.json`),
+    path.join(syntaxesDir, `codepot-${lang.id}.tmLanguage.json`),
     `${JSON.stringify(grammar, null, 2)}\n`,
   );
 }
@@ -287,10 +287,10 @@ basePackage.contributes.grammars = [...baseGrammars, ...generatedGrammars];
 await fs.writeFile(packagePath, `${JSON.stringify(basePackage, null, 2)}\n`);
 
 const supported = [
-  "Codepurify Supported Languages",
+  "codepot Supported Languages",
   "",
   "Base extensions:",
-  "- .codepurify",
+  "- .codepot",
   "- .code",
   "",
   "Host language template extensions:",
@@ -298,7 +298,7 @@ const supported = [
     "",
     `${lang.label}:`,
     ...lang.extensions.flatMap((ext) => [
-      `- .${ext}.codepurify`,
+      `- .${ext}.codepot`,
       `- .${ext}.code`,
     ]),
   ]),

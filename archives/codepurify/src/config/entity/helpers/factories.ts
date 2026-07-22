@@ -1,4 +1,4 @@
-// ─── codepurify/fields/factories.ts ─────────────────────────────────────────────────
+// ─── codepot/fields/factories.ts ─────────────────────────────────────────────────
 
 import {
   StringFieldConfig,

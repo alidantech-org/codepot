@@ -1,176 +1,158 @@
 {
-      "Name Original": {
-            "prefix": "name.original",
-            "body": [
-                  "{| ${1:entity}.name.original |}"
-            ],
-            "description": "Original source name"
-      },
-      "Name Length": {
-            "prefix": "name.length",
-            "body": [
-                  "{| ${1:entity}.name.length |}"
-            ],
-            "description": "Original name length"
-      },
-      "Name Casing": {
-            "prefix": "name.casing",
-            "body": [
-                  "{| ${1:entity}.name.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
-            ],
-            "description": "Any casing variant"
-      },
-      "Entity Casing": {
-            "prefix": "entity.name",
-            "body": [
-                  "{| entity.name.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
-            ],
-            "description": "Entity casing variant"
-      },
-      "Field Casing": {
-            "prefix": "field.name",
-            "body": [
-                  "{| field.name.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
-            ],
-            "description": "Field casing variant"
-      },
-      "Relation Casing": {
-            "prefix": "relation.name",
-            "body": [
-                  "{| relation.name.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
-            ],
-            "description": "Relation casing variant"
-      },
-      "Module Casing": {
-            "prefix": "module.name",
-            "body": [
-                  "{| module.name.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
-            ],
-            "description": "Module casing variant"
-      },
-      "Property Casing": {
-            "prefix": "property.name",
-            "body": [
-                  "{| ${1:relation}.property.name.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
-            ],
-            "description": "Property casing variant"
-      },
-      "Singular Casing": {
-            "prefix": "name.singular",
-            "body": [
-                  "{| ${1:entity}.name.singular.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
-            ],
-            "description": "Singular name casing variant"
-      },
-      "Plural Casing": {
-            "prefix": "name.plural",
-            "body": [
-                  "{| ${1:entity}.name.plural.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
-            ],
-            "description": "Plural name casing variant"
-      },
-      "loop Name Parts": {
-            "prefix": "loop.name.parts",
-            "body": [
-                  "{| loop ${1:entity}.name.array.parts.items as part |}",
-                  "  {| part.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}",
-                  "{| /loop |}"
-            ],
-            "description": "Loop over name parts"
-      },
-      "loop Name Words": {
-            "prefix": "loop.name.words",
-            "body": [
-                  "{| loop ${1:entity}.name.array.words.items as word |}",
-                  "  {| word.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}",
-                  "{| /loop |}"
-            ],
-            "description": "Loop over name words"
-      },
-      "loop Name Characters": {
-            "prefix": "loop.name.characters",
-            "body": [
-                  "{| loop ${1:entity}.name.array.characters.items as character |}",
-                  "  {| character.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}",
-                  "{| /loop |}"
-            ],
-            "description": "Loop over name characters"
-      },
-      "Array Length": {
-            "prefix": "array.length",
-            "body": [
-                  "{| ${1:entity.fields.array.all}.length |}"
-            ],
-            "description": "Array child length"
-      },
-      "Array Items Loop": {
-            "prefix": "loop.array",
-            "body": [
-                  "{| loop ${1:entity.fields.array.all.items} as ${2:item} |}",
-                  "  $0",
-                  "{| /loop |}"
-            ],
-            "description": "Loop over any ArrayChildContext items"
-      },
-      "Item Index": {
-            "prefix": "item.index",
-            "body": [
-                  "{| ${1:item}.index |}"
-            ],
-            "description": "Current array item index"
-      },
-      "loop Fields": {
-            "prefix": "loop.fields",
-            "body": [
-                  "{| loop entity.fields.array.all.items as field |}",
-                  "  $0",
-                  "{| /loop |}"
-            ],
-            "description": "Loop over all entity fields"
-      },
-      "loop Relations": {
-            "prefix": "loop.relations",
-            "body": [
-                  "{| loop entity.relations.array.all.items as relation |}",
-                  "  $0",
-                  "{| /loop |}"
-            ],
-            "description": "Loop over all entity relations"
-      },
-      "If Block": {
-            "prefix": "if",
-            "body": [
-                  "{| if ${1:condition} |}",
-                  "  $0",
-                  "{| /if |}"
-            ],
-            "description": "Codepurify if block"
-      },
-      "If Else Block": {
-            "prefix": "ifelse",
-            "body": [
-                  "{| if ${1:condition} |}",
-                  "  ${2:if_content}",
-                  "{| else |}",
-                  "  $0",
-                  "{| /if |}"
-            ],
-            "description": "Codepurify if/else block"
-      },
-      "Comment": {
-            "prefix": "cp.comment",
-            "body": [
-                  "{|# ${1:comment} #|}"
-            ],
-            "description": "Codepurify comment"
-      },
-      "Raw Block": {
-            "prefix": "raw",
-            "body": [
-                  "{| raw |}",
-                  "$0",
-                  "{| /raw |}"
-            ],
-            "description": "Raw block"
-      }
+  "Name Original": {
+    "prefix": "name.original",
+    "body": ["{| ${1:entity}.name.original |}"],
+    "description": "Original source name"
+  },
+  "Name Length": {
+    "prefix": "name.length",
+    "body": ["{| ${1:entity}.name.length |}"],
+    "description": "Original name length"
+  },
+  "Name Casing": {
+    "prefix": "name.casing",
+    "body": [
+      "{| ${1:entity}.name.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
+    ],
+    "description": "Any casing variant"
+  },
+  "Entity Casing": {
+    "prefix": "entity.name",
+    "body": [
+      "{| entity.name.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
+    ],
+    "description": "Entity casing variant"
+  },
+  "Field Casing": {
+    "prefix": "field.name",
+    "body": [
+      "{| field.name.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
+    ],
+    "description": "Field casing variant"
+  },
+  "Relation Casing": {
+    "prefix": "relation.name",
+    "body": [
+      "{| relation.name.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
+    ],
+    "description": "Relation casing variant"
+  },
+  "Module Casing": {
+    "prefix": "module.name",
+    "body": [
+      "{| module.name.casing.${1|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
+    ],
+    "description": "Module casing variant"
+  },
+  "Property Casing": {
+    "prefix": "property.name",
+    "body": [
+      "{| ${1:relation}.property.name.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
+    ],
+    "description": "Property casing variant"
+  },
+  "Singular Casing": {
+    "prefix": "name.singular",
+    "body": [
+      "{| ${1:entity}.name.singular.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
+    ],
+    "description": "Singular name casing variant"
+  },
+  "Plural Casing": {
+    "prefix": "name.plural",
+    "body": [
+      "{| ${1:entity}.name.plural.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}"
+    ],
+    "description": "Plural name casing variant"
+  },
+  "loop Name Parts": {
+    "prefix": "loop.name.parts",
+    "body": [
+      "{| loop ${1:entity}.name.array.parts.items as part |}",
+      "  {| part.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}",
+      "{| /loop |}"
+    ],
+    "description": "Loop over name parts"
+  },
+  "loop Name Words": {
+    "prefix": "loop.name.words",
+    "body": [
+      "{| loop ${1:entity}.name.array.words.items as word |}",
+      "  {| word.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}",
+      "{| /loop |}"
+    ],
+    "description": "Loop over name words"
+  },
+  "loop Name Characters": {
+    "prefix": "loop.name.characters",
+    "body": [
+      "{| loop ${1:entity}.name.array.characters.items as character |}",
+      "  {| character.casing.${2|camel,pascal,snake,kebab,dot,slash,path,constant,lower,upper,title,train|} |}",
+      "{| /loop |}"
+    ],
+    "description": "Loop over name characters"
+  },
+  "Array Length": {
+    "prefix": "array.length",
+    "body": ["{| ${1:entity.fields.array.all}.length |}"],
+    "description": "Array child length"
+  },
+  "Array Items Loop": {
+    "prefix": "loop.array",
+    "body": [
+      "{| loop ${1:entity.fields.array.all.items} as ${2:item} |}",
+      "  $0",
+      "{| /loop |}"
+    ],
+    "description": "Loop over any ArrayChildContext items"
+  },
+  "Item Index": {
+    "prefix": "item.index",
+    "body": ["{| ${1:item}.index |}"],
+    "description": "Current array item index"
+  },
+  "loop Fields": {
+    "prefix": "loop.fields",
+    "body": [
+      "{| loop entity.fields.array.all.items as field |}",
+      "  $0",
+      "{| /loop |}"
+    ],
+    "description": "Loop over all entity fields"
+  },
+  "loop Relations": {
+    "prefix": "loop.relations",
+    "body": [
+      "{| loop entity.relations.array.all.items as relation |}",
+      "  $0",
+      "{| /loop |}"
+    ],
+    "description": "Loop over all entity relations"
+  },
+  "If Block": {
+    "prefix": "if",
+    "body": ["{| if ${1:condition} |}", "  $0", "{| /if |}"],
+    "description": "codepot if block"
+  },
+  "If Else Block": {
+    "prefix": "ifelse",
+    "body": [
+      "{| if ${1:condition} |}",
+      "  ${2:if_content}",
+      "{| else |}",
+      "  $0",
+      "{| /if |}"
+    ],
+    "description": "codepot if/else block"
+  },
+  "Comment": {
+    "prefix": "cp.comment",
+    "body": ["{|# ${1:comment} #|}"],
+    "description": "codepot comment"
+  },
+  "Raw Block": {
+    "prefix": "raw",
+    "body": ["{| raw |}", "$0", "{| /raw |}"],
+    "description": "Raw block"
+  }
 }

@@ -1,5 +1,5 @@
 /**
- * Codepurify Object Utilities
+ * codepot Object Utilities
  *
  * Provides object manipulation helpers for configuration merging and data processing.
  * Includes deep merge, type checking, and array utilities.

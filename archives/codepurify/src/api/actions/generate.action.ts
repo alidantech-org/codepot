@@ -9,7 +9,7 @@
 
 import { FileAction, type GenerateOptions, type GenerateResult, type GeneratedFileResult } from '@/api/types';
 
-import type { CodepurifyAction } from '@/api/runtime/action-contract';
+import type { codepotAction } from '@/api/runtime/action-contract';
 
 import { debug, info, success } from '@/core/logger';
 
@@ -17,7 +17,7 @@ import { GENERATE_ACTION, GENERATE_DEFAULTS, GENERATE_LOG_MESSAGES } from '@/api
 
 import { GeneratePipeline } from '@/api/runtime/generate-pipeline';
 
-export const generateAction: CodepurifyAction<GenerateOptions, GenerateResult> = {
+export const generateAction: codepotAction<GenerateOptions, GenerateResult> = {
   name: GENERATE_ACTION.name,
 
   defaults: (options) => ({

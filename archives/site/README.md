@@ -1,14 +1,14 @@
-# Codepurify Documentation Website
+# codepot Documentation Website
 
-This is the official documentation website for [Codepurify](https://github.com/alidantech-org/codepurify) - a semantic metadata inference engine and template compiler for generating architecture artifacts from typed domain configs.
+This is the official documentation website for [codepot](https://github.com/alidantech-org/codepot) - a semantic metadata inference engine and template compiler for generating architecture artifacts from typed domain configs.
 
-## About Codepurify
+## About codepot
 
-Codepurify is a powerful tool that allows you to:
+codepot is a powerful tool that allows you to:
 
 - Define semantic metadata in strongly-typed TypeScript configs
 - Infer query capabilities, mutation semantics, and relation groups
-- Generate architecture artifacts through Codepurify templates
+- Generate architecture artifacts through codepot templates
 - Create framework-agnostic code generation systems
 
 ## Getting Started
@@ -61,15 +61,15 @@ www/
 
 ## Contributing
 
-This documentation website is part of the Codepurify project. To contribute:
+This documentation website is part of the codepot project. To contribute:
 
-1. Fork the [Codepurify repository](https://github.com/alidantech-org/codepurify)
+1. Fork the [codepot repository](https://github.com/alidantech-org/codepot)
 2. Make changes to the documentation in the `www/` directory
 3. Submit a pull request
 
 ## Learn More
 
-- **[Codepurify Core Documentation](https://github.com/alidantech-org/codepurify#readme)** - Learn about the semantic metadata engine
+- **[codepot Core Documentation](https://github.com/alidantech-org/codepot#readme)** - Learn about the semantic metadata engine
 - **[Next.js Documentation](https://nextjs.org/docs)** - Learn about Next.js features and API
 - **[Tailwind CSS Documentation](https://tailwindcss.com/docs)** - Learn about utility-first CSS framework
 

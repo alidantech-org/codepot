@@ -25,23 +25,23 @@ export async function findPackageRoot(startDir: string): Promise<string> {
     try {
       await access(packageJsonPath, constants.F_OK);
 
-      // Verify this is the codepurify package
+      // Verify this is the codepot package
       const { readFile } = await import('node:fs/promises');
       const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf-8'));
 
-      if (packageJson.name === 'codepurify') {
+      if (packageJson.name === 'codepot') {
         return currentDir;
       }
     } catch {
-      // Continue searching if not codepurify package or file not found
+      // Continue searching if not codepot package or file not found
     }
 
-    // package.json not found or not codepurify package, go up one level
+    // package.json not found or not codepot package, go up one level
     const parentDir = dirname(currentDir);
 
     // If we've reached the root directory and still haven't found package.json
     if (parentDir === currentDir) {
-      throw new Error('codepurify package.json not found in directory tree');
+      throw new Error('codepot package.json not found in directory tree');
     }
 
     currentDir = parentDir;

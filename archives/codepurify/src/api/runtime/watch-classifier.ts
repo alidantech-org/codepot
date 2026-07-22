@@ -4,7 +4,7 @@
  * Determines the type of file change based on path patterns.
  */
 
-import type { CodepurifyWatchEvent } from '@/api/types';
+import type { codepotWatchEvent } from '@/api/types';
 import { FilePatternUtils } from './file-pattern-utils';
 
 /**
@@ -14,7 +14,7 @@ import { FilePatternUtils } from './file-pattern-utils';
  * Global config files are checked first to prevent them being
  * misclassified as regular config files.
  */
-export function classifyWatchEvent(path: string): CodepurifyWatchEvent['type'] {
+export function classifyWatchEvent(path: string): codepotWatchEvent['type'] {
   // Check for global config files first (most specific)
   if (FilePatternUtils.isGlobalConfig(path)) {
     return 'global';

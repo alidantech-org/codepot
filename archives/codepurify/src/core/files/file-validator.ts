@@ -1,16 +1,16 @@
-import type { CodepurifyFileDb } from './file-db';
-import type { CodepurifyFileReader } from './file-reader';
-import type { CodepurifyFileValidationResult } from './file-types';
+import type { codepotFileDb } from './file-db';
+import type { codepotFileReader } from './file-reader';
+import type { codepotFileValidationResult } from './file-types';
 
-export class CodepurifyFileValidator {
+export class codepotFileValidator {
   constructor(
-    private readonly db: CodepurifyFileDb,
-    private readonly reader: CodepurifyFileReader,
+    private readonly db: codepotFileDb,
+    private readonly reader: codepotFileReader,
   ) {}
 
-  async validate(): Promise<CodepurifyFileValidationResult[]> {
+  async validate(): Promise<codepotFileValidationResult[]> {
     const records = await this.db.list();
-    const results: CodepurifyFileValidationResult[] = [];
+    const results: codepotFileValidationResult[] = [];
 
     for (const record of records) {
       try {

@@ -1,13 +1,13 @@
 /**
- * Codepurify Generate Command
+ * codepot Generate Command
  *
- * Generates entity files from discovered entity folders using the Codepurify API.
+ * Generates entity files from discovered entity folders using the codepot API.
  */
 
 import { Command } from 'commander';
 import { intro, outro, spinner } from '@clack/prompts';
 import { consola } from 'consola';
-import { Codepurify } from '@/api/codepurify';
+import { codepot } from '@/api/codepot';
 
 /**
  * Creates the generate command
@@ -20,15 +20,15 @@ export function createGenerateCommand(): Command {
     .option('-t, --templates <templates>', 'Specify templates to use (comma-separated)')
     .action(async (options) => {
       try {
-        intro('🚀 Codepurify Generate');
+        intro('🚀 codepot Generate');
 
-        const codepurify = new Codepurify();
+        const codepot = new codepot();
 
-        // Generate using Codepurify API
+        // Generate using codepot API
         const s = spinner();
         s.start('Generating entity files...');
 
-        const result = await codepurify.generate({
+        const result = await codepot.generate({
           dryRun: options.dryRun,
           entity: options.entities ? options.entities.split(',')[0].trim() : undefined,
           templates: options.templates ? options.templates.split(',').map((t: string) => t.trim()) : undefined,

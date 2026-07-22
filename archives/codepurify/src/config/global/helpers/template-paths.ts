@@ -1,14 +1,14 @@
 /**
- * Codepurify Template Path Helpers
+ * codepot Template Path Helpers
  *
  * Path tokens and file name builder for template output paths.
  */
 
 /**
- * Codepurify template path token helpers.
+ * codepot template path token helpers.
  *
  * These are strongly typed placeholder tokens that can be used to build
- * output paths without manually writing Codepurify path strings everywhere.
+ * output paths without manually writing codepot path strings everywhere.
  */
 export const paths = {
   entity: {
@@ -28,7 +28,7 @@ export const paths = {
   },
 } as const;
 
-export type CodepurifyPathToken =
+export type codepotPathToken =
   | typeof paths.entity.key
   | typeof paths.entity.groupKey
   | typeof paths.entity.name.pascal
@@ -37,18 +37,18 @@ export type CodepurifyPathToken =
   | typeof paths.entity.name.snake
   | typeof paths.template.name;
 
-export type CodepurifyOutputFolderPart = string | CodepurifyPathToken;
+export type codepotOutputFolderPart = string | codepotPathToken;
 
-export type CodepurifyOutputFolder = readonly CodepurifyOutputFolderPart[];
+export type codepotOutputFolder = readonly codepotOutputFolderPart[];
 
 /**
  * File name builder result type.
  */
-export interface CodepurifyOutputFileName {
+export interface codepotOutputFileName {
   /**
    * Base token for the filename.
    */
-  base: CodepurifyPathToken;
+  base: codepotPathToken;
 
   /**
    * Optional prefix to add before the base token.
@@ -69,7 +69,7 @@ export interface CodepurifyOutputFileName {
 /**
  * File name builder API.
  */
-export function file(base: CodepurifyPathToken) {
+export function file(base: codepotPathToken) {
   return {
     prefix: (prefix: string) => ({
       suffix: (suffix: string) => ({
@@ -79,14 +79,14 @@ export function file(base: CodepurifyPathToken) {
             prefix,
             suffix,
             ext,
-          }) as CodepurifyOutputFileName,
+          }) as codepotOutputFileName,
       }),
       ext: (ext: string) =>
         ({
           base,
           prefix,
           ext,
-        }) as CodepurifyOutputFileName,
+        }) as codepotOutputFileName,
     }),
     suffix: (suffix: string) => ({
       ext: (ext: string) =>
@@ -94,12 +94,12 @@ export function file(base: CodepurifyPathToken) {
           base,
           suffix,
           ext,
-        }) as CodepurifyOutputFileName,
+        }) as codepotOutputFileName,
     }),
     ext: (ext: string) =>
       ({
         base,
         ext,
-      }) as CodepurifyOutputFileName,
+      }) as codepotOutputFileName,
   };
 }

@@ -1,48 +1,48 @@
 /**
- * Codepurify Runtime
+ * codepot Runtime
  *
- * Shared runtime services and dependencies for Codepurify operations.
+ * Shared runtime services and dependencies for codepot operations.
  */
 
 import { resolve } from 'node:path';
 import { watch as chokidarWatch, type FSWatcher } from 'chokidar';
 
 import { debug } from '@/core/logger';
-import { CodepurifyFiles } from '@/core/files';
-import { CodepurifyAssets } from './codepurify-assets';
-import type { CodepurifyOptions } from '@/api/types';
+import { codepotFiles } from '@/core/files';
+import { codepotAssets } from './codepot-assets';
+import type { codepotOptions } from '@/api/types';
 
 /**
- * Shared runtime dependencies for Codepurify operations.
+ * Shared runtime dependencies for codepot operations.
  *
  * Provides initialized managers and shared services that actions can reuse.
  * This eliminates repeated initialization and provides a central place for
  * managing shared resources like file watchers.
  */
-export class CodepurifyRuntime {
+export class codepotRuntime {
   readonly cwd: string;
   readonly configPath?: string;
   readonly templatesPath?: string;
-  public readonly files: CodepurifyFiles;
-  public readonly assets: CodepurifyAssets;
+  public readonly files: codepotFiles;
+  public readonly assets: codepotAssets;
   watcher?: FSWatcher;
 
-  constructor(options: CodepurifyOptions = {}) {
+  constructor(options: codepotOptions = {}) {
     this.cwd = resolve(options.cwd ?? process.cwd());
     this.configPath = options.configPath;
     this.templatesPath = options.templatesPath;
 
     // Initialize files module
-    this.files = new CodepurifyFiles({
+    this.files = new codepotFiles({
       rootDir: this.cwd,
-      dbPath: '.codepurify/files.json',
-      backupDir: '.codepurify/backups',
+      dbPath: '.codepot/files.json',
+      backupDir: '.codepot/backups',
     });
 
     // Initialize assets module
-    this.assets = new CodepurifyAssets();
+    this.assets = new codepotAssets();
 
-    debug(`Codepurify runtime initialized in: ${this.cwd}`);
+    debug(`codepot runtime initialized in: ${this.cwd}`);
   }
 
   /**

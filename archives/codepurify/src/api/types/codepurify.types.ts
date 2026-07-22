@@ -1,15 +1,15 @@
 /**
- * Codepurify Execution Types
+ * codepot Execution Types
  *
- * Core types for the Codepurify execution API.
+ * Core types for the codepot execution API.
  */
 
 /**
- * Main Codepurify execution options.
+ * Main codepot execution options.
  */
-export interface CodepurifyOptions {
+export interface codepotOptions {
   /**
-   * Working directory for Codepurify execution.
+   * Working directory for codepot execution.
    */
   cwd?: string;
 
@@ -191,13 +191,13 @@ export interface WatchOptions {
   /**
    * Callback for watch events.
    */
-  onChange?: (event: CodepurifyWatchEvent) => Promise<void>;
+  onChange?: (event: codepotWatchEvent) => Promise<void>;
 }
 
 /**
  * Watch event types.
  */
-export interface CodepurifyWatchEvent {
+export interface codepotWatchEvent {
   /**
    * Type of change event.
    */

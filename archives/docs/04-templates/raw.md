@@ -9,7 +9,7 @@ Escape template delimiters when they conflict with target syntax.
 
 ## Raw Block Syntax
 
-```codepurify
+```codepot
 {|{raw}|} Content that should not be parsed {|{/raw}|}
 ```
 
@@ -19,7 +19,7 @@ Escape template delimiters when they conflict with target syntax.
 
 Vue uses `{| ... |}` syntax for interpolation:
 
-```codepurify
+```codepot
 {|{raw}|}
 <template>
   <div>{{message}}</div>
@@ -27,13 +27,13 @@ Vue uses `{| ... |}` syntax for interpolation:
 {|{/raw}|}
 ```
 
-### Codepurify Inside Templates
+### codepot Inside Templates
 
-When generating Codepurify templates:
+When generating codepot templates:
 
-```codepurify
+```codepot
 {|{raw}|}
-<script type="text/x-codepurify-template">
+<script type="text/x-codepot-template">
   <div>{{name}}</div>
 </script>
 {|{/raw}|}
@@ -43,9 +43,9 @@ When generating Codepurify templates:
 
 When generating templates that use similar delimiters:
 
-```codepurify
+```codepot
 {|{raw}|}
-<!-- This should not be parsed by Codepurify -->
+<!-- This should not be parsed by codepot -->
 <div class="{{active ? 'active' : ''}}">
   Content here
 </div>
@@ -54,9 +54,9 @@ When generating templates that use similar delimiters:
 
 ## Before Raw Block
 
-❌ Incorrect - Codepurify tries to parse `{| active |}`:
+❌ Incorrect - codepot tries to parse `{| active |}`:
 
-```codepurify
+```codepot
 <div class="{| active ? 'active' : '' |}">
   {| content |}
 </div>
@@ -66,7 +66,7 @@ When generating templates that use similar delimiters:
 
 ✅ Correct - Content preserved as-is:
 
-```codepurify
+```codepot
 {|{raw}|}
 <div class="{{active ? 'active' : ''}}">
   {{content}}
@@ -76,9 +76,9 @@ When generating templates that use similar delimiters:
 
 ## Real Example: Generating Vue Component
 
-Template: `templates/user.component.vue.codepurify`
+Template: `templates/user.component.vue.codepot`
 
-```codepurify
+```codepot
 <template>
   {|{raw}|}
   <div class="user-card">

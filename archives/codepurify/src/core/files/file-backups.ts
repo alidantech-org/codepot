@@ -4,9 +4,9 @@ import { dirname, join, resolve } from 'node:path';
 import { FILE_BACKUP_CONSTANTS, createBackupSessionId, formatBackupSessionJson } from './file.constants';
 import { hashContent } from './file-hash';
 import { relativeFromRoot, resolveInsideRoot } from './file-paths';
-import type { CodepurifyBackupRecord, CodepurifyBackupSession } from './file-types';
+import type { codepotBackupRecord, codepotBackupSession } from './file-types';
 
-export class CodepurifyFileBackups {
+export class codepotFileBackups {
   readonly backupDir: string;
 
   constructor(
@@ -16,8 +16,8 @@ export class CodepurifyFileBackups {
     this.backupDir = resolve(rootDir, backupDir ?? FILE_BACKUP_CONSTANTS.defaultDirName);
   }
 
-  async createSession(reason?: string): Promise<CodepurifyBackupSession> {
-    const session: CodepurifyBackupSession = {
+  async createSession(reason?: string): Promise<codepotBackupSession> {
+    const session: codepotBackupSession = {
       id: createBackupSessionId(),
       reason,
       createdAt: new Date().toISOString(),
@@ -29,7 +29,7 @@ export class CodepurifyFileBackups {
     return session;
   }
 
-  async backupFile(session: CodepurifyBackupSession, path: string): Promise<CodepurifyBackupRecord> {
+  async backupFile(session: codepotBackupSession, path: string): Promise<codepotBackupRecord> {
     const absolutePath = resolveInsideRoot(this.rootDir, path);
     const relativePath = relativeFromRoot(this.rootDir, absolutePath);
 
@@ -45,7 +45,7 @@ export class CodepurifyFileBackups {
       }
     }
 
-    const record: CodepurifyBackupRecord = {
+    const record: codepotBackupRecord = {
       originalPath: absolutePath,
       backupPath: null,
       existed: Boolean(content),
@@ -68,16 +68,16 @@ export class CodepurifyFileBackups {
     return record;
   }
 
-  async saveSession(session: CodepurifyBackupSession): Promise<void> {
+  async saveSession(session: codepotBackupSession): Promise<void> {
     const sessionPath = this.getSessionPath(session.id);
     await mkdir(dirname(sessionPath), { recursive: true });
     await writeFile(sessionPath, formatBackupSessionJson(session), 'utf-8');
   }
 
-  async loadSession(sessionId: string): Promise<CodepurifyBackupSession | null> {
+  async loadSession(sessionId: string): Promise<codepotBackupSession | null> {
     try {
       const content = await readFile(this.getSessionPath(sessionId), 'utf-8');
-      return JSON.parse(content) as CodepurifyBackupSession;
+      return JSON.parse(content) as codepotBackupSession;
     } catch (error) {
       const fsError = error as NodeJS.ErrnoException;
       if (fsError.code === 'ENOENT') return null;
@@ -85,10 +85,10 @@ export class CodepurifyFileBackups {
     }
   }
 
-  async listSessions(): Promise<CodepurifyBackupSession[]> {
+  async listSessions(): Promise<codepotBackupSession[]> {
     try {
       const entries = await readdir(this.backupDir, { withFileTypes: true });
-      const sessions: CodepurifyBackupSession[] = [];
+      const sessions: codepotBackupSession[] = [];
 
       for (const entry of entries) {
         if (!entry.isDirectory()) continue;

@@ -1,16 +1,16 @@
 ---
 title: Extending the Language
-description: Adding custom syntax and helpers to Codepurify
+description: Adding custom syntax and helpers to codepot
 ---
 
 # Extending the Language
 
-Add custom syntax, helpers, and functions to Codepurify templates.
+Add custom syntax, helpers, and functions to codepot templates.
 
 ## Custom Helpers
 
 ```typescript
-import { HelperRegistry } from "@codepurify/core";
+import { HelperRegistry } from "@codepot/core";
 
 class CustomHelpers {
   static formatDate(date: string): string {
@@ -40,7 +40,7 @@ registry.register("toEnum", CustomHelpers.toEnum);
 
 ## Template Usage
 
-```codepurify
+```codepot
 {| formatDate(entity.created_at) |} {| pluralize(field.count, 'item') |} export
 enum {| entity.names.casing.pascal |}Enum { {|
 toEnum(entity.fields.arrays.all.items.map(item => item.names.original)) |} }
@@ -85,7 +85,7 @@ class CustomParser {
 ## Plugin System
 
 ```typescript
-interface CodepurifyPlugin {
+interface codepotPlugin {
   name: string;
   version: string;
   helpers?: Record<string, Function>;
@@ -93,7 +93,7 @@ interface CodepurifyPlugin {
   middleware?: Middleware[];
 }
 
-class EnumPlugin implements CodepurifyPlugin {
+class EnumPlugin implements codepotPlugin {
   name = "enum-generator";
   version = "1.0.0";
 
@@ -111,8 +111,8 @@ class EnumPlugin implements CodepurifyPlugin {
 ## Plugin Registration
 
 ```typescript
-import { Codepurify } from "@codepurify/core";
+import { codepot } from "@codepot/core";
 
-const app = new Codepurify();
+const app = new codepot();
 app.use(new EnumPlugin());
 ```

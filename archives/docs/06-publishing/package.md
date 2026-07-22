@@ -1,6 +1,6 @@
 ---
 title: Package Extension
-description: Build and package the Codepurify extension for distribution
+description: Build and package the codepot extension for distribution
 ---
 
 # Package Extension
@@ -24,6 +24,7 @@ vsce package
 ## What is a VSIX File?
 
 A `.vsix` file is a Visual Studio Code extension package containing:
+
 - Extension manifest (`package.json`)
 - Compiled JavaScript code
 - Assets and resources
@@ -34,7 +35,7 @@ A `.vsix` file is a Visual Studio Code extension package containing:
 The command creates a `.vsix` file:
 
 ```
-codepurify-1.0.0.vsix
+codepot-1.0.0.vsix
 ```
 
 ## Versioning
@@ -44,7 +45,7 @@ Update version in `package.json` before packaging:
 ```json
 {
   "version": "1.0.0",
-  "name": "codepurify"
+  "name": "codepot"
 }
 ```
 
@@ -54,7 +55,7 @@ Update version in `package.json` before packaging:
 $ vsce package
 Executing prepublish script 'npm run compile'...
 
-DONE  Packaged: codepurify-1.0.0.vsix (12.3 KB)
+DONE  Packaged: codepot-1.0.0.vsix (12.3 KB)
 ```
 
 The `.vsix` file is ready for distribution via VSIX installation or Open VSX publishing.

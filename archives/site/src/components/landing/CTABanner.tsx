@@ -13,7 +13,7 @@ export function CTABanner() {
       </p>
       <div className="mb-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
         <a
-          href="https://github.com/alidantech-org/codepurify"
+          href="https://github.com/alidantech-org/codepot"
           target="_blank"
           rel="noopener noreferrer"
           className="flex h-11 items-center gap-2 rounded-full bg-linear-to-r from-primary to-secondary px-7 text-sm font-medium text-white transition-opacity hover:opacity-90"
@@ -21,7 +21,7 @@ export function CTABanner() {
           Get Started on GitHub
         </a>
         <a
-          href="https://github.com/alidantech-org/codepurify#readme"
+          href="https://github.com/alidantech-org/codepot#readme"
           target="_blank"
           rel="noopener noreferrer"
           className="flex h-11 items-center gap-2 rounded-full border-border px-7 text-sm text-foreground transition-colors hover:bg-card-muted/60"

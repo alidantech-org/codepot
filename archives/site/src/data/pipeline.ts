@@ -26,7 +26,7 @@ export const PIPELINE_STEPS: PipelineStep[] = [
     step: "04",
     description: "Apply Templates",
     details:
-      "Use Codepurify templates to render context into any language or framework. Create reusable templates for consistent architecture.",
+      "Use codepot templates to render context into any language or framework. Create reusable templates for consistent architecture.",
     icon: "LayoutTemplate",
   },
   {

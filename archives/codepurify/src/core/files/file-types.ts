@@ -1,7 +1,7 @@
 import { FileAction } from '@/api/types';
 
 /**
- * Codepurify file management types.
+ * codepot file management types.
  *
  * This module defines the internal JSON DB shape and the public file-system API
  * result/input types.
@@ -10,7 +10,7 @@ import { FileAction } from '@/api/types';
 /**
  * File kind enum for type safety.
  */
-export enum CodepurifyFileKind {
+export enum codepotFileKind {
   GENERATED = 'generated',
   CONFIG = 'config',
   TEMPLATE = 'template',
@@ -18,7 +18,7 @@ export enum CodepurifyFileKind {
   UNKNOWN = 'unknown',
 }
 
-export interface CodepurifyFilesOptions {
+export interface codepotFilesOptions {
   /**
    * Project root directory.
    */
@@ -28,7 +28,7 @@ export interface CodepurifyFilesOptions {
    * File DB path relative to rootDir.
    *
    * Recommended:
-   * '.codepurify/files.json'
+   * '.codepot/files.json'
    */
   dbPath?: string;
 
@@ -36,18 +36,18 @@ export interface CodepurifyFilesOptions {
    * Backup directory path relative to rootDir.
    *
    * Recommended:
-   * '.codepurify/backups'
+   * '.codepot/backups'
    */
   backupDir?: string;
 }
 
-export interface CodepurifyFileBackupRef {
+export interface codepotFileBackupRef {
   sessionId: string;
   path: string;
   createdAt: string;
 }
 
-export interface CodepurifyFileRecord {
+export interface codepotFileRecord {
   /**
    * POSIX relative path from rootDir.
    */
@@ -58,7 +58,7 @@ export interface CodepurifyFileRecord {
    */
   absolutePath: string;
 
-  kind: CodepurifyFileKind;
+  kind: codepotFileKind;
 
   /**
    * Source config/entity/template that produced this file.
@@ -82,34 +82,34 @@ export interface CodepurifyFileRecord {
 
   immutable?: boolean;
 
-  backup?: CodepurifyFileBackupRef;
+  backup?: codepotFileBackupRef;
 
   metadata?: Record<string, unknown>;
 }
 
-export interface CodepurifyFilesDb {
+export interface codepotFilesDb {
   version: 1;
-  generator: 'codepurify';
+  generator: 'codepot';
   updatedAt: string | null;
-  records: CodepurifyFileRecord[];
+  records: codepotFileRecord[];
 }
 
-export interface CodepurifyReadResult {
+export interface codepotReadResult {
   path: string;
   absolutePath: string;
   exists: boolean;
   content: string;
   hash?: string;
   sizeBytes: number;
-  record?: CodepurifyFileRecord | null;
+  record?: codepotFileRecord | null;
 }
 
-export interface CodepurifyFileInfo {
+export interface codepotFileInfo {
   path: string;
   absolutePath: string;
   exists: boolean;
   sizeBytes: number;
-  record?: CodepurifyFileRecord | null;
+  record?: codepotFileRecord | null;
 }
 
 export interface WriteGeneratedFileInput {
@@ -119,7 +119,7 @@ export interface WriteGeneratedFileInput {
   template: string;
   immutable?: boolean;
   metadata?: Record<string, unknown>;
-  backupSession?: CodepurifyBackupSession;
+  backupSession?: codepotBackupSession;
 }
 
 export interface WriteGeneratedFileResult {
@@ -131,7 +131,7 @@ export interface WriteGeneratedFileResult {
   backupPath?: string;
 }
 
-export interface CodepurifyBackupRecord {
+export interface codepotBackupRecord {
   originalPath: string;
   backupPath: string | null;
   existed: boolean;
@@ -139,22 +139,22 @@ export interface CodepurifyBackupRecord {
   sizeBytes?: number;
 }
 
-export interface CodepurifyBackupSession {
+export interface codepotBackupSession {
   id: string;
   reason?: string;
   createdAt: string;
-  records: CodepurifyBackupRecord[];
+  records: codepotBackupRecord[];
 }
 
-export interface CodepurifyRollbackResult {
+export interface codepotRollbackResult {
   sessionId: string;
   restoredFiles: string[];
   deletedFiles: string[];
   skippedFiles: string[];
 }
 
-export interface CodepurifyFileValidationResult {
-  record: CodepurifyFileRecord;
+export interface codepotFileValidationResult {
+  record: codepotFileRecord;
   exists: boolean;
   hashMatches?: boolean;
   actualHash?: string;

@@ -1,6 +1,6 @@
 ---
 title: Install via VSIX
-description: Install Codepurify extension from VSIX file
+description: Install codepot extension from VSIX file
 ---
 
 # Install via VSIX
@@ -26,19 +26,21 @@ Install the extension using a `.vsix` file.
 For VS Code, you can install via command line:
 
 ```bash
-code --install-extension codepurify-1.0.0.vsix
+code --install-extension codepot-1.0.0.vsix
 ```
 
 ## Verification
 
 After installation:
+
 1. Open Extensions panel
-2. Search for "Codepurify"
+2. Search for "codepot"
 3. Verify extension appears and is enabled
 
 ## Update Process
 
 To update:
+
 1. Download new `.vsix` file
 2. Repeat installation steps
 3. VS Code will prompt to restart

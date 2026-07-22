@@ -1,16 +1,16 @@
 /**
- * Codepurify
+ * codepot
  *
  * Semantic metadata inference engine + template compiler for generating architecture artifacts from typed domain configs.
  */
 
 // Public API - Main API
-export { Codepurify } from './api/codepurify';
+export { codepot } from './api/codepot';
 export * as API from './api';
 
 // Public API - Configuration
-export { defineCodepurifyConfig } from '@/config/global/helpers/define-config';
-export { defineCodepurifyTemplates } from '@/config/global/helpers/define-templates';
+export { definecodepotConfig } from '@/config/global/helpers/define-config';
+export { definecodepotTemplates } from '@/config/global/helpers/define-templates';
 
 // Public API - Template utilities
 export { paths, file } from '@/config/global/helpers/template-paths';
@@ -19,16 +19,16 @@ export { paths, file } from '@/config/global/helpers/template-paths';
 export * from '@/config/entity';
 
 // Public API - Configuration types
-export type { CodepurifyConfig, ResolvedCodepurifyConfig } from '@/config/global/types/codepurify.config.types';
+export type { codepotConfig, ResolvedcodepotConfig } from '@/config/global/types/codepot.config.types';
 
 export type {
-  CodepurifyPathToken,
-  CodepurifyOutputFolderPart,
-  CodepurifyOutputFolder,
-  CodepurifyOutputFileName,
-  CodepurifyTemplateRegistration,
-  CodepurifyTemplatesFile,
-} from '@/config/global/types/codepurify.templates.types';
+  codepotPathToken,
+  codepotOutputFolderPart,
+  codepotOutputFolder,
+  codepotOutputFileName,
+  codepotTemplateRegistration,
+  codepotTemplatesFile,
+} from '@/config/global/types/codepot.templates.types';
 
 // Public API - Core functionality
 export * as Core from '@/core';

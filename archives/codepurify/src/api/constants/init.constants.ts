@@ -12,13 +12,13 @@ export const INIT_ACTION = {
 export const INIT_ASSET_PATHS = {
   rootDir: 'code',
   templatesDir: 'templates',
-  templatesRegistryFile: 'codepurify.templates.ts',
+  templatesRegistryFile: 'codepot.templates.ts',
 } as const;
 
 export const INIT_TEMPLATE_SYMBOLS = {
-  templateRootDir: '__CODEPURIFY_TEMPLATE_ROOT_DIR__',
-  entitiesDir: '__CODEPURIFY_ENTITIES_DIR__',
-  resourcesDir: '__CODEPURIFY_RESOURCES_DIR__',
+  templateRootDir: '__codepot_TEMPLATE_ROOT_DIR__',
+  entitiesDir: '__codepot_ENTITIES_DIR__',
+  resourcesDir: '__codepot_RESOURCES_DIR__',
 } as const;
 
 export const INIT_OUTPUTS = {
@@ -26,8 +26,8 @@ export const INIT_OUTPUTS = {
   templatesRootDir: './code/templates',
   gitignore: '.gitignore',
   // Root-level config files
-  configFile: 'codepurify.config.ts',
-  templatesFile: 'codepurify.templates.ts',
+  configFile: 'codepot.config.ts',
+  templatesFile: 'codepot.templates.ts',
 } as const;
 
 export const INIT_CONFIG_DIRS = {
@@ -37,18 +37,18 @@ export const INIT_CONFIG_DIRS = {
   resourcesDir: './code/configs/resources',
 } as const;
 
-export const INIT_GITIGNORE_ENTRIES = ['.codepurify/'] as const;
+export const INIT_GITIGNORE_ENTRIES = ['.codepot/'] as const;
 
 export const INIT_FILE_EXTENSIONS = {
-  codepurify: '.codepurify',
+  codepot: '.codepot',
   typescript: '.ts',
 } as const;
 
 export const INIT_TEMPLATE_IMPORTS = {
-  packageName: 'codepurify',
+  packageName: 'codepot',
   paths: 'paths',
   file: 'file',
-  defineTemplates: 'defineCodepurifyTemplates',
+  defineTemplates: 'definecodepotTemplates',
 } as const;
 
 export const INIT_TEMPLATE_NAMES = {
@@ -63,9 +63,9 @@ export const ASSET_PATHS = {
 } as const;
 
 export const INIT_LOG_MESSAGES = {
-  starting: 'Initializing Codepurify project...',
-  completed: 'Codepurify project initialized successfully.',
-  dryRunCompleted: 'Codepurify init dry run completed.',
+  starting: 'Initializing codepot project...',
+  completed: 'codepot project initialized successfully.',
+  dryRunCompleted: 'codepot init dry run completed.',
   backupCreated: (sessionId: string) => `Created init backup session: ${sessionId}`,
   assetsFound: (count: number, paths: string[]) => `Found ${count} init asset file(s): ${paths.join(', ')}`,
   templatesFound: (count: number, paths: string[]) => `Found ${count} template file(s): ${paths.join(', ')}`,

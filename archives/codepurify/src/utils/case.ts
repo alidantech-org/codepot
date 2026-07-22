@@ -1,5 +1,5 @@
 /**
- * Codepurify Case Utilities
+ * codepot Case Utilities
  *
  * Provides naming case conversion helpers for code generation.
  * Handles various input formats and converts to different case styles.

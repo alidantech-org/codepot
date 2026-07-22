@@ -1,5 +1,5 @@
 /**
- * Codepurify Assets
+ * codepot Assets
  *
  * Handles reading package-embedded starter assets.
  */
@@ -16,13 +16,13 @@ const packageRoot = resolve(currentDir, ASSET_PATHS.distRoot);
 
 const initAssetsRoot = join(packageRoot, ASSET_PATHS.initRoot);
 
-export interface CodepurifyAssetFile {
+export interface codepotAssetFile {
   path: string;
   content: string;
 }
 
-export class CodepurifyAssets {
-  async listInitFiles(dir = INIT_ASSET_PATHS.rootDir): Promise<CodepurifyAssetFile[]> {
+export class codepotAssets {
+  async listInitFiles(dir = INIT_ASSET_PATHS.rootDir): Promise<codepotAssetFile[]> {
     const root = this.getInitAssetDirectory(dir);
 
     return this.walkDirectory({
@@ -35,8 +35,8 @@ export class CodepurifyAssets {
     return ASSET_PATHS.initRoot ? join(initAssetsRoot, dir) : initAssetsRoot;
   }
 
-  private async walkDirectory(input: { absoluteRoot: string; absoluteDir: string }): Promise<CodepurifyAssetFile[]> {
-    const files: CodepurifyAssetFile[] = [];
+  private async walkDirectory(input: { absoluteRoot: string; absoluteDir: string }): Promise<codepotAssetFile[]> {
+    const files: codepotAssetFile[] = [];
     const entries = await readdir(input.absoluteDir, {
       withFileTypes: true,
     });

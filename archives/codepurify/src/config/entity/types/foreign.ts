@@ -1,4 +1,4 @@
-// ─── codepurify/fields/foreign.ts ─────────────────────────────────────────────────
+// ─── codepot/fields/foreign.ts ─────────────────────────────────────────────────
 
 import type { BaseFieldConfig, BusinessConfig, SystemConfig } from './base';
 

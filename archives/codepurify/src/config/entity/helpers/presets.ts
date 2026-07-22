@@ -1,4 +1,4 @@
-// ─── codepurify/presets.ts ─────────────────────────────────────────────────
+// ─── codepot/presets.ts ─────────────────────────────────────────────────
 
 import type { MutationConfig, QueryConfig, ToggleState } from '../types/base';
 import type { StringFieldConfig } from '../types';

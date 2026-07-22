@@ -4,18 +4,18 @@ import { FileAction } from '@/api/types';
 import { createTempFilePath } from './file.constants';
 import { hashContent } from './file-hash';
 import { relativeFromRoot, resolveInsideRoot } from './file-paths';
-import type { CodepurifyFileBackups } from './file-backups';
-import type { CodepurifyFileDb } from './file-db';
-import type { CodepurifyFileReader } from './file-reader';
+import type { codepotFileBackups } from './file-backups';
+import type { codepotFileDb } from './file-db';
+import type { codepotFileReader } from './file-reader';
 import type { WriteGeneratedFileInput, WriteGeneratedFileResult } from './file-types';
-import { CodepurifyFileKind } from './file-types';
+import { codepotFileKind } from './file-types';
 
-export class CodepurifyFileWriter {
+export class codepotFileWriter {
   constructor(
     private readonly rootDir: string,
-    private readonly db: CodepurifyFileDb,
-    private readonly reader: CodepurifyFileReader,
-    private readonly backups: CodepurifyFileBackups,
+    private readonly db: codepotFileDb,
+    private readonly reader: codepotFileReader,
+    private readonly backups: codepotFileBackups,
   ) {}
 
   async writeGenerated(input: WriteGeneratedFileInput): Promise<WriteGeneratedFileResult> {
@@ -47,7 +47,7 @@ export class CodepurifyFileWriter {
     await this.db.upsert({
       path: relativePath,
       absolutePath,
-      kind: CodepurifyFileKind.GENERATED,
+      kind: codepotFileKind.GENERATED,
       source: input.source,
       template: input.template,
       hash,

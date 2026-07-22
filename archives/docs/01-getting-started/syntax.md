@@ -1,17 +1,17 @@
 ---
 title: Syntax
-description: Codepurify template syntax reference
+description: codepot template syntax reference
 ---
 
-# Codepurify Template Syntax
+# codepot Template Syntax
 
-Codepurify uses `{| ... |}` tags to generate deterministic code from structured data.
+codepot uses `{| ... |}` tags to generate deterministic code from structured data.
 
 ## Delimiters
 
 All syntax is defined inside:
 
-```codepurify
+```codepot
 {| ... |}
 ```
 
@@ -21,7 +21,7 @@ These delimiters define expressions, blocks, and comments.
 
 Expressions output values directly into the generated code.
 
-```codepurify
+```codepot
 {|entity.name.pascal|}
 ```
 
@@ -37,13 +37,13 @@ Comments are ignored and not included in output.
 
 ### Regular comment
 
-```codepurify
+```codepot
 {|# comment #|}
 ```
 
 ### Documentation comment
 
-```codepurify
+```codepot
 {|* documentation *|}
 ```
 
@@ -51,7 +51,7 @@ Comments are ignored and not included in output.
 
 Blocks control rendering behavior. Each block has an opening and closing tag.
 
-```codepurify
+```codepot
 {|if condition|}
 ...
 {|/if|}
@@ -61,7 +61,7 @@ Blocks control rendering behavior. Each block has an opening and closing tag.
 
 Renders content when a condition is true.
 
-```codepurify
+```codepot
 {|if condition|}
 ...
 {|/if|}
@@ -78,7 +78,7 @@ Supports an optional `else` branch.
 
 Renders content when a condition is false.
 
-```codepurify
+```codepot
 {|unless condition|}
 ...
 {|/unless|}
@@ -95,7 +95,7 @@ Equivalent to a negated `if`.
 
 Defines a fallback branch.
 
-```codepurify
+```codepot
 {|else|}
 ```
 
@@ -110,7 +110,7 @@ Defines a fallback branch.
 
 Repeats content for each item in a collection.
 
-```codepurify
+```codepot
 {|loop item in collection|}
 ...
 {|/loop|}
@@ -126,7 +126,7 @@ Repeats content for each item in a collection.
 
 Changes the current context inside a block.
 
-```codepurify
+```codepot
 {|with value|}
 ...
 {|/with|}
@@ -142,7 +142,7 @@ Changes the current context inside a block.
 
 Disables all template processing inside the block.
 
-```codepurify
+```codepot
 {|ignore|}
 ...
 {|/ignore|}
@@ -156,7 +156,7 @@ Disables all template processing inside the block.
 
 ## Formatting
 
-Codepurify does not apply formatting automatically.
+codepot does not apply formatting automatically.
 
 Templates control:
 
@@ -182,7 +182,7 @@ Templates control:
 
 ## Design Principles
 
-Codepurify syntax is intentionally minimal:
+codepot syntax is intentionally minimal:
 
 - deterministic
 - explicit

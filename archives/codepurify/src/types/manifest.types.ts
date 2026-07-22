@@ -1,18 +1,18 @@
 /**
- * Codepurify Manifest Types
+ * codepot Manifest Types
  *
- * Types for Codepurify manifest tracking and backup/session management.
+ * Types for codepot manifest tracking and backup/session management.
  * Provides contracts for file tracking and generation metadata.
  */
 
-export interface CodepurifyManifest {
+export interface codepotManifest {
   version: 1;
-  generator: 'codepurify';
+  generator: 'codepot';
   generatedAt: string | null;
-  entries: CodepurifyManifestEntry[];
+  entries: codepotManifestEntry[];
 }
 
-export interface CodepurifyManifestEntry {
+export interface codepotManifestEntry {
   path: string;
   absolutePath: string;
   source: string;

@@ -1,31 +1,31 @@
 import { dirname, resolve } from 'node:path';
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 
-import type { CodepurifyFileRecord, CodepurifyFilesDb } from './file-types';
+import type { codepotFileRecord, codepotFilesDb } from './file-types';
 import { FILE_DB_CONSTANTS, createTempFilePath, formatDbJson, createEmptyFileDb } from './file.constants';
 
-export class CodepurifyFileDb {
+export class codepotFileDb {
   readonly dbPath: string;
 
   constructor(rootDir: string, dbPath?: string) {
     this.dbPath = resolve(rootDir, dbPath ?? FILE_DB_CONSTANTS.defaultFileName);
   }
 
-  createEmpty(): CodepurifyFilesDb {
+  createEmpty(): codepotFilesDb {
     return createEmptyFileDb();
   }
 
-  async load(): Promise<CodepurifyFilesDb> {
+  async load(): Promise<codepotFilesDb> {
     try {
       const content = await readFile(this.dbPath, 'utf-8');
-      const parsed = JSON.parse(content) as CodepurifyFilesDb;
+      const parsed = JSON.parse(content) as codepotFilesDb;
 
       if (
         parsed.version !== FILE_DB_CONSTANTS.version ||
         parsed.generator !== FILE_DB_CONSTANTS.generator ||
         !Array.isArray(parsed.records)
       ) {
-        throw new Error('Invalid Codepurify file DB structure.');
+        throw new Error('Invalid codepot file DB structure.');
       }
 
       return parsed;
@@ -40,8 +40,8 @@ export class CodepurifyFileDb {
     }
   }
 
-  async save(db: CodepurifyFilesDb): Promise<void> {
-    const nextDb: CodepurifyFilesDb = {
+  async save(db: codepotFilesDb): Promise<void> {
+    const nextDb: codepotFilesDb = {
       ...db,
       updatedAt: new Date().toISOString(),
     };
@@ -53,17 +53,17 @@ export class CodepurifyFileDb {
     await rename(tempPath, this.dbPath);
   }
 
-  async get(path: string): Promise<CodepurifyFileRecord | null> {
+  async get(path: string): Promise<codepotFileRecord | null> {
     const db = await this.load();
     return db.records.find((record) => record.path === path) ?? null;
   }
 
-  async list(): Promise<CodepurifyFileRecord[]> {
+  async list(): Promise<codepotFileRecord[]> {
     const db = await this.load();
     return db.records;
   }
 
-  async upsert(record: CodepurifyFileRecord): Promise<void> {
+  async upsert(record: codepotFileRecord): Promise<void> {
     const db = await this.load();
 
     const existing = db.records.find((item) => item.path === record.path);

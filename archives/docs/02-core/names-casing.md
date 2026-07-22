@@ -21,56 +21,56 @@ The names system provides consistent string transformations across all templates
 
 ### camel
 
-```codepurify
+```codepot
 {| entity.names.casing.camel |} // Output: userProfile
 ```
 
 ### pascal
 
-```codepurify
+```codepot
 {| entity.names.casing.pascal |} // Output: UserProfile
 ```
 
 ### snake
 
-```codepurify
+```codepot
 {| entity.names.casing.snake |} // Output: user_profile
 ```
 
 ### kebab
 
-```codepurify
+```codepot
 {| entity.names.casing.kebab |} // Output: user-profile
 ```
 
 ### constant
 
-```codepurify
+```codepot
 {| entity.names.casing.constant |} // Output: USER_PROFILE
 ```
 
 ### title
 
-```codepurify
+```codepot
 {| entity.names.casing.title |} // Output: User Profile
 ```
 
 ## Original Name
 
-```codepurify
+```codepot
 {| entity.names.original |} // Output: userProfile
 ```
 
 ## Singular/Plural
 
-```codepurify
+```codepot
 {| entity.names.singular.casing.pascal |} // Output: User {|
 entity.names.plural.casing.pascal |} // Output: Users
 ```
 
 ## Real Template Usage
 
-```codepurify
+```codepot
 // Class name export class {| entity.names.casing.pascal |} { {|#each
 entity.fields.arrays.all.items as field|} // Property name
 {|field.names.casing.camel|}: {|#if field.flags.is_string}string{|/if|};

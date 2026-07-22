@@ -1,11 +1,11 @@
 /**
- * Codepurify API Barrel Export
+ * codepot API Barrel Export
  *
- * Central exports for all Codepurify API modules.
+ * Central exports for all codepot API modules.
  */
 
 // Main API
-export { Codepurify } from './codepurify';
+export { codepot } from './codepot';
 
 // Actions
 export * from './actions';

@@ -1,7 +1,7 @@
 /**
  * Rollback Action
  *
- * Restores files from a Codepurify backup session.
+ * Restores files from a codepot backup session.
  *
  * Pipeline:
  *
@@ -15,13 +15,13 @@
  */
 
 import type { RollbackOptions, RollbackResult } from '@/api/types';
-import type { CodepurifyAction } from '@/api/runtime/action-contract';
+import type { codepotAction } from '@/api/runtime/action-contract';
 
 import { debug, info, success } from '@/core/logger';
 
 import { ROLLBACK_ACTION, ROLLBACK_LOG_MESSAGES } from '@/api/constants';
 
-export const rollbackAction: CodepurifyAction<RollbackOptions, RollbackResult> = {
+export const rollbackAction: codepotAction<RollbackOptions, RollbackResult> = {
   name: ROLLBACK_ACTION.name,
 
   defaults: (options) => ({

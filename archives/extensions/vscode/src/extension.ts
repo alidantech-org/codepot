@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-const LANGUAGE_ID_PREFIX = "codepurify";
+const LANGUAGE_ID_PREFIX = "codepot";
 const BLOCK_NAMES = ["if", "loop", "ignore", "unless", "with"];
 const ELSE_PARENT_BLOCKS = ["if", "unless"];
 
@@ -11,10 +11,10 @@ type OpenBlock = {
 };
 
 export function activate(context: vscode.ExtensionContext): void {
-  console.log("Codepurify extension activated");
+  console.log("codepot extension activated");
 
   vscode.window.setStatusBarMessage(
-    "✨ Codepurify ready — template syntax active",
+    "✨ codepot ready — template syntax active",
     4000,
   );
 
@@ -26,21 +26,21 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {}
 
-function isCodepurifyDocument(document: vscode.TextDocument): boolean {
+function iscodepotDocument(document: vscode.TextDocument): boolean {
   return (
     document.languageId === LANGUAGE_ID_PREFIX ||
     document.languageId.startsWith(`${LANGUAGE_ID_PREFIX}-`) ||
-    document.fileName.endsWith(".codepurify") ||
+    document.fileName.endsWith(".codepot") ||
     document.fileName.endsWith(".code")
   );
 }
 
 function registerCompletionProvider(): vscode.Disposable {
   return vscode.languages.registerCompletionItemProvider(
-    { scheme: "file", pattern: "**/*.{codepurify,code}" },
+    { scheme: "file", pattern: "**/*.{codepot,code}" },
     {
       provideCompletionItems(document) {
-        if (!isCodepurifyDocument(document)) return undefined;
+        if (!iscodepotDocument(document)) return undefined;
 
         return [
           snippet("if", "{|if ${1:condition}|}\n\t$0\n{|/if|}", "If block"),
@@ -94,10 +94,10 @@ function snippet(
 function registerDiagnosticsProvider(
   context: vscode.ExtensionContext,
 ): vscode.Disposable {
-  const collection = vscode.languages.createDiagnosticCollection("codepurify");
+  const collection = vscode.languages.createDiagnosticCollection("codepot");
 
   const validate = (document: vscode.TextDocument): void => {
-    if (!isCodepurifyDocument(document)) return;
+    if (!iscodepotDocument(document)) return;
 
     const diagnostics: vscode.Diagnostic[] = [];
     const text = document.getText();

@@ -1,16 +1,16 @@
 /**
- * Codepurify Config Types
+ * codepot Config Types
  *
  * Types for global configuration and resolved configurations.
  */
 
 /**
- * Global Codepurify config.
+ * Global codepot config.
  *
  * Keep this separate from templates so templates can be imported directly
  * into entity configs for traceability.
  */
-export interface CodepurifyConfig {
+export interface codepotConfig {
   /**
    * Optional project root.
    */
@@ -42,7 +42,7 @@ export interface CodepurifyConfig {
 /**
  * Resolved global config.
  */
-export interface ResolvedCodepurifyConfig {
+export interface ResolvedcodepotConfig {
   rootDir: string;
   manifestPath: string;
   outputDir: string;
