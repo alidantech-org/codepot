@@ -6,6 +6,27 @@ import { createGenerationEngine } from '../src/generation/index';
 import { createMemoryPlatformServices } from '../src/platform/index';
 import { createTemplatingEngine } from '../src/templating/index';
 
+function authoringFixture(): CompiledAuthoringArtifact {
+  return {
+    header: {
+      kind: 'codepot.authoring', protocolVersion: 1, artifactVersion: 1,
+      producer: { name: 'test', version: '1' }, contentDigest: 'authoring', sourceDigest: 'source',
+    },
+    source: {
+      id: 'contracts', descriptor: { kind: 'memory', id: 'contracts' }, root: '/contracts',
+      entry: '/contracts/codepotx.config.ts', digest: 'source', files: [],
+    },
+    project: { name: 'Demo', version: '1.0.0', tags: [], defaults: {} },
+    properties: [],
+    schemas: [{
+      id: 'schema:user', key: 'User', name: 'user_profile', group: 'models', role: 'model',
+      schema: { kind: 'object', fields: [], extends: [], additionalProperties: false },
+    }],
+    entities: [], relations: [], resources: [], operations: [], access: [], hooks: [], frontends: [],
+    metadata: {}, diagnostics: [],
+  };
+}
+
 test('CodepotFile planning renders and writes generated files through memory adapters', async () => {
   const platform = createMemoryPlatformServices();
   await platform.files.mkdir('/project/templates/{model}', { recursive: true });
@@ -53,11 +74,7 @@ write:
   assert.equal(templates.success, true);
   if (!templates.success) return;
 
-  const authoring = {
-    header: { kind: 'codepot.authoring', protocolVersion: 1, artifactVersion: 1, producer: { name: 'test', version: '1' }, contentDigest: 'authoring', sourceDigest: 'source' },
-    schemas: [{ id: 'schema:user', key: 'User', name: 'user_profile' }],
-    frontends: [],
-  } as unknown as CompiledAuthoringArtifact;
+  const authoring = authoringFixture();
   const authoringPort = { compile: async () => ({ success: true, value: authoring, diagnostics: [] }) } as unknown as AuthoringPort;
   const generation = createGenerationEngine({ ...platform, authoring: authoringPort, templating });
 
@@ -82,7 +99,6 @@ test('unsafe clean paths are refused during planning', async () => {
   const platform = createMemoryPlatformServices();
   const templating = createTemplatingEngine(platform);
   const generation = createGenerationEngine({ ...platform, authoring: {} as AuthoringPort, templating });
-  const authoring = { header: { kind: 'codepot.authoring', contentDigest: 'a', sourceDigest: 'a' }, schemas: [], frontends: [] } as unknown as CompiledAuthoringArtifact;
   const templates = {
     header: { kind: 'codepot.templates', contentDigest: 't', sourceDigest: 't' }, folders: [], templates: [],
     writePolicy: { defaultMode: 'managed', managedRoots: [], immutableRoots: [], protectedRoots: [], cleanRoots: [] },
@@ -91,7 +107,7 @@ test('unsafe clean paths are refused during planning', async () => {
     path: '/project/CodepotFile.yml', root: '/project', allow: true, defaults: {},
     tasks: [{ name: 'bad', authoring: { kind: 'memory', id: 'a' }, templates: { kind: 'memory', id: 't' }, output: 'generated', clean: ['../outside'], before: [], after: [], environment: {} }],
   } as const;
-  const plan = await generation.plan({ codepotFile: file, task: 'bad', authoring, templates });
+  const plan = await generation.plan({ codepotFile: file, task: 'bad', authoring: authoringFixture(), templates });
   assert.equal(plan.success, true);
   if (plan.success) assert.equal(plan.value.clean[0]?.allowed, false);
 });
