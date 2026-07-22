@@ -1,4 +1,3 @@
-import Handlebars from 'handlebars';
 import {
   CODEPOT_ARTIFACT_VERSION,
   CODEPOT_PROTOCOL_VERSION,
@@ -11,8 +10,13 @@ import type {
   JsonObject,
   TemplateContextRequest,
   TemplateContextResult,
+  TemplateContextValidateRequest,
+  TemplateContextValidateResult,
   TemplateRenderRequest,
   TemplateRenderResult,
+  TemplateVariableRequirement,
+  TemplateVariablesRequest,
+  TemplateVariablesResult,
   TemplatingCompileRequest,
   TemplatingCompileResult,
   TemplatingLoadRequest,
@@ -21,19 +25,42 @@ import type {
   TemplatingValidateResult,
   VirtualFile,
 } from '@/contract/index';
-import { compilePathParts, compilePathTokens } from './path-tokens';
-import type { PathsFileInput, TemplatingDependencies, TemplatingEngine } from './templating.types';
 
+import { BUILTIN_TEMPLATE_HELPERS, createTemplateRenderer } from './helpers';
+import { compilePathParts, compilePathTokens } from './path-tokens';
+import { buildTemplateContext } from './template-context';
+import { collectTemplateReferences } from './template-references';
+import {
+  buildTemplateVariableCatalog,
+  formatTemplateVariableCatalog,
+  validateTemplateContext,
+} from './template-variables';
+import type {
+  PathsFileInput,
+  TemplateVariableRequirementInput,
+  TemplatingDependencies,
+  TemplatingEngine,
+} from './templating.types';
+
+/** Default autonomous implementation of the public templating contracts. */
 export class DefaultTemplatingEngine implements TemplatingEngine {
   readonly #dependencies: TemplatingDependencies;
-  constructor(dependencies: TemplatingDependencies) { this.#dependencies = dependencies; }
 
-  async load(request: TemplatingLoadRequest): Promise<TemplatingLoadResult> { return this.compile(request); }
+  constructor(dependencies: TemplatingDependencies) {
+    this.#dependencies = dependencies;
+  }
+
+  async load(request: TemplatingLoadRequest): Promise<TemplatingLoadResult> {
+    return this.compile(request);
+  }
 
   async validate(request: TemplatingValidateRequest): Promise<TemplatingValidateResult> {
     const result = await this.compile({ ...request, cache: 'bypass' });
     if (!result.success) return result;
-    return success({ valid: result.diagnostics.every((item) => item.severity !== 'error'), diagnostics: result.diagnostics }, result.diagnostics);
+    return success({
+      valid: result.diagnostics.every((item) => item.severity !== 'error'),
+      diagnostics: result.diagnostics,
+    }, result.diagnostics);
   }
 
   async compile(request: TemplatingCompileRequest): Promise<TemplatingCompileResult> {
@@ -42,41 +69,73 @@ export class DefaultTemplatingEngine implements TemplatingEngine {
         ...(request.projectRoot ? { projectRoot: request.projectRoot } : {}),
         cache: request.cache ?? 'auto',
       });
-      const pathsPath = request.pathsFile ? join(source.root, request.pathsFile) : join(source.root, 'paths.yaml');
-      const config = this.#dependencies.data.parseYaml<PathsFileInput>(await this.#dependencies.files.readText(pathsPath));
+      const pathsPath = request.pathsFile
+        ? join(source.root, request.pathsFile)
+        : join(source.root, 'paths.yaml');
+      const config = this.#dependencies.data.parseYaml<PathsFileInput>(
+        await this.#dependencies.files.readText(pathsPath),
+      );
       const diagnostics = validatePaths(config);
       const extension = config.templateExtension ?? config.template_extension ?? '.hbs';
-      const allFiles = await this.#dependencies.files.glob(['**/*'], { cwd: source.root, absolute: true, ignore: ['paths.yaml'] });
+      const stripExtension = config.stripTemplateExtension ?? config.strip_template_extension ?? true;
+      const includeHidden = config.includeHidden ?? config.include_hidden ?? true;
+      const ignore = ['paths.yaml', ...(config.ignore ?? [])];
+      const paths = await this.#dependencies.files.glob(
+        includeHidden ? ['**/*', '**/.*', '**/.*/**/*'] : ['**/*'],
+        { cwd: source.root, absolute: true, ignore },
+      );
+      const requestedHelpers = config.helpers ?? [];
+      // Validate helper names once during compilation rather than failing late in render.
+      createTemplateRenderer(requestedHelpers);
+      const knownHelpers = new Set([
+        ...BUILTIN_TEMPLATE_HELPERS.map((helper) => helper.name),
+        ...requestedHelpers,
+        'each', 'if', 'unless', 'with', 'lookup', 'log',
+      ]);
       const templates: CompiledTemplateDescriptor[] = [];
-      for (const path of allFiles.sort()) {
+
+      for (const path of [...new Set(paths)].sort()) {
         const stat = await this.#dependencies.files.stat(path);
         if (stat.kind !== 'file') continue;
         const relative = relativePath(source.root, path);
+        if (ignore.some((pattern) => matchesGlob(relative, pattern))) continue;
         const isTemplate = relative.endsWith(extension);
-        const allowRawFiles = config.allowRawFiles ?? config.allow_raw_files ?? true;
-        if (!isTemplate && !allowRawFiles) continue;
-        const stripTemplateExtension = config.stripTemplateExtension ?? config.strip_template_extension ?? true;
-        const outputPath = isTemplate && stripTemplateExtension ? relative.slice(0, -extension.length) : relative;
-        const segments = outputPath.split('/');
+        if (!isTemplate && !(config.allowRawFiles ?? config.allow_raw_files ?? true)) continue;
+        const isPartial = isTemplate && isPartialPath(relative, config.partials ?? []);
+        const stripped = isTemplate && stripExtension
+          ? relative.slice(0, -extension.length)
+          : relative;
+        const segments = stripped.split('/');
         const marker = segments[0] ?? '';
-        const folderMatch = /^\{([^}]+)\}$/.exec(marker);
-        const group = folderMatch?.[1] ?? 'root';
+        const markerMatch = /^\{([^}]+)\}$/.exec(marker);
+        const group = isPartial ? 'partials' : markerMatch?.[1] ?? 'root';
         const folder = config.folders?.[group];
-        const templateRelative = folderMatch ? segments.slice(1).join('/') : outputPath;
-        const outputTokens = [...compilePathParts(folder?.parts ?? []), ...compilePathTokens(templateRelative)];
+        const templatePath = markerMatch ? segments.slice(1).join('/') : stripped;
+        const outputTokens = isPartial
+          ? []
+          : [...compilePathParts(folder?.parts ?? []), ...compilePathTokens(templatePath)];
+        const lifecycle = folderLifecycle(config, group);
+
         if (isTemplate) {
           const text = await this.#dependencies.files.readText(path);
-          templates.push({
-            id: `template:${relative}`,
-            path: relative,
-            kind: 'handlebars',
-            group,
-            outputTokens,
-            lifecycle: folderLifecycle(config, group),
-            compareMode: 'exact',
-            text,
-            digest: await this.#dependencies.hashes.text(text),
-          });
+          const id = `template:${relative}`;
+          try {
+            templates.push({
+              id,
+              path: relative,
+              kind: isPartial ? 'partial' : 'handlebars',
+              group,
+              outputTokens,
+              ...(isPartial ? { partialName: partialNameFor(relative, extension) } : {}),
+              ...(lifecycle ? { lifecycle } : {}),
+              compareMode: 'exact',
+              references: collectTemplateReferences(id, text, knownHelpers),
+              text,
+              digest: await this.#dependencies.hashes.text(text),
+            });
+          } catch (caught) {
+            diagnostics.push(diagnostic('TEMPLATING_TEMPLATE_PARSE_FAILED', caught, { path: relative }));
+          }
         } else {
           const dataBase64 = await this.#dependencies.files.readBase64(path);
           templates.push({
@@ -85,23 +144,29 @@ export class DefaultTemplatingEngine implements TemplatingEngine {
             kind: 'raw',
             group,
             outputTokens,
-            lifecycle: folderLifecycle(config, group),
+            ...(lifecycle ? { lifecycle } : {}),
             compareMode: 'raw',
+            references: [],
             dataBase64,
             digest: await this.#dependencies.hashes.base64(dataBase64),
           });
         }
       }
-      const folders: CompiledTemplateFolder[] = Object.entries(config.folders ?? {}).map(([name, folder]) => ({
-        name,
-        parts: folder.parts ?? [],
-        mode: folder.mode ?? 'once',
-        ...(folder.select ? { select: folder.select } : {}),
-        ...(folder.alias ?? folder.as ? { alias: folder.alias ?? folder.as } : {}),
-        ...(folder.lifecycle ? { lifecycle: folder.lifecycle } : {}),
-        ...(folder.description ? { description: folder.description } : {}),
-        ...(folder.metadata ? { metadata: folder.metadata } : {}),
-      }));
+
+      diagnostics.push(...validateCompiledTemplates(config, templates));
+      const folders: CompiledTemplateFolder[] = Object.entries(config.folders ?? {})
+        .map(([name, folder]) => ({
+          name,
+          parts: folder.parts ?? [],
+          mode: folder.mode ?? 'once',
+          ...(folder.select ? { select: folder.select } : {}),
+          ...(folder.alias ?? folder.as ? { alias: folder.alias ?? folder.as } : {}),
+          ...(folder.lifecycle ? { lifecycle: folder.lifecycle } : {}),
+          ...(folder.description ? { description: folder.description } : {}),
+          ...(folder.metadata ? { metadata: folder.metadata } : {}),
+        }))
+        .sort((left, right) => left.name.localeCompare(right.name));
+      const variableRequirements = normalizeVariableRequirements(config.variables);
       const body = {
         source,
         manifest: {
@@ -109,9 +174,16 @@ export class DefaultTemplatingEngine implements TemplatingEngine {
           version: config.version ?? '1.0.0',
           ...(config.description ? { description: config.description } : {}),
           templateExtension: extension,
-          stripTemplateExtension: config.stripTemplateExtension ?? config.strip_template_extension ?? true,
+          stripTemplateExtension: stripExtension,
           allowRawFiles: config.allowRawFiles ?? config.allow_raw_files ?? true,
-          helpers: config.helpers ?? [],
+          includeHidden,
+          ignore: [...ignore].sort(),
+          helpers: [...new Set(requestedHelpers)].sort(),
+          partials: templates
+            .filter((template) => template.kind === 'partial' && template.partialName)
+            .map((template) => template.partialName!)
+            .sort(),
+          variableRequirements,
           ...(config.metadata ? { metadata: config.metadata } : {}),
         },
         folders,
@@ -122,43 +194,90 @@ export class DefaultTemplatingEngine implements TemplatingEngine {
           protectedRoots: config.write?.protectedRoots ?? config.write?.protected_roots ?? [],
           cleanRoots: config.write?.cleanRoots ?? config.write?.clean_roots ?? [],
         },
-        templates,
+        templates: templates.sort((left, right) => left.path.localeCompare(right.path)),
         files: source.files,
         diagnostics,
       } as const;
-      const contentDigest = await this.#dependencies.hashes.text(this.#dependencies.data.stringifyJson(body));
+      const contentDigest = await this.#dependencies.hashes.text(
+        this.#dependencies.data.stringifyJson(body),
+      );
       const artifact: CompiledTemplatePack = {
         header: {
-          kind: 'codepot.templates', protocolVersion: CODEPOT_PROTOCOL_VERSION, artifactVersion: CODEPOT_ARTIFACT_VERSION,
-          producer: { name: 'codepotx', version: '0.0.0' }, contentDigest, sourceDigest: source.digest,
+          kind: 'codepot.templates',
+          protocolVersion: CODEPOT_PROTOCOL_VERSION,
+          artifactVersion: CODEPOT_ARTIFACT_VERSION,
+          producer: { name: 'codepotx', version: '0.0.0' },
+          contentDigest,
+          sourceDigest: source.digest,
         },
         ...body,
       };
-      return diagnostics.some((item) => item.severity === 'error') ? failure(diagnostics) : success(artifact, diagnostics);
-    } catch (caught) { return failure([diagnostic('TEMPLATING_COMPILE_FAILED', caught)]); }
+      return diagnostics.some((item) => item.severity === 'error')
+        ? failure(diagnostics)
+        : success(artifact, diagnostics);
+    } catch (caught) {
+      return failure([diagnostic('TEMPLATING_COMPILE_FAILED', caught)]);
+    }
   }
 
   async createContext(request: TemplateContextRequest): Promise<TemplateContextResult> {
-    const frontend = request.selectedFrontend ? request.authoring.frontends.find((item) => item.name === request.selectedFrontend) : undefined;
-    return success({
-      authoring: request.authoring as unknown as JsonObject,
-      project: request.project ?? {},
-      variables: request.variables ?? {},
-      ...(frontend ? { frontend: frontend as unknown as JsonObject } : {}),
-    });
+    return success(buildTemplateContext(request));
+  }
+
+  async variables(request: TemplateVariablesRequest): Promise<TemplateVariablesResult> {
+    try {
+      const context = buildTemplateContext(request);
+      const catalog = await buildTemplateVariableCatalog(context, request.templates, {
+        hashes: this.#dependencies.hashes,
+        data: this.#dependencies.data,
+      });
+      return success(
+        formatTemplateVariableCatalog(catalog, request.format ?? 'object', request.pretty ?? true),
+        catalog.diagnostics,
+      );
+    } catch (caught) {
+      return failure([diagnostic('TEMPLATING_VARIABLES_FAILED', caught)]);
+    }
+  }
+
+  async validateContext(request: TemplateContextValidateRequest): Promise<TemplateContextValidateResult> {
+    try {
+      const context = buildTemplateContext(request);
+      const catalog = await buildTemplateVariableCatalog(context, request.templates, {
+        hashes: this.#dependencies.hashes,
+        data: this.#dependencies.data,
+      });
+      const validation = validateTemplateContext(catalog, request.templates, request.strict ?? true);
+      return validation.valid
+        ? success(validation, validation.diagnostics)
+        : failure(validation.diagnostics);
+    } catch (caught) {
+      return failure([diagnostic('TEMPLATING_CONTEXT_VALIDATION_FAILED', caught)]);
+    }
   }
 
   async render(request: TemplateRenderRequest): Promise<TemplateRenderResult> {
     try {
       const byId = new Map(request.templates.templates.map((template) => [template.id, template]));
-      const renderer = createRenderer(request.templates.manifest.helpers);
+      const renderer = createTemplateRenderer(request.templates.manifest.helpers);
+      for (const partial of request.templates.templates.filter((template) => template.kind === 'partial')) {
+        if (partial.partialName) renderer.registerPartial(partial.partialName, partial.text ?? '');
+      }
       const files: VirtualFile[] = [];
       for (const item of request.files) {
         const template = byId.get(item.templateId);
         if (!template) throw new Error(`Unknown template: ${item.templateId}`);
+        if (template.kind === 'partial') throw new Error(`Partial cannot be emitted directly: ${template.id}`);
         const content = template.kind === 'raw'
           ? { encoding: 'base64' as const, data: template.dataBase64 ?? '' }
-          : { encoding: 'utf8' as const, text: renderer.compile(template.text ?? '', { strict: true, noEscape: true })(item.context) };
+          : {
+              encoding: 'utf8' as const,
+              text: renderer.compile(template.text ?? '', { strict: true, noEscape: true })(item.context, {
+                allowCallsToHelperMissing: false,
+                allowProtoMethodsByDefault: false,
+                allowProtoPropertiesByDefault: false,
+              }),
+            };
         const serialized = content.encoding === 'utf8' ? content.text : content.data;
         files.push({
           id: `virtual:${item.outputPath}`,
@@ -166,54 +285,177 @@ export class DefaultTemplatingEngine implements TemplatingEngine {
           lifecycle: template.lifecycle ?? request.templates.writePolicy.defaultMode,
           compareMode: template.compareMode,
           content,
-          contentDigest: content.encoding === 'utf8' ? await this.#dependencies.hashes.text(serialized) : await this.#dependencies.hashes.base64(serialized),
+          contentDigest: content.encoding === 'utf8'
+            ? await this.#dependencies.hashes.text(serialized)
+            : await this.#dependencies.hashes.base64(serialized),
           metadata: { templateId: template.id },
         });
       }
       return success(files);
-    } catch (caught) { return failure([diagnostic('TEMPLATING_RENDER_FAILED', caught)]); }
+    } catch (caught) {
+      return failure([diagnostic('TEMPLATING_RENDER_FAILED', caught)]);
+    }
   }
 }
 
-export function createTemplatingEngine(dependencies: TemplatingDependencies): TemplatingEngine { return new DefaultTemplatingEngine(dependencies); }
-
-
-function createRenderer(requestedHelpers: readonly string[]): typeof Handlebars {
-  const renderer = Handlebars.create();
-  const helpers: Readonly<Record<string, (...args: unknown[]) => unknown>> = {
-    json: (value: unknown) => JSON.stringify(value, null, 2),
-    lower: (value: unknown) => String(value).toLowerCase(),
-    upper: (value: unknown) => String(value).toUpperCase(),
-    camel: (value: unknown) => words(value).map((word, index) => index === 0 ? word.toLowerCase() : capitalize(word)).join(''),
-    pascal: (value: unknown) => words(value).map(capitalize).join(''),
-    snake: (value: unknown) => words(value).map((word) => word.toLowerCase()).join('_'),
-    kebab: (value: unknown) => words(value).map((word) => word.toLowerCase()).join('-'),
-    eq: (left: unknown, right: unknown) => left === right,
-    and: (...values: unknown[]) => values.slice(0, -1).every(Boolean),
-    or: (...values: unknown[]) => values.slice(0, -1).some(Boolean),
-  };
-  for (const name of requestedHelpers) {
-    const helper = helpers[name];
-    if (!helper) throw new Error(`Unknown Handlebars helper requested by template pack: ${name}`);
-    renderer.registerHelper(name, helper);
-  }
-  return renderer;
+export function createTemplatingEngine(dependencies: TemplatingDependencies): TemplatingEngine {
+  return new DefaultTemplatingEngine(dependencies);
 }
-function words(value: unknown): string[] {
-  return String(value).replace(/([a-z0-9])([A-Z])/g, '$1 $2').split(/[^A-Za-z0-9]+/).filter(Boolean);
-}
-function capitalize(value: string): string { return value.length ? value[0]!.toUpperCase() + value.slice(1).toLowerCase() : value; }
 
 function validatePaths(config: PathsFileInput): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
-  for (const root of [...(config.write?.protectedRoots ?? config.write?.protected_roots ?? []), ...(config.write?.cleanRoots ?? config.write?.clean_roots ?? [])]) {
-    if (root.startsWith('/') || root.includes('..')) diagnostics.push({ code: 'TEMPLATING_UNSAFE_ROOT', severity: 'error', layer: 'templating', message: `Unsafe template write root: ${root}` });
+  const roots = [
+    ...(config.write?.protectedRoots ?? config.write?.protected_roots ?? []),
+    ...(config.write?.cleanRoots ?? config.write?.clean_roots ?? []),
+  ];
+  for (const root of roots) {
+    if (unsafePath(root)) diagnostics.push({
+      code: 'TEMPLATING_UNSAFE_ROOT',
+      severity: 'error',
+      layer: 'templating',
+      message: `Unsafe template write root: ${root}`,
+    });
+  }
+  for (const [name, folder] of Object.entries(config.folders ?? {})) {
+    if ((folder.mode === 'each' || folder.mode === 'group') && !folder.select) diagnostics.push({
+      code: 'TEMPLATING_SELECTION_REQUIRED',
+      severity: 'error',
+      layer: 'templating',
+      message: `Template folder "${name}" uses mode ${folder.mode} and requires select.`,
+    });
   }
   return diagnostics;
 }
-function folderLifecycle(config: PathsFileInput, group: string): 'managed' | 'immutable' | undefined { return config.folders?.[group]?.lifecycle; }
-function join(root: string, path: string): string { return `${root.replace(/[\\/]$/, '')}/${path.replace(/^[\\/]/, '')}`; }
-function relativePath(root: string, path: string): string { return path.replaceAll('\\', '/').replace(`${root.replaceAll('\\', '/').replace(/\/$/, '')}/`, ''); }
-function diagnostic(code: string, caught: unknown): Diagnostic { return { code, severity: 'error', layer: 'templating', message: caught instanceof Error ? caught.message : String(caught) }; }
-function success<T>(value: T, diagnostics: readonly Diagnostic[] = []): { readonly success: true; readonly value: T; readonly diagnostics: readonly Diagnostic[] } { return { success: true, value, diagnostics }; }
-function failure(diagnostics: readonly Diagnostic[]): { readonly success: false; readonly diagnostics: readonly Diagnostic[] } { return { success: false, diagnostics }; }
+
+function validateCompiledTemplates(
+  config: PathsFileInput,
+  templates: readonly CompiledTemplateDescriptor[],
+): Diagnostic[] {
+  const diagnostics: Diagnostic[] = [];
+  const partials = new Map<string, string>();
+  for (const template of templates) {
+    if (template.kind !== 'partial' || !template.partialName) continue;
+    const existing = partials.get(template.partialName);
+    if (existing) diagnostics.push({
+      code: 'TEMPLATING_DUPLICATE_PARTIAL',
+      severity: 'error',
+      layer: 'templating',
+      message: `Partial "${template.partialName}" is defined by both ${existing} and ${template.path}.`,
+    });
+    else partials.set(template.partialName, template.path);
+  }
+  for (const name of Object.keys(config.folders ?? {})) {
+    if (!templates.some((template) => template.group === name)) diagnostics.push({
+      code: 'TEMPLATING_FOLDER_WITHOUT_FILES',
+      severity: 'warning',
+      layer: 'templating',
+      message: `Configured template folder "${name}" has no matching {${name}} files.`,
+    });
+  }
+  if (!templates.some((template) => template.kind !== 'partial')) diagnostics.push({
+    code: 'TEMPLATING_NO_EMITTABLE_FILES',
+    severity: 'warning',
+    layer: 'templating',
+    message: 'Template pack contains no emittable templates or raw files.',
+  });
+  return diagnostics;
+}
+
+function normalizeVariableRequirements(
+  input: PathsFileInput['variables'],
+): readonly TemplateVariableRequirement[] {
+  if (!input) return [];
+  if (Array.isArray(input)) {
+    return input.map((item) => normalizeRequirement(item, item.required ?? true))
+      .sort((left, right) => left.path.localeCompare(right.path));
+  }
+  const grouped = input as {
+    readonly required?: readonly (string | TemplateVariableRequirementInput)[];
+    readonly optional?: readonly (string | TemplateVariableRequirementInput)[];
+  };
+  return [
+    ...(grouped.required ?? []).map((item) => normalizeRequirement(item, true)),
+    ...(grouped.optional ?? []).map((item) => normalizeRequirement(item, false)),
+  ].sort((left, right) => left.path.localeCompare(right.path));
+}
+
+function normalizeRequirement(
+  input: string | TemplateVariableRequirementInput,
+  required: boolean,
+): TemplateVariableRequirement {
+  if (typeof input === 'string') return { path: input, required };
+  return {
+    path: input.path,
+    required: input.required ?? required,
+    ...(input.kind ? { kind: input.kind } : {}),
+    ...(input.description ? { description: input.description } : {}),
+  };
+}
+
+function isPartialPath(path: string, configured: readonly string[]): boolean {
+  const normalized = path.replaceAll('\\', '/');
+  return normalized.startsWith('_partials/')
+    || normalized.includes('/_partials/')
+    || normalized.startsWith('partials/')
+    || normalized.includes('/partials/')
+    || configured.some((pattern) => matchesGlob(normalized, pattern));
+}
+
+function partialNameFor(path: string, extension: string): string {
+  const withoutExtension = path.endsWith(extension) ? path.slice(0, -extension.length) : path;
+  const segments = withoutExtension.split('/');
+  const marker = Math.max(segments.lastIndexOf('_partials'), segments.lastIndexOf('partials'));
+  return (marker >= 0 ? segments.slice(marker + 1) : segments)
+    .join('/')
+    .replace(/^\{[^}]+\}\//, '');
+}
+
+function matchesGlob(path: string, pattern: string): boolean {
+  const escaped = pattern
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replaceAll('**', '::DOUBLE_STAR::')
+    .replaceAll('*', '[^/]*')
+    .replaceAll('::DOUBLE_STAR::', '.*')
+    .replaceAll('?', '.');
+  return new RegExp(`^${escaped}$`).test(path);
+}
+
+function unsafePath(path: string): boolean {
+  const normalized = path.replaceAll('\\', '/');
+  return normalized.startsWith('/') || normalized === '..' || normalized.startsWith('../') || normalized.includes('/../');
+}
+
+function folderLifecycle(config: PathsFileInput, group: string): 'managed' | 'immutable' | undefined {
+  return config.folders?.[group]?.lifecycle;
+}
+
+function join(root: string, path: string): string {
+  return `${root.replace(/[\\/]$/, '')}/${path.replace(/^[\\/]/, '')}`;
+}
+
+function relativePath(root: string, path: string): string {
+  return path.replaceAll('\\', '/').replace(`${root.replaceAll('\\', '/').replace(/\/$/, '')}/`, '');
+}
+
+function diagnostic(code: string, caught: unknown, details?: JsonObject): Diagnostic {
+  return {
+    code,
+    severity: 'error',
+    layer: 'templating',
+    message: caught instanceof Error ? caught.message : String(caught),
+    ...(details ? { details } : {}),
+  };
+}
+
+function success<T>(
+  value: T,
+  diagnostics: readonly Diagnostic[] = [],
+): { readonly success: true; readonly value: T; readonly diagnostics: readonly Diagnostic[] } {
+  return { success: true, value, diagnostics };
+}
+
+function failure(
+  diagnostics: readonly Diagnostic[],
+): { readonly success: false; readonly diagnostics: readonly Diagnostic[] } {
+  return { success: false, diagnostics };
+}
