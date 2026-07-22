@@ -1,1 +1,0 @@
-"""CodepotX namespaced CLI package."""

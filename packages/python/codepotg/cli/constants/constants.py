@@ -4,8 +4,8 @@ This module is owned by the CLI adapter. Runtime and engine modules must not
 import from it.
 """
 
-APP_NAME = "codepotx"
-APP_DESCRIPTION = "Config-driven OpenAPI generator."
+APP_NAME = "codepotg"
+APP_DESCRIPTION = "Deprecated Python and Jinja Codepot generator."
 APP_VERSION = "0.1.0"
 
 CMD_EMIT = "emit"

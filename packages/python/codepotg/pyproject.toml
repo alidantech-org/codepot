@@ -3,9 +3,9 @@ requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "codepotx"
+name = "codepotg"
 version = "0.0.1"
-description = "Config-driven OpenAPI code generation engine"
+description = "Deprecated Python and Jinja Codepot generator"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
@@ -34,7 +34,7 @@ dependencies = [
 ]
 
 [project.scripts]
-codepotx = "codepotx.cli.main:app"
+codepotg = "codepotg.cli.main:app"
 
 [tool.setuptools]
 include-package-data = true
@@ -50,7 +50,7 @@ include = [
   "cli*",
   "constants*",
   "codepot_file*",
-  "codepotx*",
+  "codepotg*",
   "contracts*",
   "core*",
   "emission*",
@@ -63,7 +63,7 @@ include = [
 exclude = ["tests*"]
 
 [tool.setuptools.package-data]
-codepotx = [
+codepotg = [
   "templates/**/*.j2",
   "templates/**/*.yaml",
   "templates/**/*.json",

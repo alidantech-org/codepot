@@ -7,7 +7,7 @@ from pathlib import Path
 from contracts.language import LanguageAdapter
 
 DEFAULT_TEMPLATES_ROOT = Path("templates")
-BUNDLED_TEMPLATES_ROOT = Path(__file__).resolve().parents[2] / "codepotx" / "templates"
+BUNDLED_TEMPLATES_ROOT = Path(__file__).resolve().parents[2] / "codepotg" / "templates"
 
 
 def resolve_template_root(

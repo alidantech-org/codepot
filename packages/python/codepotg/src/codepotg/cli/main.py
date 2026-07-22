@@ -1,7 +1,7 @@
 # ruff: noqa: E402, I001
-"""Namespaced CodepotX CLI entry point.
+"""Namespaced CodepotG CLI entry point.
 
-This prevents the global `codepotx` command from importing another project's
+This prevents the global `codepotg` command from importing another project's
 top-level `cli.main` module.
 """
 
@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 def _repo_root() -> Path:
-    # src/codepotx/cli/main.py -> src -> repository root
+    # src/codepotg/cli/main.py -> src -> repository root
     return Path(__file__).resolve().parents[3]
 
 

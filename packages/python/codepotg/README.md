@@ -1,42 +1,45 @@
-codepotx
+codepotg
 ========
 
-Config-driven OpenAPI code generation for TypeScript, Dart, and debug output.
+> [!WARNING]
+> `codepotg` is deprecated and no longer receives new features. It remains available for existing Python and Jinja generation workflows and as a behavioral reference while generation is rebuilt in the Node.js `codepotx` package.
+
+Config-driven OpenAPI code generation for TypeScript, Dart, Next.js, and debug output.
 
 Installation
 ------------
 
 ```bash
-pip install codepotx
+pip install codepotg
 ```
 
 CLI Usage
 ---------
 
-`codepotx` exposes one public workflow: `generate`.
+`codepotg` exposes one public workflow: `generate`.
 
 Run generation from a project-local `CodepotFile.yml` or `CodepotFile.yaml`:
 
 ```bash
-codepotx generate
+codepotg generate
 ```
 
 Run one named task:
 
 ```bash
-codepotx generate my-task
+codepotg generate my-task
 ```
 
 Run every configured task:
 
 ```bash
-codepotx generate --all
+codepotg generate --all
 ```
 
 Preview without writing files or running configured shell commands:
 
 ```bash
-codepotx generate my-task --dry-run --verbose
+codepotg generate my-task --dry-run --verbose
 ```
 
 CodepotFile
@@ -78,7 +81,7 @@ tasks:
 ```
 
 Use `frontend: "*"` to expose every authored frontend. If `frontend` is omitted,
-old backend/API generation behavior is unchanged. CodepotX does not infer
+old backend/API generation behavior is unchanged. `codepotg` does not infer
 screens from resources or operations; templates only see explicitly authored
 frontend components and screens.
 
@@ -139,7 +142,7 @@ folders:
 once` is accepted as an alias for `immutable` when `write_policy` is present.
 Unsafe writes are refused and fail the task instead of being written.
 
-`codepotx generate --refresh` cleans only paths allowed by `clean_roots` and
+`codepotg generate --refresh` cleans only paths allowed by `clean_roots` and
 will not delete immutable roots.
 
 Local Development
@@ -149,7 +152,7 @@ Install this checkout in editable mode:
 
 ```bash
 python -m pip install -e .
-codepotx --help
+codepotg --help
 ```
 
 Build And Publish

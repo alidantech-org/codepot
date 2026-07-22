@@ -106,7 +106,7 @@ The deprecated Python and Jinja generator.
 
 It is no longer the supported implementation, but it remains an important behavioral reference for generation tasks, command execution, `paths.yml`, template contexts, language adaptation, imports, dependency planning, write lifecycle, cleanup, dry runs, and reporting.
 
-Its package and command identity should be `codepotg`. New users should use the Node.js `codepotx` direction once it becomes available.
+Its PyPI distribution, Python import namespace, and CLI command are all named `codepotg`. New users should use the Node.js `codepotx` direction once it becomes available.
 
 ### `codepot_lang`
 

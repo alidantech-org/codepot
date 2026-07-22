@@ -1,0 +1,1 @@
+"""CodepotG namespaced CLI package."""

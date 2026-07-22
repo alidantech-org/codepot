@@ -1,4 +1,4 @@
-"""Public package API for CodepotX."""
+"""Public package API for CodepotG."""
 
 from __future__ import annotations
 
