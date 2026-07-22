@@ -4,7 +4,7 @@
 
 | Order | Phase | Status | Issue | Gate |
 |---|---|---|---|---|
-| 00 | Agent guides and task system | [~] | #2 | Documentation committed and verified |
+| 00 | Agent guides and task system | [x] | #2 closed | Complete |
 | 01 | Shared contract and stable artifacts | [ ] | #3 | Phase 00 complete |
 | 02 | Runtime and platform adapters | [ ] | Open when ready | Phase 01 complete |
 | 03 | Authoring parity and canonical compiler | [ ] | Open when ready | Required Phase 01/02 ports complete |
@@ -31,20 +31,20 @@ The stable authoring artifact, engine ports, platform ports, requests, results, 
 
 ## Phase 00 validation
 
-Status: [~]
-Issue: #2
+Status: [x]
+Issue: #2 closed as completed
 Depends on: repository package foundation
-Commit: pending
-Validation: pending repository file and PR verification
+Commit: `4415c31bd3aed17f6286dc9c8c94226cea217e30`
+Validation: GitHub content reads verified `AGENTS.md`, this roadmap, and `01-contract.md`; commit comparison verified the complete `agents/` and `agents/tasks/` file set and removal of temporary `.keep` files.
 
-- [x] Root `AGENTS.md` instructions drafted.
-- [x] Project, architecture, rules, workflow, and features guides drafted.
-- [x] Ordered task files drafted.
+- [x] Root `AGENTS.md` instructions committed.
+- [x] Project, architecture, rules, workflow, and features guides committed.
+- [x] Ordered task files committed.
 - [x] GitHub issue workflow documented.
 - [x] First contract issue opened as #3.
-- [ ] Files committed to `chatgpt/codepotx-restart`.
-- [ ] Paths and contents verified from GitHub.
-- [ ] Issue #2 closed.
+- [x] Files committed to `chatgpt/codepotx-restart`.
+- [x] Paths and contents verified from GitHub.
+- [x] Issue #2 closed.
 
 ## Global completion conditions
 
