@@ -1,7 +1,8 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: 'src/index.ts',
+  entry: ['src/index.ts', 'src/contract/index.ts'],
+  root: 'src',
   outDir: 'dist',
   format: ['esm'],
   platform: 'node',

@@ -1,6 +1,11 @@
 /**
  * Public entry point for the new Codepot TypeScript package.
  *
- * The authoring and generation APIs will be designed before exports are added.
+ * Runtime authoring APIs will be added after the shared contracts are stable.
  */
-export {};
+export {
+  CODEPOT_ARTIFACT_VERSION,
+  CODEPOT_PROTOCOL_VERSION,
+} from './contract/index';
+
+export type * from './contract/index';
