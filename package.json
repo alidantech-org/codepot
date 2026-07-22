@@ -2,7 +2,7 @@
   "name": "codepot-workspace",
   "version": "0.0.0",
   "private": true,
-  "description": "Codepot authoring and code-generation workspace.",
+  "description": "Codepot authoring, generation, documentation, and website workspace.",
   "type": "module",
   "packageManager": "pnpm@11.15.1",
   "engines": {
@@ -12,6 +12,8 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:site": "pnpm --filter @codepot/site dev",
+    "build:site": "pnpm --filter @codepot/site build",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "check": "turbo run typecheck test package:lint",
