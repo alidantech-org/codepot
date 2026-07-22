@@ -1,4 +1,12 @@
-export type CliCommand = 'generate' | 'plan' | 'validate' | 'inspect' | 'features' | 'help' | 'version';
+export type CliCommand =
+  | 'generate'
+  | 'plan'
+  | 'validate'
+  | 'inspect'
+  | 'variables'
+  | 'features'
+  | 'help'
+  | 'version';
 
 export interface CliOptions {
   readonly command: CliCommand;
