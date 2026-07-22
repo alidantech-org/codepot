@@ -50,8 +50,8 @@ export function buildTemplateContext(request: TemplateContextRequest): JsonObjec
       examples: [],
     },
   };
-  const dependencies: readonly JsonObject[] = [];
-  const imports: readonly JsonObject[] = [];
+  const dependencies = [dependencyPlaceholder()];
+  const imports = [importPlaceholder()];
 
   return {
     project,
@@ -291,8 +291,8 @@ function generationEmitPlaceholder(ref: string | null = null): JsonObject {
     ref,
     dependencyRefs: [],
     dependency_refs: [],
-    dependencies: [],
-    imports: [],
+    dependencies: [dependencyPlaceholder()],
+    imports: [importPlaceholder()],
   };
 }
 
@@ -309,8 +309,30 @@ function generationFilePlaceholder(): JsonObject {
     depth: 0,
     rootPrefix: './',
     subjectRefs: [],
-    dependencies: [],
-    imports: [],
+    dependencies: [dependencyPlaceholder()],
+    imports: [importPlaceholder()],
+  };
+}
+
+function dependencyPlaceholder(): JsonObject {
+  return {
+    ref: '',
+    purpose: 'reference',
+    targetRef: '',
+    outputPath: '',
+    importPath: '',
+    metadata: {},
+  };
+}
+
+function importPlaceholder(): JsonObject {
+  return {
+    ref: '',
+    purpose: 'reference',
+    outputPath: '',
+    importPath: '',
+    statement: '',
+    symbols: [],
   };
 }
 
