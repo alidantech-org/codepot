@@ -5,7 +5,8 @@
       "items": [
         { "title": "Overview", "slug": "overview" },
         { "title": "Getting started", "slug": "getting-started" },
-        { "title": "Architecture", "slug": "architecture" }
+        { "title": "Three-layer model", "slug": "architecture" },
+        { "title": "Codepot Lang", "slug": "codepot-lang" }
       ]
     },
     {
@@ -30,15 +31,8 @@
         { "title": "Code generation", "slug": "generation" },
         { "title": "CodepotFile.yml", "slug": "codepot-file" },
         { "title": "CLI", "slug": "cli" },
-        { "title": "Safety", "slug": "generation-safety" }
-      ]
-    },
-    {
-      "title": "Operate",
-      "items": [
-        { "title": "Runtime", "slug": "runtime" },
-        { "title": "Deployment", "slug": "deployment" },
-        { "title": "Release checklist", "slug": "release-checklist" }
+        { "title": "Generation safety", "slug": "generation-safety" },
+        { "title": "Programmatic use", "slug": "runtime" }
       ]
     }
   ]
