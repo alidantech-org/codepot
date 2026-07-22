@@ -1,4 +1,4 @@
-import type { JsonObject, PortablePath } from './common.types';
+import type { CancellationSignal, JsonObject, PortablePath } from './common.types';
 import type { CompiledAuthoringArtifact } from './authoring-artifact.types';
 import type {
   CommandExecutionOutcome,
@@ -152,11 +152,14 @@ export interface GenerationPlanRequest {
   readonly dryRun?: boolean;
   readonly skipBefore?: boolean;
   readonly skipAfter?: boolean;
+  readonly signal?: CancellationSignal;
 }
 
 export interface GenerationRenderRequest {
   readonly plan: GenerationPlan;
   readonly templates: CompiledTemplatePack;
+  readonly cache?: CacheMode;
+  readonly signal?: CancellationSignal;
 }
 
 export interface GenerationWriteRequest {
@@ -164,11 +167,13 @@ export interface GenerationWriteRequest {
   readonly outputRoot: PortablePath;
   readonly dryRun?: boolean;
   readonly atomic?: boolean;
+  readonly signal?: CancellationSignal;
 }
 
 export interface GenerationCleanRequest {
   readonly plan: GenerationPlan;
   readonly dryRun?: boolean;
+  readonly signal?: CancellationSignal;
 }
 
 export interface GenerationCommandRequest {
@@ -176,6 +181,7 @@ export interface GenerationCommandRequest {
   readonly phase: 'before' | 'after';
   readonly dryRun?: boolean;
   readonly verbose?: boolean;
+  readonly signal?: CancellationSignal;
 }
 
 export interface GenerationExecuteRequest {
@@ -187,6 +193,7 @@ export interface GenerationExecuteRequest {
   readonly skipBefore?: boolean;
   readonly skipAfter?: boolean;
   readonly verbose?: boolean;
+  readonly signal?: CancellationSignal;
 }
 
 export type CodepotFileLoadResult = OperationResult<CompiledCodepotFile>;
