@@ -98,7 +98,9 @@ export type FileWriteStatus =
   | 'updated'
   | 'unchanged'
   | 'skipped'
-  | 'refused';
+  | 'refused'
+  | 'deleted'
+  | 'rolledBack';
 
 export interface FileWriteOutcome {
   readonly path: PortablePath;
@@ -119,6 +121,48 @@ export interface CommandExecutionOutcome {
   readonly stderr: string;
 }
 
+/** One file owned by a successful Codepot generation task. */
+export interface ManagedFileRecord {
+  readonly path: PortablePath;
+  readonly contentDigest: ContentDigest;
+  readonly encoding: 'utf8' | 'base64';
+  readonly lifecycle: FileLifecycleMode;
+  readonly compareMode: FileCompareMode;
+  readonly templateId: CodepotId;
+}
+
+/** Deterministic ownership manifest used for safe stale-file cleanup. */
+export interface GenerationManifest {
+  readonly header: ArtifactHeader<'codepot.generation-manifest'>;
+  readonly task: string;
+  readonly projectRoot: PortablePath;
+  readonly outputRoot: PortablePath;
+  readonly plan: ArtifactReference;
+  readonly files: readonly ManagedFileRecord[];
+}
+
+export interface GenerationFileCounts {
+  readonly planned: number;
+  readonly rendered: number;
+  readonly created: number;
+  readonly updated: number;
+  readonly unchanged: number;
+  readonly skipped: number;
+  readonly refused: number;
+  readonly deleted: number;
+  readonly rolledBack: number;
+}
+
+/** Operational summary. Timings are informative and excluded from artifact digests. */
+export interface GenerationReport {
+  readonly task: string;
+  readonly status: 'success' | 'failed' | 'rolledBack' | 'dryRun';
+  readonly durationMs: number;
+  readonly fileCounts: GenerationFileCounts;
+  readonly commandCount: number;
+  readonly diagnostics: readonly Diagnostic[];
+}
+
 export interface GenerationResult {
   readonly task: string;
   readonly dryRun: boolean;
@@ -127,5 +171,8 @@ export interface GenerationResult {
   readonly files: readonly FileWriteOutcome[];
   readonly commands: readonly CommandExecutionOutcome[];
   readonly cleaned: readonly PortablePath[];
+  readonly manifest: GenerationManifest;
+  readonly report: GenerationReport;
+  readonly rolledBack: boolean;
   readonly diagnostics: readonly Diagnostic[];
 }
