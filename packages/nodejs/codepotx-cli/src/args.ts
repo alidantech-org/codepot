@@ -13,9 +13,14 @@ const COMMANDS = new Set<CliCommand>([
   'version',
 ]);
 
-export function parseCliArguments(argv: readonly string[], cwd = process.cwd()): CliOptions {
+export function parseCliArguments(
+  argv: readonly string[],
+  cwd: string = process.cwd(),
+): CliOptions {
   const commandValue = argv[0] ?? 'help';
-  const command = COMMANDS.has(commandValue as CliCommand) ? commandValue as CliCommand : 'help';
+  const command = COMMANDS.has(commandValue as CliCommand)
+    ? commandValue as CliCommand
+    : 'help';
   const parsed = parseArgs({
     args: argv.slice(1),
     allowPositionals: true,
