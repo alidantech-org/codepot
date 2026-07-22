@@ -31,7 +31,7 @@ export interface GenerationDependencies {
   readonly ids: IdPort;
   readonly clock: ClockPort;
   readonly events: EventBusPort;
-  readonly imports?: GenerationImportAdapter;
+  readonly imports?: GenerationImportAdapter | undefined;
 }
 
 export interface GenerationEngine extends GenerationPort {}
