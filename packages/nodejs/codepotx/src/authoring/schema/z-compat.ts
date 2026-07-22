@@ -41,13 +41,6 @@ export interface CodepotZodCompatibility {
   readonly safeParseAsync: typeof internalZod.safeParseAsync;
 }
 
-/**
- * Deliberately selected Zod-compatible constructors owned by Codepot.
- *
- * This is not a re-export of the complete Zod package. Existing Codepot
- * contracts can change `import { z } from 'zod'` to `import { z } from
- * 'codepotx'` while Codepot retains control of the implementation version.
- */
 export const z: CodepotZodCompatibility = {
   string: internalZod.string,
   number: internalZod.number,
@@ -92,8 +85,14 @@ export namespace z {
   export type infer<TSchema extends z4.$ZodType> = z4.output<TSchema>;
   export type input<TSchema extends z4.$ZodType> = z4.input<TSchema>;
   export type output<TSchema extends z4.$ZodType> = z4.output<TSchema>;
-  export type ZodTypeAny = z4.$ZodType;
-  export type ZodType<TOutput = unknown, TInput = unknown> = z4.$ZodType<TOutput, TInput>;
+  export type ZodTypeAny = z4.$ZodType & {
+    safeParse(data: unknown): { readonly success: boolean; readonly data?: unknown };
+    parse(data: unknown): unknown;
+  };
+  export type ZodType<TOutput = unknown, TInput = unknown> = z4.$ZodType<TOutput, TInput> & {
+    safeParse(data: unknown): { readonly success: boolean; readonly data?: TOutput };
+    parse(data: TInput): TOutput;
+  };
   export type ZodIssue = z4.$ZodIssue;
   export type ZodError = z4.$ZodError;
 }

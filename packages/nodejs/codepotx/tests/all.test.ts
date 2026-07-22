@@ -1,3 +1,4 @@
+import './authoring-refs-properties.test';
 import './authoring-schema.test';
 import './platform.test';
 import './runtime.test';
