@@ -1,67 +1,129 @@
-import matter from 'gray-matter';
+import GithubSlugger from "github-slugger";
+import matter from "gray-matter";
 
-import { DOCS, NAVIGATION, type DocSlug } from '@/generated/docs';
+import { DOCS, NAVIGATION, type DocSlug } from "@/generated/docs";
 
-export interface DocMetadata {
-  readonly title: string;
-  readonly description: string;
-  readonly order: number;
+export interface DocFrontmatter {
+  title?: string;
+  description?: string;
+  order?: number;
+  published?: boolean;
+  group?: string;
+  [key: string]: unknown;
 }
 
-export interface DocRecord {
-  readonly slug: DocSlug;
-  readonly metadata: DocMetadata;
-  readonly content: string;
+export interface Heading {
+  id: string;
+  text: string;
+  level: number;
 }
 
-export interface NavigationItem {
-  readonly title: string;
-  readonly slug: DocSlug;
+export interface DocSummary {
+  slug: string;
+  title: string;
+  description?: string;
 }
 
-export interface NavigationSection {
-  readonly title: string;
-  readonly items: readonly NavigationItem[];
+export interface Doc extends DocSummary {
+  content: string;
+  frontmatter: DocFrontmatter;
+  headings: Heading[];
+  prev?: DocSummary;
+  next?: DocSummary;
 }
 
-/** Parsed docs are stable build inputs generated from the root docs directory. */
-export function getDoc(slug: string): DocRecord | undefined {
-  if (!(slug in DOCS)) return undefined;
-  const typedSlug = slug as DocSlug;
-  const parsed = matter(DOCS[typedSlug]);
+export interface DocItem extends DocSummary {
+  group?: string;
+  children?: DocItem[];
+}
+
+function extractHeadings(content: string): Heading[] {
+  const headings: Heading[] = [];
+  const slugger = new GithubSlugger();
+  for (const line of content.split("\n")) {
+    const match = line.match(/^(#{1,6})\s+(.+)$/);
+    if (!match) continue;
+    const rawText = match[2].replace(/#+$/, "").trim();
+    const text = rawText
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/\*([^*]+)\*/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .trim();
+    if (text) headings.push({ id: slugger.slug(text), text, level: match[1].length });
+  }
+  return headings;
+}
+
+function groupForSlug(slug: string): string | undefined {
+  return NAVIGATION.sections.find((section) => section.items.some((item) => item.slug === slug))?.title;
+}
+
+function loadDoc(slug: DocSlug): Doc {
+  const parsed = matter(DOCS[slug]);
+  const frontmatter = parsed.data as DocFrontmatter;
   return {
-    slug: typedSlug,
-    metadata: {
-      title: String(parsed.data.title ?? typedSlug),
-      description: String(parsed.data.description ?? ''),
-      order: Number(parsed.data.order ?? 0),
-    },
-    content: parsed.content,
+    slug,
+    title: typeof frontmatter.title === "string" ? frontmatter.title : slug,
+    ...(typeof frontmatter.description === "string" ? { description: frontmatter.description } : {}),
+    content: parsed.content.trim(),
+    frontmatter,
+    headings: extractHeadings(parsed.content),
   };
 }
 
-export function getAllDocs(): readonly DocRecord[] {
-  return Object.keys(DOCS)
-    .map((slug) => getDoc(slug))
-    .filter((doc): doc is DocRecord => Boolean(doc))
-    .sort((left, right) => left.metadata.order - right.metadata.order || left.slug.localeCompare(right.slug));
+export function getAllDocs(): DocItem[] {
+  return NAVIGATION.sections.flatMap((section) =>
+    section.items
+      .filter((item): item is { readonly title: string; readonly slug: DocSlug } => item.slug in DOCS)
+      .map((item) => {
+        const doc = loadDoc(item.slug);
+        return {
+          slug: doc.slug,
+          title: doc.title,
+          ...(doc.description ? { description: doc.description } : {}),
+          group: section.title,
+        };
+      }),
+  );
 }
 
-export function getNavigation(): readonly NavigationSection[] {
-  return NAVIGATION.sections.map((section) => ({
-    title: section.title,
-    items: section.items.filter((item): item is NavigationItem => item.slug in DOCS),
-  }));
-}
-
-export function adjacentDocs(slug: string): {
-  readonly previous?: DocRecord;
-  readonly next?: DocRecord;
-} {
+export function getDocBySlug(slug: string): Doc | null {
+  if (!(slug in DOCS)) return null;
   const docs = getAllDocs();
-  const index = docs.findIndex((doc) => doc.slug === slug);
+  const currentIndex = docs.findIndex((doc) => doc.slug === slug);
+  const doc = loadDoc(slug as DocSlug);
   return {
-    ...(index > 0 ? { previous: docs[index - 1] } : {}),
-    ...(index >= 0 && index < docs.length - 1 ? { next: docs[index + 1] } : {}),
+    ...doc,
+    ...(currentIndex > 0 ? { prev: docs[currentIndex - 1] } : {}),
+    ...(currentIndex >= 0 && currentIndex < docs.length - 1 ? { next: docs[currentIndex + 1] } : {}),
   };
+}
+
+export function generateStaticParams(): { slug: string }[] {
+  return Object.keys(DOCS).map((slug) => ({ slug }));
+}
+
+export function generateDocMetadata(doc: Doc): { title: string; description: string } {
+  return {
+    title: `${doc.title} - Codepot Documentation`,
+    description: doc.description ?? `Documentation for ${doc.title}`,
+  };
+}
+
+export function searchDocs(query: string): DocItem[] {
+  const value = query.trim().toLowerCase();
+  if (!value) return [];
+  return getAllDocs().filter((item) => {
+    const doc = loadDoc(item.slug as DocSlug);
+    return [item.title, item.description, doc.content, item.slug]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(value);
+  });
+}
+
+export function getDocGroup(slug: string): string | undefined {
+  return groupForSlug(slug);
 }
