@@ -10,7 +10,6 @@ import type {
   CompiledAuthoringArtifact,
   CompiledTemplatePack,
   Diagnostic,
-  FileWriteOutcome,
   GenerationCleanRequest,
   GenerationCleanResult,
   GenerationCommandRequest,
@@ -30,19 +29,13 @@ import type {
 } from '@/contract/index';
 
 import { compileCodepotFile, findTask } from './codepot-file';
-import {
-  executePlannedCommands,
-  taskCommands,
-} from './command-execution';
+import { executePlannedCommands, taskCommands } from './command-execution';
 import type {
   CodepotFileInput,
   GenerationDependencies,
   GenerationEngine,
 } from './generation.types';
-import {
-  applyManagedWrite,
-  ManagedWriteError,
-} from './managed-write';
+import { applyManagedWrite, ManagedWriteError } from './managed-write';
 import {
   artifactReference,
   joinPath,
@@ -50,6 +43,10 @@ import {
   planCommands,
   planFiles,
 } from './planning';
+import {
+  readRenderedGenerationCache,
+  writeRenderedGenerationCache,
+} from './render-cache';
 import { createGenerationReport } from './report';
 import { diagnostic, error, failure, success } from './results';
 
@@ -98,42 +95,59 @@ export class DefaultGenerationEngine implements GenerationEngine {
   }
 
   async render(request: GenerationRenderRequest): Promise<GenerationRenderResult> {
-    const emittable = request.plan.files.filter((file) => !file.refusalReason);
-    if (emittable.length !== request.plan.files.length) {
-      return failure([error(
-        'GENERATION_REFUSED_FILES',
-        'Generation plan contains refused files and cannot be rendered.',
-      )]);
+    try {
+      const emittable = request.plan.files.filter((file) => !file.refusalReason);
+      if (emittable.length !== request.plan.files.length) {
+        return failure([error(
+          'GENERATION_REFUSED_FILES',
+          'Generation plan contains refused files and cannot be rendered.',
+        )]);
+      }
+      const cached = await readRenderedGenerationCache(
+        request.plan,
+        request.templates,
+        this.#dependencies,
+      );
+      if (cached) return success(cached, cached.diagnostics);
+
+      const rendered = await this.#dependencies.templating.render({
+        templates: request.templates,
+        files: emittable.map((file) => ({
+          templateId: file.templateId,
+          outputPath: file.outputPath,
+          context: file.context,
+        })),
+      });
+      if (!rendered.success) return rendered;
+      const body = {
+        plan: artifactReference(request.plan),
+        files: rendered.value,
+        diagnostics: rendered.diagnostics,
+      } as const;
+      const contentDigest = await this.#dependencies.hashes.text(
+        this.#dependencies.data.stringifyJson(body),
+      );
+      const value: RenderedGeneration = {
+        header: {
+          kind: 'codepot.rendered-generation',
+          protocolVersion: CODEPOT_PROTOCOL_VERSION,
+          artifactVersion: CODEPOT_ARTIFACT_VERSION,
+          producer: { name: 'codepotx', version: '0.0.0' },
+          contentDigest,
+          sourceDigest: request.plan.header.contentDigest,
+        },
+        ...body,
+      };
+      await writeRenderedGenerationCache(
+        request.plan,
+        request.templates,
+        value,
+        this.#dependencies,
+      );
+      return success(value, rendered.diagnostics);
+    } catch (caught) {
+      return failure([diagnostic('GENERATION_RENDER_FAILED', caught)]);
     }
-    const rendered = await this.#dependencies.templating.render({
-      templates: request.templates,
-      files: emittable.map((file) => ({
-        templateId: file.templateId,
-        outputPath: file.outputPath,
-        context: file.context,
-      })),
-    });
-    if (!rendered.success) return rendered;
-    const body = {
-      plan: artifactReference(request.plan),
-      files: rendered.value,
-      diagnostics: rendered.diagnostics,
-    } as const;
-    const contentDigest = await this.#dependencies.hashes.text(
-      this.#dependencies.data.stringifyJson(body),
-    );
-    const value: RenderedGeneration = {
-      header: {
-        kind: 'codepot.rendered-generation',
-        protocolVersion: CODEPOT_PROTOCOL_VERSION,
-        artifactVersion: CODEPOT_ARTIFACT_VERSION,
-        producer: { name: 'codepotx', version: '0.0.0' },
-        contentDigest,
-        sourceDigest: request.plan.header.contentDigest,
-      },
-      ...body,
-    };
-    return success(value, rendered.diagnostics);
   }
 
   async write(request: GenerationWriteRequest): Promise<GenerationWriteResult> {
@@ -215,7 +229,7 @@ export class DefaultGenerationEngine implements GenerationEngine {
       const dryRun = request.dryRun ?? false;
       const verbose = request.verbose ?? false;
       const before = request.skipBefore
-        ? { success: true as const, outcomes: [] as readonly CommandExecutionOutcome[], diagnostics: [] as readonly Diagnostic[] }
+        ? emptyCommands()
         : await executePlannedCommands({
             commands: taskCommands(task, loaded.value.root, 'before', this.#dependencies.ids),
             dryRun,
@@ -228,7 +242,7 @@ export class DefaultGenerationEngine implements GenerationEngine {
         task: task.name,
         ...(request.refresh === undefined ? {} : { refresh: request.refresh }),
         dryRun,
-        skipBefore: true,
+        ...(request.skipBefore === undefined ? {} : { skipBefore: request.skipBefore }),
         ...(request.skipAfter === undefined ? {} : { skipAfter: request.skipAfter }),
       });
       if (!prepared.success) return prepared;
@@ -255,32 +269,20 @@ export class DefaultGenerationEngine implements GenerationEngine {
         const rollback = caught instanceof ManagedWriteError ? caught.rollback : [];
         return failure([
           diagnostic('GENERATION_MANAGED_WRITE_FAILED', caught),
-          ...(rollback.length ? [{
-            code: 'GENERATION_ROLLBACK_COMPLETED',
-            severity: 'info' as const,
-            layer: 'generation' as const,
-            message: `Rolled back ${rollback.length} file changes after write failure.`,
-          }] : []),
+          ...(rollback.length ? [rollbackDiagnostic(rollback.length, 'write failure')] : []),
         ]);
       }
 
+      const afterCommands = prepared.value.plan.commands
+        .filter((command) => command.phase === 'after');
       const after = request.skipAfter
-        ? { success: true as const, outcomes: [] as readonly CommandExecutionOutcome[], diagnostics: [] as readonly Diagnostic[] }
-        : await executePlannedCommands({
-            commands: taskCommands(task, loaded.value.root, 'after', this.#dependencies.ids),
-            dryRun,
-            verbose,
-          }, this.#dependencies);
+        ? emptyCommands()
+        : await executePlannedCommands({ commands: afterCommands, dryRun, verbose }, this.#dependencies);
       if (!after.success) {
         const rollback = managed.transaction ? await managed.transaction.rollback() : [];
         return failure([
           ...after.diagnostics,
-          ...(rollback.length ? [{
-            code: 'GENERATION_ROLLBACK_COMPLETED',
-            severity: 'info' as const,
-            layer: 'generation' as const,
-            message: `Rolled back ${rollback.length} file changes after required after-command failure.`,
-          }] : []),
+          ...(rollback.length ? [rollbackDiagnostic(rollback.length, 'required after-command failure')] : []),
         ]);
       }
       managed.transaction?.complete();
@@ -343,21 +345,18 @@ export class DefaultGenerationEngine implements GenerationEngine {
             cache: request.refresh ? 'refresh' : 'auto',
           });
       if (!templateResult.success) return templateResult;
-      const contextResult = await this.#dependencies.templating.createContext({
+      const contextRequest = {
         authoring: authoringResult.value,
         templates: templateResult.value,
         project: request.codepotFile.defaults,
         ...(task.variables ? { variables: task.variables } : {}),
         ...(task.frontend ? { selectedFrontend: task.frontend } : {}),
-      });
+      } as const;
+      const contextResult = await this.#dependencies.templating.createContext(contextRequest);
       if (!contextResult.success) return contextResult;
       const validation = await this.#dependencies.templating.validateContext({
-        authoring: authoringResult.value,
-        templates: templateResult.value,
-        project: request.codepotFile.defaults,
-        ...(task.variables ? { variables: task.variables } : {}),
-        ...(task.frontend ? { selectedFrontend: task.frontend } : {}),
-        strict: false,
+        ...contextRequest,
+        strict: true,
       });
       if (!validation.success) return validation;
 
@@ -389,7 +388,10 @@ export class DefaultGenerationEngine implements GenerationEngine {
         clean,
         diagnostics,
       } as const;
-      if (diagnostics.some((item) => item.severity === 'error') || files.some((file) => file.refusalReason)) {
+      if (
+        diagnostics.some((item) => item.severity === 'error')
+        || files.some((file) => file.refusalReason)
+      ) {
         return failure(diagnostics.length ? diagnostics : [error(
           'GENERATION_PLAN_REFUSED',
           'Generation plan contains refused files.',
@@ -443,4 +445,21 @@ export class DefaultGenerationEngine implements GenerationEngine {
 
 export function createGenerationEngine(dependencies: GenerationDependencies): GenerationEngine {
   return new DefaultGenerationEngine(dependencies);
+}
+
+function emptyCommands(): {
+  readonly success: true;
+  readonly outcomes: readonly CommandExecutionOutcome[];
+  readonly diagnostics: readonly Diagnostic[];
+} {
+  return { success: true, outcomes: [], diagnostics: [] };
+}
+
+function rollbackDiagnostic(count: number, reason: string): Diagnostic {
+  return {
+    code: 'GENERATION_ROLLBACK_COMPLETED',
+    severity: 'info',
+    layer: 'generation',
+    message: `Rolled back ${count} file changes after ${reason}.`,
+  };
 }
