@@ -40,3 +40,41 @@ test('generate maps directly to one typed runtime request', async () => {
     },
   });
 });
+
+test('variables command composes only typed runtime requests', async () => {
+  const received: unknown[] = [];
+  const task = {
+    name: 'sdk',
+    authoring: { kind: 'memory', id: 'authoring' },
+    templates: { kind: 'memory', id: 'templates' },
+    output: 'generated',
+    clean: [], before: [], after: [], environment: {},
+    variables: { packageName: 'demo' },
+  } as const;
+  const runtime = {
+    events: { publish: async () => {}, subscribe: () => ({ dispose: () => {} }) },
+    execute: async (request: { readonly kind: string }) => {
+      received.push(request);
+      if (request.kind === 'generation.file.load') {
+        return { kind: request.kind, runId: 'run', result: { success: true, value: { root: '/project', tasks: [task] }, diagnostics: [] } };
+      }
+      if (request.kind === 'authoring.compile') {
+        return { kind: request.kind, runId: 'run', result: { success: true, value: { header: {} }, diagnostics: [] } };
+      }
+      if (request.kind === 'templating.compile') {
+        return { kind: request.kind, runId: 'run', result: { success: true, value: { header: {} }, diagnostics: [] } };
+      }
+      return { kind: request.kind, runId: 'run', result: { success: true, value: '# variables', diagnostics: [] } };
+    },
+    features: async () => ({ features: [] }),
+  } as unknown as CodepotRuntimePort;
+
+  await executeCliCommand(runtime, parseCliArguments(['variables', 'sdk', '--root', '/project']));
+  assert.deepEqual(received.map((item) => (item as { kind: string }).kind), [
+    'generation.file.load',
+    'authoring.compile',
+    'templating.compile',
+    'templating.variables',
+  ]);
+  assert.equal((received[3] as { input: { format: string } }).input.format, 'markdown');
+});
