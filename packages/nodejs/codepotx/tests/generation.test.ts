@@ -105,7 +105,17 @@ test('unsafe clean paths are refused during planning', async () => {
   } as never;
   const file = {
     path: '/project/CodepotFile.yml', root: '/project', allow: true, defaults: {},
-    tasks: [{ name: 'bad', authoring: { kind: 'memory', id: 'a' }, templates: { kind: 'memory', id: 't' }, output: 'generated', clean: ['../outside'], before: [], after: [], environment: {} }],
+    tasks: [{
+      name: 'bad',
+      authoring: { kind: 'memory', id: 'a' },
+      templates: { kind: 'memory', id: 't' },
+      output: 'generated',
+      clean: ['../outside'],
+      before: [],
+      after: [],
+      environment: {},
+      transactional: true,
+    }],
   } as const;
   const plan = await generation.plan({ codepotFile: file, task: 'bad', authoring: authoringFixture(), templates });
   assert.equal(plan.success, true);
