@@ -6,6 +6,8 @@ import type {
   JsonObject,
   JsonValue,
   SourceResolverPort,
+  TemplateIntrospectionPort,
+  TemplateVariableKind,
   TemplatingPort,
 } from '@/contract/index';
 
@@ -17,7 +19,14 @@ export interface TemplatingDependencies {
   readonly cache: CachePort;
 }
 
-export interface TemplatingEngine extends TemplatingPort {}
+export interface TemplatingEngine extends TemplatingPort, TemplateIntrospectionPort {}
+
+export interface TemplateVariableRequirementInput {
+  readonly path: string;
+  readonly required?: boolean;
+  readonly kind?: TemplateVariableKind;
+  readonly description?: string;
+}
 
 export interface PathsFolderInput {
   readonly parts?: readonly JsonValue[];
@@ -40,7 +49,15 @@ export interface PathsFileInput {
   readonly strip_template_extension?: boolean;
   readonly allowRawFiles?: boolean;
   readonly allow_raw_files?: boolean;
+  readonly includeHidden?: boolean;
+  readonly include_hidden?: boolean;
+  readonly ignore?: readonly string[];
   readonly helpers?: readonly string[];
+  readonly partials?: readonly string[];
+  readonly variables?: readonly TemplateVariableRequirementInput[] | {
+    readonly required?: readonly (string | TemplateVariableRequirementInput)[];
+    readonly optional?: readonly (string | TemplateVariableRequirementInput)[];
+  };
   readonly metadata?: JsonObject;
   readonly folders?: Readonly<Record<string, PathsFolderInput>>;
   readonly write?: {
