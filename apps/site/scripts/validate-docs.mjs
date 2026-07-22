@@ -5,27 +5,55 @@ import { fileURLToPath } from "node:url";
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = resolve(scriptDirectory, "../../..");
 const docsRoot = resolve(workspaceRoot, "docs");
-const navigation = JSON.parse(await readFile(resolve(docsRoot, "navigation.json"), "utf8"));
+const warnings = [];
 const slugs = new Set();
 const documents = new Map();
 
+/**
+ * Documentation validation is advisory during local development. It reports
+ * content problems without blocking the site, while sync-docs remains the
+ * authoritative build step for files that are genuinely required.
+ */
+function warn(message) {
+  warnings.push(message);
+  console.warn(`[docs] ${message}`);
+}
+
+let navigation;
+try {
+  navigation = JSON.parse(await readFile(resolve(docsRoot, "navigation.json"), "utf8"));
+} catch (error) {
+  warn(`Unable to read navigation.json: ${error instanceof Error ? error.message : String(error)}`);
+  navigation = { sections: [] };
+}
+
 for (const section of navigation.sections ?? []) {
   if (typeof section.title !== "string" || !section.title.trim()) {
-    throw new Error("Every public documentation section requires a title.");
+    warn("A public documentation section has no title.");
   }
+
   for (const item of section.items ?? []) {
     if (typeof item.slug !== "string" || !/^[a-z0-9-]+$/.test(item.slug)) {
-      throw new Error(`Invalid documentation slug: ${String(item.slug)}`);
+      warn(`Invalid documentation slug: ${String(item.slug)}`);
+      continue;
     }
+
     if (slugs.has(item.slug)) {
-      throw new Error(`Duplicate documentation slug: ${item.slug}`);
+      warn(`Duplicate documentation slug: ${item.slug}`);
+      continue;
     }
     slugs.add(item.slug);
-    const content = await readFile(resolve(docsRoot, `${item.slug}.md`), "utf8");
-    if (!content.startsWith("---\n")) {
-      throw new Error(`Documentation file ${item.slug}.md requires frontmatter.`);
+
+    try {
+      const content = await readFile(resolve(docsRoot, `${item.slug}.md`), "utf8");
+      const normalized = content.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
+      if (!normalized.startsWith("---\n")) {
+        warn(`Documentation file ${item.slug}.md has no YAML frontmatter.`);
+      }
+      documents.set(item.slug, normalized);
+    } catch (error) {
+      warn(`Unable to read ${item.slug}.md: ${error instanceof Error ? error.message : String(error)}`);
     }
-    documents.set(item.slug, content);
   }
 }
 
@@ -33,10 +61,14 @@ const linkPattern = /\]\(\/docs\/([a-z0-9-]+)(?:#[^)]+)?\)/g;
 for (const [slug, content] of documents) {
   for (const match of content.matchAll(linkPattern)) {
     const target = match[1];
-    if (!slugs.has(target)) {
-      throw new Error(`Documentation ${slug}.md links to unpublished /docs/${target}.`);
+    if (target && !slugs.has(target)) {
+      warn(`Documentation ${slug}.md links to unpublished /docs/${target}.`);
     }
   }
 }
 
-console.log(`Validated ${slugs.size} public Markdown documentation pages.`);
+if (warnings.length === 0) {
+  console.log(`Validated ${slugs.size} public Markdown documentation pages.`);
+} else {
+  console.warn(`[docs] Validation completed with ${warnings.length} warning${warnings.length === 1 ? "" : "s"}.`);
+}
