@@ -1,0 +1,45 @@
+{
+  "sections": [
+    {
+      "title": "Start",
+      "items": [
+        { "title": "Overview", "slug": "overview" },
+        { "title": "Getting started", "slug": "getting-started" },
+        { "title": "Architecture", "slug": "architecture" }
+      ]
+    },
+    {
+      "title": "Authoring",
+      "items": [
+        { "title": "Authoring contracts", "slug": "authoring" },
+        { "title": "Configuration", "slug": "codepotx-config" },
+        { "title": "Migration", "slug": "migration" }
+      ]
+    },
+    {
+      "title": "Templates",
+      "items": [
+        { "title": "Template packs", "slug": "template-packs" },
+        { "title": "Template variables", "slug": "template-variables" },
+        { "title": "paths.yaml", "slug": "paths-yaml" }
+      ]
+    },
+    {
+      "title": "Generation",
+      "items": [
+        { "title": "Code generation", "slug": "generation" },
+        { "title": "CodepotFile.yml", "slug": "codepot-file" },
+        { "title": "CLI", "slug": "cli" },
+        { "title": "Safety", "slug": "generation-safety" }
+      ]
+    },
+    {
+      "title": "Operate",
+      "items": [
+        { "title": "Runtime", "slug": "runtime" },
+        { "title": "Deployment", "slug": "deployment" },
+        { "title": "Release checklist", "slug": "release-checklist" }
+      ]
+    }
+  ]
+}
