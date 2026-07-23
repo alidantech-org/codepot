@@ -1,0 +1,1 @@
+import '../../authoring-compatibility.test';
