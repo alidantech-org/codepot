@@ -106,7 +106,9 @@ function resolveDependencies(
   }
   return {
     dependencies: planned.sort((left, right) => left.ref.localeCompare(right.ref)),
-    imports: importFacts.sort((left, right) => String(left.importPath).localeCompare(String(right.importPath))),
+    imports: importFacts.sort((left, right) =>
+      String(left['importPath']).localeCompare(String(right['importPath'])),
+    ),
     ...(refusalReason ? { refusalReason } : {}),
   };
 }
@@ -116,7 +118,7 @@ function attachDependencyContext(
   dependencies: readonly PlannedDependency[],
   imports: readonly JsonObject[],
 ): JsonObject {
-  const file = asObject(context.file) ?? {};
+  const file = asObject(context['file']) ?? {};
   const next: Record<string, JsonValue> = {
     ...context,
     dependencies: dependencies as unknown as JsonValue,
@@ -135,7 +137,7 @@ function attachDependencyContext(
     next[alias] = {
       ...selected,
       emit: {
-        ...(asObject(selected.emit) ?? {}),
+        ...(asObject(selected['emit']) ?? {}),
         dependencies: dependencies as unknown as JsonValue,
         imports,
       },
