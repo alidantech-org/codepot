@@ -76,6 +76,26 @@ Validation: strict checks and declaration emission passed; 13 focused runtime/pl
 - [x] `codepotx/runtime` and `codepotx/platform` exports configured.
 - [x] Issue #4 closed.
 
+## CodepotX structure hardening track
+
+The implemented top-level architecture remains valid, but internal compiler and orchestration modules must be reorganized before further large-scale feature growth.
+
+Source of truth: `agents/CODEPOTX_STRUCTURE_GUIDE.md`.
+
+| Order | Task | Status | Gate |
+|---|---|---|---|
+| 15 | Structure migration program | [ ] | Planning complete |
+| 16 | Baseline and architecture guardrails | [ ] | Open first implementation issue |
+| 17 | Contract partitioning | [ ] | Task 16 complete |
+| 18 | Authoring modularization | [ ] | Task 17 complete |
+| 19 | Templating modularization | [ ] | Task 18 complete |
+| 20 | Generation modularization | [ ] | Task 19 complete |
+| 21 | Runtime and platform modularization | [ ] | Task 20 complete |
+| 22 | Tests, exports, documentation, and cleanup | [ ] | Task 21 complete |
+| 23 | Full structural integration gate | [ ] | Tasks 16-22 complete |
+
+No broad source move may begin before Task 16 captures the baseline and adds architecture checks. Each phase requires its own issue, focused commits, validation evidence, and issue closure.
+
 ## Global completion conditions
 
 - every phase has compatibility and behavioral validation;
@@ -84,4 +104,5 @@ Validation: strict checks and declaration emission passed; 13 focused runtime/pl
 - Python generator behavior is intentionally ported to Handlebars/TypeScript;
 - no domain layer performs un-injected filesystem, process, Git, cache, or terminal work;
 - external CLI contains no domain logic;
-- package export and consumer-fixture checks pass.
+- package export and consumer-fixture checks pass;
+- Tasks 15-23 complete the non-breaking structure hardening program before unrestricted feature expansion.
