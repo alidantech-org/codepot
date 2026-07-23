@@ -34,6 +34,7 @@
     "test:contract": "tsx --test tests/contract/index.test.ts",
     "test:unit:authoring": "tsx --test tests/unit/authoring/index.test.ts",
     "test:unit:generation": "tsx --test tests/unit/generation/index.test.ts",
+    "test:unit:platform": "tsx --test tests/unit/platform/index.test.ts",
     "test:unit:runtime": "tsx --test tests/unit/runtime/index.test.ts",
     "test:unit:templating": "tsx --test tests/unit/templating/index.test.ts",
     "test:integration": "tsx --test tests/integration/index.test.ts",
