@@ -2,19 +2,26 @@ from __future__ import annotations
 
 from typing import Any
 
-from constants.codegen import X_CODEGEN, KIND, KIND_PRIMITIVE, KIND_ENUM, KIND_MODEL, KIND_DTO
+from constants.codegen import (
+    KIND,
+    KIND_DTO,
+    KIND_ENUM,
+    KIND_MODEL,
+    KIND_PRIMITIVE,
+    X_CODEGEN,
+)
 from constants.openapi import (
-    REF,
-    TYPE,
-    PROPERTIES,
     ALL_OF,
     ENUM,
+    PROPERTIES,
+    REF,
+    TYPE,
+    TYPE_BOOLEAN,
+    TYPE_INTEGER,
+    TYPE_NULL,
+    TYPE_NUMBER,
     TYPE_OBJECT,
     TYPE_STRING,
-    TYPE_INTEGER,
-    TYPE_NUMBER,
-    TYPE_BOOLEAN,
-    TYPE_NULL,
 )
 from inference.models import InferredSchemaKind
 from openapi.document import OpenApiDocument
@@ -78,19 +85,23 @@ def _is_object_schema(schema: dict[str, Any]) -> bool:
     if isinstance(schema.get(PROPERTIES), dict):
         return True
 
-    if isinstance(schema.get(ALL_OF), list):
-        return True
-
-    return False
+    return isinstance(schema.get(ALL_OF), list)
 
 
 def _is_primitive_schema(schema: dict[str, Any]) -> bool:
     schema_type = schema.get(TYPE)
+    primitive_types = {
+        TYPE_STRING,
+        TYPE_INTEGER,
+        TYPE_NUMBER,
+        TYPE_BOOLEAN,
+        TYPE_NULL,
+    }
 
     if isinstance(schema_type, str):
-        return schema_type in {TYPE_STRING, TYPE_INTEGER, TYPE_NUMBER, TYPE_BOOLEAN, TYPE_NULL}
+        return schema_type in primitive_types
 
     if isinstance(schema_type, list):
-        return any(item in {TYPE_STRING, TYPE_INTEGER, TYPE_NUMBER, TYPE_BOOLEAN, TYPE_NULL} for item in schema_type)
+        return any(item in primitive_types for item in schema_type)
 
     return False
