@@ -1,10 +1,10 @@
 # Task 15 — CodepotX structure migration program
 
 Status: [~]
-Issues: child issues beginning with #14
+Issues: child issues #14 through #18 currently cover Tasks 16-20
 Depends on: current CodepotX implementation baseline
 Commit: implementation proceeds through Tasks 16-23
-Validation: Task 16 guardrail implementation committed; execution evidence pending
+Validation: Task 16 is complete. Tasks 17-20 are implemented and awaiting one combined package validation gate.
 
 ## Goal
 
@@ -14,11 +14,11 @@ This is the umbrella task. Implementation is completed through Tasks 16-23 in or
 
 ## Required order
 
-- [~] Task 16 — baseline and architecture guardrails
-- [ ] Task 17 — contract partitioning and protocol ownership
-- [ ] Task 18 — authoring compiler and engine modularization
-- [ ] Task 19 — templating modularization
-- [ ] Task 20 — generation modularization
+- [x] Task 16 — baseline and architecture guardrails
+- [~] Task 17 — contract partitioning and protocol ownership
+- [~] Task 18 — authoring compiler and engine modularization
+- [~] Task 19 — templating modularization
+- [~] Task 20 — generation modularization
 - [ ] Task 21 — runtime and platform modularization
 - [ ] Task 22 — tests, exports, documentation, and cleanup
 - [ ] Task 23 — full integration and structural migration gate
