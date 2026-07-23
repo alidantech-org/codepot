@@ -3,14 +3,14 @@
 Status: [~]
 Issue: #13
 Depends on: Python generator parity and package tests
-Commit: pending final local validation
-Validation: user rerun required after Codepotg.yaml migration
+Validated code: `ebbc8f0`
+Validation: `python scripts/release.py check` passed on Windows with Python 3.12 on 2026-07-23
 
 ## Goal
 
 Prepare the stable Python/Jinja OpenAPI generator as `codepotg==1.0.0` while preserving compatibility with OpenAPI emitted by CodepotX.
 
-The release is blocked until every local check passes. Do not upload while this task remains active.
+The local release gate has passed. PyPI upload and installation from PyPI remain intentionally pending.
 
 ## Public configuration contract
 
@@ -26,7 +26,7 @@ The release is blocked until every local check passes. Do not upload while this 
 
 ## Reported test failure audit
 
-The user ran 210 tests before this migration: 185 passed and 25 failed.
+The user initially ran 210 tests before this migration: 185 passed and 25 failed.
 
 - [x] Fix the real eager `codepotg --version` CLI bug.
 - [x] Fix bundled-template resolution for the retired source path shape.
@@ -35,7 +35,7 @@ The user ran 210 tests before this migration: 185 passed and 25 failed.
 - [x] Point shared tests at bundled templates under `src/codepotg/templates`.
 - [x] Migrate config loader, workflow, and CLI tests to `Codepotg.yaml`.
 - [x] Preserve command, cleanup, defaults, lifecycle, inference, and rendering coverage.
-- [ ] Rerun all tests and classify any remaining failures.
+- [x] Rerun all tests and classify remaining failures: 213 passed after fixing the debug fixture pack.
 
 ## Package readiness
 
@@ -53,16 +53,16 @@ The user ran 210 tests before this migration: 185 passed and 25 failed.
 
 ## Required local validation
 
-- [ ] Install `.[dev]` in a clean virtual environment.
-- [ ] Run the full test suite.
-- [ ] Run Ruff.
-- [ ] Create `Codepotg.yaml` through the installed CLI.
-- [ ] Run bundled TypeScript generation from the installed wheel in dry-run mode.
-- [ ] Build one sdist and one universal wheel.
-- [ ] Pass `twine check`.
-- [ ] Verify the wheel contains runtime modules and bundled templates.
-- [ ] Install the wheel in a second clean virtual environment.
-- [ ] Run `codepotg --version`, `codepotg --help`, and `python -m codepotg --version`.
+- [ ] Install `.[dev]` in a separate clean development virtual environment.
+- [x] Run the full test suite: 213 passed.
+- [x] Run Ruff.
+- [x] Create `Codepotg.yaml` through the installed CLI.
+- [x] Run bundled TypeScript generation from the installed wheel in dry-run mode.
+- [x] Build one sdist and one universal wheel.
+- [x] Pass `twine check`.
+- [x] Verify the wheel contains runtime modules and bundled templates.
+- [x] Install the wheel in a second clean virtual environment.
+- [x] Run `codepotg --version`, `codepotg --help`, and `python -m codepotg --version`.
 - [ ] Upload `codepotg==1.0.0` using the local ignored `PUBLISH_TOKEN`.
 - [ ] Install `codepotg==1.0.0` from PyPI and rerun the smoke test.
 
