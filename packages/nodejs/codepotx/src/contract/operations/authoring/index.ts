@@ -2,8 +2,9 @@ import type { CompiledAuthoringArtifact } from '../../artifacts/authoring/index'
 import type { OperationResult, ValidationResult } from '../../diagnostics/index';
 import type { PortablePath } from '../../protocol/common.types';
 import type { SourceDescriptor } from '../../sources/source.types';
+import type { CacheMode } from '../cache-mode.types';
 
-export type CacheMode = 'auto' | 'bypass' | 'refresh';
+export type { CacheMode } from '../cache-mode.types';
 
 export interface AuthoringCompileRequest {
   readonly source: SourceDescriptor;
