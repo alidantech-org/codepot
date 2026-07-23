@@ -1,6 +1,7 @@
 import type {
   CodepotEvent,
   CodepotEventListener,
+  CodepotEventOf,
   CodepotEventType,
   Disposable,
   EventBusPort,
@@ -56,11 +57,11 @@ export class SequentialEventBus implements EventBusPort {
   subscribe(listener: CodepotEventListener): Disposable;
   subscribe<TType extends CodepotEventType>(
     type: TType,
-    listener: CodepotEventListener<Extract<CodepotEvent, { readonly type: TType }>>,
+    listener: CodepotEventListener<CodepotEventOf<TType>>,
   ): Disposable;
   subscribe<TType extends CodepotEventType>(
     typeOrListener: TType | CodepotEventListener,
-    maybeListener?: CodepotEventListener<Extract<CodepotEvent, { readonly type: TType }>>,
+    maybeListener?: CodepotEventListener<CodepotEventOf<TType>>,
   ): Disposable {
     if (typeof typeOrListener === 'function') {
       this.#allListeners.add(typeOrListener);
@@ -68,7 +69,8 @@ export class SequentialEventBus implements EventBusPort {
     }
     if (!maybeListener) throw new TypeError('A typed event subscription requires a listener.');
     const listeners = this.#typedListeners.get(typeOrListener) ?? new Set<CodepotEventListener>();
-    const listener: CodepotEventListener = maybeListener;
+    const listener: CodepotEventListener = (event) =>
+      isCodepotEventOf(event, typeOrListener) ? maybeListener(event) : undefined;
     listeners.add(listener);
     this.#typedListeners.set(typeOrListener, listeners);
     return new EventSubscription(() => {
@@ -76,4 +78,11 @@ export class SequentialEventBus implements EventBusPort {
       if (listeners.size === 0) this.#typedListeners.delete(typeOrListener);
     });
   }
+}
+
+function isCodepotEventOf<TType extends CodepotEventType>(
+  event: CodepotEvent,
+  type: TType,
+): event is CodepotEventOf<TType> {
+  return event.type === type;
 }
