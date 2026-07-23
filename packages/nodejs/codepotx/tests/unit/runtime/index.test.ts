@@ -1,1 +1,1 @@
-import '../../../runtime.test';
+import '../../runtime.test';
