@@ -84,13 +84,13 @@ Source of truth: `agents/CODEPOTX_STRUCTURE_GUIDE.md`.
 
 | Order | Task | Status | Gate |
 |---|---|---|---|
-| 15 | Structure migration program | [~] | Task 17 active |
+| 15 | Structure migration program | [~] | Tasks 17-20 combined validation active |
 | 16 | Baseline and architecture guardrails | [x] | #14 closed; 40 library and 3 CLI tests passed with package validation |
-| 17 | Contract partitioning | [~] | Issue open; inventory before moves |
-| 18 | Authoring modularization | [ ] | Task 17 complete |
-| 19 | Templating modularization | [ ] | Task 18 complete |
-| 20 | Generation modularization | [ ] | Task 19 complete |
-| 21 | Runtime and platform modularization | [ ] | Task 20 complete |
+| 17 | Contract partitioning | [~] | #15; strict type gate passed, combined validation pending |
+| 18 | Authoring modularization | [~] | #16; implementation complete, combined validation pending |
+| 19 | Templating modularization | [~] | #17; implementation complete, combined validation pending |
+| 20 | Generation modularization | [~] | #18; implementation complete, combined validation pending |
+| 21 | Runtime and platform modularization | [ ] | Tasks 17-20 complete |
 | 22 | Tests, exports, documentation, and cleanup | [ ] | Task 21 complete |
 | 23 | Full structural integration gate | [ ] | Tasks 16-22 complete |
 
