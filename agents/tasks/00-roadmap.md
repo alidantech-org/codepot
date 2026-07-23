@@ -84,9 +84,9 @@ Source of truth: `agents/CODEPOTX_STRUCTURE_GUIDE.md`.
 
 | Order | Task | Status | Gate |
 |---|---|---|---|
-| 15 | Structure migration program | [~] | Task 16 active |
-| 16 | Baseline and architecture guardrails | [~] | #14; regression fixes committed, validation rerun pending |
-| 17 | Contract partitioning | [ ] | Task 16 complete |
+| 15 | Structure migration program | [~] | Task 17 active |
+| 16 | Baseline and architecture guardrails | [x] | #14 closed; 40 library and 3 CLI tests passed with package validation |
+| 17 | Contract partitioning | [~] | Issue open; inventory before moves |
 | 18 | Authoring modularization | [ ] | Task 17 complete |
 | 19 | Templating modularization | [ ] | Task 18 complete |
 | 20 | Generation modularization | [ ] | Task 19 complete |
