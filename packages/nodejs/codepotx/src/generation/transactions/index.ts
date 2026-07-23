@@ -1,3 +1,1 @@
-export {
-  GenerationTransaction,
-} from '../transaction';
+export { GenerationFileTransaction } from '../transaction';
