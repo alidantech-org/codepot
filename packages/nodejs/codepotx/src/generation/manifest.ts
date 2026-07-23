@@ -12,6 +12,7 @@ import type {
   RenderedGeneration,
   VirtualFile,
 } from '@/contract/index';
+import { CODEPOT_ARTIFACT_PRODUCER } from '@/internal/package-info';
 
 import { joinPath } from './planning';
 
@@ -66,7 +67,7 @@ export async function buildGenerationManifest(
       kind: 'codepot.generation-manifest',
       protocolVersion: CODEPOT_PROTOCOL_VERSION,
       artifactVersion: CODEPOT_ARTIFACT_VERSION,
-      producer: { name: 'codepotx', version: '0.0.0' },
+      producer: CODEPOT_ARTIFACT_PRODUCER,
       contentDigest,
       sourceDigest: rendered.header.contentDigest,
     },
