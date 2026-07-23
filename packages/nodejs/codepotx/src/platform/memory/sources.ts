@@ -1,1 +1,1 @@
-export { MemorySourceRegistry } from '../source-resolver';
+export { MemorySourceRegistry } from './source-store';
