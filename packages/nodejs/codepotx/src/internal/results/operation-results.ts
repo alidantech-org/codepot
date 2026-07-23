@@ -1,15 +1,19 @@
-import type { Diagnostic, OperationResult } from '@/contract/index';
+import type {
+  Diagnostic,
+  OperationFailure,
+  OperationSuccess,
+} from '@/contract/index';
 
 export function success<T>(
   value: T,
   diagnostics: readonly Diagnostic[] = [],
-): OperationResult<T> {
+): OperationSuccess<T> {
   return { success: true, value, diagnostics };
 }
 
-export function failure<T = never>(
+export function failure(
   diagnostics: readonly Diagnostic[],
-): OperationResult<T> {
+): OperationFailure {
   return { success: false, diagnostics };
 }
 
