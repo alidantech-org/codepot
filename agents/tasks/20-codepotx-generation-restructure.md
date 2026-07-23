@@ -51,6 +51,7 @@ src/generation/
 - [ ] Group before/after command planning and execution.
 - [ ] Group generation event publication.
 - [ ] Group report construction and result aggregation.
+- [ ] Adopt `CODEPOT_ARTIFACT_PRODUCER` from `src/internal/package-info.ts` in generation-plan, rendered-generation, and generation-manifest assembly without changing serialized producer values.
 - [ ] Make `DefaultGenerationEngine` a small facade over application use cases.
 
 ## Safety invariants
