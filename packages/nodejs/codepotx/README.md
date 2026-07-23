@@ -250,6 +250,7 @@ pnpm --filter codepotx test:unit:authoring
 pnpm --filter codepotx test:unit:templating
 pnpm --filter codepotx test:unit:generation
 pnpm --filter codepotx test:unit:runtime
+pnpm --filter codepotx test:unit:platform
 pnpm --filter codepotx test:integration
 ```
 
