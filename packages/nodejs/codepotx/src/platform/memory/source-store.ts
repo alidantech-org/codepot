@@ -5,7 +5,8 @@ export class MemorySourceRegistry implements MemorySourceRegistryPort {
   readonly #entries = new Map<string, ResolvedSource>();
 
   get(id: string): ResolvedSource | null {
-    return this.#entries.get(id) ?? null;
+    const source = this.#entries.get(id);
+    return source ? structuredClone(source) : null;
   }
 
   register(source: ResolvedSource): void {
