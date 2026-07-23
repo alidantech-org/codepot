@@ -23,15 +23,15 @@ test('generation publisher emits observational stage file and command events', a
   const subscription = platform.events.subscribe((event) => {
     events.push(event);
   });
-  const publisher = new GenerationEventPublisher(platform, 'generation:test');
+  const publisher = new GenerationEventPublisher(platform, 'sdk', 'generation:test');
   await publisher.stage('stage.started', 'render');
-  await publisher.file({ path: 'src/user.ts', status: 'created', lifecycle: 'managed' }, 'digest');
+  await publisher.file({ path: 'src/user.ts', status: 'created', lifecycle: 'managed' });
   await publisher.command({
     id: 'command:format', phase: 'after', command: 'format', cwd: '/project',
     exitCode: 0, skipped: false, optional: false, stdout: '', stderr: '',
   });
   await publisher.stage('stage.completed', 'render', { itemCount: 1 });
-  await subscription.dispose();
+  subscription.dispose();
 
   assert.deepEqual(events.map((event) => event.type), [
     'runtime.stage',
