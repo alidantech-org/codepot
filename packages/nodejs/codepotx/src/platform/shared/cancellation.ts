@@ -49,7 +49,7 @@ export class CodepotCancellationSignal implements CancellationSignal {
 }
 
 export class CodepotCancellationController {
-  readonly signal = new CodepotCancellationSignal();
+  readonly signal: CodepotCancellationSignal = new CodepotCancellationSignal();
 
   abort(reason?: string): void {
     this.signal.abort(reason);
