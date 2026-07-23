@@ -1,2 +1,2 @@
-import '../../../authoring-refs-properties.test';
-import '../../../authoring-schema.test';
+import '../../authoring-refs-properties.test';
+import '../../authoring-schema.test';
