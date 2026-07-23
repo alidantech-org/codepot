@@ -152,12 +152,10 @@ test('authoring, templating, and generation match the structural migration basel
   assert.equal(packageJson.version, baseline.packageVersion);
 
   const authoring = await compileAuthoring();
-  const authoringAgain = await compileAuthoring();
-  assert.deepEqual(authoringAgain, authoring);
+  assert.deepEqual(await compileAuthoring(), authoring);
   assertJsonSafe(authoring);
   assert.deepEqual(JSON.parse(JSON.stringify(authoring)), authoring);
-
-  const authoringSummary = {
+  assert.deepEqual({
     artifactKind: authoring.header.kind,
     project: {
       name: authoring.project.name,
@@ -170,8 +168,7 @@ test('authoring, templating, and generation match the structural migration basel
         operation.cacheInvalidates,
       ]),
     ),
-  };
-  assert.deepEqual(authoringSummary, baseline.authoring);
+  }, baseline.authoring);
 
   const platform = createMemoryPlatformServices();
   await platform.files.mkdir('/project/templates/{model}', { recursive: true });
@@ -217,13 +214,14 @@ write:
   assertJsonSafe(compiled.value);
 
   const template = compiled.value.templates[0];
-  assert.ok(template);
   const model = authoring.schemas[0];
+  assert.ok(template);
   assert.ok(model);
-  const outputPath = resolveOutputTokens(template.outputTokens, { model });
+  const modelContext = { model: { name: model.name } };
+  const outputPath = resolveOutputTokens(template.outputTokens, modelContext);
   const renderedTemplate = await templating.render({
     templates: compiled.value,
-    files: [{ templateId: template.id, outputPath, context: { model } }],
+    files: [{ templateId: template.id, outputPath, context: modelContext }],
   });
   assert.equal(renderedTemplate.success, true);
   if (!renderedTemplate.success) return;
