@@ -2,24 +2,25 @@
 
 **CodepotG** is the stable Python and Jinja generation runtime for turning OpenAPI documents into project-ready source code.
 
-Version **1.0.0** preserves the established Python generator for teams that already use OpenAPI, Jinja template packs, and `CodepotFile.yml`. New Codepot authoring can happen in `codepotx`; when `codepotx` emits OpenAPI, the resulting JSON or YAML document can continue through CodepotG without changing the Python generation workflow.
+Version **1.0.0** preserves the established Python generator for teams that use OpenAPI, Jinja template packs, and configuration-driven generation. New Codepot authoring can happen in `codepotx`; when CodepotX emits OpenAPI, the resulting JSON or YAML document can continue through CodepotG without changing the Python generation model.
 
 ## What CodepotG provides
 
-- OpenAPI JSON and YAML loading;
+- OpenAPI 3.0 and 3.1 JSON or YAML loading;
 - inference and normalized generation contracts;
 - Jinja template packs with reusable partials and filters;
-- config-driven generation through `CodepotFile.yml`;
-- built-in TypeScript, Next.js, Dart, and debug template packs;
+- project tasks configured in `Codepotg.yaml`;
+- bundled TypeScript, Next.js, Dart, and debug template packs;
+- optional project-owned template packs;
 - managed and immutable write modes;
 - guarded cleanup, dry runs, before/after commands, and structured diagnostics;
-- explicit `x-codegen` metadata support for resources, DTOs, entities, access, frontends, screens, and documentation information.
+- optional `x-codegen` metadata for resources, DTOs, entities, access, frontends, screens, and documentation.
 
 ## Requirements
 
 - Python 3.11 or newer;
 - an OpenAPI document containing `openapi` and `paths`;
-- a CodepotG template pack, either bundled or project-owned.
+- either a bundled language pack or a project-owned Jinja template pack.
 
 ## Installation
 
@@ -32,17 +33,18 @@ Verify the installed release:
 ```bash
 codepotg --version
 codepotg --help
-```
-
-You can also run the CLI as a Python module:
-
-```bash
-python -m codepotg --help
+python -m codepotg --version
 ```
 
 ## Quick start
 
-Create a `CodepotFile.yml` in the project that owns the generated output:
+Create a starter configuration:
+
+```bash
+codepotg init --yes
+```
+
+This creates `Codepotg.yaml`:
 
 ```yaml
 allow: true
@@ -51,21 +53,18 @@ tasks:
   sdk:
     input: ./openapi.json
     language: typescript
-    templateDir: ./templates/typescript
     output: ./generated/sdk
-
-    after:
-      - run: npx prettier --write generated/sdk
-        optional: true
 ```
 
-Preview the task without modifying files or running real shell commands:
+When `templateDir` is omitted, CodepotG uses the bundled template pack selected by `language`.
+
+Preview without writing files or running real shell commands:
 
 ```bash
 codepotg generate sdk --dry-run --verbose
 ```
 
-Generate the files:
+Generate files:
 
 ```bash
 codepotg generate sdk
@@ -77,56 +76,111 @@ Run every configured task:
 codepotg generate --all
 ```
 
+## Custom template packs
+
+Set `templateDir` only when the project owns a custom pack:
+
+```yaml
+allow: true
+
+tasks:
+  custom-sdk:
+    input: ./openapi.json
+    language: typescript
+    templateDir: ./templates/typescript
+    output: ./generated/sdk
+```
+
+The `templates` key is accepted as an alias for `templateDir`.
+
+## `Codepotg.yaml` reference
+
+A task supports:
+
+| Field | Required | Purpose |
+| --- | --- | --- |
+| `input` | yes | OpenAPI JSON or YAML file |
+| `language` | yes | Adapter such as `typescript`, `next`, `dart`, or `debug` |
+| `output` | yes | Generated output root |
+| `templateDir` / `templates` | no | Custom Jinja template-pack directory; omitted means bundled templates |
+| `clean` | no | Paths eligible for guarded refresh cleanup |
+| `before` | no | Commands run before generation |
+| `after` | no | Commands run after generation |
+| `env` | no | Task environment values |
+| `frontend` | no | Explicit frontend selection |
+| `description` | no | Human-readable task description |
+
+`allow: true` is mandatory. CodepotG refuses project generation without that explicit opt-in.
+
+The Python package intentionally uses `Codepotg.yaml`. `CodepotFile.yml` and `CodepotFile.yaml` belong to the TypeScript Codepot workflow and are rejected by CodepotG to prevent accidental cross-tool configuration.
+
+## Commands
+
+Create the initial config:
+
+```bash
+codepotg init --yes
+```
+
+Add a task:
+
+```bash
+codepotg task add admin-sdk \
+  --language next \
+  --input ./openapi.json \
+  --output ./src/generated \
+  --yes
+```
+
+Use a non-default config path explicitly:
+
+```bash
+codepotg generate sdk --config ./config/codepotg-admin.yaml
+```
+
+Refresh only configured safe cleanup paths:
+
+```bash
+codepotg generate sdk --refresh
+```
+
+Skip configured commands when diagnosing generation:
+
+```bash
+codepotg generate sdk --skip-before --skip-after --verbose
+```
+
 ## Using OpenAPI emitted by CodepotX
 
-CodepotG remains intentionally OpenAPI-driven. The compatibility flow is:
+CodepotG remains intentionally OpenAPI-driven:
 
 ```text
 codepotx.config.ts
         ↓
 CodepotX authoring artifact
         ↓
-OpenAPI JSON or YAML output
+OpenAPI 3.0.3 or 3.1.0 JSON/YAML
         ↓
 CodepotG + Jinja template pack
         ↓
 generated project files
 ```
 
-Point the CodepotG task `input` field at the OpenAPI file emitted by CodepotX:
+Point a CodepotG task at the OpenAPI file emitted by CodepotX:
 
 ```yaml
 allow: true
 
 tasks:
-  legacy-python-generation:
+  sdk:
     input: ./.codepot/openapi.json
     language: next
-    templateDir: ./templates/next
     output: ./src/generated
 ```
 
-The first compatibility target is standard OpenAPI **3.0.3** and **3.1.0** documents. Codepot-specific behavior is carried through optional `x-codegen` extensions; ordinary OpenAPI fields remain usable without those extensions.
+Standard OpenAPI fields work without Codepot extensions. Optional `x-codegen` data preserves additional Codepot behavior such as resource placement, schema roles, frontend definitions, and normalized documentation metadata.
 
-The post-release compatibility gate will run a real CodepotX-emitted document through CodepotG generation and record any projection changes required on the CodepotX OpenAPI target.
-
-## CodepotFile reference
-
-A task supports:
-
-| Field | Purpose |
-| --- | --- |
-| `input` | OpenAPI JSON or YAML file |
-| `language` | Generation adapter such as `typescript`, `next`, `dart`, or `debug` |
-| `templateDir` / `templates` | Jinja template-pack directory |
-| `output` | Generated output root |
-| `clean` | Paths eligible for guarded refresh cleanup |
-| `before` | Commands run before generation |
-| `after` | Commands run after generation |
-| `env` | Task environment values |
-| `frontend` | Optional explicit frontend selection |
-
-`allow: true` is mandatory. CodepotG refuses project generation without that explicit opt-in.
+The compatibility gate validates both OpenAPI **3.0.3** and **3.1.0** documents and will later run a real CodepotX-emitted document through the published CodepotG package.
 
 ## Frontend metadata
 
@@ -140,7 +194,7 @@ Use `frontend: "*"` to expose all authored frontends. CodepotG does not invent s
 
 ## Template packs
 
-A template pack contains Jinja templates and a `paths.yaml` file. Path configuration controls:
+A template pack contains Jinja templates and `paths.yaml`. Path configuration controls:
 
 - which contract collection a template iterates over;
 - output folder and file expressions;
@@ -183,7 +237,7 @@ from codepotg import GeneratorApp
 
 app = GeneratorApp()
 result = app.generate(
-    config_path=Path("CodepotFile.yml"),
+    config_path=Path("Codepotg.yaml"),
     task_name="sdk",
     dry_run=True,
     verbose=True,
@@ -206,41 +260,37 @@ python -m pytest
 python -m ruff check .
 ```
 
-On Linux or macOS, activate with:
-
-```bash
-source .venv/bin/activate
-```
+On Linux or macOS, activate with `source .venv/bin/activate`.
 
 ## Release validation
 
-The repository includes a release checker that:
+The repository release checker:
 
-1. verifies all version declarations are `1.0.0`;
-2. runs tests and linting;
+1. verifies every version declaration is `1.0.0`;
+2. runs tests and Ruff;
 3. builds the source distribution and wheel;
 4. validates metadata with Twine;
-5. inspects required wheel modules and bundled templates;
+5. inspects required modules, templates, license, and config documentation;
 6. installs the wheel into a clean virtual environment;
-7. starts both `codepotg --version` and `codepotg --help`.
+7. starts `codepotg --version`, `codepotg --help`, and `python -m codepotg`.
 
 ```bash
 python scripts/release.py check
 ```
 
-Publishing reads `PUBLISH_TOKEN` from the process environment or the ignored local `.env` file. The token is never printed by the release script:
+Publishing reads `PUBLISH_TOKEN` from the process environment or ignored local `.env` file. The token is never printed:
 
 ```bash
 python scripts/release.py publish
 ```
 
-PyPI versions are immutable. Validate the exact `1.0.0` artifacts before uploading them.
+Do not publish while any release check fails. PyPI versions are immutable.
 
 ## Security
 
 - Never commit `.env` or a PyPI token.
-- Prefer a project-scoped PyPI token where possible.
-- Review every configured `before` and `after` command before running generation.
+- Prefer a project-scoped PyPI token after the project exists.
+- Review every configured `before` and `after` command.
 - Use `--dry-run` when reviewing a new OpenAPI document or template pack.
 
 ## License
