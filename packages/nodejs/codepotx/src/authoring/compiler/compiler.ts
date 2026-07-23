@@ -5,6 +5,7 @@ import {
 import type {
   CompiledAccessDefinition,
   CompiledAuthoringArtifact,
+  CompiledDocumentation,
   CompiledEntity,
   CompiledField,
   CompiledFrontend,
@@ -12,6 +13,7 @@ import type {
   CompiledInlineSchema,
   CompiledOperation,
   CompiledPropertyGroup,
+  CompiledRelation,
   CompiledResource,
   CompiledSchema,
   CompiledSchemaUse,
@@ -46,6 +48,46 @@ interface SchemaEntry {
   readonly group: string;
   readonly definition: SchemaComponentDefinition;
   readonly id: string;
+}
+
+/**
+ * Internal dynamic-object view used only while normalizing user-authored values.
+ * Frequently inspected properties are declared explicitly so strict index-signature
+ * access remains enabled across the package.
+ */
+interface DynamicObject extends Record<string, unknown> {
+  readonly _def?: unknown;
+  readonly _zod?: unknown;
+  readonly aliasOf?: unknown;
+  readonly date?: unknown;
+  readonly def?: unknown;
+  readonly description?: unknown;
+  readonly element?: unknown;
+  readonly entries?: unknown;
+  readonly exact?: unknown;
+  readonly format?: unknown;
+  readonly global?: unknown;
+  readonly id?: unknown;
+  readonly key?: unknown;
+  readonly kind?: unknown;
+  readonly mode?: unknown;
+  readonly name?: unknown;
+  readonly oneOf?: unknown;
+  readonly owner?: unknown;
+  readonly range?: unknown;
+  readonly required?: unknown;
+  readonly resource?: unknown;
+  readonly safeParse?: unknown;
+  readonly schema?: unknown;
+  readonly search?: unknown;
+  readonly sort?: unknown;
+  readonly source?: unknown;
+  readonly sourceRefId?: unknown;
+  readonly summary?: unknown;
+  readonly type?: unknown;
+  readonly typeName?: unknown;
+  readonly value?: unknown;
+  readonly values?: unknown;
 }
 
 /** Compiles user builders into the stable, JSON-safe authoring artifact. */
@@ -83,23 +125,10 @@ export class DefaultAuthoringCompiler implements AuthoringCompiler {
         compileEntities(resource.entityComponents, schemaFields),
       ),
     ]);
-    const relations = contracts.flatMap((contract) =>
+    const relations: CompiledRelation[] = contracts.flatMap((contract) =>
       contract.resources.flatMap((resource) =>
         resource.entityRelationComponents.flatMap((registry) =>
-          registry.definitions.map((relation) => ({
-            id: `relation:${relation.source}:${relation.name}`,
-            key: relation.name,
-            name: relation.name,
-            sourceEntity: relation.source,
-            targetEntity: relation.target.id,
-            sourceField: relation.local,
-            targetField: relation.foreign,
-            cardinality: cardinality(relation.cardinality),
-            required: relation.onDelete?.setNull !== true,
-            ...(deleteBehavior(relation.onDelete)
-              ? { deleteBehavior: deleteBehavior(relation.onDelete) }
-              : {}),
-          })),
+          registry.definitions.map(compileRelation),
         ),
       ),
     );
@@ -114,18 +143,18 @@ export class DefaultAuthoringCompiler implements AuthoringCompiler {
         compileHooks(resource.hookComponents),
       ),
     );
-    const frontends = contracts.flatMap((contract) =>
+    const frontends: CompiledFrontend[] = contracts.flatMap((contract) =>
       contract.frontends.map((frontend) => ({
         id: `frontend:${frontend.context.name}`,
         key: frontend.context.name,
         name: frontend.context.name,
         components: frontend.components,
         screens: frontend.screens,
-        ...(docs(frontend.context.info) ? { docs: docs(frontend.context.info) } : {}),
+        ...docsProperty(frontend.context.info),
         ...(frontend.context.metadata
           ? { metadata: frontend.context.metadata }
           : {}),
-      } satisfies CompiledFrontend)),
+      })),
     );
 
     const resources: CompiledResource[] = [];
@@ -240,7 +269,7 @@ function propertyRefId(
   key: string,
 ): string | undefined {
   const candidate = registry.ref[key];
-  return record(candidate) && typeof candidate.id === 'string'
+  return dynamicObject(candidate) && typeof candidate.id === 'string'
     ? candidate.id
     : undefined;
 }
@@ -252,7 +281,7 @@ function compileSchemas(entries: readonly SchemaEntry[]): CompiledSchema[] {
     name: definition.name,
     group,
     schema: namedSchema(definition.value),
-    ...(docs(definition.info) ? { docs: docs(definition.info) } : {}),
+    ...docsProperty(definition.info),
     ...(definition.projection
       ? { metadata: jsonObject({ projection: definition.projection }) }
       : {}),
@@ -285,8 +314,37 @@ function namedSchema(value: unknown): CompiledInlineSchema {
     };
   }
   if (isSchemaField(value)) return inlineSchema(value);
-  if (record(value) && !isZod(value)) return objectSchema(value);
+  if (dynamicObject(value) && !isZod(value)) return objectSchema(value);
   return zodSchema(value);
+}
+
+function compileRelation(
+  relation: Parameters<
+    typeof Array.prototype.map<CompiledRelation>
+  >[0] extends (value: infer TValue, ...rest: never[]) => unknown ? TValue : never,
+): CompiledRelation {
+  const value = relation as {
+    readonly source: string;
+    readonly name: string;
+    readonly target: { readonly id: string };
+    readonly local: string;
+    readonly foreign: string;
+    readonly cardinality: string;
+    readonly onDelete?: unknown;
+  };
+  const behavior = deleteBehavior(value.onDelete);
+  return {
+    id: `relation:${value.source}:${value.name}`,
+    key: value.name,
+    name: value.name,
+    sourceEntity: value.source,
+    targetEntity: value.target.id,
+    sourceField: value.local,
+    targetField: value.foreign,
+    cardinality: cardinality(value.cardinality),
+    required: dynamicObject(value.onDelete)?.setNull !== true,
+    ...(behavior ? { deleteBehavior: behavior } : {}),
+  };
 }
 
 function compileEntities(
@@ -345,7 +403,7 @@ function compileEntity(
     ),
     relationIds: [],
     ...(definition.store ? { owner: definition.store } : {}),
-    ...(docs(definition.info) ? { docs: docs(definition.info) } : {}),
+    ...docsProperty(definition.info),
   };
 }
 
@@ -374,7 +432,7 @@ function compileAccess(
         ),
         tags: definition.tags ?? [],
       }),
-      ...(docs(definition.info) ? { docs: docs(definition.info) } : {}),
+      ...docsProperty(definition.info),
     })),
   );
 }
@@ -394,7 +452,7 @@ function compileHooks(registries: readonly RuntimeHookRegistry[]): CompiledHook[
       ...(definition.transport?.outbound
         ? { outbound: jsonObject(definition.transport.outbound) }
         : {}),
-      ...(docs(definition.info) ? { docs: docs(definition.info) } : {}),
+      ...docsProperty(definition.info),
     })),
   );
 }
@@ -409,6 +467,7 @@ function compileResource(
       compileOperation(key, route, resource, contract, diagnostics),
     ),
   );
+  const resourceAccessRef = accessRef(resource.context.access);
 
   return {
     resource: {
@@ -419,16 +478,14 @@ function compileResource(
       folders: resource.context.folders,
       tags: resource.context.tags,
       operationIds: operations.map((operation) => operation.id),
-      ...(accessRef(resource.context.access)
-        ? { accessRef: accessRef(resource.context.access) }
-        : {}),
+      ...(resourceAccessRef ? { accessRef: resourceAccessRef } : {}),
       hookRefs: resource.hookComponents.flatMap((registry) =>
         registry.definitions.map((hook) =>
           `hook:${owner(hook.owner)}:${hook.key}`,
         ),
       ),
       ...(resource.context.ui ? { frontend: resource.context.ui } : {}),
-      ...(docs(resource.context.info) ? { docs: docs(resource.context.info) } : {}),
+      ...docsProperty(resource.context.info),
     },
     operations,
   };
@@ -506,7 +563,7 @@ function compileOperation(
       value: jsonValue(value),
     })),
     cacheInvalidates: route.cache?.invalidate?.operations ?? [],
-    ...(docs(route.info) ? { docs: docs(route.info) } : {}),
+    ...docsProperty(route.info),
     metadata: jsonObject({
       codegenTags: route.codegenTags ?? [],
       meta: route.meta ?? {},
@@ -557,7 +614,7 @@ function schemaUse(value: unknown): CompiledSchemaUse {
         kind: 'inline',
         schema: isSchemaField(source)
           ? inlineSchema(source)
-          : record(source) && !isZod(source)
+          : dynamicObject(source) && !isZod(source)
             ? objectSchema(source)
             : zodSchema(source),
         required: requiredValue,
@@ -631,7 +688,7 @@ function zodSchema(value: unknown): CompiledInlineSchema {
     };
   }
   if (kind.includes('enum')) {
-    const entries = record(definition.entries) ? definition.entries : {};
+    const entries = dynamicObject(definition.entries) ? definition.entries : {};
     const values = Object.values(entries).filter(
       (item): item is string | number =>
         typeof item === 'string' || typeof item === 'number',
@@ -676,7 +733,7 @@ function zodSchema(value: unknown): CompiledInlineSchema {
 }
 
 function queryMetadata(value: unknown): CompiledField['query'] {
-  const query = record(value) ? value : {};
+  const query = dynamicObject(value) ? value : {};
   const operators = [
     query.exact ? 'exact' : undefined,
     query.oneOf ? 'oneOf' : undefined,
@@ -742,10 +799,13 @@ function diagnostic(
   return { code, severity, layer: 'authoring', message };
 }
 
-function docs(
-  value: unknown,
-): { readonly summary?: string; readonly description?: string } | undefined {
-  if (!record(value)) return undefined;
+function docsProperty(value: unknown): { readonly docs?: CompiledDocumentation } {
+  const compiled = docs(value);
+  return compiled ? { docs: compiled } : {};
+}
+
+function docs(value: unknown): CompiledDocumentation | undefined {
+  if (!dynamicObject(value)) return undefined;
   const summary = typeof value.summary === 'string' ? value.summary : undefined;
   const description = typeof value.description === 'string'
     ? value.description
@@ -759,32 +819,35 @@ function docs(
 }
 
 function owner(value: unknown): string {
-  if (!record(value)) return 'global';
+  if (!dynamicObject(value)) return 'global';
   if (value.global === true) return 'global';
-  return record(value.resource) && typeof value.resource.name === 'string'
-    ? value.resource.name
+  const resource = dynamicObject(value.resource) ? value.resource : undefined;
+  return resource && typeof resource.name === 'string'
+    ? resource.name
     : 'global';
 }
 
 function accessRef(value: unknown): string | undefined {
-  return record(value) && typeof value.key === 'string' && 'owner' in value
+  return dynamicObject(value)
+    && typeof value.key === 'string'
+    && value.owner !== undefined
     ? `access:${owner(value.owner)}:${value.key}`
     : undefined;
 }
 
 function required(value: unknown): boolean {
   if (isRefUsage(value)) return value.usage.required ?? true;
-  return record(value) && typeof value.required === 'boolean'
+  return dynamicObject(value) && typeof value.required === 'boolean'
     ? value.required
     : true;
 }
 
 function bodySchema(value: unknown): unknown {
-  return record(value) && 'schema' in value ? value.schema : value;
+  return dynamicObject(value) && value.schema !== undefined ? value.schema : value;
 }
 
 function responseSchema(value: unknown): unknown {
-  return record(value) && 'schema' in value ? value.schema : value;
+  return dynamicObject(value) && value.schema !== undefined ? value.schema : value;
 }
 
 function noContent(value: unknown): boolean {
@@ -808,7 +871,7 @@ function cardinality(
 }
 
 function deleteBehavior(value: unknown): string | undefined {
-  if (!record(value)) return undefined;
+  if (!dynamicObject(value)) return undefined;
   return Object.keys(value).find((key) => value[key] === true);
 }
 
@@ -822,14 +885,14 @@ function isRef(value: unknown): boolean {
 }
 
 function isEngineRef(value: unknown): value is EngineRef {
-  return record(value)
+  return dynamicObject(value)
     && typeof value.id === 'string'
     && typeof value.name === 'string'
     && Object.values(RefKind).includes(value.kind as never);
 }
 
 function isSchemaField(value: unknown): value is SchemaField {
-  return record(value)
+  return dynamicObject(value)
     && typeof value.kind === 'string'
     && Object.values(SchemaKind).includes(value.kind as never);
 }
@@ -841,23 +904,26 @@ function isProjection(value: unknown): value is {
   readonly fields?: readonly string[];
   readonly steps?: readonly unknown[];
 } {
-  return record(value)
+  return dynamicObject(value)
     && value.kind === 'schema-projection-definition'
     && typeof value.source === 'string'
     && typeof value.sourceRefId === 'string'
     && typeof value.mode === 'string';
 }
 
-function isZod(value: unknown): value is object {
-  return record(value)
-    && ('_zod' in value || '_def' in value || typeof value.safeParse === 'function');
+function isZod(value: unknown): value is DynamicObject {
+  return dynamicObject(value)
+    && (
+      value._zod !== undefined
+      || value._def !== undefined
+      || typeof value.safeParse === 'function'
+    );
 }
 
-function zodDefinition(value: object): Record<string, unknown> {
-  const source = value as Record<string, unknown>;
-  const zod = record(source._zod) ? source._zod : undefined;
-  if (zod && record(zod.def)) return zod.def;
-  return record(source._def) ? source._def : {};
+function zodDefinition(value: DynamicObject): DynamicObject {
+  const zod = dynamicObject(value._zod) ? value._zod : undefined;
+  if (zod && dynamicObject(zod.def)) return zod.def;
+  return dynamicObject(value._def) ? value._def : {};
 }
 
 function primitive(value: unknown): 'string' | 'number' | 'integer' | 'boolean' | 'bigint' | 'date' | 'null' | 'unknown' {
@@ -872,7 +938,7 @@ function primitive(value: unknown): 'string' | 'number' | 'integer' | 'boolean' 
 
 function jsonObject(value: unknown): JsonObject {
   const result = jsonValue(value);
-  return record(result) ? result as JsonObject : {};
+  return dynamicObject(result) ? result as JsonObject : {};
 }
 
 function jsonValue(value: unknown): JsonValue {
@@ -885,7 +951,7 @@ function jsonValue(value: unknown): JsonValue {
   if (typeof value === 'bigint') return value.toString();
   if (Array.isArray(value)) return value.map(jsonValue);
   if (value instanceof Date) return value.toISOString();
-  if (record(value)) {
+  if (dynamicObject(value)) {
     return Object.fromEntries(
       Object.entries(value)
         .filter(([, item]) =>
@@ -899,6 +965,6 @@ function jsonValue(value: unknown): JsonValue {
   return String(value);
 }
 
-function record(value: unknown): value is Record<string, unknown> {
+function dynamicObject(value: unknown): value is DynamicObject {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
