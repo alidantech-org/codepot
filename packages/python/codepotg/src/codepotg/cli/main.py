@@ -44,7 +44,11 @@ def _ensure_bundled_cli_first() -> None:
         sys.path.insert(0, value)
 
     loaded_cli = sys.modules.get("cli")
-    loaded_cli_file = Path(str(getattr(loaded_cli, "__file__", ""))).resolve() if loaded_cli else None
+    loaded_cli_file = (
+        Path(loaded_cli.__file__).resolve()
+        if loaded_cli is not None and loaded_cli.__file__
+        else None
+    )
     if loaded_cli_file and root not in loaded_cli_file.parents:
         sys.modules.pop("cli", None)
         sys.modules.pop("cli.main", None)
