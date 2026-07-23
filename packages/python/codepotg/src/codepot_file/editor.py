@@ -1,4 +1,4 @@
-"""Create and edit CodepotFile.yml configs."""
+"""Create and edit ``Codepotg.yaml`` configuration files."""
 
 from __future__ import annotations
 
@@ -9,19 +9,18 @@ from typing import Any
 import yaml
 
 from codepot_file.loader import (
-    CODEPOT_FILE_YAML,
-    CODEPOT_FILE_YML,
-    SUPPORTED_CONFIG_NAMES,
-    load_codepot_file,
-    load_codepot_file_yaml,
-    resolve_codepot_file,
+    CODEPOTG_CONFIG_NAME,
+    LEGACY_CONFIG_NAMES,
+    load_codepotg_config,
+    load_codepotg_yaml,
+    resolve_codepotg_config,
 )
 from core.errors import ConfigError
 
 DEFAULT_TASK_NAME = "sdk"
 DEFAULT_INPUT = "./openapi.yaml"
 DEFAULT_LANGUAGE = "typescript"
-DEFAULT_TEMPLATE_DIR = "./templates"
+DEFAULT_TEMPLATE_DIR: str | None = None
 DEFAULT_OUTPUT = "./generated"
 
 
@@ -47,24 +46,24 @@ class TaskDraft:
     after: tuple[str, ...] = ()
 
 
-def init_codepot_file(
+def init_codepotg_config(
     *,
     root: Path,
     draft: TaskDraft,
     force: bool = False,
 ) -> Path:
-    """Create a new CodepotFile.yml in root."""
+    """Create a new ``Codepotg.yaml`` in ``root``."""
     root = root.resolve()
-    target = root / CODEPOT_FILE_YML
+    target = root / CODEPOTG_CONFIG_NAME
     existing = _existing_configs(root)
 
     if existing and not force:
         names = ", ".join(path.name for path in existing)
-        raise ConfigError(f"CodepotFile already exists ({names}). Use --force to overwrite.")
+        raise ConfigError(f"CodepotG config already exists ({names}). Use --force to overwrite.")
 
     if force:
         for path in existing:
-            if path.name == CODEPOT_FILE_YAML and path != target:
+            if path != target:
                 path.unlink()
 
     raw = {
@@ -76,27 +75,27 @@ def init_codepot_file(
             )
         },
     }
-    write_codepot_file(target, raw)
+    write_codepotg_config(target, raw)
     return target
 
 
-def add_task_to_codepot_file(
+def add_task_to_codepotg_config(
     *,
     config_path: Path | None,
     draft: TaskDraft,
     force: bool = False,
     yes: bool = False,
 ) -> Path:
-    """Add or replace one task in an existing CodepotFile."""
-    path = resolve_codepot_file(config_path)
-    loaded = load_codepot_file(path)
+    """Add or replace one task in an existing ``Codepotg.yaml``."""
+    path = resolve_codepotg_config(config_path)
+    loaded = load_codepotg_config(path)
     if not loaded.allow:
-        raise ConfigError("Task editing refused. Set allow: true in CodepotFile.yml to enable it.")
+        raise ConfigError(f"Task editing refused. Set allow: true in {CODEPOTG_CONFIG_NAME}.")
 
-    raw = load_codepot_file_yaml(path)
+    raw = load_codepotg_yaml(path)
     tasks = raw.setdefault("tasks", {})
     if not isinstance(tasks, dict):
-        raise ConfigError("CodepotFile tasks must be an object.")
+        raise ConfigError("Codepotg.yaml tasks must be an object.")
 
     if draft.name in tasks and not force:
         raise ConfigError(f"Task '{draft.name}' already exists. Use --force to replace it.")
@@ -109,23 +108,23 @@ def add_task_to_codepot_file(
     _validate_resolved_task(path, draft.name, defaults, task_raw)
 
     tasks[draft.name] = task_raw
-    write_codepot_file(path, raw)
+    write_codepotg_config(path, raw)
     return path
 
 
 def starter_draft(name: str = DEFAULT_TASK_NAME) -> TaskDraft:
-    """Return the default starter task."""
+    """Return the default starter task using bundled templates."""
     return TaskDraft(
         name=name,
         input=DEFAULT_INPUT,
         language=DEFAULT_LANGUAGE,
-        template_dir=DEFAULT_TEMPLATE_DIR,
+        template_dir=None,
         output=DEFAULT_OUTPUT,
     )
 
 
-def write_codepot_file(path: Path, raw: dict[str, Any]) -> None:
-    """Write CodepotFile YAML with stable top-level ordering."""
+def write_codepotg_config(path: Path, raw: dict[str, Any]) -> None:
+    """Write CodepotG YAML with stable top-level ordering."""
     ordered: dict[str, Any] = {}
     if "allow" in raw:
         ordered["allow"] = raw["allow"]
@@ -146,7 +145,8 @@ def write_codepot_file(path: Path, raw: dict[str, Any]) -> None:
 
 
 def _existing_configs(root: Path) -> list[Path]:
-    return [root / name for name in SUPPORTED_CONFIG_NAMES if (root / name).exists()]
+    names = (CODEPOTG_CONFIG_NAME, *LEGACY_CONFIG_NAMES)
+    return [root / name for name in names if (root / name).exists()]
 
 
 def _starter_task(draft: TaskDraft) -> TaskDraft:
@@ -154,7 +154,7 @@ def _starter_task(draft: TaskDraft) -> TaskDraft:
         name=draft.name or DEFAULT_TASK_NAME,
         input=draft.input or DEFAULT_INPUT,
         language=draft.language or DEFAULT_LANGUAGE,
-        template_dir=draft.template_dir or (None if draft.templates else DEFAULT_TEMPLATE_DIR),
+        template_dir=draft.template_dir,
         templates=draft.templates,
         output=draft.output or DEFAULT_OUTPUT,
         clean=draft.clean,
@@ -187,8 +187,6 @@ def _task_to_yaml(draft: TaskDraft, *, allow_incomplete: bool) -> dict[str, Any]
             for field in ("input", "language", "output")
             if not isinstance(task.get(field), str) or not task[field].strip()
         ]
-        if not (task.get("templateDir") or task.get("templates")):
-            missing.append("templateDir/templates")
         if missing:
             fields = ", ".join(missing)
             raise ConfigError(f"Task '{draft.name}' is missing required fields: {fields}")
@@ -202,13 +200,13 @@ def _validate_resolved_task(
     defaults: dict[str, Any],
     task_raw: dict[str, Any],
 ) -> None:
-    raw = load_codepot_file_yaml(config_path)
+    raw = load_codepotg_yaml(config_path)
     raw["defaults"] = defaults
     raw["tasks"] = {task_name: task_raw}
     temp_path = config_path.with_name(f".{config_path.name}.tmp")
     try:
-        write_codepot_file(temp_path, raw)
-        load_codepot_file(temp_path)
+        write_codepotg_config(temp_path, raw)
+        load_codepotg_config(temp_path)
     finally:
         if temp_path.exists():
             temp_path.unlink()
@@ -217,3 +215,10 @@ def _validate_resolved_task(
 def _set_optional(target: dict[str, Any], key: str, value: str | None) -> None:
     if value is not None and value.strip():
         target[key] = value
+
+
+# Internal aliases keep older module imports working while all user-facing
+# behavior uses Codepotg.yaml.
+init_codepot_file = init_codepotg_config
+add_task_to_codepot_file = add_task_to_codepotg_config
+write_codepot_file = write_codepotg_config
