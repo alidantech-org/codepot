@@ -1,1 +1,1 @@
-import '../../baseline.test';
+import '../baseline.test';
