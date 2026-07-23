@@ -40,7 +40,7 @@ class ProjectPaths:
         return self.root / FILE_PYPROJECT
 
     @classmethod
-    def from_cwd(cls, cwd: Path | None = None) -> "ProjectPaths":
+    def from_cwd(cls, cwd: Path | None = None) -> ProjectPaths:
         current = (cwd or Path.cwd()).resolve()
 
         # If command is run inside generator/, detect it directly.
