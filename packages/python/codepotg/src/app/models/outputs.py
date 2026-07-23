@@ -113,7 +113,7 @@ class EmitOutput:
 
 @dataclass(frozen=True)
 class GenerateTaskOutput:
-    """Output for one CodepotFile task."""
+    """Output for one task from ``Codepotg.yaml``."""
 
     name: str
     input_path: Path
@@ -135,7 +135,7 @@ class GenerateTaskOutput:
 
 @dataclass(frozen=True)
 class GenerateOutput:
-    """Output from CodepotFile-driven generation."""
+    """Output from ``Codepotg.yaml``-driven generation."""
 
     config_path: Path
     dry_run: bool = False
