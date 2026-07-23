@@ -1,12 +1,16 @@
-"""CodepotFile config loading and task execution."""
+"""CodepotG configuration loading and task execution."""
 
-from codepot_file.loader import load_codepot_file, resolve_codepot_file
-from codepot_file.models import CodepotCommand, CodepotFile, CodepotTask
+from codepot_file.loader import load_codepotg_config, resolve_codepotg_config
+from codepot_file.models import (
+    CodepotCommand as CodepotgCommand,
+    CodepotFile as CodepotgConfig,
+    CodepotTask as CodepotgTask,
+)
 
 __all__ = [
-    "CodepotCommand",
-    "CodepotFile",
-    "CodepotTask",
-    "load_codepot_file",
-    "resolve_codepot_file",
+    "CodepotgCommand",
+    "CodepotgConfig",
+    "CodepotgTask",
+    "load_codepotg_config",
+    "resolve_codepotg_config",
 ]
