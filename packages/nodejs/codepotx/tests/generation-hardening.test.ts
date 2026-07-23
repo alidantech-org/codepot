@@ -2,67 +2,100 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import type {
+  AuthoringPort,
   CompiledAuthoringArtifact,
   CompiledTemplatePack,
-  JsonObject,
   ResolvedSource,
 } from '../src/contract/index';
+import {
+  createGenerationEngine,
+  planFiles,
+} from '../src/generation/index';
+import {
+  createMemoryPlatformServices,
+  MemoryCommandRunner,
+} from '../src/platform/index';
 import {
   buildTemplateContext,
   createTemplatingEngine,
 } from '../src/templating/index';
-import {
-  applyManagedWrite,
-  planFiles,
-} from '../src/generation/index';
-import { createMemoryPlatformServices } from '../src/platform/index';
 
-function artifact(names: readonly string[]): CompiledAuthoringArtifact {
+function artifact(schemaNames: readonly string[]): CompiledAuthoringArtifact {
   return {
     header: {
       kind: 'codepot.authoring', protocolVersion: 1, artifactVersion: 1,
-      producer: { name: 'test', version: '1' }, contentDigest: 'authoring', sourceDigest: 'source',
+      producer: { name: 'test', version: '1' },
+      contentDigest: `authoring:${schemaNames.join(',')}`, sourceDigest: 'source',
     },
     source: {
-      id: 'authoring', descriptor: { kind: 'memory', id: 'authoring' },
-      root: '/project', entry: '/project/codepotx.config.ts', digest: 'source', files: [],
+      id: 'authoring', descriptor: { kind: 'memory', id: 'authoring' }, root: '/authoring',
+      entry: '/authoring/codepotx.config.ts', digest: 'source', files: [],
     },
-    project: { name: 'Demo', version: '1', tags: [], defaults: {} },
+    project: { name: 'Generation Demo', version: '1.0.0', tags: [], defaults: {} },
     properties: [],
-    schemas: names.map((name) => ({
+    schemas: schemaNames.map((name, index) => ({
       id: `schema:${name.toLowerCase()}`,
       key: name,
       name,
-      group: 'Models',
-      schema: { kind: 'object', fields: [], extends: [], additionalProperties: false },
-      ...(name === 'User'
-        ? { metadata: { dependencyRefs: ['schema:role'] } }
-        : {}),
+      group: 'models',
+      role: 'model',
+      schema: {
+        kind: 'object' as const,
+        fields: index === 0 && schemaNames[1]
+          ? [{
+              id: `field:${name}:dependency`, key: 'dependency', name: 'dependency', wireName: 'dependency',
+              schema: { kind: 'ref' as const, ref: `schema:${schemaNames[1].toLowerCase()}`, required: true, nullable: false },
+              lifecycle: { selectable: true, editable: true, immutable: false, managed: false },
+              query: { enabled: false, filterable: false, searchable: false, sortable: false, operators: [] },
+            }]
+          : [],
+        extends: [],
+        additionalProperties: false,
+      },
     })),
-    entities: [], relations: [], resources: [], operations: [],
-    access: [], hooks: [], frontends: [], metadata: {}, diagnostics: [],
+    entities: [], relations: [], resources: [], operations: [], access: [], hooks: [], frontends: [],
+    metadata: {}, diagnostics: [],
   };
 }
 
-async function setupProject(): Promise<{
+async function setupProject(afterCommand?: string): Promise<{
   readonly platform: ReturnType<typeof createMemoryPlatformServices>;
   readonly templates: CompiledTemplatePack;
 }> {
   const platform = createMemoryPlatformServices();
   await platform.files.mkdir('/project/templates/{model}', { recursive: true });
-  await platform.files.writeText('/project/templates/paths.yaml', [
-    'folders:',
-    '  models:',
-    '    select: schemas.models',
-    '    alias: model',
-    '    path: "{model}"',
-    'writePolicy:',
-    '  defaultMode: managed',
-    '',
-  ].join('\n'));
+  await platform.files.writeText('/project/CodepotFile.yml', `
+allow: true
+tasks:
+  models:
+    authoring: authoring
+    templates: templates
+    output: generated
+    clean: [src]
+    transactional: true
+${afterCommand ? `    after:\n      - run: ${afterCommand}` : ''}
+sources:
+  authoring:
+    type: memory
+    id: authoring
+  templates:
+    type: memory
+    id: templates
+`);
+  await platform.files.writeText('/project/templates/paths.yaml', `
+name: models
+folders:
+  model:
+    select: schemas.models
+    as: model
+    mode: each
+    parts: [src]
+write:
+  clean_roots: [src]
+`);
   await platform.files.writeText(
-    '/project/templates/{model}/[model.name.kebab].ts.hbs',
-    'export interface {{model.name.pascal}} {}\n',
+    '/project/templates/{model}/[model.name.snake].ts.hbs',
+    '{{#each model.emit.imports}}// {{importPath}}\n{{/each}}export interface {{model.name.pascal}} {}\n',
   );
   const source: ResolvedSource = {
     id: 'templates', descriptor: { kind: 'memory', id: 'templates' },
@@ -86,10 +119,7 @@ test('planning resolves semantic dependency imports through the output index', a
   const user = files.find((file) => file.outputPath === 'src/user.ts');
   assert.equal(user?.dependencies[0]?.targetRef, 'schema:role');
   assert.equal(user?.dependencies[0]?.importPath, './role');
-  const model = user?.context['model'] as {
-    readonly emit?: { readonly imports?: readonly { readonly importPath: string }[] };
-  } | undefined;
-  assert.equal(model?.emit?.imports?.[0]?.importPath, './role');
+  assert.equal((user?.context['model'] as { emit?: { imports?: readonly { importPath: string }[] } })?.emit?.imports?.[0]?.importPath, './role');
   assert.equal(platform.files !== undefined, true);
 });
 
@@ -109,9 +139,67 @@ test('duplicate output paths are refused deterministically before rendering', ()
   assert.equal(diagnostics[0]?.code, 'GENERATION_DUPLICATE_OUTPUT_PATH');
 });
 
-test('managed writes preserve user-modified stale files', async () => {
+test('manifest cleanup deletes only unchanged stale managed files and reports no-change runs', async () => {
   const { platform } = await setupProject();
-  assert.equal(typeof applyManagedWrite, 'function');
-  const metadata: JsonObject = {};
-  assert.deepEqual(metadata, {});
+  let current = artifact(['User', 'Role']);
+  const authoring = { compile: async () => ({ success: true as const, value: current, diagnostics: [] }) } as unknown as AuthoringPort;
+  const templating = createTemplatingEngine(platform);
+  const generation = createGenerationEngine({ ...platform, authoring, templating });
+
+  const first = await generation.execute({ codepotFile: { projectRoot: '/project' }, task: 'models' });
+  assert.equal(first.success, true);
+  assert.equal(await platform.files.exists('/project/generated/src/role.ts'), true);
+  assert.equal(await platform.files.exists('/project/.codepot/manifests/models.json'), true);
+
+  current = artifact(['User']);
+  const second = await generation.execute({ codepotFile: { projectRoot: '/project' }, task: 'models' });
+  assert.equal(second.success, true);
+  if (!second.success) return;
+  assert.equal(await platform.files.exists('/project/generated/src/role.ts'), false);
+  assert.equal(second.value[0]?.files.some((file) => file.status === 'deleted'), true);
+
+  const third = await generation.execute({ codepotFile: { projectRoot: '/project' }, task: 'models' });
+  assert.equal(third.success, true);
+  if (!third.success) return;
+  assert.equal(third.value[0]?.files.some((file) => file.status === 'unchanged'), true);
+  assert.equal(third.value[0]?.report.fileCounts.unchanged, 1);
+});
+
+test('modified stale managed files are preserved', async () => {
+  const { platform } = await setupProject();
+  let current = artifact(['User', 'Role']);
+  const authoring = { compile: async () => ({ success: true as const, value: current, diagnostics: [] }) } as unknown as AuthoringPort;
+  const generation = createGenerationEngine({ ...platform, authoring, templating: createTemplatingEngine(platform) });
+  assert.equal((await generation.execute({ codepotFile: { projectRoot: '/project' }, task: 'models' })).success, true);
+  await platform.files.writeText('/project/generated/src/role.ts', '// user edited\n');
+  current = artifact(['User']);
+  const result = await generation.execute({ codepotFile: { projectRoot: '/project' }, task: 'models' });
+  assert.equal(result.success, true);
+  if (!result.success) return;
+  assert.equal(await platform.files.readText('/project/generated/src/role.ts'), '// user edited\n');
+  assert.equal(result.value[0]?.files.some((file) => file.status === 'refused'), true);
+});
+
+test('required after-command failure rolls back files and manifest', async () => {
+  const { platform } = await setupProject('fail');
+  const commands = new MemoryCommandRunner((request) => ({
+    command: request.command,
+    cwd: request.cwd,
+    exitCode: request.command === 'fail' ? 1 : 0,
+    stdout: '',
+    stderr: request.command === 'fail' ? 'failed' : '',
+    skipped: false,
+  }));
+  const authoring = { compile: async () => ({ success: true as const, value: artifact(['User']), diagnostics: [] }) } as unknown as AuthoringPort;
+  const generation = createGenerationEngine({
+    ...platform,
+    commands,
+    authoring,
+    templating: createTemplatingEngine(platform),
+  });
+  const result = await generation.execute({ codepotFile: { projectRoot: '/project' }, task: 'models' });
+  assert.equal(result.success, false);
+  assert.equal(await platform.files.exists('/project/generated/src/user.ts'), false);
+  assert.equal(await platform.files.exists('/project/.codepot/manifests/models.json'), false);
+  assert.equal(result.diagnostics.some((item) => item.code === 'GENERATION_ROLLBACK_COMPLETED'), true);
 });
