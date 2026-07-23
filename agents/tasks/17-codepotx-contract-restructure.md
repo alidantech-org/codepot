@@ -1,10 +1,10 @@
 # Task 17 — Contract partitioning and protocol ownership
 
-Status: [ ]
-Issue: open when ready
-Depends on: Task 16
+Status: [~]
+Issue: #15 open
+Depends on: Task 16 complete
 Commit: pending
-Validation: pending
+Validation: inventory and implementation pending
 
 ## Goal
 
