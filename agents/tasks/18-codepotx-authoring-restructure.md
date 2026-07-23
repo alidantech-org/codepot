@@ -59,6 +59,7 @@ src/authoring/
 - [ ] Separate source/module loading infrastructure from canonical compilation.
 - [ ] Centralize typed success/failure result construction in an approved internal result module.
 - [ ] Verify artifact digest handling rather than carrying unused verification computations.
+- [ ] Adopt `CODEPOT_ARTIFACT_PRODUCER` from `src/internal/package-info.ts` in canonical authoring artifact assembly without changing serialized producer values.
 
 ## Public API and compatibility
 
