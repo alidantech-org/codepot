@@ -22,6 +22,7 @@ import type {
   PortablePath,
   RemoveOptions,
 } from '@/contract/index';
+import { normalizePortablePath } from '@/internal/paths/portable-path';
 
 function fileKind(value: Awaited<ReturnType<typeof stat>>): FileKind {
   if (value.isFile()) return 'file';
@@ -72,7 +73,7 @@ export class NodeFileSystem implements FileSystemPort {
     return entries
       .map((entry): DirectoryEntry => ({
         name: entry.name,
-        path: join(path, entry.name),
+        path: normalizePortablePath(join(path, entry.name)),
         kind: entry.isFile()
           ? 'file'
           : entry.isDirectory()
@@ -96,7 +97,7 @@ export class NodeFileSystem implements FileSystemPort {
       if (!options.includeDirectories && (await stat(absolutePath)).isDirectory()) {
         continue;
       }
-      results.push(options.absolute ? absolutePath : entry);
+      results.push(normalizePortablePath(options.absolute ? absolutePath : entry));
     }
 
     return [...new Set(results)].sort((left, right) => left.localeCompare(right));
@@ -126,7 +127,7 @@ export class NodeFileSystem implements FileSystemPort {
   }
 
   async realpath(path: PortablePath): Promise<PortablePath> {
-    if (isAbsolute(path)) return realpath(path);
-    return realpath(resolve(path));
+    const resolved = isAbsolute(path) ? await realpath(path) : await realpath(resolve(path));
+    return normalizePortablePath(resolved);
   }
 }
