@@ -2,7 +2,12 @@ import type { JsonObject } from '@/contract/index';
 
 import type { InfoInput, NormalizedInfo, ResourceContext } from '../core/authoring.types';
 import type { ComponentRef, ParameterRef, RequestBodyRef, ResponseRef } from '../refs/ref.types';
-import type { RefUsage, RefWithUsageMethods, SchemaProjection, SchemaProjectionDefinition } from '../refs/ref-usage.types';
+import type {
+  RefUsage,
+  SchemaProjection,
+  SchemaProjectionDefinition,
+  SchemaRefWithUsageMethods,
+} from '../refs/ref-usage.types';
 import type { SchemaField, SchemaFieldMap } from '../schema/schema.types';
 
 export type ComponentFieldValue =
@@ -22,13 +27,39 @@ export interface SchemaComponentDefinition {
   readonly info?: NormalizedInfo;
 }
 
-export type SchemaComponentValue = ComponentFieldValue | { readonly schema: ComponentFieldValue; readonly info?: InfoInput };
-
-export type SchemaComponentRefMap<TInput extends Record<string, SchemaComponentValue>> = {
-  readonly [TKey in keyof TInput & string]: RefWithUsageMethods<ComponentRef>;
+export type SchemaComponentValue = ComponentFieldValue | {
+  readonly schema: ComponentFieldValue;
+  readonly info?: InfoInput;
 };
 
-export interface SchemaComponentRegistry<TInput extends Record<string, SchemaComponentValue> = Record<string, SchemaComponentValue>> {
+type UnwrappedSchemaComponentValue<TValue> = TValue extends {
+  readonly schema: infer TSchema;
+}
+  ? TSchema
+  : TValue;
+
+/** Field shape carried by a schema ref so projection chains stay strongly typed. */
+export type SchemaComponentFields<TValue> =
+  UnwrappedSchemaComponentValue<TValue> extends SchemaProjectionDefinition<
+    string,
+    infer TFields,
+    SchemaProjection['mode']
+  >
+    ? TFields
+    : UnwrappedSchemaComponentValue<TValue> extends Readonly<Record<string, unknown>>
+      ? UnwrappedSchemaComponentValue<TValue>
+      : Record<string, unknown>;
+
+export type SchemaComponentRefMap<TInput extends Record<string, SchemaComponentValue>> = {
+  readonly [TKey in keyof TInput & string]: SchemaRefWithUsageMethods<
+    ComponentRef,
+    SchemaComponentFields<TInput[TKey]>
+  >;
+};
+
+export interface SchemaComponentRegistry<
+  TInput extends Record<string, SchemaComponentValue> = Record<string, SchemaComponentValue>,
+> {
   readonly name: string;
   readonly definitions: SchemaComponentDefinition[];
   readonly ref: SchemaComponentRefMap<TInput>;
@@ -47,7 +78,9 @@ export interface ParameterComponentDefinition extends ParameterComponentInput {
   readonly key: string;
 }
 
-export interface ParameterComponentRegistry<TInput extends Record<string, ParameterComponentInput> = Record<string, ParameterComponentInput>> {
+export interface ParameterComponentRegistry<
+  TInput extends Record<string, ParameterComponentInput> = Record<string, ParameterComponentInput>,
+> {
   readonly name: string;
   readonly definitions: readonly ParameterComponentDefinition[];
   readonly ref: { readonly [TKey in keyof TInput & string]: ParameterRef };
@@ -64,7 +97,9 @@ export interface RequestBodyComponentDefinition extends RequestBodyComponentInpu
   readonly name: string;
 }
 
-export interface RequestBodyComponentRegistry<TInput extends Record<string, RequestBodyComponentInput> = Record<string, RequestBodyComponentInput>> {
+export interface RequestBodyComponentRegistry<
+  TInput extends Record<string, RequestBodyComponentInput> = Record<string, RequestBodyComponentInput>,
+> {
   readonly name: string;
   readonly definitions: readonly RequestBodyComponentDefinition[];
   readonly ref: { readonly [TKey in keyof TInput & string]: RequestBodyRef };
@@ -81,7 +116,9 @@ export interface ResponseComponentDefinition extends ResponseComponentInput {
   readonly name: string;
 }
 
-export interface ResponseComponentRegistry<TInput extends Record<string, ResponseComponentInput> = Record<string, ResponseComponentInput>> {
+export interface ResponseComponentRegistry<
+  TInput extends Record<string, ResponseComponentInput> = Record<string, ResponseComponentInput>,
+> {
   readonly name: string;
   readonly definitions: readonly ResponseComponentDefinition[];
   readonly ref: { readonly [TKey in keyof TInput & string]: ResponseRef };
