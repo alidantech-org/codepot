@@ -1,75 +1,48 @@
 # Task 21 — Runtime and platform modularization
 
-Status: [ ]
-Issue: open when ready
-Depends on: Task 20
-Commit: pending
-Validation: pending
+Status: [~]
+Issue: #19 open
+Depends on: Task 20 complete
+Commits: runtime context/dispatch/composition and typed event work from `5f2a831fc7a996bfc86863694c0b1083f52cbad6` through `3a990146427efffee82799f23e46730605254ec5`; platform ownership migration through `27c76ceee65ccf5e8e4f0184e525b07fdf62c797`; guardrails through `2943af7417f8ca646a231f0b6f2b9514d8a3b28b`
+Validation: implementation and static guardrails are committed. Strict typecheck, behavioral tests, build, and package validation remain part of the combined Tasks 21–23 gate.
 
 ## Goal
 
-Replace growing runtime switch dispatch and flat platform adapters with typed operation handlers and capability-based Node, memory, and shared infrastructure folders without changing runtime requests, events, cancellation, or default composition.
+Replace central runtime switch dispatch and flat platform adapters with typed operation handlers and capability-based Node, memory, and shared infrastructure folders without changing runtime requests, events, cancellation, or default composition.
 
-## Target structure
+## Runtime completion
 
-```text
-src/runtime/
-├── context/
-├── dispatch/
-├── composition/
-├── runtime.ts
-└── index.ts
+- [x] Define a typed operation-handler contract and exhaustive registry.
+- [x] Register every authoring, templating, generation, and runtime feature operation by kind.
+- [x] Remove the central `as never` dispatch chain.
+- [x] Preserve compile-time operation coverage through `RuntimeOperationHandlerRegistry` and `satisfies`.
+- [x] Move run context creation/storage into `runtime/context/`.
+- [x] Move default features and composition into `runtime/composition/`.
+- [x] Keep runtime focused on context, timing, cancellation, typed lifecycle events, failure normalization, feature discovery, and dispatch.
+- [x] Preserve ordered event publication and listener isolation.
 
-src/platform/
-├── node/
-├── memory/
-├── shared/
-├── create-platform-services.ts
-└── index.ts
-```
+## Platform completion
 
-## Runtime work
+- [x] Group Node filesystem, command, module, cache, and source resolver ownership under `platform/node/`.
+- [x] Group memory filesystem, command, module, cache, and source registry ownership under `platform/memory/`.
+- [x] Move shared errors, cancellation, codec, events, writer, hashing, paths, clocks, IDs, and source contracts under `platform/shared/`.
+- [x] Rewire default and memory platform factories to capability folders.
+- [x] Preserve fixed clocks, sequential IDs, default composition, and all existing ports.
+- [x] Convert moved flat implementation files to thin compatibility shims.
+- [x] Keep business validation and domain orchestration outside platform.
 
-- [ ] Define a typed operation-handler contract and registry.
-- [ ] Register authoring, templating, generation, and runtime feature handlers by operation kind.
-- [ ] Replace central `as never` dispatch casts with typed handler mapping.
-- [ ] Preserve exhaustive operation coverage at compile time.
-- [ ] Move run context storage into `runtime/context/`.
-- [ ] Move default feature declarations and runtime composition into `runtime/composition/`.
-- [ ] Keep runtime responsible only for context, timing, cancellation, event envelopes, error normalization, feature discovery, and dispatch.
-- [ ] Preserve listener isolation and ordered events.
+## Type-safety and acceptance
 
-## Platform work
-
-- [ ] Group Node filesystem, command, module, source, and cache adapters by capability.
-- [ ] Group memory filesystem, command, module, source, and cache adapters by capability.
-- [ ] Move adapter-independent primitives into focused `shared/` folders only when reused.
-- [ ] Preserve one default platform composition factory.
-- [ ] Preserve deterministic fixed clock and sequential ID adapters.
-- [ ] Keep business validation and orchestration out of platform.
-- [ ] Keep all domain I/O behind existing contract ports.
-
-## Type-safety requirements
-
-- [ ] Runtime operation request and response inference remains exact by operation kind.
-- [ ] Handler registration rejects missing, duplicate, or mismatched handlers at compile time or startup validation.
-- [ ] No generic service locator is introduced.
-- [ ] No `any`, `@ts-ignore`, or broad runtime casts replace current dispatch casts.
-- [ ] Memory adapters continue to satisfy the same ports as Node adapters.
-
-## Acceptance criteria
-
-- [ ] Runtime dispatch has no central unsafe `as never` chain.
-- [ ] Adding a new operation requires a typed handler rather than editing unrelated dispatch logic.
-- [ ] Node and memory adapters are easy to locate by capability.
-- [ ] Existing runtime/platform tests and event snapshots remain equivalent.
-- [ ] `codepotx/runtime` and `codepotx/platform` exports remain compatible and explicit.
+- [x] Runtime request and result types remain indexed by exact operation kind.
+- [x] Handler registration rejects missing or mismatched handlers through the mapped registry.
+- [x] No service locator, `any`, `@ts-ignore`, or new broad dispatch cast was introduced.
+- [x] Adding an operation requires adding a typed handler, not editing runtime lifecycle code.
+- [x] Runtime and platform package facades remain explicit and compatible.
+- [ ] Confirm strict typecheck, adapter parity, runtime behavior, events, build, Publint, and ESM package checks in the combined gate.
 
 ## Validation
 
 ```bash
-pnpm --filter codepotx typecheck
-pnpm --filter codepotx test
-pnpm --filter codepotx build
-pnpm --filter codepotx package:lint
+pnpm --filter codepotx check
+pnpm --filter codepotx-cli check
 ```
