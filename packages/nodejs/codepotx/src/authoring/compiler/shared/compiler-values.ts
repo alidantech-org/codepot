@@ -10,6 +10,9 @@ import type { EngineRef } from '../../refs/ref.types';
 import { SchemaKind } from '../../schema/schema-kind';
 import type { SchemaField } from '../../schema/schema.types';
 
+const REF_KINDS: ReadonlySet<unknown> = new Set(Object.values(RefKind));
+const SCHEMA_KINDS: ReadonlySet<unknown> = new Set(Object.values(SchemaKind));
+
 /** Strict dynamic-object view used only while normalizing authored values. */
 export interface DynamicObject extends Record<string, unknown> {
   readonly _def?: unknown;
@@ -168,13 +171,13 @@ export function isEngineRef(value: unknown): value is EngineRef {
   return dynamicObject(value)
     && typeof value.id === 'string'
     && typeof value.name === 'string'
-    && Object.values(RefKind).includes(value.kind as never);
+    && REF_KINDS.has(value.kind);
 }
 
 export function isSchemaField(value: unknown): value is SchemaField {
   return dynamicObject(value)
     && typeof value.kind === 'string'
-    && Object.values(SchemaKind).includes(value.kind as never);
+    && SCHEMA_KINDS.has(value.kind);
 }
 
 export function isProjection(value: unknown): value is {
