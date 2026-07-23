@@ -6,10 +6,9 @@ export {
   planFiles,
 } from '../planning';
 export {
-  evaluateSelection,
-  evaluateSelectionValue,
+  createPlannedFileCandidates,
+  normalizeRelativePath,
+  unsafeRelativePath,
 } from '../selection-planning';
-export {
-  prepareGenerationPlan,
-} from './prepare-generation-plan';
+export { prepareGenerationPlan } from './prepare-generation-plan';
 export type { PreparedGenerationPlan } from './prepare-generation-plan';
