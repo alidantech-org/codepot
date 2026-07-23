@@ -1,21 +1,34 @@
 [build-system]
-requires = ["setuptools>=69", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "codepotg"
-version = "0.0.1"
-description = "Deprecated Python and Jinja Codepot generator"
-readme = "README.md"
+version = "1.0.0"
+description = "Stable OpenAPI-driven Python and Jinja code generator for Codepot"
+readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
   { name = "Alidantech" },
 ]
-keywords = ["openapi", "codegen", "generator", "typescript", "dart"]
+keywords = [
+  "openapi",
+  "codegen",
+  "generator",
+  "jinja",
+  "typescript",
+  "dart",
+  "nextjs",
+  "codepot",
+]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 5 - Production/Stable",
   "Environment :: Console",
   "Intended Audience :: Developers",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -32,6 +45,21 @@ dependencies = [
   "jinja2>=3.1.4",
   "pluralizer>=2.0.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2",
+  "pytest>=8.3",
+  "ruff>=0.9",
+  "twine>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/alidantech-org/codepot"
+Documentation = "https://github.com/alidantech-org/codepot/tree/main/packages/python/codepotg"
+Repository = "https://github.com/alidantech-org/codepot"
+Issues = "https://github.com/alidantech-org/codepot/issues"
+Changelog = "https://github.com/alidantech-org/codepot/releases"
 
 [project.scripts]
 codepotg = "codepotg.cli.main:app"
