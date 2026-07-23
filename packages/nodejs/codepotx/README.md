@@ -1,165 +1,262 @@
 # codepotx
 
-`codepotx` is the active TypeScript implementation of Codepot.
+`codepotx` is the active TypeScript implementation of Codepot. It provides typed authoring, deterministic Handlebars template compilation, safe generation planning and execution, a typed runtime, and Node/in-memory platform adapters.
 
-Codepot combines three independent, user-owned layers to generate source code:
+## Ownership model
 
-1. **Authoring** — a reusable `codepot.config.ts` specification.
-2. **Template packs** — reusable Handlebars templates whose `paths.yml` controls emitted folders, files, names, selections, and write behavior.
-3. **Consumer projects** — a project-owned `CodepotFile.yml` that combines authoring and template sources with output rules and generation tasks.
+Codepot combines three independently reusable inputs:
 
-## The three layers
+1. **Authoring source** — normally `codepotx.config.ts`, describing contracts and semantic metadata.
+2. **Template pack** — Handlebars templates and `paths.yaml`, describing output structure and rendering rules.
+3. **Consumer project** — `CodepotFile.yml`, selecting sources, tasks, outputs, commands, and cleanup policy.
 
-### Authoring: `codepot.config.ts`
+Authoring does not prescribe framework or folder conventions. Template packs decide generated architecture. Consumer projects control when and where generation runs.
 
-The authoring layer describes the contracts and semantic information that generation consumes.
+## Package entrypoints
 
-It can define information such as:
+```ts
+import { defineVersionContract, defineResource, schema, z } from 'codepotx';
+import type { CompiledAuthoringArtifact } from 'codepotx/contract';
+import { createDefaultCodepotRuntime } from 'codepotx/runtime';
+import { createMemoryPlatformServices } from 'codepotx/platform';
+import { DefaultAuthoringCompiler } from 'codepotx/authoring';
+import { createTemplatingEngine } from 'codepotx/templating';
+import { createGenerationEngine } from 'codepotx/generation';
+```
 
-- properties and schemas;
-- entities and relations;
-- resources and operations;
-- request and response contracts;
-- access and runtime metadata;
-- frontend metadata;
-- OpenAPI and generator metadata.
+Published entrypoints are explicit and curated:
 
-Authoring is owned by its author and is reusable. One authored specification may be shared across several projects and used with different template packs.
+- `codepotx`
+- `codepotx/contract`
+- `codepotx/runtime`
+- `codepotx/platform`
+- `codepotx/authoring`
+- `codepotx/templating`
+- `codepotx/generation`
 
-Authoring sources may be local, packaged, or retrieved from a Git repository. Git-backed authoring should support a branch, tag, or commit reference and an optional path to `codepot.config.ts`.
+Internal folders are not supported package subpaths.
 
-### Template packs: `paths.yml` and Handlebars
-
-A template pack controls what generated code looks like.
-
-The pack owns:
-
-- `paths.yml`;
-- Handlebars templates;
-- static files distributed with the pack;
-- output folder and filename rules;
-- semantic selections and aliases exposed to templates;
-- framework and architecture conventions;
-- import and dependency behavior;
-- managed, immutable, and other supported write rules.
-
-Codepot itself must not force NestJS, Flutter, React, TypeORM, SDK, folder, or naming conventions. Template authors decide those conventions.
-
-Template packs are reusable independently from authoring. They may live locally, in Git repositories, in packages, or eventually in a template marketplace.
-
-### Consumer projects: `CodepotFile.yml`
-
-`CodepotFile.yml` lives in the project receiving generated code.
-
-It is owned by that project and combines:
-
-- an authoring source;
-- a template-pack source;
-- output locations;
-- named generation tasks;
-- cleanup rules;
-- environment and working-directory rules;
-- commands that run before generation;
-- commands that run after generation.
-
-The target project therefore controls its own generation lifecycle.
-
-A task may prepare or refresh authoring before generation, clean generated locations, render a selected template pack, and then run project tools such as ESLint, Prettier, type checking, builds, or other user-defined commands.
-
-`allow: true` is the project’s explicit permission for Codepot to execute the configured generation workflow and its commands.
-
-## Generation flow
+## Architecture
 
 ```text
-CodepotFile.yml
-        ↓
-resolve the selected authoring source
-        ↓
-load and compile codepot.config.ts
-        ↓
-resolve the selected template-pack source
-        ↓
-load paths.yml and Handlebars templates
-        ↓
-plan and emit generated files
-        ↓
-run the project-owned after commands
+contract
+  protocol, artifacts, operations, ports, diagnostics, events, sources
+
+internal
+  package metadata, portable paths, shared operation results
+
+authoring
+  DSL domains, compiler passes, schema normalization, validation,
+  application use cases, source/cache infrastructure
+
+templating
+  raw and normalized config, discovery, descriptor compilation,
+  paths, references, context, variables, secure rendering
+
+generation
+  CodepotFile config, planning, rendering coordination, writing,
+  manifests, transactions, commands, caching, reports, events, use cases
+
+platform
+  node adapters, memory adapters, shared infrastructure capabilities
+
+runtime
+  run context, exhaustive typed dispatch, lifecycle events, composition
 ```
 
-The same authoring source can be combined with multiple template packs and consumer projects. The same template pack can also be reused with many authoring sources.
+Dependency direction is enforced by architecture tests:
 
-## Schema authoring boundary
+```text
+contract   -> contract only
+internal   -> internal + contract
+platform   -> platform + contract + internal
+authoring  -> authoring + contract + internal
+templating -> templating + contract + internal
+generation -> generation + contract + internal
+runtime    -> contract + platform + engine public APIs + internal
+CLI        -> published runtime and contract APIs
+```
 
-Users will import Codepot-owned schema builders from `codepotx`:
+Generation depends on `AuthoringPort` and `TemplatingPort`, never concrete engine implementations. Authoring and templating do not import generation. Domain layers do not call un-injected filesystem, process, Git, cache, or terminal APIs.
+
+## Stable artifacts
+
+The layers communicate through versioned, readonly, JSON-safe artifacts:
+
+- `CompiledAuthoringArtifact`
+- `CompiledTemplatePack`
+- `TemplateVariableCatalog`
+- `GenerationPlan`
+- `RenderedGeneration`
+- `GenerationManifest`
+- `GenerationResult`
+
+Artifacts contain no functions, Zod instances, Handlebars instances, mutable builders, CLI presentation state, or platform implementation objects. Producer metadata is centralized and artifact digests are deterministic.
+
+## Authoring
 
 ```ts
-import { schema } from 'codepotx';
+import { defineCodepotConfig, defineVersionContract, z } from 'codepotx';
+
+const v1 = defineVersionContract({
+  info: { title: 'Example', version: '1.0.0' },
+});
+
+const schemas = v1.defineSchemas({
+  User: {
+    id: z.string(),
+    name: z.string().min(1),
+  },
+});
+
+const users = v1.defineResource({
+  name: 'users',
+  route: '/v1/users',
+});
+
+users.defineRoutes()
+  .params(schemas.ref.User.pick({ id: true }))
+  .routes((route) => ({
+    listUsers: route.get('/').response(schemas.ref.User.array()),
+    updateUser: route.patch('/:id')
+      .body(schemas.ref.User.partial())
+      .response(schemas.ref.User)
+      .cache((cache) => cache.invalidate.on('listUsers')),
+  }));
+
+export default defineCodepotConfig({ contracts: [v1] });
 ```
 
-The public authoring API will provide only the Zod-like capabilities that Codepot deliberately supports. Users will not import Zod to author Codepot contracts and will not need to install or coordinate a Zod peer dependency.
+Fields are selectable and editable by default. `.immutable()` permits create-time assignment but not updates. `.managed()` means the backend owns the value and implies readonly behavior. Route cache support is intentionally limited to operation-ID invalidation.
 
-Codepot may use Zod internally to validate definitions and extract metadata, but Zod remains an implementation dependency. Zod classes, types, internals, and package-version requirements must not become part of the public Codepot API.
+The compiler is an ordered facade over focused passes for properties, schemas, entities, relations, access, hooks, frontends, resources, operations, and cross-operation validation.
 
-## Package foundation
+## Template packs
 
-The restart uses a modern TypeScript package baseline:
+A template pack owns `paths.yaml`, Handlebars templates, partials, static files, selections, naming, lifecycle policy, and optional helper declarations.
 
-- ESM-only package output;
-- Node.js 22.18 or newer at runtime;
-- Node.js 24 LTS for repository development;
-- pnpm workspaces and Turbo task orchestration;
-- TypeScript with `module: preserve` and `moduleResolution: bundler`;
-- extensionless imports in TypeScript source;
-- tsdown for bundled JavaScript and declarations;
-- `tsx` reserved for loading project-owned TypeScript authoring configuration;
-- Publint and Are The Types Wrong checks before publishing;
-- Zod as a normal internal dependency, never a peer dependency.
+Compilation is separated into:
 
-### Import aliases
+- raw YAML input and normalized config;
+- source discovery and ignore/hidden-file handling;
+- partial and raw-file detection;
+- folder recipes and output path tokens;
+- descriptor and reference compilation;
+- compiled-pack validation and digesting.
 
-Codepot source may use internal imports such as:
+Context construction and variable introspection operate only on stable artifacts. Rendering uses a dedicated Handlebars instance with strict missing-variable behavior and prototype access disabled.
+
+## Generation
+
+`CodepotFile.yml` must explicitly set `allow: true` before configured generation work or commands can run.
+
+Generation follows staged use cases:
+
+```text
+load CodepotFile
+  -> resolve and validate task
+  -> compile authoring and templates
+  -> build and strictly validate context
+  -> plan every file, command, and cleanup operation
+  -> render virtual files
+  -> apply managed writes and manifest cleanup
+  -> run approved commands
+  -> report outcomes and diagnostics
+```
+
+Complete planning happens before mutation. Dry runs do not write or execute commands. Managed, immutable, protected, refused, stale cleanup, atomic write, cancellation, command failure, and rollback behavior are explicit and tested.
+
+## Runtime
+
+`CodepotRuntime` accepts `RuntimeRequest<TKind>` and returns `RuntimeResponse<TKind>`. Operation request/result inference is indexed by `RuntimeOperationMap`.
+
+The runtime uses an exhaustive mapped handler registry. Adding an operation requires a matching typed handler; lifecycle orchestration does not contain a growing switch statement. Runtime events are ordered and observational, and listener failures cannot alter required control flow.
 
 ```ts
-import { value } from '@/some-module';
+const runtime = createDefaultCodepotRuntime({ projectRoot: process.cwd() });
+
+const result = await runtime.execute({
+  kind: 'generation.execute',
+  input: { task: 'sdk' },
+});
 ```
 
-The package TypeScript configuration maps `@/*` to `src/*`. tsdown resolves and bundles those imports, so the alias does not appear in published JavaScript or declarations and cannot interfere with a consumer project.
+## Platform
 
-When project configuration loading is implemented, `codepotx` will load `codepot.config.ts` with the consumer project’s own `tsconfig.json`. This allows users to keep their own aliases, including `@/*`, without inheriting Codepot’s internal alias configuration.
+`platform/node/` owns production adapters such as filesystem, command execution, TypeScript module loading, filesystem cache, and local/package/Git/artifact source resolution.
 
-## What `codepotx` will own
+`platform/memory/` owns deterministic filesystem, command, module, cache, and source-registry adapters for tests and embedded use.
 
-The active Node.js package is intended to provide one installation and CLI for:
+`platform/shared/` owns capabilities that are independent of one storage mode: cancellation, codec, events, changed-aware writing, hashing, portable path checks, clocks, IDs, errors, and source-resolver contracts.
 
-- TypeScript authoring through `codepot.config.ts`;
-- authoring validation and OpenAPI generation;
-- local, package, and Git source resolution;
-- `CodepotFile.yml` loading and task execution;
-- `paths.yml` interpretation;
-- Handlebars template rendering;
-- deterministic generation planning;
-- generated-file writing and cleanup behavior;
-- user-authored before and after commands;
-- structured diagnostics, dry runs, and progress reporting.
+Both default and memory composition satisfy the same `PlatformServices` contract.
 
-The CLI will eventually be installed as:
+## Extending CodepotX
+
+### Add an authoring compiler pass
+
+1. Add a focused file under `authoring/compiler/passes/`.
+2. Give the pass an explicit typed input and output.
+3. Invoke it in the intended order from `authoring-compiler.ts`.
+4. Add validation in `compiler/validation/` when the rule spans passes.
+5. Update authoring compatibility and artifact baseline tests.
+
+### Add a template capability
+
+1. Extend raw config only when `paths.yaml` needs new syntax.
+2. Normalize it once in `templating/config/`.
+3. Keep discovery, compilation, context, variables, references, and rendering separate.
+4. Keep Handlebars runtime objects out of public artifacts.
+5. Add focused unit tests plus rendered-file baseline coverage.
+
+### Add a generation stage
+
+1. Define or extend the stable request/result contract.
+2. Add a focused use case under `generation/application/`.
+3. Depend on ports, not authoring or templating implementations.
+4. Preserve planning-before-write, dry-run, cancellation, and rollback invariants.
+5. Add memory-adapter tests for success and failure behavior.
+
+### Add a runtime operation
+
+1. Add its exact request/result pair to `RuntimeOperationMap`.
+2. Register a matching handler in `runtime/dispatch/create-runtime-handlers.ts`.
+3. Keep lifecycle events and context handling outside the handler.
+4. Add runtime inference and dispatch tests.
+
+### Add a platform adapter
+
+1. Implement an existing contract port under `platform/node/`, `platform/memory/`, or `platform/shared/`.
+2. Wire it through a typed platform factory.
+3. Do not place business orchestration or domain validation in platform code.
+4. Add adapter parity tests when more than one implementation exists.
+
+## Validation
 
 ```bash
-npm install --global codepotx
+pnpm --filter codepotx typecheck
+pnpm --filter codepotx test
+pnpm --filter codepotx build
+pnpm --filter codepotx package:lint
 ```
 
-The exact commands and configuration schemas will be designed before implementation and must remain consistent with the three-layer ownership model above.
+Focused suites are also available:
 
-## Migration reference
+```bash
+pnpm --filter codepotx test:architecture
+pnpm --filter codepotx test:compatibility
+pnpm --filter codepotx test:contract
+pnpm --filter codepotx test:unit:authoring
+pnpm --filter codepotx test:unit:templating
+pnpm --filter codepotx test:unit:generation
+pnpm --filter codepotx test:unit:runtime
+pnpm --filter codepotx test:integration
+```
 
-The deprecated Python generator, `codepotg`, remains an important behavioral reference. Its task runner, command execution, `paths.yml` behavior, template contexts, imports, dependency planning, file lifecycle, cleanup, dry runs, and reporting must be evaluated and deliberately ported to TypeScript.
+The package is ESM-only, targets Node.js 22.18 or newer, builds with tsdown, and validates publishability with Publint and Are The Types Wrong.
 
-The active generator will use Handlebars rather than Jinja. The migration must preserve important behavior instead of treating the Python implementation as disposable example code.
+## Compatibility policy
 
-## Current status
+Supported package entrypoints are stable. Thin source-level compatibility shims remain where migrated flat modules were previously imported inside the repository. New implementation code must import the owned folders, not those shims.
 
-This directory now contains only the package and workspace infrastructure plus a minimal `src/index.ts` entrypoint.
-
-No authoring, compiler, generator, CLI, source resolver, or template-engine folder architecture has been committed. That structure will be designed as the next step before feature implementation begins.
-
-The previous Node.js authoring and OpenAPI implementation remains preserved in `../codepotx-old`.
+The preserved Python generator and `codepotx-old` remain behavioral references; active TypeScript code must not import them.
