@@ -1,1 +1,1 @@
-import '../../authoring-compatibility.test';
+import '../authoring-compatibility.test';
