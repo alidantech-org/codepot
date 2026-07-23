@@ -3,8 +3,8 @@
 Status: [~]
 Issue: #21 open
 Depends on: Tasks 16–20 complete; Tasks 21–22 implementation complete
-Commits: final audit `324004ab4a20edc2a5bb29675d5af7c48d69f285`; integration guardrail `cbe7b62394d186a923a790b0e804ffcf48e318f3`, `bedf0726dc6d67dc4c17868daf93fc52378f3bf1`; grouped architecture wiring `81839d6ba1700ece7fb3f5a0d7602787399f9192`; final public-facade reconciliation through `116facc1ae17876fc36798e98965d7b24f38efb5`; task evidence update `85f44b40d01ce80ad5c57015d80a8cd615e12886`; isolated declaration fix `e90283a1d1d0a364bd570305c427c0d9c69f7a55`; generic consumer fixture fix `fb6904b2b67a84ed70d0066ede8c533f5284e556`
-Validation: the second local execution passed the CLI package completely and found one CodepotX consumer-fixture type error: `ArtifactHeader` was referenced without its required artifact-kind type argument. Commit `fb6904b2b67a84ed70d0066ede8c533f5284e556` now verifies `ArtifactHeader<'codepot.authoring'>`. The CodepotX and workspace gates must be rerun before Tasks 15, 21, 22, and 23 and issues #19–#21 can close.
+Commits: final audit `324004ab4a20edc2a5bb29675d5af7c48d69f285`; integration guardrail `cbe7b62394d186a923a790b0e804ffcf48e318f3`, `bedf0726dc6d67dc4c17868daf93fc52378f3bf1`; grouped architecture wiring `81839d6ba1700ece7fb3f5a0d7602787399f9192`; final public-facade reconciliation through `116facc1ae17876fc36798e98965d7b24f38efb5`; task evidence update `85f44b40d01ce80ad5c57015d80a8cd615e12886`; isolated declaration fix `e90283a1d1d0a364bd570305c427c0d9c69f7a55`; generic consumer fixture fix `fb6904b2b67a84ed70d0066ede8c533f5284e556`; site TypeScript compatibility fix `0753a0b337d547cf533fa20eff7929e9716692fd`
+Validation: CodepotX passed strict source/test typechecks, 56/56 tests, declaration build, Publint, and ESM package-resolution checks. CodepotX CLI passed strict source/test typechecks, 3/3 tests, build, Publint, and ESM package-resolution checks. The workspace gate reached only the documentation site, where `typescript-eslint` rejected TypeScript 7 and Next could not use its programmatic API. Commit `0753a0b337d547cf533fa20eff7929e9716692fd` aliases the site's `typescript` dependency to `@typescript/typescript6@6.0.2` and uses `tsc6`, while CodepotX and CLI remain on TypeScript 7. The lockfile and workspace gate must be regenerated and rerun before Tasks 15, 21, 22, and 23 and issues #19–#21 can close.
 
 ## Goal
 
@@ -43,9 +43,10 @@ Prove that the completed folder and file migration is behaviorally equivalent, t
 - [x] The explicit contract and root type facades match the Task 17 symbol inventory, including `CompiledPathToken`.
 - [x] Add the explicit exported property annotation required by `isolatedDeclarations` for `CodepotCancellationController.signal`.
 - [x] Instantiate generic `ArtifactHeader` with a valid artifact kind in the public consumer fixture.
-- [ ] Strict source/test typecheck and declaration generation must pass after all final commits.
-- [ ] Publint and Are The Types Wrong must pass for CodepotX and CLI.
-- [ ] Workspace check and build must pass.
+- [x] Keep CodepotX and CLI on TypeScript 7 while providing the site tooling with the TypeScript 6 compatibility API.
+- [x] Strict source/test typecheck and declaration generation pass for CodepotX and CLI.
+- [x] Publint and Are The Types Wrong pass for CodepotX and CLI.
+- [ ] Workspace check and build must pass after regenerating the TypeScript alias lockfile.
 
 ## Full validation
 
