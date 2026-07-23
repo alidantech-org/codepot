@@ -44,22 +44,26 @@ export function findOutputByRef(
 
 export function subjectRefs(context: JsonObject): readonly string[] {
   const output = new Set<string>();
-  for (const candidate of [
-    context.model,
-    context.dto,
-    context.enum,
-    context.schema,
-    context.entity,
-    context.operation,
-    context.resource,
-    context.frontend,
+  for (const key of [
+    'model',
+    'dto',
+    'enum',
+    'schema',
+    'entity',
+    'operation',
+    'resource',
+    'frontend',
   ]) {
-    collectCandidateRef(candidate, output);
+    collectCandidateRef(context[key], output);
   }
-  const file = asObject(context.file);
-  if (typeof file?.subjectRef === 'string') output.add(file.subjectRef);
-  if (Array.isArray(file?.subjectRefs)) {
-    for (const ref of file.subjectRefs) if (typeof ref === 'string') output.add(ref);
+  const file = asObject(context['file']);
+  const subjectRef = file?.['subjectRef'];
+  const subjectRefsValue = file?.['subjectRefs'];
+  if (typeof subjectRef === 'string') output.add(subjectRef);
+  if (Array.isArray(subjectRefsValue)) {
+    for (const ref of subjectRefsValue) {
+      if (typeof ref === 'string') output.add(ref);
+    }
   }
   return [...output].sort();
 }
@@ -69,14 +73,30 @@ export function dependencyRefs(context: JsonObject): readonly string[] {
   const visitCandidate = (candidate: unknown): void => {
     const item = asObject(candidate);
     if (!item) return;
-    const meta = asObject(item.meta);
-    const emit = asObject(item.emit);
-    for (const value of [meta?.dependencyRefs, meta?.dependency_refs, emit?.dependencyRefs, emit?.dependency_refs]) {
+    const meta = asObject(item['meta']);
+    const emit = asObject(item['emit']);
+    for (const value of [
+      meta?.['dependencyRefs'],
+      meta?.['dependency_refs'],
+      emit?.['dependencyRefs'],
+      emit?.['dependency_refs'],
+    ]) {
       if (!Array.isArray(value)) continue;
-      for (const ref of value) if (typeof ref === 'string') output.add(ref);
+      for (const ref of value) {
+        if (typeof ref === 'string') output.add(ref);
+      }
     }
   };
-  for (const key of ['model', 'dto', 'enum', 'schema', 'entity', 'operation', 'resource', 'frontend']) {
+  for (const key of [
+    'model',
+    'dto',
+    'enum',
+    'schema',
+    'entity',
+    'operation',
+    'resource',
+    'frontend',
+  ]) {
     visitCandidate(context[key]);
   }
   return [...output].sort();
@@ -85,13 +105,22 @@ export function dependencyRefs(context: JsonObject): readonly string[] {
 function collectCandidateRef(value: unknown, output: Set<string>): void {
   const item = asObject(value);
   if (!item) return;
-  for (const ref of [item.id, item.ref, asObject(item.api)?.id, asObject(item.emit)?.ref]) {
+  const api = asObject(item['api']);
+  const emit = asObject(item['emit']);
+  for (const ref of [
+    item['id'],
+    item['ref'],
+    api?.['id'],
+    emit?.['ref'],
+  ]) {
     if (typeof ref === 'string' && ref) output.add(ref);
   }
 }
 
 function asObject(value: unknown): JsonObject | undefined {
-  return value && typeof value === 'object' && !Array.isArray(value) ? value as JsonObject : undefined;
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as JsonObject
+    : undefined;
 }
 
 function groupBy<T>(
