@@ -22,14 +22,14 @@
     "artifactKind": "codepot.templates",
     "packName": "baseline-pack",
     "templateCount": 1,
-    "outputPath": "src/models/user_profile.ts",
-    "renderedText": "export interface UserProfile {}\n"
+    "outputPath": "src/models/User.ts",
+    "renderedText": "export interface User {}\n"
   },
   "generation": {
     "task": "models",
     "outputRoot": "/project/generated",
     "plannedFiles": [
-      "src/models/user_profile.ts"
+      "src/models/User.ts"
     ],
     "clean": [
       {
@@ -38,8 +38,8 @@
       }
     ],
     "renderedFiles": [
-      "src/models/user_profile.ts"
+      "src/models/User.ts"
     ],
-    "renderedText": "export interface UserProfile {}\n"
+    "renderedText": "export interface User {}\n"
   }
 }
