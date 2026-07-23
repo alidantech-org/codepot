@@ -1,112 +1,257 @@
 # Codepot architecture
 
-## Target package shape
+## Active packages
 
 ```text
 packages/nodejs/
 ├── codepotx/
-│   └── src/
-│       ├── contract/
-│       ├── runtime/
-│       ├── authoring/
-│       ├── templating/
-│       ├── generation/
-│       ├── platform/
-│       └── index.ts
+│   ├── src/
+│   │   ├── contract/
+│   │   ├── internal/
+│   │   ├── authoring/
+│   │   ├── templating/
+│   │   ├── generation/
+│   │   ├── platform/
+│   │   ├── runtime/
+│   │   └── index.ts
+│   └── tests/
 └── codepotx-cli/
     └── src/
 ```
 
-Subfolders are added only when a module becomes large enough to justify them. The intended internal shape is:
+`codepotx` and `codepotx-cli` are the active TypeScript packages. Historical Python and old Node implementations remain behavioral references only and are never imported by active source.
+
+## Internal ownership
 
 ```text
-contract/    artifacts, ports, requests, events, diagnostics
-runtime/     composition root, run context, service wiring, event bus
-platform/    Node and in-memory adapters for shared infrastructure ports
-authoring/   public DSL, model, compiler, validation, compatibility
-templating/  paths, context, rendering, dependency/import planning
-generation/  CodepotFile config, planning, execution, writing
+contract/
+  protocol/
+  artifacts/{authoring,templating,generation}/
+  operations/{authoring,templating,generation,runtime}/
+  ports/{engines,infrastructure}/
+  diagnostics/
+  events/
+  sources/
+
+authoring/
+  existing DSL domains
+  compiler/{passes,schema,shared,validation}/
+  application/
+  infrastructure/
+  engine/
+
+templating/
+  config/
+  compiler/
+  paths/
+  context/
+  references/
+  variables/
+  rendering/
+  application/
+
+generation/
+  config/
+  planning/
+  rendering/
+  writing/
+  manifests/
+  transactions/
+  commands/
+  caching/
+  reporting/
+  events/
+  application/
+
+platform/
+  node/
+  memory/
+  shared/
+
+runtime/
+  context/
+  dispatch/
+  composition/
 ```
+
+Folders are created only for implemented responsibilities. Generic utility warehouses and speculative empty layers are forbidden.
 
 ## Dependency direction
 
 ```text
-contract   -> nothing
-platform   -> contract
-authoring  -> contract
-templating -> contract
-generation -> contract
-runtime    -> contract + platform + engine implementations
-CLI        -> contract + runtime
+contract   -> contract only
+internal   -> internal + contract
+platform   -> platform + contract + internal
+authoring  -> authoring + contract + internal
+templating -> templating + contract + internal
+generation -> generation + contract + internal
+runtime    -> contract + internal + platform + engine public APIs
+CLI        -> published runtime and contract APIs
 ```
 
-Generation receives `AuthoringPort` and `TemplatingPort` through constructor/factory injection. It must never import their concrete internals. Authoring and templating never import generation.
+Generation receives `AuthoringPort` and `TemplatingPort` through explicit injection. It never imports their implementation folders. Authoring and templating never import generation. Domain modules do not call Node filesystem, child-process, Git, YAML, cache, or terminal APIs directly.
 
-## Stable communication artifacts
+Architecture tests reject forbidden cross-layer imports, Node built-ins in domain layers, active imports from historical packages, explicit `any`, `@ts-ignore`, layer cycles, and uncurated public entrypoints.
 
-- `CompiledAuthoringArtifact` is the deterministic, versioned, JSON-serializable result of user authoring.
-- `CompiledTemplatePack` is the deterministic result of `paths.yaml`, template, static-file, selection, dependency, and lifecycle validation.
-- `GenerationPlan` is an immutable plan created before rendering or writing.
-- `RenderedGeneration` contains virtual files in memory.
-- `GenerationResult` records writes, skips, immutable behavior, refusals, cleanup, commands, and diagnostics.
+## Contract and stable communication
 
-Artifacts contain no functions, Zod instances, Handlebars instances, mutable builders, CLI presentation state, or machine-specific implementation objects.
+`contract/` contains declarations only. It imports no authoring, templating, generation, runtime, platform, Node, Zod, Handlebars, YAML, Git, or CLI implementation.
 
-## Runtime and dependency injection
+Stable artifacts include:
 
-Runtime is the composition root. Default construction uses explicit typed factories:
+- `CompiledAuthoringArtifact`
+- `CompiledTemplatePack`
+- `TemplateVariableCatalog`
+- `GenerationPlan`
+- `RenderedGeneration`
+- `GenerationManifest`
+- `GenerationResult`
 
-```ts
-const runtime = createCodepotRuntime({
-  services: createDefaultRuntimeServices(),
-  authoring: createAuthoringEngine(...),
-  templating: createTemplatingEngine(...),
-  generation: createGenerationEngine(...),
-});
-```
+Artifacts are versioned, readonly, deterministic, and JSON-safe. They contain no functions, Zod objects, Handlebars objects, mutable builders, platform instances, or CLI presentation state. Producer metadata is centralized under `internal/package-info.ts`.
 
-Use constructor/factory injection rather than decorators, reflection metadata, or a generic service locator. Tests can inject memory filesystems, disabled command runners, deterministic clocks, fixed IDs, and event collectors.
+## Authoring compiler
 
-## Shared platform ports
-
-The contract defines narrow ports for:
-
-- filesystem reads, writes, listing, globbing, stats, removal, and real paths;
-- changed-aware and atomic file writing;
-- YAML and JSON codecs;
-- TypeScript module loading;
-- local, package, Git, and artifact source resolution;
-- hashing and source-graph fingerprints;
-- caching;
-- command execution;
-- clock and ID generation;
-- runtime events.
-
-Domain modules do not call Node filesystem, child-process, Git, YAML, or cache APIs directly.
-
-## Event model
-
-Typed events are for observation only: progress, diagnostics, tracing, file lifecycle, command lifecycle, and frontend updates. Core orchestration uses explicit port calls and returned results.
-
-Every event carries a version, ID, run ID, sequence, timestamp, source module, type, and payload. Listener errors are isolated and observer return values are ignored.
-
-## Authoring compilation
-
-`codepotx.config.ts` is loaded with the consumer's TypeScript configuration. Only the reachable import graph is executed. Existing builders are validated and normalized directly into `CompiledAuthoringArtifact`; OpenAPI is not required between authoring and generation.
-
-The old authoring API is ported before it is refactored. Compatibility is validated against real old contracts and old compiler behavior.
-
-## Generation flow
+The authoring compiler is an ordered facade over focused passes:
 
 ```text
-frontend request
-  -> runtime
-  -> generation loads CodepotFile.yml
-  -> authoring port resolves and compiles source
-  -> templating port resolves and compiles template pack
-  -> generation plans files
-  -> templating renders virtual files
-  -> generation writer commits allowed changes
-  -> generation runs approved commands
-  -> runtime returns result and events
+collect contracts
+  -> compile properties
+  -> compile schemas
+  -> build schema lookup state
+  -> compile entities and relations
+  -> compile access, hooks, and frontends
+  -> compile resources and operations
+  -> validate operation IDs and cache invalidation
+  -> assemble and digest artifact
 ```
+
+Schema normalization is separate from domain passes. Projection metadata is converted through JSON-safe normalization. Field lifecycle defaults remain permissive; `.immutable()` and `.managed()` represent the supported outliers. Route cache behavior remains operation-ID invalidation only.
+
+Compile, validate, inspect, artifact loading, and cache behavior are separate application use cases. Source/module loading and cache persistence remain infrastructure concerns.
+
+## Templating
+
+The templating layer compiles `paths.yaml` and template-pack files without importing authoring implementation code.
+
+```text
+parse raw YAML
+  -> normalize compatibility keys
+  -> validate roots and folder selections
+  -> discover files
+  -> classify templates, partials, and raw files
+  -> compile path tokens and references
+  -> validate descriptors
+  -> assemble deterministic template artifact
+```
+
+Context construction consumes stable artifacts only. Variable catalog creation, formatting, strict validation, reference analysis, partial registration, and virtual-file rendering are independently testable. Handlebars prototype access and missing-helper fallbacks remain disabled.
+
+## Generation
+
+Generation is divided into explicit application stages:
+
+```text
+load CodepotFile
+  -> prepare and validate plan inputs
+  -> plan files, commands, and cleanup
+  -> render virtual files
+  -> write or dry-run
+  -> apply manifest-owned cleanup
+  -> run commands
+  -> complete or roll back transaction
+  -> report outcomes
+```
+
+All output paths and refusals are known before mutation. `allow: true`, dry-run behavior, managed and immutable files, protected roots, manifest cleanup, broad-clean refusal, atomic writes, cancellation, before/after command ordering, optional commands, and rollback are preserved invariants.
+
+## Runtime
+
+Runtime owns per-run context, typed operation dispatch, lifecycle timing, cancellation boundaries, ordered observation events, normalized failures, feature discovery, and default composition.
+
+`RuntimeOperationMap` is the source of truth for operation request/result pairs. `RuntimeOperationHandlerRegistry` maps every operation kind to an exact handler. The registry is checked with `satisfies`; adding an operation requires a handler and does not require editing a central switch.
+
+Runtime events are explicitly typed by event kind. Listener errors are isolated and listener return values never alter control flow.
+
+## Platform
+
+The platform layer implements infrastructure ports without owning domain orchestration.
+
+### Node adapters
+
+- filesystem and globbing;
+- command execution and cancellation;
+- TypeScript module loading;
+- filesystem-backed cache;
+- local, artifact, package, and Git source resolution.
+
+### Memory adapters
+
+- filesystem;
+- command runner;
+- module loader;
+- cache;
+- source registry.
+
+### Shared capabilities
+
+- cancellation primitives;
+- YAML/JSON codec;
+- sequential event bus;
+- changed-aware writer;
+- hashing;
+- path containment and glob helpers;
+- clocks and IDs;
+- platform errors;
+- source resolver contracts.
+
+Default and memory composition both return the same `PlatformServices` interface. Adapter parity tests ensure shared behavior remains consistent.
+
+## Public packages
+
+The only supported CodepotX entrypoints are:
+
+- `codepotx`
+- `codepotx/contract`
+- `codepotx/runtime`
+- `codepotx/platform`
+- `codepotx/authoring`
+- `codepotx/templating`
+- `codepotx/generation`
+
+Every public facade uses explicit curated exports. Internal implementation folders are not package subpaths. Thin compatibility shims remain for supported repository source imports during migration, but new implementation code imports owned modules directly.
+
+## Testing structure
+
+```text
+tests/
+├── architecture/
+├── compatibility/
+├── contract/
+├── unit/{authoring,templating,generation,runtime}/
+├── integration/
+└── fixtures/
+```
+
+Grouped suite entrypoints reuse the existing focused assertions. Package scripts can run each architecture area independently or execute the complete suite.
+
+## Extension workflow
+
+### Compiler pass
+
+Add a typed pass under `authoring/compiler/passes/`, compose it in the compiler facade, add cross-pass validation when required, and update compatibility plus artifact baselines.
+
+### Template capability
+
+Normalize new `paths.yaml` syntax once, keep discovery/compilation/context/rendering separate, avoid runtime objects in artifacts, and add focused plus rendered-output tests.
+
+### Generation stage
+
+Add or extend the stable operation contract, implement a focused use case, depend on ports, preserve plan-before-write and rollback boundaries, and test with memory adapters.
+
+### Runtime operation
+
+Add the exact pair to `RuntimeOperationMap`, register the matching handler, and add inference plus dispatch coverage. Lifecycle code remains unchanged.
+
+### Platform adapter
+
+Implement an existing port under `node/`, `memory/`, or `shared/`, wire it through typed composition, keep business rules out, and add parity tests when multiple implementations exist.
