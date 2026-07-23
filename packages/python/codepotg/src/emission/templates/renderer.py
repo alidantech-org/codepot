@@ -13,9 +13,10 @@ from contracts.emission import TemplateContext
 
 
 def create_environment(template_root: Path) -> Environment:
-    """Create a strict Jinja environment."""
+    """Create a strict Jinja environment for an existing template pack."""
+    resolved_root = resolve_renderer_template_root(template_root)
     environment = Environment(
-        loader=FileSystemLoader(str(template_root)),
+        loader=FileSystemLoader(str(resolved_root)),
         undefined=StrictUndefined,
         autoescape=select_autoescape(default=False),
         keep_trailing_newline=True,
@@ -30,6 +31,26 @@ def create_environment(template_root: Path) -> Environment:
     environment.filters["info_comment"] = info_comment
 
     return environment
+
+
+def resolve_renderer_template_root(template_root: Path) -> Path:
+    """Resolve a renderer root without hiding invalid custom paths.
+
+    Historical source-checkout callers used ``<project>/templates/<language>``.
+    Built-in packs now live under ``src/codepotg/templates`` so they are included
+    in wheels. Only that exact missing legacy shape falls back to the bundled
+    pack; every other missing custom path raises a clear error.
+    """
+    root = template_root.expanduser().resolve()
+    if root.is_dir():
+        return root
+
+    if root.parent.name == "templates":
+        bundled = Path(__file__).resolve().parents[2] / "codepotg" / "templates" / root.name
+        if bundled.is_dir():
+            return bundled
+
+    raise FileNotFoundError(f"Template directory does not exist: {root}")
 
 
 def render_template(
@@ -84,7 +105,6 @@ def csv(items: Any, default: str = "-") -> str:
 
     values = [value(item, "") for item in items]
     values = [item for item in values if item]
-
     if not values:
         return default
 
