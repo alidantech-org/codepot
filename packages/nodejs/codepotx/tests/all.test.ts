@@ -10,5 +10,6 @@ import './generation-determinism.test';
 import './generation-hardening.test';
 import './platform.test';
 import './runtime.test';
+import './structural-modularization.test';
 import './templating.test';
 import './template-variables.test';
