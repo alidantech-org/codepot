@@ -5,12 +5,13 @@ from typing import Any
 from constants.openapi import SCHEMA
 from openapi.refs import find_refs, get_ref
 
+
 def get_content_types(content: dict[str, Any] | None) -> tuple[str, ...]:
     """Return media type keys from a standard OpenAPI content object."""
     if not isinstance(content, dict):
         return ()
 
-    return tuple(str(content_type) for content_type in content.keys())
+    return tuple(str(content_type) for content_type in content)
 
 
 def get_media_type(
