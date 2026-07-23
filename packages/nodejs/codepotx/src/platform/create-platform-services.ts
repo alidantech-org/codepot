@@ -1,19 +1,28 @@
 import { resolve } from 'node:path';
-
-import { FileSystemCache, MemoryCache } from './cache';
-import { NodeCommandRunner } from './command-runner';
-import { MemoryCommandRunner } from './memory-command-runner';
-import { YamlJsonCodec } from './data-codec';
-import { SequentialEventBus } from './event-bus';
-import { ChangedAwareFileWriter } from './file-writer';
-import { Sha256Hash } from './hash';
-import { MemoryFileSystem } from './memory-file-system';
-import { MemoryModuleLoader } from './memory-module-loader';
-import { TsxModuleLoader } from './module-loader';
-import { NodeFileSystem } from './node-file-system';
+import {
+  DefaultSourceResolver,
+  FileSystemCache,
+  NodeCommandRunner,
+  NodeFileSystem,
+  TsxModuleLoader,
+} from './node/index';
+import {
+  MemoryCache,
+  MemoryCommandRunner,
+  MemoryFileSystem,
+  MemoryModuleLoader,
+  MemorySourceRegistry,
+} from './memory/index';
+import {
+  ChangedAwareFileWriter,
+  RandomIdProvider,
+  SequentialEventBus,
+  SequentialIdProvider,
+  Sha256Hash,
+  SystemClock,
+  YamlJsonCodec,
+} from './shared/index';
 import type { DefaultPlatformOptions, PlatformServices } from './platform-services.types';
-import { DefaultSourceResolver, MemorySourceRegistry } from './source-resolver';
-import { RandomIdProvider, SequentialIdProvider, SystemClock } from './system';
 
 export function createDefaultPlatformServices(
   options: DefaultPlatformOptions = {},
@@ -36,7 +45,6 @@ export function createDefaultPlatformServices(
     cacheRoot: sourceCacheRoot,
     memory: memorySources,
   });
-
   return {
     files,
     writer,
@@ -69,7 +77,6 @@ export function createMemoryPlatformServices(): PlatformServices {
     cacheRoot: '/.codepot/sources',
     memory: memorySources,
   });
-
   return {
     files,
     writer,
