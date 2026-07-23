@@ -1,6 +1,14 @@
-import { dirname, relative } from 'node:path/posix';
+import {
+  normalizePortablePath,
+  portableDirname,
+  portableRelative,
+} from '@/internal/paths/portable-path';
 
-import type { GenerationImportAdapter, GenerationImportRequest, GenerationImportResult } from './imports.types';
+import type {
+  GenerationImportAdapter,
+  GenerationImportRequest,
+  GenerationImportResult,
+} from './imports.types';
 
 /**
  * Framework-neutral import adapter. Language packs may inject a richer adapter
@@ -10,9 +18,9 @@ export class RelativeImportAdapter implements GenerationImportAdapter {
   readonly id = 'relative';
 
   resolve(request: GenerationImportRequest): GenerationImportResult {
-    const fromDirectory = dirname(normalizePath(request.fromPath));
+    const fromDirectory = portableDirname(normalizePath(request.fromPath));
     const target = stripKnownSourceExtension(normalizePath(request.toPath));
-    const value = relative(fromDirectory, target);
+    const value = portableRelative(fromDirectory, target);
     const importPath = value.startsWith('.') ? value : `./${value}`;
     return { importPath };
   }
@@ -23,7 +31,8 @@ export function createRelativeImportAdapter(): GenerationImportAdapter {
 }
 
 function normalizePath(path: string): string {
-  return path.replaceAll('\\', '/').replace(/^\.\//, '');
+  const normalized = normalizePortablePath(path);
+  return normalized.startsWith('./') ? normalized.slice(2) : normalized;
 }
 
 function stripKnownSourceExtension(path: string): string {
