@@ -11,9 +11,11 @@ export function normalizeInfo(input: InfoInput | undefined): NormalizedInfo | un
   if (typeof input === 'string') return { description: input };
   if (Array.isArray(input)) return { description: input.filter(Boolean).join('\n\n') };
   const value = input as JsonObject;
+  const summary = value['summary'];
+  const description = value['description'];
   return {
-    ...(typeof value.summary === 'string' ? { summary: value.summary } : {}),
-    ...(typeof value.description === 'string' ? { description: value.description } : {}),
+    ...(typeof summary === 'string' ? { summary } : {}),
+    ...(typeof description === 'string' ? { description } : {}),
     details: value,
   };
 }
