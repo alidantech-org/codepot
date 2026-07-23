@@ -1,5 +1,6 @@
 export { compileCodepotFile, findTask } from './codepot-file';
 export { executePlannedCommands, taskCommands } from './command-execution';
+export { GenerationEventPublisher } from './generation-events';
 export { createGenerationEngine, DefaultGenerationEngine } from './generation-engine';
 export { createRelativeImportAdapter, RelativeImportAdapter } from './imports';
 export type * from './imports.types';
