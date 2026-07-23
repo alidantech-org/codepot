@@ -1,4 +1,4 @@
-"""CodepotFile data models."""
+"""Internal data models for CodepotG configuration and task execution."""
 
 from __future__ import annotations
 
@@ -19,13 +19,13 @@ class CodepotCommand:
 
 @dataclass(frozen=True)
 class CodepotTask:
-    """A config-driven generation task."""
+    """A config-driven CodepotG generation task."""
 
     name: str
     input: Path
     language: str
     output: Path
-    template_dir: Path
+    template_dir: Path | None = None
     clean: tuple[Path, ...] = ()
     before: tuple[CodepotCommand, ...] = ()
     after: tuple[CodepotCommand, ...] = ()
@@ -36,7 +36,11 @@ class CodepotTask:
 
 @dataclass(frozen=True)
 class CodepotFile:
-    """Loaded CodepotFile config."""
+    """Loaded ``Codepotg.yaml`` configuration.
+
+    The class name is retained internally while the package moves away from the
+    old shared CodepotFile filename. Consumers interact with ``Codepotg.yaml``.
+    """
 
     path: Path
     root: Path
