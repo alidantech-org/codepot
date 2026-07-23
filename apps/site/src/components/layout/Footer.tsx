@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function Footer() {
   return (
     <footer className="relative z-10 border-t border-border py-8">
@@ -5,7 +7,7 @@ export function Footer() {
         <span>{new Date().getFullYear()} codepot · MIT License</span>
         <div className="flex gap-5">
           <a href="https://github.com/alidantech-org/codepot" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-foreground">GitHub</a>
-          <a href="/docs" className="transition-colors hover:text-foreground">Docs</a>
+          <Link href="/docs" className="transition-colors hover:text-foreground">Docs</Link>
           <a href="https://www.npmjs.com/package/codepotx" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-foreground">npm</a>
         </div>
       </div>
