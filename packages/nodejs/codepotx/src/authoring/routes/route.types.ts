@@ -6,7 +6,7 @@ import type { ComponentRef, ModelRef, PropertyRef, RequestBodyRef, ResponseRef, 
 import type {
   RefUsage,
   RefWithUsageMethods,
-  SchemaProjectionDefinition,
+  SchemaProjectionStep,
 } from '../refs/ref-usage.types';
 import type { SchemaField } from '../schema/schema.types';
 import type { HttpMethod } from './http-method';
@@ -20,12 +20,18 @@ export type RouteParameterFieldValue = PropertyRef | RefUsage<PropertyRef>;
 export type RouteParameterMap = Readonly<Record<string, RouteParameterFieldValue>>;
 export type RouteQueryInput = RouteParameterMap | RefWithUsageMethods<ComponentRef> | RefUsage<ComponentRef>;
 
-/** Any schema projection produced by `.partial()`, `.pick()`, or `.omit()`. */
-export type RouteSchemaProjection = SchemaProjectionDefinition<
-  string,
-  Record<string, unknown>,
-  'partial' | 'pick' | 'omit'
->;
+/**
+ * Structural route-facing projection shape. Typed projection builders may keep
+ * richer generic methods without becoming invariant at the route boundary.
+ */
+export interface RouteSchemaProjection {
+  readonly kind: 'schema-projection-definition';
+  readonly source: string;
+  readonly sourceRefId: string;
+  readonly mode: 'partial' | 'pick' | 'omit';
+  readonly fields?: readonly string[];
+  readonly steps?: readonly SchemaProjectionStep[];
+}
 
 export type RouteSchemaInput =
   | PropertyRef
