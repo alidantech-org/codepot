@@ -1,7 +1,7 @@
 "use client";
 
 import type { HTMLAttributes, ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { Check, Copy } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -20,9 +20,13 @@ function extractText(node: ReactNode): string {
   return "";
 }
 
+function subscribeToHydration(): () => void {
+  return () => undefined;
+}
+
 export function CodeBlock(props: HTMLAttributes<HTMLPreElement>) {
   const [copied, setCopied] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(subscribeToHydration, () => true, () => false);
   const { resolvedTheme } = useTheme();
   const code = useMemo(() => extractText(props.children).trimEnd(), [props.children]);
   const language = useMemo(() => {
@@ -30,8 +34,6 @@ export function CodeBlock(props: HTMLAttributes<HTMLPreElement>) {
     const match = /language-(\w+)/.exec(child?.props?.className ?? "");
     return match?.[1] ?? "typescript";
   }, [props.children]);
-
-  useEffect(() => setMounted(true), []);
 
   async function copyCode() {
     try {
