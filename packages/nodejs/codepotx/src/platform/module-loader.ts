@@ -60,13 +60,13 @@ export class TsxModuleLoader implements ModuleLoaderPort {
     const imported = new Set<string>([pathToFileURL(absoluteEntry).href]);
     const projectRoot = resolve(options.projectRoot ?? process.cwd());
     const parentURL = pathToFileURL(resolve(projectRoot, '__codepot_loader__.mjs')).href;
-    const exports = await tsImport<TExports>(pathToFileURL(absoluteEntry).href, {
+    const exports = await tsImport(pathToFileURL(absoluteEntry).href, {
       parentURL,
       ...(options.tsconfigFile ? { tsconfig: resolve(projectRoot, options.tsconfigFile) } : {}),
       onImport: (file) => {
         imported.add(file);
       },
-    });
+    }) as TExports;
     options.signal?.throwIfAborted();
 
     const references: SourceFileReference[] = [];
