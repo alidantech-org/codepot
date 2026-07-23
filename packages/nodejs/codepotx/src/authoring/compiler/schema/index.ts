@@ -1,3 +1,4 @@
+export { normalizeNamedSchema } from './normalize-named-schema';
 export {
   field,
   inlineUse,
