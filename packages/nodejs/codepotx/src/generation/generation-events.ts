@@ -20,37 +20,58 @@ type Draft = CodepotEvent extends infer TEvent
 export class GenerationEventPublisher {
   readonly #dependencies: Pick<GenerationDependencies, 'events' | 'clock' | 'ids'>;
   readonly #runId: string;
+  readonly #task: string;
   #sequence = 0;
 
   constructor(
     dependencies: Pick<GenerationDependencies, 'events' | 'clock' | 'ids'>,
+    task = 'generation',
     runId?: string,
   ) {
     this.#dependencies = dependencies;
+    this.#task = task;
     this.#runId = runId ?? dependencies.ids.create('generation');
   }
 
   async stage(
-    type: 'stage.started' | 'stage.completed',
+    phase: 'stage.started' | 'stage.completed',
     stage: string,
     payload: { readonly itemCount?: number; readonly durationMs?: number } = {},
   ): Promise<void> {
-    await this.#publish({ source: 'generation', type, payload: { stage, ...payload } });
+    await this.#publish({
+      source: 'generation',
+      type: 'runtime.stage',
+      payload: {
+        stage,
+        message: phase === 'stage.started'
+          ? `Starting ${stage}.`
+          : `Completed ${stage}.`,
+        details: {
+          phase,
+          task: this.#task,
+          ...(payload.itemCount === undefined ? {} : { itemCount: payload.itemCount }),
+          ...(payload.durationMs === undefined ? {} : { durationMs: payload.durationMs }),
+        },
+      },
+    });
   }
 
   async diagnostic(diagnostic: Diagnostic): Promise<void> {
-    await this.#publish({ source: 'generation', type: 'diagnostic.emitted', payload: { diagnostic } });
-  }
-
-  async file(file: FileWriteOutcome, contentDigest?: string): Promise<void> {
     await this.#publish({
       source: 'generation',
-      type: 'file.classified',
+      type: 'diagnostic.published',
+      payload: { diagnostic },
+    });
+  }
+
+  async file(file: FileWriteOutcome): Promise<void> {
+    await this.#publish({
+      source: 'generation',
+      type: 'generation.file.written',
       payload: {
+        task: this.#task,
         path: file.path,
         status: file.status,
-        lifecycle: file.lifecycle,
-        ...(contentDigest ? { contentDigest } : {}),
         ...(file.reason ? { reason: file.reason } : {}),
       },
     });
@@ -59,12 +80,13 @@ export class GenerationEventPublisher {
   async command(command: CommandExecutionOutcome): Promise<void> {
     await this.#publish({
       source: 'generation',
-      type: 'command.completed',
+      type: 'generation.command.completed',
       payload: {
+        task: this.#task,
+        phase: command.phase,
         command: command.command,
         cwd: command.cwd,
         exitCode: command.exitCode,
-        skipped: command.skipped,
         optional: command.optional,
       },
     });
