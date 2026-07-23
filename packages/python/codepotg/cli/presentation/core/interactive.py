@@ -7,8 +7,9 @@ interactive dependencies are not installed.
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 from cli.constants.defaults import (
     DEFAULT_CONFIRM,
@@ -88,7 +89,12 @@ def ask_optional_output_path() -> Path | None:
 
 def ask_templates_path() -> Path | None:
     """Ask whether to use a custom template path."""
-    use_custom = _ask(lambda q: q.confirm("Use custom templates?", default=DEFAULT_USE_CUSTOM_TEMPLATES))
+    use_custom = _ask(
+        lambda q: q.confirm(
+            "Use custom templates?",
+            default=DEFAULT_USE_CUSTOM_TEMPLATES,
+        )
+    )
 
     if not use_custom:
         return None
@@ -130,6 +136,10 @@ def _load_questionary():
     try:
         import questionary
     except ImportError as exc:
-        raise RuntimeError("Interactive mode requires 'questionary'. Install it with: pip install questionary") from exc
+        message = (
+            "Interactive mode requires 'questionary'. "
+            "Install it with: pip install questionary"
+        )
+        raise RuntimeError(message) from exc
 
     return questionary
