@@ -1,10 +1,10 @@
 import type { CompiledInlineSchema } from '@/contract/index';
 import { isProjection, jsonObject } from '../shared/compiler-values';
-import { namedSchema } from './schema-normalizer';
+import { normalizeInlineNamedSchema } from './schema-use-normalizer';
 
 /** Normalize named schemas while forcing projection metadata through JSON conversion. */
 export function normalizeNamedSchema(value: unknown): CompiledInlineSchema {
-  if (!isProjection(value)) return namedSchema(value);
+  if (!isProjection(value)) return normalizeInlineNamedSchema(value);
   return {
     kind: 'object',
     fields: [],
