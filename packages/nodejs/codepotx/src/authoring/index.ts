@@ -83,7 +83,6 @@ export type {
   SchemaComponentValue,
 } from './components/component.types';
 export type { CodepotConfig, PackageConfig } from './config/config.types';
-export type { EngineIdPart as EngineIdPartValue } from './core/engine-id';
 export type {
   AuthoringState,
   DefinitionOwner,
@@ -151,7 +150,6 @@ export type {
   DefinePropertiesOptions,
   PropertyResourceContext,
 } from './properties/define-properties.types';
-export type { PropertyKind as PropertyKindValue } from './properties/property-kind';
 export type {
   ForRefPropertyDefinition,
   PropertyDefinition,
@@ -165,7 +163,6 @@ export type {
   SharedPropertyDefinition,
   ZodPropertyDefinitionFieldMap,
 } from './properties/property.types';
-export type { RefKind as RefKindValue } from './refs/ref-kind';
 export type { RefMethodOptions } from './refs/ref-methods.types';
 export type {
   ExtendWithFields,
@@ -207,7 +204,6 @@ export type {
   DefineResourceOptions,
   ResourceBuilder,
 } from './resource/resource.types';
-export type { HttpMethod as HttpMethodValue } from './routes/http-method';
 export type {
   DefineRoutesBuilderInput,
   DefineRoutesInput,
@@ -242,7 +238,6 @@ export type {
   CodepotSchemaNamespace,
   CompositeOptions,
 } from './schema/schema';
-export type { SchemaKind as SchemaKindValue } from './schema/schema-kind';
 export type {
   AnyOfSchemaField,
   CompositeSchemaField,
