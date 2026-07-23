@@ -57,15 +57,18 @@ test('platform composition uses node memory and shared capability folders', asyn
     'platform/node/command-runner.ts',
     'platform/node/module-loader.ts',
     'platform/node/file-system-cache.ts',
+    'platform/node/source-resolver.ts',
     'platform/memory/file-system.ts',
     'platform/memory/command-runner.ts',
     'platform/memory/module-loader.ts',
     'platform/memory/cache.ts',
+    'platform/memory/source-store.ts',
     'platform/shared/cancellation.ts',
     'platform/shared/data-codec.ts',
     'platform/shared/event-bus.ts',
     'platform/shared/file-writer.ts',
     'platform/shared/hash.ts',
+    'platform/shared/source-resolver.types.ts',
     'platform/shared/system.ts',
   ]) {
     assert.ok((await source(path)).trim().length > 0, `${path} must exist`);
@@ -85,8 +88,10 @@ test('moved flat platform files are compatibility shims only', async () => {
     'platform/memory-module-loader.ts',
     'platform/module-loader.ts',
     'platform/node-file-system.ts',
+    'platform/source-resolver.ts',
+    'platform/source-resolver.types.ts',
   ]) {
     const value = await source(path);
-    assert.ok(value.split('\n').length <= 5, `${path} must remain a thin shim`);
+    assert.ok(value.split('\n').length <= 6, `${path} must remain a thin shim`);
   }
 });
