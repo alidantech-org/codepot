@@ -6,12 +6,11 @@ from pathlib import Path
 
 
 def write_debug_templates(root: Path) -> Path:
-    """Create a minimal debug template tree with folder recipe paths."""
+    """Create a debug template tree covering every resource-first item group."""
     template_root = root / "debug"
-    (template_root / "{resource}").mkdir(parents=True)
-    (template_root / "{model}").mkdir(parents=True)
+    for folder in ("resource", "model", "dto", "enum", "operation"):
+        (template_root / f"{{{folder}}}").mkdir(parents=True)
 
-    # Write paths.yaml configuration
     (template_root / "paths.yaml").write_text(
         """template_extension: ".j2"
 strip_template_extension: true
@@ -35,6 +34,35 @@ folders:
       - [model.emit.resource_path]
       - schemas
       - models
+
+  dto:
+    select: schemas.emit_dtos
+    as: dto
+    parts:
+      - docs
+      - resources
+      - [dto.emit.resource_path]
+      - schemas
+      - dtos
+
+  enum:
+    select: schemas.emit_enums
+    as: enum
+    parts:
+      - docs
+      - resources
+      - [enum.emit.resource_path]
+      - schemas
+      - enums
+
+  operation:
+    select: operations
+    as: operation
+    parts:
+      - docs
+      - resources
+      - [operation.emit.resource_path]
+      - operations
 """,
         encoding="utf-8",
     )
@@ -57,6 +85,18 @@ folders:
     )
     (template_root / "{model}" / "[model.name.path.o].md.j2").write_text(
         "Schema: {{ model.name.pascal.o }}\nKind: {{ model.api.kind }}\n",
+        encoding="utf-8",
+    )
+    (template_root / "{dto}" / "[dto.name.path.o].md.j2").write_text(
+        "DTO: {{ dto.name.pascal.o }}\nKind: {{ dto.api.kind }}\n",
+        encoding="utf-8",
+    )
+    (template_root / "{enum}" / "[enum.name.path.o].md.j2").write_text(
+        "Enum: {{ enum.name.pascal.o }}\n",
+        encoding="utf-8",
+    )
+    (template_root / "{operation}" / "[operation.emit.file_name].md.j2").write_text(
+        "Operation: {{ operation.name.pascal.o }}\n",
         encoding="utf-8",
     )
     (template_root / ".gitignore").write_text(
