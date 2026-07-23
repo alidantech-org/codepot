@@ -1,4 +1,5 @@
 import type {
+  CodepotId,
   CodepotRuntimePort,
   Diagnostic,
   OperationFailure,
@@ -6,6 +7,7 @@ import type {
   RuntimeFeatureResult,
   RuntimeOperationKind,
   RuntimeOperationMap,
+  RuntimeRequest,
   RuntimeResponse,
   RunContext,
 } from '@/contract/index';
@@ -33,11 +35,7 @@ export class CodepotRuntime implements CodepotRuntimePort {
   }
 
   async execute<TKind extends RuntimeOperationKind>(
-    request: {
-      readonly kind: TKind;
-      readonly input: RuntimeOperationMap[TKind]['request'];
-      readonly context?: Partial<RunContext>;
-    },
+    request: RuntimeRequest<TKind>,
   ): Promise<RuntimeResponse<TKind>> {
     const context = createRunContext(this.#dependencies, request.context);
     const startedAt = this.#dependencies.clock.monotonicMilliseconds();
@@ -91,7 +89,7 @@ export class CodepotRuntime implements CodepotRuntimePort {
 
 function createRuntimeResponse<TKind extends RuntimeOperationKind>(
   kind: TKind,
-  runId: string,
+  runId: CodepotId,
   result: RuntimeOperationMap[TKind]['result'],
 ): RuntimeResponse<TKind> {
   return { kind, runId, result };
