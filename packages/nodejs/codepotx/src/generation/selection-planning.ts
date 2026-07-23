@@ -115,7 +115,7 @@ function attachFileContext(
     [selection.alias]: {
       ...selected,
       emit: {
-        ...(asObject(selected.emit) ?? {}),
+        ...(asObject(selected['emit']) ?? {}),
         group,
         path: outputPath,
         fileName: name,
