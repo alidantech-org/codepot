@@ -3,9 +3,14 @@ import type { AccessRef } from '../access/access.types';
 import type { InfoInput, NormalizedInfo, ResourceContext } from '../core/authoring.types';
 import type { RuntimeRouteConfig } from '../hooks/hooks.types';
 import type { ComponentRef, ModelRef, PropertyRef, RequestBodyRef, ResponseRef, RouteRef } from '../refs/ref.types';
-import type { RefUsage, RefWithUsageMethods } from '../refs/ref-usage.types';
+import type {
+  RefUsage,
+  RefWithUsageMethods,
+  SchemaProjectionDefinition,
+} from '../refs/ref-usage.types';
 import type { SchemaField } from '../schema/schema.types';
 import type { HttpMethod } from './http-method';
+
 export interface RouteCacheInvalidationConfig { readonly operations: readonly string[]; }
 export interface RouteCacheConfig { readonly invalidate?: RouteCacheInvalidationConfig; }
 export interface RouteCacheInvalidateBuilder { on(operationId: string): RouteCacheInvalidateBuilder; build(): RouteCacheInvalidationConfig; }
@@ -14,7 +19,24 @@ export type RouteParameterRegistry = RefWithUsageMethods<ComponentRef> | RefUsag
 export type RouteParameterFieldValue = PropertyRef | RefUsage<PropertyRef>;
 export type RouteParameterMap = Readonly<Record<string, RouteParameterFieldValue>>;
 export type RouteQueryInput = RouteParameterMap | RefWithUsageMethods<ComponentRef> | RefUsage<ComponentRef>;
-export type RouteSchemaInput = PropertyRef | ComponentRef | ModelRef | RefUsage<PropertyRef> | RefUsage<ComponentRef> | RefUsage<ModelRef> | SchemaField;
+
+/** Any schema projection produced by `.partial()`, `.pick()`, or `.omit()`. */
+export type RouteSchemaProjection = SchemaProjectionDefinition<
+  string,
+  Record<string, unknown>,
+  'partial' | 'pick' | 'omit'
+>;
+
+export type RouteSchemaInput =
+  | PropertyRef
+  | ComponentRef
+  | ModelRef
+  | RefUsage<PropertyRef>
+  | RefUsage<ComponentRef>
+  | RefUsage<ModelRef>
+  | SchemaField
+  | RouteSchemaProjection;
+
 export interface RouteBodyObjectInput { readonly schema: RouteSchemaInput; readonly required?: boolean; readonly description?: string; readonly contentType?: string | readonly string[]; }
 export type RouteBodyInput = RouteSchemaInput | RequestBodyRef | RouteBodyObjectInput;
 export interface RouteResponseObjectInput { readonly schema: RouteSchemaInput; readonly description?: string; readonly contentType?: string | readonly string[]; }
