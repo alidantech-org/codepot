@@ -48,7 +48,7 @@ class EmitInput:
 
 @dataclass(frozen=True)
 class GenerateInput:
-    """Input for CodepotFile-driven generation."""
+    """Input for ``Codepotg.yaml``-driven generation."""
 
     config_path: Path | None = None
     task_name: str | None = None
