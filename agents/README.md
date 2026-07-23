@@ -28,11 +28,13 @@ Users do not install Zod. `codepotx` owns it internally and exports a curated Co
 
 ## Sources of truth
 
-- `agents/ARCHITECTURE.md` — module boundaries and dependency direction.
+- `agents/ARCHITECTURE.md` — top-level module boundaries and dependency direction.
+- `agents/CODEPOTX_STRUCTURE_GUIDE.md` — required scalable folder/file structure, chunking rules, type-safety invariants, and non-breaking migration method.
 - `agents/RULES.md` — clean-code, compatibility, and dependency rules.
 - `agents/WORKFLOW.md` — issue, task, implementation, validation, and commit workflow.
 - `agents/FEATURES.md` — required product behavior.
 - `agents/tasks/00-roadmap.md` — ordered project status.
+- `agents/tasks/15-codepotx-structure-migration.md` — umbrella record for the structural migration program.
 - `packages/nodejs/codepotx-old` — TypeScript authoring and compiler behavior reference.
 - `packages/python/codepotg` — CodepotFile, paths, template-context, planning, writing, cleanup, command, and reporting behavior reference.
 
@@ -46,4 +48,7 @@ Implementation proceeds in this order:
 4. templating and Handlebars migration;
 5. generation and CodepotFile orchestration;
 6. external CLI;
-7. full parity, packaging, and release validation.
+7. full parity, packaging, and release validation;
+8. structure hardening through Tasks 15-23 before further large-scale feature expansion.
+
+The structure migration must begin with Task 16 baseline and architecture guardrails. Do not perform broad file moves before those checks exist.
