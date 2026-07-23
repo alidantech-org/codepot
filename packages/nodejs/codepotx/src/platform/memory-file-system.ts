@@ -20,7 +20,11 @@ interface MemoryEntry {
 }
 
 function normalizeMemoryPath(path: PortablePath, cwd = '/'): PortablePath {
-  const absolute = path.startsWith('/') ? path : posix.join(cwd, path);
+  const portablePath = path.replaceAll('\\', '/');
+  const portableCwd = cwd.replaceAll('\\', '/');
+  const absolute = portablePath.startsWith('/')
+    ? portablePath
+    : posix.join(portableCwd, portablePath);
   const normalized = posix.normalize(absolute);
   return normalized === '.' ? '/' : normalized;
 }
@@ -67,7 +71,9 @@ export class MemoryFileSystem implements FileSystemPort {
     if (!entry) throw new Error(`Memory path does not exist: ${normalized}`);
     return {
       kind: entry.kind,
-      size: entry.kind === 'file' ? Buffer.from(entry.content ?? '', 'base64').byteLength : 0,
+      size: entry.kind === 'file'
+        ? Buffer.from(entry.content ?? '', 'base64').byteLength
+        : 0,
       modifiedAt: entry.modifiedAt,
     };
   }
@@ -93,17 +99,24 @@ export class MemoryFileSystem implements FileSystemPort {
       });
     }
 
-    return [...children.values()].sort((left, right) => left.name.localeCompare(right.name));
+    return [...children.values()].sort((left, right) =>
+      left.name.localeCompare(right.name),
+    );
   }
 
-  async glob(patterns: readonly string[], options: GlobOptions = {}): Promise<readonly PortablePath[]> {
+  async glob(
+    patterns: readonly string[],
+    options: GlobOptions = {},
+  ): Promise<readonly PortablePath[]> {
     const cwd = normalizeMemoryPath(options.cwd ?? '/');
     const results: PortablePath[] = [];
 
     for (const [candidate, entry] of this.#entries) {
       if (candidate === '/') continue;
       if (!options.includeDirectories && entry.kind === 'directory') continue;
-      if (!candidate.startsWith(cwd === '/' ? '/' : `${cwd}/`) && candidate !== cwd) continue;
+      if (!candidate.startsWith(cwd === '/' ? '/' : `${cwd}/`) && candidate !== cwd) {
+        continue;
+      }
 
       const relative = posix.relative(cwd, candidate);
       if (!matchesAnyGlob(relative, patterns)) continue;
@@ -114,19 +127,30 @@ export class MemoryFileSystem implements FileSystemPort {
     return results.sort((left, right) => left.localeCompare(right));
   }
 
-  async mkdir(path: PortablePath, options: { readonly recursive?: boolean } = {}): Promise<void> {
+  async mkdir(
+    path: PortablePath,
+    options: { readonly recursive?: boolean } = {},
+  ): Promise<void> {
     const normalized = normalizeMemoryPath(path);
     if (options.recursive) {
       this.#ensureParents(posix.join(normalized, '_placeholder'));
       if (!this.#entries.has(normalized)) {
-        this.#entries.set(normalized, { kind: 'directory', modifiedAt: this.#clock.now() });
+        this.#entries.set(normalized, {
+          kind: 'directory',
+          modifiedAt: this.#clock.now(),
+        });
       }
       return;
     }
 
     const parent = posix.dirname(normalized);
-    if (!this.#entries.has(parent)) throw new Error(`Parent directory does not exist: ${parent}`);
-    this.#entries.set(normalized, { kind: 'directory', modifiedAt: this.#clock.now() });
+    if (!this.#entries.has(parent)) {
+      throw new Error(`Parent directory does not exist: ${parent}`);
+    }
+    this.#entries.set(normalized, {
+      kind: 'directory',
+      modifiedAt: this.#clock.now(),
+    });
   }
 
   async remove(path: PortablePath, options: RemoveOptions = {}): Promise<void> {
@@ -138,7 +162,9 @@ export class MemoryFileSystem implements FileSystemPort {
     }
 
     if (entry.kind === 'directory') {
-      const descendants = [...this.#entries.keys()].filter((candidate) => candidate.startsWith(`${normalized}/`));
+      const descendants = [...this.#entries.keys()].filter((candidate) =>
+        candidate.startsWith(`${normalized}/`),
+      );
       if (descendants.length > 0 && !options.recursive) {
         throw new Error(`Memory directory is not empty: ${normalized}`);
       }
@@ -160,11 +186,15 @@ export class MemoryFileSystem implements FileSystemPort {
     if (this.#entries.has(destination) && !options.overwrite) {
       throw new Error(`Memory destination already exists: ${destination}`);
     }
-    if (options.overwrite) await this.remove(destination, { recursive: true, force: true });
+    if (options.overwrite) {
+      await this.remove(destination, { recursive: true, force: true });
+    }
 
     this.#ensureParents(destination);
     const descendants = [...this.#entries.entries()]
-      .filter(([candidate]) => candidate === source || candidate.startsWith(`${source}/`))
+      .filter(([candidate]) =>
+        candidate === source || candidate.startsWith(`${source}/`),
+      )
       .sort(([left], [right]) => left.length - right.length);
 
     for (const [candidate, value] of descendants) {
@@ -176,14 +206,18 @@ export class MemoryFileSystem implements FileSystemPort {
 
   async realpath(path: PortablePath): Promise<PortablePath> {
     const normalized = normalizeMemoryPath(path);
-    if (!this.#entries.has(normalized)) throw new Error(`Memory path does not exist: ${normalized}`);
+    if (!this.#entries.has(normalized)) {
+      throw new Error(`Memory path does not exist: ${normalized}`);
+    }
     return normalized;
   }
 
   #file(path: PortablePath): MemoryEntry {
     const normalized = normalizeMemoryPath(path);
     const entry = this.#entries.get(normalized);
-    if (!entry || entry.kind !== 'file') throw new Error(`Memory file does not exist: ${normalized}`);
+    if (!entry || entry.kind !== 'file') {
+      throw new Error(`Memory file does not exist: ${normalized}`);
+    }
     return entry;
   }
 
@@ -195,7 +229,10 @@ export class MemoryFileSystem implements FileSystemPort {
       current = posix.dirname(current);
     }
     for (const directory of missing.reverse()) {
-      this.#entries.set(directory, { kind: 'directory', modifiedAt: this.#clock.now() });
+      this.#entries.set(directory, {
+        kind: 'directory',
+        modifiedAt: this.#clock.now(),
+      });
     }
   }
 }
