@@ -5,8 +5,8 @@ import from it.
 """
 
 APP_NAME = "codepotg"
-APP_DESCRIPTION = "Deprecated Python and Jinja Codepot generator."
-APP_VERSION = "0.1.0"
+APP_DESCRIPTION = "Stable OpenAPI-driven Python and Jinja Codepot generator."
+APP_VERSION = "1.0.0"
 
 CMD_EMIT = "emit"
 CMD_GENERATE = "generate"
