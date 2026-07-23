@@ -35,7 +35,7 @@ class RuntimeApi(Protocol):
     """Runtime methods the CLI is allowed to call."""
 
     def generate(self, **kwargs):
-        """Run CodepotFile generation."""
+        """Run CodepotG configuration-driven generation."""
 
 
 def set_runtime(ctx: typer.Context, runtime: RuntimeApi) -> None:
@@ -59,6 +59,7 @@ app = typer.Typer(
     help=APP_DESCRIPTION,
     add_completion=False,
     no_args_is_help=True,
+    invoke_without_command=True,
     rich_markup_mode="rich",
 )
 
