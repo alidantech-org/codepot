@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class NumberKind(str, Enum):
+class NumberKind(StrEnum):
     """Detected grammatical number for a token."""
 
     UNKNOWN = "unknown"
