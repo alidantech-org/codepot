@@ -26,7 +26,11 @@ import type {
   SchemaComponentDefinition,
   SchemaComponentRegistry,
 } from '../components/component.types';
-import type { EntityDefinition, EntityRegistry } from '../entities/entity.types';
+import type {
+  EntityDefinition,
+  EntityRegistry,
+  EntityRelation,
+} from '../entities/entity.types';
 import type { RuntimeHookRegistry } from '../hooks/hooks.types';
 import type { PropertyRegistry } from '../properties/property.types';
 import { isRefUsage } from '../refs/ref-methods';
@@ -318,31 +322,18 @@ function namedSchema(value: unknown): CompiledInlineSchema {
   return zodSchema(value);
 }
 
-function compileRelation(
-  relation: Parameters<
-    typeof Array.prototype.map<CompiledRelation>
-  >[0] extends (value: infer TValue, ...rest: never[]) => unknown ? TValue : never,
-): CompiledRelation {
-  const value = relation as {
-    readonly source: string;
-    readonly name: string;
-    readonly target: { readonly id: string };
-    readonly local: string;
-    readonly foreign: string;
-    readonly cardinality: string;
-    readonly onDelete?: unknown;
-  };
-  const behavior = deleteBehavior(value.onDelete);
+function compileRelation(relation: EntityRelation): CompiledRelation {
+  const behavior = deleteBehavior(relation.onDelete);
   return {
-    id: `relation:${value.source}:${value.name}`,
-    key: value.name,
-    name: value.name,
-    sourceEntity: value.source,
-    targetEntity: value.target.id,
-    sourceField: value.local,
-    targetField: value.foreign,
-    cardinality: cardinality(value.cardinality),
-    required: dynamicObject(value.onDelete)?.setNull !== true,
+    id: `relation:${relation.source}:${relation.name}`,
+    key: relation.name,
+    name: relation.name,
+    sourceEntity: relation.source,
+    targetEntity: relation.target.id,
+    sourceField: relation.local,
+    targetField: relation.foreign,
+    cardinality: cardinality(relation.cardinality),
+    required: relation.onDelete?.setNull !== true,
     ...(behavior ? { deleteBehavior: behavior } : {}),
   };
 }
