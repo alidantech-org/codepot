@@ -1,5 +1,5 @@
 export function joinTemplatePath(root: string, path: string): string {
-  return `${root.replace(/[\/]$/, '')}/${path.replace(/^[\/]/, '')}`;
+  return `${root.replace(/[\\/]$/, '')}/${path.replace(/^[\\/]/, '')}`;
 }
 
 export function relativeTemplatePath(root: string, path: string): string {
