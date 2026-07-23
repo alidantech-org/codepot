@@ -20,7 +20,7 @@ import {
 test('generation publisher emits observational stage file and command events', async () => {
   const platform = createMemoryPlatformServices();
   const events: CodepotEvent[] = [];
-  const subscription = platform.events.subscribe(undefined, (event) => {
+  const subscription = platform.events.subscribe((event) => {
     events.push(event);
   });
   const publisher = new GenerationEventPublisher(platform, 'generation:test');
@@ -31,13 +31,13 @@ test('generation publisher emits observational stage file and command events', a
     exitCode: 0, skipped: false, optional: false, stdout: '', stderr: '',
   });
   await publisher.stage('stage.completed', 'render', { itemCount: 1 });
-  subscription.dispose();
+  await subscription.dispose();
 
   assert.deepEqual(events.map((event) => event.type), [
-    'stage.started',
-    'file.classified',
-    'command.completed',
-    'stage.completed',
+    'runtime.stage',
+    'generation.file.written',
+    'generation.command.completed',
+    'runtime.stage',
   ]);
   assert.deepEqual(events.map((event) => event.sequence), [1, 2, 3, 4]);
   assert.equal(events.every((event) => event.runId === 'generation:test'), true);
@@ -49,6 +49,7 @@ test('cancellation after file mutation rolls back bytes and manifest', async () 
   await platform.files.writeText('/project/generated/file.ts', 'previous\n');
   const controller = new CodepotCancellationController();
   const writer: FileWriterPort = {
+    compare: (request) => platform.writer.compare(request),
     write: (request) => platform.writer.write(request),
     writeBatch: async (request) => {
       const outcomes = await platform.writer.writeBatch(request);
