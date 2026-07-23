@@ -80,6 +80,7 @@ test('grouped runner reaches every original behavior suite exactly once', async 
     'public-exports.test',
     'runtime-platform-modularization.test',
     'runtime.test',
+    'structure-integration.test',
     'structural-modularization.test',
     'template-variables.test',
     'templating.test',
