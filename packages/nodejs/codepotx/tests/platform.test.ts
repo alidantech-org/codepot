@@ -111,166 +111,200 @@ test('changed-aware writer handles managed, immutable, raw, and layout-insensiti
     lifecycle: 'managed',
     atomic: true,
   })).status, 'created');
-
   assert.equal((await writer.write({
     path,
-    content: { encoding: 'utf8', text: 'export const value = 1;' },
+    content: { encoding: 'utf8', text: 'export const value = 1;\n\n' },
     compareMode: 'exact',
     lifecycle: 'managed',
-    atomic: true,
   })).status, 'unchanged');
-
   assert.equal((await writer.write({
     path,
-    content: { encoding: 'utf8', text: 'export const value = 2;' },
-    compareMode: 'exact',
-    lifecycle: 'immutable',
-    atomic: true,
-  })).status, 'refused');
-
-  assert.equal((await writer.write({
-    path: '/output/layout.ts',
-    content: { encoding: 'utf8', text: 'export const value = 1;\n' },
+    content: { encoding: 'utf8', text: 'export   const value=1;' },
     compareMode: 'layoutInsensitive',
     lifecycle: 'managed',
-    atomic: true,
-  })).status, 'created');
-
-  assert.equal((await writer.write({
-    path: '/output/layout.ts',
-    content: { encoding: 'utf8', text: 'export   const value = 1;' },
-    compareMode: 'layoutInsensitive',
-    lifecycle: 'managed',
-    atomic: true,
   })).status, 'unchanged');
-
   assert.equal((await writer.write({
-    path: '/output/raw.bin',
-    content: { encoding: 'base64', data: Buffer.from([1, 2, 3]).toString('base64') },
+    path,
+    content: { encoding: 'utf8', text: 'changed' },
     compareMode: 'raw',
-    lifecycle: 'managed',
-    atomic: true,
-  })).status, 'created');
+    lifecycle: 'immutable',
+  })).status, 'skipped');
+  assert.equal(await files.readText(path), 'export const value = 1;\n');
 });
 
 test('memory cache expires entries deterministically', async () => {
   const clock = new FixedClock('2026-01-01T00:00:00.000Z');
   const cache = new MemoryCache(clock);
-  await cache.set('key', { value: 1 }, 1_000);
-  assert.deepEqual(await cache.get('key'), { value: 1 });
+  await cache.set({
+    key: 'authoring:one',
+    value: { encoding: 'utf8', data: '{}' },
+    createdAt: clock.now(),
+    expiresAt: '2026-01-01T00:00:01.000Z',
+  });
+  assert.equal((await cache.get('authoring:one'))?.key, 'authoring:one');
   clock.advance(1_001);
-  assert.equal(await cache.get('key'), undefined);
+  assert.equal(await cache.get('authoring:one'), null);
 });
 
 test('command adapters support dry run, output capture, and cancellation', async () => {
   const runner = new NodeCommandRunner();
-  const dry = await runner.run({ command: 'ignored', cwd: process.cwd(), environment: {}, dryRun: true });
-  assert.equal(dry.skipped, true);
-
-  const output = await runner.run({
-    command: `${JSON.stringify(process.execPath)} -e "process.stdout.write('out'); process.stderr.write('err')"`,
+  const dry = await runner.run({
+    command: 'not-executed',
     cwd: process.cwd(),
     environment: {},
+    dryRun: true,
   });
-  assert.equal(output.exitCode, 0);
-  assert.equal(output.stdout, 'out');
-  assert.equal(output.stderr, 'err');
+  assert.equal(dry.skipped, true);
+
+  const completed = await runner.run({
+    command: `${process.execPath} -e "process.stdout.write(process.env.CODEPOT_VALUE)"`,
+    cwd: process.cwd(),
+    environment: { CODEPOT_VALUE: 'captured' },
+  });
+  assert.equal(completed.exitCode, 0);
+  assert.equal(completed.stdout, 'captured');
 
   const controller = new CodepotCancellationController();
-  controller.cancel('test');
-  const cancelled = await runner.run({
-    command: `${JSON.stringify(process.execPath)} -e "setTimeout(() => {}, 1000)"`,
+  const pending = runner.run({
+    command: `${process.execPath} -e "setTimeout(() => {}, 5000)"`,
     cwd: process.cwd(),
     environment: {},
     signal: controller.signal,
   });
-  assert.equal(cancelled.cancelled, true);
+  setTimeout(() => controller.abort('test cancellation'), 20);
+  await assert.rejects(pending, /test cancellation/u);
 });
 
 test('memory test adapters record commands and modules', async () => {
   const commands = new MemoryCommandRunner();
-  const outcome = await commands.run({ command: 'echo test', cwd: '/project', environment: {} });
-  assert.equal(outcome.exitCode, 0);
+  await commands.run({ command: 'format', cwd: '/project', environment: {} });
   assert.equal(commands.requests.length, 1);
 
   const modules = new MemoryModuleLoader();
-  modules.register('/project/codepotx.config.ts', { value: 42 });
-  assert.deepEqual(await modules.load('/project/codepotx.config.ts'), { value: 42 });
-  assert.equal(modules.requests.length, 1);
+  modules.register('/project/codepotx.config.ts', { default: { contracts: [] } });
+  const loaded = await modules.load<{ readonly default: object }>('/project/codepotx.config.ts');
+  assert.deepEqual(loaded.exports.default, { contracts: [] });
 });
 
-test('memory source registry stores stable resolved sources', async () => {
+test('memory source registry stores stable resolved sources', () => {
   const registry = new MemorySourceRegistry();
   const source: ResolvedSource = {
-    id: 'source:test',
-    descriptor: { kind: 'memory', id: 'test' },
-    root: '/project',
-    entry: '/project/index.ts',
+    id: 'source_1',
+    descriptor: { kind: 'memory', id: 'contracts' },
+    root: '/contracts',
+    entry: '/contracts/codepotx.config.ts',
     digest: 'digest',
     files: [],
   };
   registry.register(source);
-  assert.deepEqual(registry.get('test'), source);
+  assert.deepEqual(registry.get('source_1'), source);
+  assert.equal(registry.delete('source_1'), true);
 });
 
 test('data codec and hashing produce JSON-safe deterministic values', async () => {
   const codec = new YamlJsonCodec();
-  const value = { z: 1, a: ['x'] };
-  assert.deepEqual(codec.parseYaml(codec.stringifyYaml(value)), value);
-  assert.deepEqual(codec.parseJson(codec.stringifyJson(value)), value);
+  assert.deepEqual(codec.parseYaml('name: codepot\ncount: 2\n'), { name: 'codepot', count: 2 });
+  assert.equal(codec.stringifyJson({ value: 1 }, { pretty: true }).endsWith('\n'), true);
+  assert.throws(() => codec.stringifyJson({ date: new Date() }), /Non-JSON object/u);
+
   const hash = new Sha256Hash();
-  assert.equal(await hash.text('same'), await hash.text('same'));
-  assert.equal(await hash.values(['a', 'b']), await hash.values(['a', 'b']));
+  assert.equal(
+    await hash.values([{ beta: 2, alpha: 1 }]),
+    await hash.values([{ alpha: 1, beta: 2 }]),
+  );
 });
 
 test('filesystem cache persists encoded payloads through the filesystem port', async () => {
-  const files = new MemoryFileSystem(new FixedClock('2026-01-01T00:00:00.000Z'));
-  const cache = new FileSystemCache(files, new JsonTestCodec(), '/cache');
-  await cache.set('key/with/slashes', { value: 1 });
-  assert.deepEqual(await cache.get('key/with/slashes'), { value: 1 });
-  await cache.remove('key/with/slashes');
-  assert.equal(await cache.get('key/with/slashes'), undefined);
+  const clock = new FixedClock('2026-01-01T00:00:00.000Z');
+  const files = new MemoryFileSystem(clock);
+  const cache = new FileSystemCache('/cache', files, new JsonTestCodec(), new Sha256Hash(), clock);
+  await cache.set({
+    key: 'templates:pack',
+    value: { encoding: 'utf8', data: '{"kind":"codepot.templates"}' },
+    createdAt: clock.now(),
+  });
+  assert.equal((await cache.get('templates:pack'))?.value.encoding, 'utf8');
+  assert.equal(await cache.delete('templates:pack'), true);
+  assert.equal(await cache.get('templates:pack'), null);
 });
 
 test('module loader tracks the reachable entry and supports caching', async () => {
   const root = await mkdtemp(join(tmpdir(), 'codepot-module-'));
   try {
-    const entry = join(root, 'config.ts');
-    await new NodeFileSystem().writeText(entry, 'export default { value: 42 };\n');
-    const loader = new TsxModuleLoader();
-    const first = await loader.load<{ default: { value: number } }>(entry);
-    const second = await loader.load<{ default: { value: number } }>(entry);
-    assert.equal(first.default.value, 42);
-    assert.equal(second.default.value, 42);
+    const entry = join(root, 'config.mjs');
+    const files = new NodeFileSystem();
+    await files.writeText(entry, 'export default { name: "codepot" };\n');
+    const loader = new TsxModuleLoader(files, new Sha256Hash());
+    const first = await loader.load<{ readonly default: { readonly name: string } }>(entry, { cache: true });
+    const second = await loader.load<{ readonly default: { readonly name: string } }>(entry, { cache: true });
+    assert.equal(first.exports.default.name, 'codepot');
     assert.equal(first, second);
+    assert.equal(first.files.some((file) => file.path === entry), true);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
 test('source resolver handles local, package, git, artifact, and memory sources', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'codepot-source-'));
+  const root = await mkdtemp(join(tmpdir(), 'codepot-sources-'));
+  const files = new NodeFileSystem();
+  const hash = new Sha256Hash();
+  const codec = new JsonTestCodec();
+  const commands = new NodeCommandRunner();
+  const memory = new MemorySourceRegistry();
+  const resolver = new DefaultSourceResolver(files, hash, codec, commands, {
+    cacheRoot: join(root, '.sources'),
+    memory,
+  });
+
   try {
-    const files = new NodeFileSystem();
-    const codec = new YamlJsonCodec();
-    const hash = new Sha256Hash();
-    const modules = new TsxModuleLoader();
-    const memory = new MemorySourceRegistry();
-    const resolver = new DefaultSourceResolver({ files, codec, hash, modules, memory });
+    const localRoot = join(root, 'local');
+    await files.writeText(join(localRoot, 'codepotx.config.ts'), 'export default {};\n');
+    const local = await resolver.resolve({ kind: 'local', path: localRoot, entry: 'codepotx.config.ts' });
+    assert.equal(local.files.length, 1);
 
-    await files.writeText(join(root, 'local', 'index.ts'), 'export default {};\n');
-    const local = await resolver.resolve({ kind: 'local', path: 'local', entry: 'index.ts' }, { projectRoot: root });
-    assert.equal(local.entry.endsWith('index.ts'), true);
+    const artifact = await resolver.resolve({ kind: 'artifact', path: join(localRoot, 'codepotx.config.ts') });
+    assert.equal(artifact.entry.endsWith('codepotx.config.ts'), true);
 
-    memory.register({
-      id: 'memory:test',
-      descriptor: { kind: 'memory', id: 'test' },
+    const packageRoot = join(root, 'node_modules', 'test-codepot-source');
+    await files.writeText(join(packageRoot, 'package.json'), JSON.stringify({
+      name: 'test-codepot-source',
+      version: '1.0.0',
+      main: 'index.js',
+    }));
+    await files.writeText(join(packageRoot, 'index.js'), 'module.exports = {};\n');
+    const packaged = await resolver.resolve({
+      kind: 'package',
+      package: 'test-codepot-source',
+      version: '1.0.0',
+      entry: 'index.js',
+    }, { projectRoot: root });
+    assert.equal(packaged.root, packageRoot);
+
+    const repository = join(root, 'repository');
+    await files.mkdir(repository, { recursive: true });
+    for (const command of [
+      'git init',
+      'git config user.email "codepot@example.test"',
+      'git config user.name "Codepot Test"',
+    ]) {
+      assert.equal((await commands.run({ command, cwd: repository, environment: {} })).exitCode, 0);
+    }
+    await files.writeText(join(repository, 'paths.yaml'), 'folders: {}\n');
+    assert.equal((await commands.run({ command: 'git add . && git commit -m "initial"', cwd: repository, environment: {} })).exitCode, 0);
+    const git = await resolver.resolve({ kind: 'git', repository, ref: 'HEAD', entry: 'paths.yaml' });
+    assert.equal(git.entry.endsWith('paths.yaml'), true);
+
+    const memorySource: ResolvedSource = {
+      id: 'memory_source',
+      descriptor: { kind: 'memory', id: 'contracts' },
       root: '/memory',
-      entry: '/memory/index.ts',
-      digest: 'memory',
+      entry: '/memory/codepotx.config.ts',
+      digest: 'memory-digest',
       files: [],
-    });
-    assert.equal((await resolver.resolve({ kind: 'memory', id: 'test' })).id, 'memory:test');
+    };
+    memory.register(memorySource);
+    assert.equal((await resolver.resolve({ kind: 'memory', id: 'memory_source' })).digest, 'memory-digest');
   } finally {
     await rm(root, { recursive: true, force: true });
   }
