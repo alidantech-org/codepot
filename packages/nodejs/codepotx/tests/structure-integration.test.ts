@@ -133,43 +133,45 @@ test('public entrypoints and package scripts match the documented boundary', asy
 });
 
 test('owned source does not depend on moved platform compatibility shims', async () => {
-  const shimSpecifiers = [
-    './cache',
-    './command-runner',
-    './data-codec',
-    './event-bus',
-    './file-writer',
-    './hash',
-    './memory-command-runner',
-    './memory-file-system',
-    './memory-module-loader',
-    './module-loader',
-    './node-file-system',
-    './source-resolver',
-    './system',
+  const shimNames = [
+    'cache',
+    'command-runner',
+    'data-codec',
+    'event-bus',
+    'file-writer',
+    'hash',
+    'memory-command-runner',
+    'memory-file-system',
+    'memory-module-loader',
+    'module-loader',
+    'node-file-system',
+    'source-resolver',
+    'system',
   ];
+  const shims = new Set([
+    'platform/cache.ts',
+    'platform/command-runner.ts',
+    'platform/data-codec.ts',
+    'platform/event-bus.ts',
+    'platform/file-writer.ts',
+    'platform/hash.ts',
+    'platform/memory-command-runner.ts',
+    'platform/memory-file-system.ts',
+    'platform/memory-module-loader.ts',
+    'platform/module-loader.ts',
+    'platform/node-file-system.ts',
+    'platform/source-resolver.ts',
+    'platform/system.ts',
+  ]);
   const violations: string[] = [];
   for (const path of await files(resolve(sourceRoot, 'platform'))) {
     if (!path.endsWith('.ts')) continue;
     const relativePath = relative(sourceRoot, path).replaceAll('\\', '/');
+    if (shims.has(relativePath)) continue;
     const value = await text(path);
-    const isShim = [
-      'platform/cache.ts',
-      'platform/command-runner.ts',
-      'platform/data-codec.ts',
-      'platform/event-bus.ts',
-      'platform/file-writer.ts',
-      'platform/hash.ts',
-      'platform/memory-command-runner.ts',
-      'platform/memory-file-system.ts',
-      'platform/memory-module-loader.ts',
-      'platform/module-loader.ts',
-      'platform/node-file-system.ts',
-      'platform/source-resolver.ts',
-      'platform/system.ts',
-    ].includes(relativePath);
-    if (isShim) continue;
-    for (const specifier of shimSpecifiers) {
+    const fromRoot = relativePath.split('/').length > 2 ? '../' : './';
+    for (const name of shimNames) {
+      const specifier = `${fromRoot}${name}`;
       if (value.includes(`from '${specifier}'`) || value.includes(`from "${specifier}"`)) {
         violations.push(`${relativePath}: ${specifier}`);
       }
