@@ -65,11 +65,7 @@ test('published runtime value surfaces remain intentional', () => {
     'CODEPOT_PROTOCOL_VERSION',
   ]);
   assert.deepEqual(keys(authoring), authoringValues);
-  assert.deepEqual(keys(root), [
-    ...authoringValues,
-    'CODEPOT_ARTIFACT_VERSION',
-    'CODEPOT_PROTOCOL_VERSION',
-  ].sort());
+  assert.deepEqual(keys(root), authoringValues);
   assert.deepEqual(keys(runtime), [
     'CodepotRuntime',
     'RunContextStore',
