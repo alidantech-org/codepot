@@ -84,8 +84,8 @@ Source of truth: `agents/CODEPOTX_STRUCTURE_GUIDE.md`.
 
 | Order | Task | Status | Gate |
 |---|---|---|---|
-| 15 | Structure migration program | [ ] | Planning complete |
-| 16 | Baseline and architecture guardrails | [ ] | Open first implementation issue |
+| 15 | Structure migration program | [~] | Task 16 active |
+| 16 | Baseline and architecture guardrails | [~] | Issue #14; implementation committed, validation pending |
 | 17 | Contract partitioning | [ ] | Task 16 complete |
 | 18 | Authoring modularization | [ ] | Task 17 complete |
 | 19 | Templating modularization | [ ] | Task 18 complete |
