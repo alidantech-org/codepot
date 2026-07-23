@@ -1,0 +1,45 @@
+{
+  "branch": "chatgpt/codepotx-restart",
+  "packageVersion": "0.0.0",
+  "authoring": {
+    "artifactKind": "codepot.authoring",
+    "project": {
+      "name": "Structure Baseline",
+      "version": "1.0.0"
+    },
+    "operationIds": [
+      "listUsers",
+      "updateUser"
+    ],
+    "cacheInvalidates": {
+      "listUsers": [],
+      "updateUser": [
+        "listUsers"
+      ]
+    }
+  },
+  "templating": {
+    "artifactKind": "codepot.templates",
+    "packName": "baseline-pack",
+    "templateCount": 1,
+    "outputPath": "src/models/user_profile.ts",
+    "renderedText": "export interface UserProfile {}\n"
+  },
+  "generation": {
+    "task": "models",
+    "outputRoot": "/project/generated",
+    "plannedFiles": [
+      "src/models/user_profile.ts"
+    ],
+    "clean": [
+      {
+        "path": "/project/generated/src",
+        "allowed": true
+      }
+    ],
+    "renderedFiles": [
+      "src/models/user_profile.ts"
+    ],
+    "renderedText": "export interface UserProfile {}\n"
+  }
+}
