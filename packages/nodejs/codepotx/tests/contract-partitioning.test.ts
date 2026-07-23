@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { access, readFile, readdir } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import { dirname, relative, resolve, sep } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -30,10 +30,9 @@ function importSpecifiers(source: string): readonly string[] {
   return output;
 }
 
-async function exists(path: string): Promise<boolean> {
+async function isFile(path: string): Promise<boolean> {
   try {
-    await access(path);
-    return true;
+    return (await stat(path)).isFile();
   } catch {
     return false;
   }
@@ -42,8 +41,8 @@ async function exists(path: string): Promise<boolean> {
 async function resolveContractImport(file: string, specifier: string): Promise<string | undefined> {
   if (!specifier.startsWith('.')) return undefined;
   const base = resolve(dirname(file), specifier);
-  for (const candidate of [base, `${base}.ts`, resolve(base, 'index.ts')]) {
-    if (await exists(candidate)) return candidate;
+  for (const candidate of [`${base}.ts`, resolve(base, 'index.ts'), base]) {
+    if (await isFile(candidate)) return candidate;
   }
   return undefined;
 }
