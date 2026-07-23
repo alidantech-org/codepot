@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from src.emission.templates.path_safety import validate_relative_path, UnsafePathError
+from src.emission.templates.path_safety import UnsafePathError, validate_relative_path
 
 
 def test_safe_relative_path_allows_normal_path() -> None:

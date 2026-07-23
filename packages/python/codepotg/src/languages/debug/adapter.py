@@ -59,9 +59,9 @@ from contracts.template import (
     TemplateSchemaLang,
     TemplateSchemaMeta,
 )
+from inference.frontends import all_template_frontends, template_frontends
 from languages.debug.context.path_values import safe_file_name, safe_path_parts
 from languages.decorators import language_adapter
-from inference.frontends import all_template_frontends, template_frontends
 
 
 @language_adapter(name="debug", aliases=("txt", "md"), template_name="debug")

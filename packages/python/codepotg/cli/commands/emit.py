@@ -24,6 +24,7 @@ from cli.constants.constants import (
     OPT_TEMPLATES,
     OPT_VERBOSE,
 )
+from cli.paths import normalize_cli_path
 from cli.presentation.core.console import print_error, print_header
 from cli.presentation.core.interactive import (
     ask_dry_run,
@@ -33,7 +34,6 @@ from cli.presentation.core.interactive import (
     ask_templates_path,
     should_prompt,
 )
-from cli.paths import normalize_cli_path
 from cli.presentation.emit.renderer import render_emit_result
 
 

@@ -9,8 +9,8 @@ from openapi.refs import get_ref
 from openapi.resolver.request_bodies import (
     get_request_body_content,
     get_request_body_content_types,
-    get_request_body_schema_refs,
     get_request_body_ref,
+    get_request_body_schema_refs,
     is_request_body_required,
     resolve_request_body,
 )

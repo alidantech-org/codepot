@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
+from typing import Any
+
+import yaml
+
 from constants.files import ENCODING_UTF8, EXT_JSON, EXT_YAML, EXT_YML
 from constants.openapi import (
     ERR_FILE_NOT_FOUND,
@@ -13,11 +18,6 @@ from constants.openapi import (
     OPENAPI,
     PATHS,
 )
-from pathlib import Path
-from typing import Any
-
-import yaml
-
 from core.errors import OpenApiLoadError
 from openapi.document import OpenApiDocument
 

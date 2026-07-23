@@ -11,6 +11,7 @@ from typing import Any
 from constants.codegen import TARGET, X_CODEGEN
 from constants.openapi import PARAMETERS, REF
 
+
 def get_parameter_target_refs(node: dict[str, Any] | None) -> tuple[str, ...]:
     """Return parameter target refs from x-codegen metadata.
 

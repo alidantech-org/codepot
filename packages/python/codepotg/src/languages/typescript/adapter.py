@@ -21,6 +21,7 @@ from contracts.template import (
     TemplateProjectEmit,
     TemplateProjectLang,
 )
+from inference.frontends import all_template_frontends, template_frontends
 from languages.decorators import language_adapter
 from languages.typescript.constants import (
     NODE_FRAMEWORK_NAME,
@@ -34,7 +35,6 @@ from languages.typescript.operations import template_operations
 from languages.typescript.resources import resource_paths, template_resources
 from languages.typescript.schemas import template_schema_groups
 from languages.typescript.urls import default_base_url
-from inference.frontends import all_template_frontends, template_frontends
 
 
 @language_adapter(

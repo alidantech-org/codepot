@@ -5,7 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from contracts.names import make_contract_name
-from contracts.template import TemplateDependency, TemplateDependencyTarget, TemplateDependencyTargetKind, TemplateFile
+from contracts.template import (
+    TemplateDependency,
+    TemplateDependencyTarget,
+    TemplateDependencyTargetKind,
+    TemplateFile,
+)
 from emission.imports.base import ImportPlanningContext
 from emission.imports.markdown import MarkdownImportPlanner
 

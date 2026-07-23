@@ -6,7 +6,6 @@ from core.errors import ConfigError
 from emission.templates.resolver import resolve_variable
 from inference.frontends import all_template_frontends, template_frontends
 
-
 X_CODEGEN = {
     "frontends": {
         "admin": {

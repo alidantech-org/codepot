@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from constants.openapi import COMPONENTS, COMPONENT_REF_PREFIX, JSON_POINTER_PREFIX, REF
+from constants.openapi import COMPONENT_REF_PREFIX, COMPONENTS, JSON_POINTER_PREFIX, REF
 
 
 @dataclass(frozen=True)

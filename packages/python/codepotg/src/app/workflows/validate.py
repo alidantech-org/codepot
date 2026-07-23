@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from openapi.loader import load_openapi_document
 from app.models import RuntimeDiagnostic, RuntimeEvent, ValidateInput, ValidateOutput
+from openapi.loader import load_openapi_document
 
 
 def run_validate(request: ValidateInput) -> ValidateOutput:

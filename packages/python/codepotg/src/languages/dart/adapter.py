@@ -8,6 +8,7 @@ from contracts.api import ApiContract
 from contracts.emission import EmissionResult
 from contracts.events import ProgressSink, RuntimeEvent
 from contracts.language import LanguagePostResult
+from contracts.names import make_contract_name
 from contracts.template import (
     TemplateContract,
     TemplateContractMeta,
@@ -21,7 +22,7 @@ from contracts.template import (
     TemplateProjectEmit,
     TemplateProjectLang,
 )
-from contracts.names import make_contract_name
+from inference.frontends import all_template_frontends, template_frontends
 from languages.dart.constants import (
     DART_LANGUAGE_ALIAS_FLUTTER,
     DART_LANGUAGE_NAME,
@@ -33,7 +34,6 @@ from languages.dart.operations import template_operations
 from languages.dart.resources import feature_resources, resource_paths, template_resources
 from languages.dart.schemas import template_schema_groups
 from languages.dart.urls import default_base_url
-from inference.frontends import all_template_frontends, template_frontends
 from languages.decorators import language_adapter
 
 

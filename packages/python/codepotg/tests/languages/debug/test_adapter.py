@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
-from src.contracts.api import ApiContract, ApiDocumentInfo, ApiEnumValue, ApiResource, ApiSchema, ApiSchemaGroups
+from src.contracts.api import (
+    ApiContract,
+    ApiDocumentInfo,
+    ApiEnumValue,
+    ApiResource,
+    ApiSchema,
+    ApiSchemaGroups,
+)
 from src.contracts.names import make_contract_name
-from src.languages.discovery import resolve_language_adapter
 from src.languages.debug.context.path_values import safe_file_name, safe_path_parts
+from src.languages.discovery import resolve_language_adapter
 from tests.fixtures.contracts import make_api_contract
 
 

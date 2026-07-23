@@ -13,7 +13,12 @@ from contracts.template import (
     TemplateFile,
 )
 from emission.dependencies.output_index import EmittedItem, OutputIndex
-from emission.dependencies.resolver import REASON_MISSING, REASON_PRIMITIVE, REASON_SELF, resolve_file_dependencies
+from emission.dependencies.resolver import (
+    REASON_MISSING,
+    REASON_PRIMITIVE,
+    REASON_SELF,
+    resolve_file_dependencies,
+)
 
 USER_REF = "#/components/schemas/User"
 

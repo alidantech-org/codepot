@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from collections import Counter
 
-from inference.engine import InferenceEngine
-from openapi.loader import load_openapi_document
 from app.io.inference_output import write_inference_graph
 from app.models import (
     AliasSchemaSummary,
@@ -15,6 +13,8 @@ from app.models import (
     RuntimeEvent,
     UnknownSchemaSummary,
 )
+from inference.engine import InferenceEngine
+from openapi.loader import load_openapi_document
 
 
 def run_infer(request: InferInput) -> InferOutput:

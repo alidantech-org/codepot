@@ -7,7 +7,7 @@ from schema nodes to make fields self-contained for emitters.
 from dataclasses import dataclass
 from typing import Any
 
-from constants.openapi import REF_SCHEMAS, ITEMS, TYPE, TYPE_ARRAY, TYPE_NULL
+from constants.openapi import ITEMS, REF_SCHEMAS, TYPE, TYPE_ARRAY, TYPE_NULL
 from inference.classifiers import classify_schema
 from inference.schemas.primitives import infer_primitive_format
 from inference.schemas.resolution import resolve_schema_alias

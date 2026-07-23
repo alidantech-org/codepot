@@ -6,7 +6,15 @@ and extracting information from parameter objects.
 
 from typing import Any
 
-from constants.openapi import PARAMETERS, REF_PARAMETERS, PARAM_IN, PARAM_NAME, REF, REQUIRED, SCHEMA
+from constants.openapi import (
+    PARAM_IN,
+    PARAM_NAME,
+    PARAMETERS,
+    REF,
+    REF_PARAMETERS,
+    REQUIRED,
+    SCHEMA,
+)
 from openapi.document import OpenApiDocument
 from openapi.refs import get_ref
 

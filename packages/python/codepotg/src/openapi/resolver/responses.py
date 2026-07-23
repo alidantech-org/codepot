@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from constants.openapi import CONTENT, DESCRIPTION
 from constants.http import DEFAULT_STATUS_CODE
+from constants.openapi import CONTENT, DESCRIPTION
 from openapi.document import OpenApiDocument
 from openapi.refs import get_ref
 from openapi.resolver.components import resolve_component_ref
