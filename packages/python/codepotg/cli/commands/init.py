@@ -13,19 +13,27 @@ from codepot_file.editor import (
     DEFAULT_LANGUAGE,
     DEFAULT_OUTPUT,
     DEFAULT_TASK_NAME,
-    DEFAULT_TEMPLATE_DIR,
     TaskDraft,
-    init_codepot_file,
+    init_codepotg_config,
     starter_draft,
 )
+from codepot_file.loader import CODEPOTG_CONFIG_NAME
 
 
 def init_command(
     task_name: str | None = typer.Option(None, "--task", help="Initial task name."),
     input_path: str | None = typer.Option(None, "--input", help="OpenAPI input path."),
     language: str | None = typer.Option(None, "--language", help="Generation language."),
-    template_dir: str | None = typer.Option(None, "--template-dir", help="Template directory."),
-    templates: str | None = typer.Option(None, "--templates", help="Template package path."),
+    template_dir: str | None = typer.Option(
+        None,
+        "--template-dir",
+        help="Custom template directory. Omit it to use bundled templates.",
+    ),
+    templates: str | None = typer.Option(
+        None,
+        "--templates",
+        help="Alias for a custom template directory.",
+    ),
     output_path: str | None = typer.Option(None, "--output", help="Output directory."),
     clean: list[str] | None = typer.Option(None, "--clean", help="Clean path.", show_default=False),
     before: list[str] | None = typer.Option(
@@ -41,13 +49,13 @@ def init_command(
         show_default=False,
     ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Use starter defaults."),
-    force: bool = typer.Option(False, "--force", help="Overwrite existing CodepotFile."),
+    force: bool = typer.Option(False, "--force", help=f"Overwrite existing {CODEPOTG_CONFIG_NAME}."),
     debug: bool = typer.Option(False, "--debug", help="Show traceback when an error occurs."),
 ) -> None:
-    """Create CodepotFile.yml in the current directory."""
+    """Create ``Codepotg.yaml`` in the current directory."""
     try:
         if force:
-            print_warning("Overwriting existing CodepotFile config if one exists.")
+            print_warning(f"Overwriting existing {CODEPOTG_CONFIG_NAME} if present.")
 
         draft = _draft_from_options(
             task_name=task_name,
@@ -61,9 +69,11 @@ def init_command(
             after=tuple(after or ()),
             yes=yes,
         )
-        path = init_codepot_file(root=Path.cwd(), draft=draft, force=force)
+        path = init_codepotg_config(root=Path.cwd(), draft=draft, force=force)
         print_success(f"Created {path.name}")
         print_info(f"Task: {draft.name}")
+        if draft.template_dir is None and draft.templates is None:
+            print_info(f"Templates: bundled {draft.language or DEFAULT_LANGUAGE} pack")
     except Exception as exc:
         print_error(str(exc))
         if debug:
@@ -90,7 +100,7 @@ def _draft_from_options(
             name=starter.name,
             input=input_path or starter.input,
             language=language or starter.language,
-            template_dir=template_dir or (None if templates else starter.template_dir),
+            template_dir=template_dir,
             templates=templates,
             output=output_path or starter.output,
             clean=clean,
@@ -115,7 +125,7 @@ def _draft_from_options(
             name=task_name or DEFAULT_TASK_NAME,
             input=input_path or DEFAULT_INPUT,
             language=language or DEFAULT_LANGUAGE,
-            template_dir=template_dir or (None if templates else DEFAULT_TEMPLATE_DIR),
+            template_dir=template_dir,
             templates=templates,
             output=output_path or DEFAULT_OUTPUT,
             clean=clean,
@@ -128,17 +138,13 @@ def _draft_from_options(
 
 def _interactive_draft() -> TaskDraft:
     task_name = questionary.text("Task name", default=DEFAULT_TASK_NAME).ask() or DEFAULT_TASK_NAME
-    input_path = (
-        questionary.text("OpenAPI input path", default=DEFAULT_INPUT).ask() or DEFAULT_INPUT
-    )
+    input_path = questionary.text("OpenAPI input path", default=DEFAULT_INPUT).ask() or DEFAULT_INPUT
     language = questionary.text("Language", default=DEFAULT_LANGUAGE).ask() or DEFAULT_LANGUAGE
-    template_dir = (
-        questionary.text("Template directory", default=DEFAULT_TEMPLATE_DIR).ask()
-        or DEFAULT_TEMPLATE_DIR
-    )
-    output_path = (
-        questionary.text("Output directory", default=DEFAULT_OUTPUT).ask() or DEFAULT_OUTPUT
-    )
+    template_dir = questionary.text(
+        "Custom template directory (blank uses bundled templates)",
+        default="",
+    ).ask()
+    output_path = questionary.text("Output directory", default=DEFAULT_OUTPUT).ask() or DEFAULT_OUTPUT
     clean = questionary.text("Clean path (optional)", default="").ask() or ""
     before = questionary.text("Before command (optional)", default="").ask() or ""
     after = questionary.text("After command (optional)", default="").ask() or ""
@@ -147,7 +153,7 @@ def _interactive_draft() -> TaskDraft:
         name=task_name,
         input=input_path,
         language=language,
-        template_dir=template_dir,
+        template_dir=template_dir or None,
         output=output_path,
         clean=(clean,) if clean else (),
         before=(before,) if before else (),
