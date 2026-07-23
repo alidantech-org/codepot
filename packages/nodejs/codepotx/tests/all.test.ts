@@ -1,6 +1,8 @@
+import './architecture.test';
 import './authoring-compatibility.test';
 import './authoring-refs-properties.test';
 import './authoring-schema.test';
+import './baseline.test';
 import './default-runtime.test';
 import './generation.test';
 import './generation-determinism.test';
