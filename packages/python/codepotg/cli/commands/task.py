@@ -14,14 +14,13 @@ from codepot_file.editor import (
     DEFAULT_INPUT,
     DEFAULT_LANGUAGE,
     DEFAULT_OUTPUT,
-    DEFAULT_TEMPLATE_DIR,
     TaskDraft,
-    add_task_to_codepot_file,
+    add_task_to_codepotg_config,
     starter_draft,
 )
-from codepot_file.loader import load_codepot_file_yaml, resolve_codepot_file
+from codepot_file.loader import CODEPOTG_CONFIG_NAME, load_codepotg_yaml, resolve_codepotg_config
 
-app = typer.Typer(help="CodepotFile task commands.", no_args_is_help=True)
+app = typer.Typer(help=f"{CODEPOTG_CONFIG_NAME} task commands.", no_args_is_help=True)
 
 
 @app.command("add")
@@ -31,7 +30,7 @@ def add_task_command(
         None,
         "--config",
         "-c",
-        help="Path to CodepotFile.yml or CodepotFile.yaml.",
+        help="Path to Codepotg.yaml or another explicit CodepotG YAML config.",
         exists=False,
         file_okay=True,
         dir_okay=False,
@@ -39,8 +38,16 @@ def add_task_command(
     ),
     input_path: str | None = typer.Option(None, "--input", help="OpenAPI input path."),
     language: str | None = typer.Option(None, "--language", help="Generation language."),
-    template_dir: str | None = typer.Option(None, "--template-dir", help="Template directory."),
-    templates: str | None = typer.Option(None, "--templates", help="Template package path."),
+    template_dir: str | None = typer.Option(
+        None,
+        "--template-dir",
+        help="Custom template directory. Omit it to use bundled templates.",
+    ),
+    templates: str | None = typer.Option(
+        None,
+        "--templates",
+        help="Alias for a custom template directory.",
+    ),
     output_path: str | None = typer.Option(None, "--output", help="Output directory."),
     clean: list[str] | None = typer.Option(None, "--clean", help="Clean path.", show_default=False),
     before: list[str] | None = typer.Option(
@@ -59,7 +66,7 @@ def add_task_command(
     force: bool = typer.Option(False, "--force", help="Replace existing task."),
     debug: bool = typer.Option(False, "--debug", help="Show traceback when an error occurs."),
 ) -> None:
-    """Add a task to CodepotFile.yml."""
+    """Add a task to ``Codepotg.yaml``."""
     try:
         resolved_config = normalize_cli_path(config_path)
         if force:
@@ -78,7 +85,7 @@ def add_task_command(
             after=tuple(after or ()),
             yes=yes,
         )
-        path = add_task_to_codepot_file(
+        path = add_task_to_codepotg_config(
             config_path=resolved_config,
             draft=draft,
             force=force,
@@ -125,7 +132,7 @@ def _draft_from_options(
             name=task_name,
             input=input_path or starter.input,
             language=language or starter.language,
-            template_dir=template_dir or (None if templates else starter.template_dir),
+            template_dir=template_dir,
             templates=templates,
             output=output_path or starter.output,
             clean=clean,
@@ -142,7 +149,10 @@ def _interactive_draft(task_name: str, *, config_path: Path | None) -> TaskDraft
     input_path = _ask_with_default("OpenAPI input path", DEFAULT_INPUT, defaults.get("input"))
     language = _ask_with_default("Language", DEFAULT_LANGUAGE, defaults.get("language"))
     template_default = defaults.get("templateDir") or defaults.get("templates")
-    template_dir = _ask_with_default("Template directory", DEFAULT_TEMPLATE_DIR, template_default)
+    template_dir = _ask_optional(
+        "Custom template directory (blank uses bundled templates)",
+        template_default,
+    )
     output_path = _ask_with_default("Output directory", DEFAULT_OUTPUT, defaults.get("output"))
     clean = questionary.text("Clean path (optional)", default="").ask() or ""
     before = _ask_with_default(
@@ -165,8 +175,8 @@ def _interactive_draft(task_name: str, *, config_path: Path | None) -> TaskDraft
 
 
 def _load_defaults(config_path: Path | None) -> dict[str, Any]:
-    path = resolve_codepot_file(config_path)
-    raw = load_codepot_file_yaml(path)
+    path = resolve_codepotg_config(config_path)
+    raw = load_codepotg_yaml(path)
     defaults = raw.get("defaults")
     return defaults if isinstance(defaults, dict) else {}
 
@@ -179,6 +189,12 @@ def _ask_with_default(label: str, fallback: str, inherited: Any) -> str | None:
         ).ask()
         return answer or None
     return questionary.text(label, default=fallback).ask() or fallback
+
+
+def _ask_optional(label: str, inherited: Any) -> str | None:
+    default = inherited if isinstance(inherited, str) else ""
+    answer = questionary.text(label, default=default).ask()
+    return answer.strip() if isinstance(answer, str) and answer.strip() else None
 
 
 def _first_command(raw: Any) -> str | None:
