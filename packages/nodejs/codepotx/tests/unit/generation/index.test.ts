@@ -1,2 +1,2 @@
-import '../../../generation-determinism.test';
-import '../../../generation-hardening.test';
+import '../../generation-determinism.test';
+import '../../generation-hardening.test';
