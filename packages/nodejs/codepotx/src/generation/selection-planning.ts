@@ -1,5 +1,3 @@
-import { dirname, extname } from 'node:path/posix';
-
 import type {
   CompiledTemplateFolder,
   CompiledTemplatePack,
@@ -8,7 +6,14 @@ import type {
   JsonValue,
   PlannedFile,
 } from '@/contract/index';
-import { resolveExpression, resolveOutputTokens } from '@/templating/index';
+import {
+  portableDirname,
+  portableExtname,
+} from '@/internal/paths/portable-path';
+import {
+  resolveExpression,
+  resolveOutputTokens,
+} from '@/internal/paths/template-path-resolution';
 
 import { subjectRefs } from './output-index';
 import { diagnostic, error } from './results';
@@ -32,7 +37,10 @@ export function createPlannedFileCandidates(
     for (const selected of contextsFor(folder, baseContext, diagnostics)) {
       try {
         const outputPath = normalizeRelativePath(
-          resolveOutputTokens(template.outputTokens, selected.context as Record<string, unknown>),
+          resolveOutputTokens(
+            template.outputTokens,
+            selected.context as Record<string, unknown>,
+          ),
         );
         const refusalReason = unsafeRelativePath(outputPath)
           ? `Unsafe output path: ${outputPath}`
@@ -72,7 +80,10 @@ function contextsFor(
   }
   const alias = folder.alias ?? folder.name;
   if (folder.mode === 'group') {
-    return [{ context: { ...base, [alias]: selected as never, items: selected as never }, alias }];
+    return [{
+      context: { ...base, [alias]: selected as never, items: selected as never },
+      alias,
+    }];
   }
   const values = Array.isArray(selected) ? selected : [selected];
   return values.map((value, index) => ({
@@ -88,9 +99,10 @@ function attachFileContext(
   group: string,
   outputPath: string,
 ): JsonObject {
-  const extension = extname(outputPath);
+  const extension = portableExtname(outputPath);
   const name = outputPath.split('/').at(-1) ?? outputPath;
-  const directory = dirname(outputPath) === '.' ? '' : dirname(outputPath);
+  const resolvedDirectory = portableDirname(outputPath);
+  const directory = resolvedDirectory === '.' ? '' : resolvedDirectory;
   const subject = subjectRefs(selection.context);
   const file: JsonObject = {
     templateId,
@@ -134,7 +146,10 @@ export function normalizeRelativePath(path: string): string {
 
 export function unsafeRelativePath(path: string): boolean {
   const value = normalizeRelativePath(path);
-  return value.startsWith('/') || value === '..' || value.startsWith('../') || value.includes('/../');
+  return value.startsWith('/')
+    || value === '..'
+    || value.startsWith('../')
+    || value.includes('/../');
 }
 
 function asObject(value: JsonValue | undefined): JsonObject | undefined {
