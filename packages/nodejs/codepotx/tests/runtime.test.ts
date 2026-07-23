@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import type { AuthoringPort, GenerationPort, OperationResult, TemplatingPort } from '@/contract/index';
+import type {
+  AuthoringPort,
+  GenerationPort,
+  OperationResult,
+  TemplateIntrospectionPort,
+  TemplatingPort,
+} from '@/contract/index';
 import { CodepotCancellationController } from '../src/platform/cancellation';
 import { SequentialEventBus } from '../src/platform/event-bus';
 import { FixedClock, SequentialIdProvider } from '../src/platform/system';
@@ -25,7 +31,9 @@ const templating = {
   compile: async () => success({}),
   createContext: async () => success({}),
   render: async () => success([]),
-} as unknown as TemplatingPort;
+  variables: async () => success({}),
+  validateContext: async () => success({ valid: true, diagnostics: [] }),
+} as unknown as TemplatingPort & TemplateIntrospectionPort;
 
 const generation = {
   load: async () => success({}),
