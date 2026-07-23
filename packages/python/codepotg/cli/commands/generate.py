@@ -17,16 +17,17 @@ from cli.presentation.core.console import (
 )
 from cli.presentation.core.reporter import Reporter
 from cli.presentation.emit.files import render_emit_files
+from codepot_file.loader import CODEPOTG_CONFIG_NAME
 
 
 def generate_command(
     ctx: typer.Context,
-    task_name: str | None = typer.Argument(None, help="Task name from CodepotFile.yml."),
+    task_name: str | None = typer.Argument(None, help="Task name from Codepotg.yaml."),
     config_path: Path | None = typer.Option(
         None,
         "--config",
         "-c",
-        help="Path to CodepotFile.yml or CodepotFile.yaml.",
+        help="Path to Codepotg.yaml or another explicit CodepotG YAML config.",
         exists=False,
         file_okay=True,
         dir_okay=False,
@@ -40,7 +41,7 @@ def generate_command(
     skip_after: bool = typer.Option(False, "--skip-after", help="Skip after commands."),
     debug: bool = typer.Option(False, "--debug", help="Show traceback when an error occurs."),
 ) -> None:
-    """Run generation from CodepotFile.yml."""
+    """Run generation from ``Codepotg.yaml``."""
     try:
         from cli.main import get_runtime
 
@@ -48,7 +49,7 @@ def generate_command(
         reporter = Reporter(verbose=verbose)
 
         runtime = get_runtime(ctx)
-        print_header("Generate", str(resolved_config or "CodepotFile.yml"))
+        print_header("Generate", str(resolved_config or CODEPOTG_CONFIG_NAME))
         result = runtime.generate(
             config_path=resolved_config,
             task_name=task_name,
