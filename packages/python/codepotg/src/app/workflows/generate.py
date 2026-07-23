@@ -1,4 +1,4 @@
-"""CodepotFile-driven generation workflow."""
+"""``Codepotg.yaml``-driven generation workflow."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from app.models import (
 from app.models.inputs import EmitInput
 from app.workflows.emit import run_emit
 from app.workflows.template_paths import resolve_template_root
-from codepot_file.loader import load_codepot_file
+from codepot_file.loader import CODEPOTG_CONFIG_NAME, load_codepotg_config
 from codepot_file.models import CodepotFile, CodepotTask
 from codepot_file.runner import clean_task_paths, run_commands
 from core.errors import CommandError, ConfigError
@@ -21,14 +21,20 @@ from languages.discovery import resolve_language_adapter
 
 
 def run_generate(request: GenerateInput) -> GenerateOutput:
-    """Run one or more CodepotFile tasks."""
-    _notify(request, "loading_config", "Loading config")
-    config = load_codepot_file(request.config_path)
+    """Run one or more CodepotG tasks."""
+    _notify(request, "loading_config", f"Loading {CODEPOTG_CONFIG_NAME}")
+    config = load_codepotg_config(request.config_path)
     if not config.allow:
-        raise ConfigError("Generation refused. Set allow: true in CodepotFile.yml to enable it.")
+        raise ConfigError(
+            f"Generation refused. Set allow: true in {CODEPOTG_CONFIG_NAME} to enable it."
+        )
 
     _notify(request, "resolving_task", "Resolving task")
-    selected_tasks = _select_tasks(config, task_name=request.task_name, all_tasks=request.all_tasks)
+    selected_tasks = _select_tasks(
+        config,
+        task_name=request.task_name,
+        all_tasks=request.all_tasks,
+    )
     outputs: list[GenerateTaskOutput] = []
     diagnostics: list[RuntimeDiagnostic] = []
 
@@ -86,7 +92,10 @@ def _run_task(
     ]
     cleaned = []
     adapter = resolve_language_adapter(task.language)
-    template_root = resolve_template_root(adapter=adapter, templates_path=task.template_dir)
+    template_root = resolve_template_root(
+        adapter=adapter,
+        templates_path=task.template_dir,
+    )
     path_config = load_path_config(template_root)
 
     if request.refresh:
@@ -131,7 +140,7 @@ def _run_task(
             language=task.language,
             output_path=task.output,
             dry_run=request.dry_run,
-            templates_path=task.template_dir,
+            templates_path=template_root,
             frontend=task.frontend,
             progress=request.progress,
         )
@@ -179,7 +188,7 @@ def _run_task(
         input_path=task.input,
         language=task.language,
         output_path=task.output,
-        template_dir=task.template_dir,
+        template_dir=template_root,
         dry_run=request.dry_run,
         planned=emit_result.planned,
         written=emit_result.written,
