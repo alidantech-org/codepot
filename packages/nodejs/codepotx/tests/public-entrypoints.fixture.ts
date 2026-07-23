@@ -7,10 +7,12 @@ import {
 import type {
   CodepotConfig,
   CompiledAuthoringArtifact,
+  CompiledPathToken,
   RouteDefinition,
 } from 'codepotx';
 import type {
   ArtifactHeader,
+  CompiledPathToken as ContractCompiledPathToken,
   RuntimeRequest,
   RuntimeResponse,
 } from 'codepotx/contract';
@@ -68,6 +70,8 @@ void values;
 type PublicTypes = [
   CodepotConfig,
   CompiledAuthoringArtifact,
+  CompiledPathToken,
+  ContractCompiledPathToken,
   RouteDefinition,
   ArtifactHeader,
   RuntimeRequest<'authoring.compile'>,
