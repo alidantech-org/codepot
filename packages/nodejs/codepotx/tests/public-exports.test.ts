@@ -60,12 +60,13 @@ function keys(value: object): readonly string[] {
 }
 
 test('published runtime value surfaces remain intentional', () => {
-  assert.deepEqual(keys(contract), [
+  const protocolValues = [
     'CODEPOT_ARTIFACT_VERSION',
     'CODEPOT_PROTOCOL_VERSION',
-  ]);
+  ];
+  assert.deepEqual(keys(contract), protocolValues);
   assert.deepEqual(keys(authoring), authoringValues);
-  assert.deepEqual(keys(root), authoringValues);
+  assert.deepEqual(keys(root), [...authoringValues, ...protocolValues].sort());
   assert.deepEqual(keys(runtime), [
     'CodepotRuntime',
     'RunContextStore',
