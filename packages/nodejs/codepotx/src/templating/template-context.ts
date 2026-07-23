@@ -2,6 +2,7 @@ import type {
   CompiledAuthoringArtifact,
   CompiledNamedItem,
   CompiledOperation,
+  CompiledOperationEffect,
   CompiledResource,
   CompiledSchema,
   JsonObject,
@@ -159,7 +160,10 @@ function enrichSchema(schema: CompiledSchema): JsonObject {
       kind: schema.schema.kind,
       fieldCount: fields.length,
       dependencyCount: refs.length,
-      queryEnabled: fields.some((field) => Boolean((field.lang as JsonObject).queryEnabled)),
+      queryEnabled: fields.some((field) => {
+        const language = asObject(field.lang);
+        return Boolean(language?.['queryEnabled']);
+      }),
     },
     meta: {
       ...(schema.metadata ?? {}),
@@ -233,7 +237,7 @@ function enrichOperation(operation: CompiledOperation, authoring: CompiledAuthor
       cacheInvalidates: operation.cacheInvalidates,
       accessRef: operation.accessRef ?? null,
       hookRefs: operation.hookRefs,
-      effects: operation.effects,
+      effects: operation.effects.map(effectContext),
     },
   };
 }
@@ -251,7 +255,7 @@ function classifySchemas(all: readonly JsonObject[]): ClassifiedSchemas {
   const dtos = all.filter((item) => schemaRole(item) === 'dto');
   const enums = all.filter((item) => schemaKind(item) === 'enum');
   const primitives = all.filter((item) => schemaKind(item) === 'primitive');
-  const aliases = all.filter((item) => Boolean((item.meta as JsonObject | undefined)?.aliasOf));
+  const aliases = all.filter((item) => Boolean(asObject(item['meta'])?.['aliasOf']));
   const queries = all.filter((item) => schemaRole(item) === 'query');
   const params = all.filter((item) => schemaRole(item) === 'params');
   const bodies = all.filter((item) => schemaRole(item) === 'body');
@@ -337,16 +341,17 @@ function importPlaceholder(): JsonObject {
 }
 
 function schemaRole(item: JsonObject): string | undefined {
-  if (typeof item.role === 'string') return item.role;
-  const meta = item.meta as JsonObject | undefined;
-  return typeof meta?.role === 'string' ? meta.role : undefined;
+  const role = item['role'];
+  if (typeof role === 'string') return role;
+  const meta = asObject(item['meta']);
+  const metadataRole = meta?.['role'];
+  return typeof metadataRole === 'string' ? metadataRole : undefined;
 }
 
 function schemaKind(item: JsonObject): string | undefined {
-  const value = item.schema;
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const object = value as JsonObject;
-  return typeof object.kind === 'string' ? object.kind : undefined;
+  const object = asObject(item['schema']);
+  const kind = object?.['kind'];
+  return typeof kind === 'string' ? kind : undefined;
 }
 
 function collectReferences(value: JsonValue): readonly string[] {
@@ -358,7 +363,9 @@ function collectReferences(value: JsonValue): readonly string[] {
     }
     if (!current || typeof current !== 'object') return;
     const object = current as JsonObject;
-    if (object.kind === 'ref' && typeof object.ref === 'string') output.add(object.ref);
+    const kind = object['kind'];
+    const ref = object['ref'];
+    if (kind === 'ref' && typeof ref === 'string') output.add(ref);
     for (const nested of Object.values(object)) visit(nested);
   };
   visit(value);
@@ -366,9 +373,23 @@ function collectReferences(value: JsonValue): readonly string[] {
 }
 
 function readOriginalName(item: JsonObject): string | undefined {
-  const name = item.name;
-  if (!name || typeof name !== 'object' || Array.isArray(name)) return undefined;
-  return typeof name.original === 'string' ? name.original : undefined;
+  const name = asObject(item['name']);
+  const original = name?.['original'];
+  return typeof original === 'string' ? original : undefined;
+}
+
+function effectContext(effect: CompiledOperationEffect): JsonObject {
+  return {
+    kind: effect.kind,
+    ...(effect.value === undefined ? {} : { value: effect.value }),
+    ...(effect.metadata ? { metadata: effect.metadata } : {}),
+  };
+}
+
+function asObject(value: JsonValue | undefined): JsonObject | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as JsonObject
+    : undefined;
 }
 
 function splitWords(value: string): string[] {
