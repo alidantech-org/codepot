@@ -4,8 +4,6 @@ import type { PortablePath } from '../../protocol/common.types';
 import type { SourceDescriptor } from '../../sources/source.types';
 import type { CacheMode } from '../cache-mode.types';
 
-export type { CacheMode } from '../cache-mode.types';
-
 export interface AuthoringCompileRequest {
   readonly source: SourceDescriptor;
   readonly projectRoot?: PortablePath;
