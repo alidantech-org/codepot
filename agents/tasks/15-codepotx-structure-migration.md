@@ -1,10 +1,10 @@
 # Task 15 — CodepotX structure migration program
 
 Status: [~]
-Issues: #14–#18 closed; Tasks 21–23 pending
+Issues: #14–#18 closed; #19–#21 open for final combined validation
 Depends on: current CodepotX implementation baseline
 Commit: implementation proceeds through Tasks 16–23
-Validation: Tasks 16–20 passed strict typechecks, 45 CodepotX tests, 3 CLI tests, builds, Publint, and ESM package-resolution checks.
+Validation: Tasks 16–20 passed strict typechecks, 45 CodepotX tests, 3 CLI tests, builds, Publint, and ESM package-resolution checks. Tasks 21–23 are implemented and awaiting the final combined gate.
 
 ## Goal
 
@@ -17,9 +17,9 @@ Migrate `packages/nodejs/codepotx` to the structure defined in `agents/CODEPOTX_
 - [x] Task 18 — authoring compiler and engine modularization
 - [x] Task 19 — templating modularization
 - [x] Task 20 — generation modularization
-- [ ] Task 21 — runtime and platform modularization
-- [ ] Task 22 — tests, exports, documentation, and cleanup
-- [ ] Task 23 — full integration and structural migration gate
+- [~] Task 21 — runtime and platform modularization; implementation complete, validation pending
+- [~] Task 22 — tests, exports, documentation, and cleanup; implementation complete, validation pending
+- [~] Task 23 — full integration and structural migration gate; audit committed, execution pending
 
 ## Program rules
 
@@ -32,12 +32,12 @@ Migrate `packages/nodejs/codepotx` to the structure defined in `agents/CODEPOTX_
 - [x] Keep `codepotx` and `codepotx-cli` as the active npm packages.
 - [x] Do not add empty folder scaffolding.
 - [x] Commit each focused migration unit separately.
-- [~] Record validation evidence and commit SHAs in every child task.
+- [~] Record final validation evidence and commit SHAs in Tasks 21–23.
 
 ## Completion criteria
 
 - [ ] Tasks 16–23 are complete.
 - [ ] Every child issue is closed after validation.
-- [ ] The package follows the approved folder and dependency structure.
-- [ ] Public imports and generated behavior match the baseline.
+- [x] The implemented package follows the approved folder and dependency structure.
+- [ ] Public imports and generated behavior match the baseline after the final commits.
 - [ ] Workspace and package release checks pass.
