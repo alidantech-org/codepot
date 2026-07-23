@@ -1,4 +1,4 @@
-/** Public entry point for Codepot authoring and stable contracts. */
+/** Public entry point for Codepot authoring and stable contract types. */
 export {
   createAccessBuilder,
   createAuthoringEngine,
@@ -38,10 +38,6 @@ export {
   z,
   ZOD_COMPATIBILITY_FEATURES,
 } from './authoring/index';
-export {
-  CODEPOT_ARTIFACT_VERSION,
-  CODEPOT_PROTOCOL_VERSION,
-} from './contract/index';
 
 export type {
   AccessAllowMap,
