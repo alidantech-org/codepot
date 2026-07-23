@@ -1,25 +1,52 @@
-# Task 14 — Publish CodepotG 1.0.0 to PyPI
+# Task 14 — Prepare CodepotG 1.0.0 for PyPI
 
 Status: [~]
 Issue: #13
 Depends on: Python generator parity and package tests
 Commit: pending final local validation
-Validation: pending user-run clean build and upload
+Validation: user rerun required after Codepotg.yaml migration
 
 ## Goal
 
-Publish the stable Python/Jinja OpenAPI generator as `codepotg==1.0.0` while preserving compatibility with OpenAPI emitted by CodepotX.
+Prepare the stable Python/Jinja OpenAPI generator as `codepotg==1.0.0` while preserving compatibility with OpenAPI emitted by CodepotX.
+
+The release is blocked until every local check passes. Do not upload while this task remains active.
+
+## Public configuration contract
+
+- [x] Use `Codepotg.yaml` as the only automatically discovered Python generator config.
+- [x] Reject `CodepotFile.yml` and `CodepotFile.yaml` with a migration message because those names belong to the TypeScript workflow.
+- [x] Allow another explicit non-legacy YAML path through `--config`.
+- [x] Make `templateDir` / `templates` optional.
+- [x] Use the bundled template pack selected by `language` when no custom path is configured.
+- [x] Remove implicit working-directory template discovery.
+- [x] Make `codepotg init --yes` create `Codepotg.yaml` without a fake local template path.
+- [x] Update generate, init, task-add, runtime messages, README, release guide, and changelog.
+- [x] Add installed-wheel smoke coverage for config creation and bundled-template generation.
+
+## Reported test failure audit
+
+The user ran 210 tests before this migration: 185 passed and 25 failed.
+
+- [x] Fix the real eager `codepotg --version` CLI bug.
+- [x] Fix bundled-template resolution for the retired source path shape.
+- [x] Correct the stale naming-contract assertion.
+- [x] Replace the deleted package-root `openapi.yaml` fixture with a committed self-contained fixture.
+- [x] Point shared tests at bundled templates under `src/codepotg/templates`.
+- [x] Migrate config loader, workflow, and CLI tests to `Codepotg.yaml`.
+- [x] Preserve command, cleanup, defaults, lifecycle, inference, and rendering coverage.
+- [ ] Rerun all tests and classify any remaining failures.
 
 ## Package readiness
 
 - [x] Align `pyproject.toml`, `codepotg.__version__`, and CLI version at `1.0.0`.
-- [x] Replace deprecated public wording with a stable compatibility-product description.
+- [x] Describe CodepotG as the supported OpenAPI compatibility generator.
 - [x] Add SPDX license metadata and package-local license file.
 - [x] Add PyPI project links, classifiers, keywords, and development dependencies.
-- [x] Add source-distribution manifest rules.
-- [x] Make the namespaced CLI bootstrap work in both editable checkouts and installed wheels.
+- [x] Add source-distribution manifest rules, including YAML fixtures.
+- [x] Make the namespaced CLI bootstrap work in editable checkouts and installed wheels.
 - [x] Add `codepotg --version` and `python -m codepotg`.
-- [x] Rewrite the package README for PyPI consumers.
+- [x] Add a PyPI consumer README and release guide.
 - [x] Add guarded release automation that never prints `PUBLISH_TOKEN`.
 - [x] Add version and package-metadata tests.
 - [x] Add OpenAPI 3.0.3/3.1.0 CodepotX compatibility fixtures.
@@ -29,9 +56,11 @@ Publish the stable Python/Jinja OpenAPI generator as `codepotg==1.0.0` while pre
 - [ ] Install `.[dev]` in a clean virtual environment.
 - [ ] Run the full test suite.
 - [ ] Run Ruff.
+- [ ] Create `Codepotg.yaml` through the installed CLI.
+- [ ] Run bundled TypeScript generation from the installed wheel in dry-run mode.
 - [ ] Build one sdist and one universal wheel.
 - [ ] Pass `twine check`.
-- [ ] Verify the wheel contains the legacy runtime modules and bundled templates.
+- [ ] Verify the wheel contains runtime modules and bundled templates.
 - [ ] Install the wheel in a second clean virtual environment.
 - [ ] Run `codepotg --version`, `codepotg --help`, and `python -m codepotg --version`.
 - [ ] Upload `codepotg==1.0.0` using the local ignored `PUBLISH_TOKEN`.
