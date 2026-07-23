@@ -2,7 +2,6 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "types": ["node"],
-    "baseUrl": ".",
     "paths": {
       "codepotx": ["../codepotx/src/index.ts"],
       "codepotx/*": ["../codepotx/src/*/index.ts"]
