@@ -10,6 +10,8 @@ from app.models import EmitOutput
 from app.workflows import generate as generate_workflow
 from cli.main import app
 
+CONFIG_NAME = "Codepotg.yaml"
+
 
 def test_generate_missing_config_file_fails_with_helpful_message() -> None:
     runner = CliRunner()
@@ -17,7 +19,7 @@ def test_generate_missing_config_file_fails_with_helpful_message() -> None:
     result = runner.invoke(app, ["generate"])
 
     assert result.exit_code == 1
-    assert "CodepotFile.yml not found" in result.output
+    assert "Codepotg.yaml not found" in result.output
 
 
 def test_help_exposes_public_commands_only() -> None:
@@ -54,12 +56,12 @@ def test_task_help_exposes_add_command_only() -> None:
     assert "emit" not in result.output
 
 
-def test_init_yes_creates_minimal_starter(tmp_path: Path) -> None:
+def test_init_yes_creates_minimal_starter_with_bundled_templates(tmp_path: Path) -> None:
     runner = CliRunner()
 
     with runner.isolated_filesystem(temp_dir=tmp_path):
         result = runner.invoke(app, ["init", "--yes"])
-        config = _read_yaml(Path("CodepotFile.yml"))
+        config = _read_yaml(Path(CONFIG_NAME))
 
     assert result.exit_code == 0
     assert config == {
@@ -68,18 +70,18 @@ def test_init_yes_creates_minimal_starter(tmp_path: Path) -> None:
             "sdk": {
                 "input": "./openapi.yaml",
                 "language": "typescript",
-                "templateDir": "./templates",
                 "output": "./generated",
             }
         },
     }
+    assert "bundled typescript pack" in result.output
 
 
 def test_init_refuses_to_overwrite_existing_config(tmp_path: Path) -> None:
     runner = CliRunner()
 
     with runner.isolated_filesystem(temp_dir=tmp_path):
-        Path("CodepotFile.yml").write_text("allow: true\ntasks: {}\n", encoding="utf-8")
+        Path(CONFIG_NAME).write_text("allow: true\ntasks: {}\n", encoding="utf-8")
         result = runner.invoke(app, ["init", "--yes"])
 
     assert result.exit_code == 1
@@ -90,9 +92,9 @@ def test_init_force_overwrites_existing_config(tmp_path: Path) -> None:
     runner = CliRunner()
 
     with runner.isolated_filesystem(temp_dir=tmp_path):
-        Path("CodepotFile.yml").write_text("allow: false\ntasks: {}\n", encoding="utf-8")
+        Path(CONFIG_NAME).write_text("allow: false\ntasks: {}\n", encoding="utf-8")
         result = runner.invoke(app, ["init", "--yes", "--force"])
-        config = _read_yaml(Path("CodepotFile.yml"))
+        config = _read_yaml(Path(CONFIG_NAME))
 
     assert result.exit_code == 0
     assert config["allow"] is True
@@ -125,7 +127,7 @@ def test_init_with_flags_creates_valid_task(tmp_path: Path) -> None:
                 "echo after",
             ],
         )
-        config = _read_yaml(Path("CodepotFile.yml"))
+        config = _read_yaml(Path(CONFIG_NAME))
 
     task = config["tasks"]["custom-sdk"]
     assert result.exit_code == 0
@@ -142,7 +144,7 @@ def test_task_add_adds_task_and_preserves_defaults_and_existing_tasks(tmp_path: 
     runner = CliRunner()
 
     with runner.isolated_filesystem(temp_dir=tmp_path):
-        Path("CodepotFile.yml").write_text(
+        Path(CONFIG_NAME).write_text(
             """
 allow: true
 defaults:
@@ -172,7 +174,7 @@ tasks:
                 "--yes",
             ],
         )
-        config = _read_yaml(Path("CodepotFile.yml"))
+        config = _read_yaml(Path(CONFIG_NAME))
 
     assert result.exit_code == 0
     assert config["defaults"] == {"input": "./openapi.yaml"}
@@ -186,7 +188,7 @@ def test_task_add_refuses_duplicate_task(tmp_path: Path) -> None:
     runner = CliRunner()
 
     with runner.isolated_filesystem(temp_dir=tmp_path):
-        _write_basic_config(Path("CodepotFile.yml"))
+        _write_basic_config(Path(CONFIG_NAME))
         result = runner.invoke(app, ["task", "add", "sdk", "--yes"])
 
     assert result.exit_code == 1
@@ -197,7 +199,7 @@ def test_task_add_force_replaces_only_that_task(tmp_path: Path) -> None:
     runner = CliRunner()
 
     with runner.isolated_filesystem(temp_dir=tmp_path):
-        Path("CodepotFile.yml").write_text(
+        Path(CONFIG_NAME).write_text(
             """
 allow: true
 defaults:
@@ -230,7 +232,7 @@ tasks:
                 "--yes",
             ],
         )
-        config = _read_yaml(Path("CodepotFile.yml"))
+        config = _read_yaml(Path(CONFIG_NAME))
 
     assert result.exit_code == 0
     assert config["defaults"] == {"input": "./openapi.yaml"}
@@ -242,14 +244,13 @@ def test_task_add_refuses_when_allow_is_not_true(tmp_path: Path) -> None:
     runner = CliRunner()
 
     with runner.isolated_filesystem(temp_dir=tmp_path):
-        Path("CodepotFile.yml").write_text(
+        Path(CONFIG_NAME).write_text(
             """
 allow: false
 tasks:
   sdk:
     input: ./openapi.yaml
     language: typescript
-    templateDir: ./templates
     output: ./generated
 """.strip(),
             encoding="utf-8",
@@ -265,11 +266,11 @@ def test_generate_output_includes_major_stage_messages(tmp_path: Path, monkeypat
     _patch_emit(monkeypatch)
 
     with runner.isolated_filesystem(temp_dir=tmp_path):
-        _write_basic_config(Path("CodepotFile.yml"))
+        _write_basic_config(Path(CONFIG_NAME))
         result = runner.invoke(app, ["generate"])
 
     assert result.exit_code == 0
-    assert "Loading config" in result.output
+    assert "Loading Codepotg.yaml" in result.output
     assert "Resolving task" in result.output
     assert "Validating task" in result.output
     assert "Loading OpenAPI document" in result.output
@@ -284,7 +285,7 @@ def test_generate_failure_includes_command_output_and_context(tmp_path: Path, mo
     )
 
     with runner.isolated_filesystem(temp_dir=tmp_path):
-        Path("CodepotFile.yml").write_text(
+        Path(CONFIG_NAME).write_text(
             yaml.safe_dump(
                 {
                     "allow": True,
@@ -292,7 +293,6 @@ def test_generate_failure_includes_command_output_and_context(tmp_path: Path, mo
                         "sdk": {
                             "input": "./openapi.yaml",
                             "language": "typescript",
-                            "templateDir": "./templates",
                             "output": "./generated",
                             "after": [
                                 {
@@ -332,7 +332,6 @@ tasks:
   sdk:
     input: ./openapi.yaml
     language: typescript
-    templateDir: ./templates
     output: ./generated
 """.strip(),
         encoding="utf-8",
@@ -353,5 +352,5 @@ def _patch_emit(monkeypatch):
 
 
 def _python_command(code: str) -> str:
-    escaped = code.replace('"', r"\"")
+    escaped = code.replace('"', r'\"')
     return f'"{sys.executable}" -c "{escaped}"'
