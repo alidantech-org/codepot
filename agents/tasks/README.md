@@ -40,6 +40,8 @@ Subtasks use checkboxes. A task cannot be marked `[x]` until:
 
 ## Ordered files
 
+### Original implementation phases
+
 1. `00-roadmap.md`
 2. `01-contract.md`
 3. `02-runtime-platform.md`
@@ -48,5 +50,24 @@ Subtasks use checkboxes. A task cannot be marked `[x]` until:
 6. `05-generation.md`
 7. `06-cli.md`
 8. `07-integration-release.md`
+9. `08-template-contract.md`
+10. `09-generation-hardening.md`
+11. `10-site-docs-deploy.md`
+12. `11-shipping-validation.md`
+13. `12-python-parity-matrix.md`
+14. `13-strict-typecheck-recovery.md`
+15. `14-codepotg-pypi-release.md`
 
-Do not begin a phase until the dependency gates in the roadmap are met.
+### CodepotX structure migration
+
+16. `15-codepotx-structure-migration.md` — umbrella program
+17. `16-codepotx-architecture-guardrails.md` — baseline and automated boundaries
+18. `17-codepotx-contract-restructure.md` — protocol, artifacts, operations, and ports
+19. `18-codepotx-authoring-restructure.md` — compiler passes and authoring use cases
+20. `19-codepotx-templating-restructure.md` — template compilation, context, variables, and rendering
+21. `20-codepotx-generation-restructure.md` — planning, writing, manifests, transactions, commands, and orchestration
+22. `21-codepotx-runtime-platform-restructure.md` — typed dispatch and adapter organization
+23. `22-codepotx-tests-exports-cleanup.md` — test hierarchy, curated exports, documentation, and cleanup
+24. `23-codepotx-structure-integration-gate.md` — final behavioral, type, package, and workspace validation
+
+Do not begin a phase until its dependency gates are met. For the structure migration, read `agents/CODEPOTX_STRUCTURE_GUIDE.md` before opening Task 16.
