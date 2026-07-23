@@ -6,10 +6,16 @@ OpenAPI schema objects including allOf, anyOf, and oneOf.
 
 from typing import Any
 
-from constants.openapi import ALL_OF, ANY_OF, ONE_OF, COMPOSITION_ALL_OF, COMPOSITION_ANY_OF, COMPOSITION_ONE_OF
-from openapi.refs import get_ref
-
+from constants.openapi import (
+    ALL_OF,
+    ANY_OF,
+    COMPOSITION_ALL_OF,
+    COMPOSITION_ANY_OF,
+    COMPOSITION_ONE_OF,
+    ONE_OF,
+)
 from inference.models.schemas import InferredSchemaComposition
+from openapi.refs import get_ref
 
 
 def split_nullable_union(schema: dict[str, Any] | None) -> tuple[dict[str, Any], bool]:
@@ -186,8 +192,7 @@ def _count_inline_objects(items: list[dict[str, Any]]) -> int:
     count = 0
 
     for item in items:
-        if isinstance(item, dict):
-            if get_ref(item) is None:
-                count += 1
+        if isinstance(item, dict) and get_ref(item) is None:
+            count += 1
 
     return count
