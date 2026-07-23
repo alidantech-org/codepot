@@ -73,7 +73,7 @@ type PublicTypes = [
   CompiledPathToken,
   ContractCompiledPathToken,
   RouteDefinition,
-  ArtifactHeader,
+  ArtifactHeader<'codepot.authoring'>,
   RuntimeRequest<'authoring.compile'>,
   RuntimeResponse<'generation.execute'>,
   RuntimeDependencies,
