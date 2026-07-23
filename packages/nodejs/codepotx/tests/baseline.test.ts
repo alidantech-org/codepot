@@ -117,15 +117,13 @@ function assertJsonSafe(value: unknown, path = '$'): void {
     || typeof value === 'number'
     || typeof value === 'boolean'
   ) return;
-  assert.notEqual(typeof value, 'undefined', `${path} contains undefined`);
-  assert.notEqual(typeof value, 'function', `${path} contains a function`);
-  assert.notEqual(typeof value, 'symbol', `${path} contains a symbol`);
-  assert.notEqual(typeof value, 'bigint', `${path} contains a bigint`);
   if (Array.isArray(value)) {
     value.forEach((item, index) => assertJsonSafe(item, `${path}[${index}]`));
     return;
   }
-  assert.equal(typeof value, 'object', `${path} must be JSON-compatible`);
+  if (typeof value !== 'object') {
+    assert.fail(`${path} contains non-JSON value of type ${typeof value}`);
+  }
   assert.equal(
     Object.getPrototypeOf(value),
     Object.prototype,
