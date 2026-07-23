@@ -37,6 +37,7 @@ src/templating/
 - [ ] Extract helper validation and template-reference collection.
 - [ ] Extract compiled template-pack validation.
 - [ ] Extract deterministic artifact assembly and digesting.
+- [ ] Adopt `CODEPOT_ARTIFACT_PRODUCER` from `src/internal/package-info.ts` in template-pack and template-variable artifact assembly without changing serialized producer values.
 - [ ] Split context construction from template compilation.
 - [ ] Split variable catalog creation, formatting, and strict validation.
 - [ ] Split Handlebars renderer construction, partial registration, and virtual-file rendering.
