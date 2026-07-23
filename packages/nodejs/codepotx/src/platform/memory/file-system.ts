@@ -8,8 +8,8 @@ import type {
   PortablePath,
   RemoveOptions,
 } from '@/contract/index';
-import { matchesAnyGlob } from './path-utils';
-import { SystemClock } from './system';
+import { matchesAnyGlob } from '../shared/path-utils';
+import { SystemClock } from '../shared/system';
 
 interface MemoryEntry {
   readonly kind: 'file' | 'directory';
