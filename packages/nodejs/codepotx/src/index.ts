@@ -316,6 +316,7 @@ export type {
   CompiledOperationEffect,
   CompiledParameter,
   CompiledParameterLocation,
+  CompiledPathToken,
   CompiledPrimitiveKind,
   CompiledPrimitiveSchema,
   CompiledProject,
