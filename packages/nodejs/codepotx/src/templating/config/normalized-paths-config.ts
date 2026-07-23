@@ -43,7 +43,7 @@ export function normalizePathsConfig(input: PathsFileInput): NormalizedPathsConf
       input.stripTemplateExtension ?? input.strip_template_extension ?? true,
     allowRawFiles: input.allowRawFiles ?? input.allow_raw_files ?? true,
     includeHidden: input.includeHidden ?? input.include_hidden ?? true,
-    ignore: ['paths.yaml', ...(input.ignore ?? [])],
+    ignore: [...new Set(['paths.yaml', ...(input.ignore ?? [])])],
     helpers: input.helpers ?? [],
     partials: input.partials ?? [],
     variableRequirements: normalizeVariableRequirements(input.variables),
@@ -74,7 +74,8 @@ function normalizeVariableRequirements(
 ): readonly TemplateVariableRequirement[] {
   if (!input) return [];
   if (Array.isArray(input)) {
-    return input.map((item) => normalizeRequirement(item, item.required ?? true))
+    const entries = input as readonly TemplateVariableRequirementInput[];
+    return entries.map((item) => normalizeRequirement(item, item.required ?? true))
       .sort((left, right) => left.path.localeCompare(right.path));
   }
   const grouped = input as {
