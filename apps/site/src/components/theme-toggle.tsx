@@ -2,13 +2,15 @@
 
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+function subscribeToHydration(): () => void {
+  return () => undefined;
+}
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(subscribeToHydration, () => true, () => false);
 
   function toggleTheme() {
     if (theme === "light") setTheme("dark");
