@@ -3,8 +3,9 @@
 ## 1.0.0 — First stable PyPI release
 
 - Publishes the established Python and Jinja OpenAPI generator as `codepotg`.
-- Supports OpenAPI JSON and YAML input.
-- Preserves config-driven generation through `CodepotFile.yml`.
+- Supports OpenAPI 3.0 and 3.1 JSON or YAML input.
+- Uses the Python-specific `Codepotg.yaml` task file and rejects the TypeScript workflow's `CodepotFile.yml` and `CodepotFile.yaml` names.
+- Uses bundled language templates when `templateDir` is omitted.
 - Includes TypeScript, Next.js, Dart, and debug template packs.
 - Preserves inference, dependency/import planning, frontend metadata, `x-codegen` metadata, managed writes, immutable scaffolds, guarded cleanup, dry runs, commands, and diagnostics.
 - Adds an installed-wheel-safe `codepotg` console entry point.
