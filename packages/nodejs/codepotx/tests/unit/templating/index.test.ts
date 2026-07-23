@@ -1,1 +1,1 @@
-import '../../../template-variables.test';
+import '../../template-variables.test';
