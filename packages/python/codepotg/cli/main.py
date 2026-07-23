@@ -18,12 +18,14 @@ from cli.commands.task import app as task_app
 from cli.constants.constants import (
     APP_DESCRIPTION,
     APP_NAME,
+    APP_VERSION,
     CMD_GENERATE,
     CMD_INIT,
     CMD_TASK,
     HELP_GENERATE,
     HELP_INIT,
     HELP_TASK,
+    HELP_VERSION,
 )
 
 RUNTIME_KEY = "runtime"
@@ -62,8 +64,20 @@ app = typer.Typer(
 
 
 @app.callback()
-def main(ctx: typer.Context) -> None:
+def main(
+    ctx: typer.Context,
+    version: bool = typer.Option(
+        False,
+        "--version",
+        help=HELP_VERSION,
+        is_eager=True,
+    ),
+) -> None:
     """Initialize CLI runtime state."""
+    if version:
+        typer.echo(f"{APP_NAME} {APP_VERSION}")
+        raise typer.Exit()
+
     set_runtime(ctx, GeneratorApp())
 
 
