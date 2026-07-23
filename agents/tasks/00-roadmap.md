@@ -38,20 +38,30 @@ The stable authoring artifact, engine ports, platform ports, requests, results, 
 ## CodepotX structure hardening track
 
 Source of truth: `agents/CODEPOTX_STRUCTURE_GUIDE.md`.
+Final audit: `agents/audits/CODEPOTX_STRUCTURE_FINAL.md`.
 
 | Order | Task | Status | Gate |
 |---|---|---|---|
-| 15 | Structure migration program | [~] | Tasks 16–20 complete; Task 21 active |
+| 15 | Structure migration program | [~] | Tasks 16–23 implemented; final combined gate pending |
 | 16 | Baseline and architecture guardrails | [x] | #14 closed |
 | 17 | Contract partitioning | [x] | #15 closed; combined package gate passed |
 | 18 | Authoring modularization | [x] | #16 closed; combined package gate passed |
 | 19 | Templating modularization | [x] | #17 closed; combined package gate passed |
 | 20 | Generation modularization | [x] | #18 closed; combined package gate passed |
-| 21 | Runtime and platform modularization | [ ] | Open issue and implement |
-| 22 | Tests, exports, documentation, and cleanup | [ ] | Task 21 complete |
-| 23 | Full structural integration gate | [ ] | Tasks 16–22 complete |
+| 21 | Runtime and platform modularization | [~] | #19 open; implementation complete, final gate pending |
+| 22 | Tests, exports, documentation, and cleanup | [~] | #20 open; implementation complete, final gate pending |
+| 23 | Full structural integration gate | [~] | #21 open; audit and guardrails committed, execution pending |
 
-Tasks 16–20 passed strict source/test typechecks, 45 CodepotX tests, 3 CLI tests, package builds, Publint, and ESM package-resolution checks.
+Tasks 16–20 passed strict source/test typechecks, 45 CodepotX tests, 3 CLI tests, package builds, Publint, and ESM package-resolution checks. Tasks 21–23 add typed runtime dispatch, capability-owned platform adapters, grouped tests, explicit package exports, consumer fixtures, final documentation, and the integration audit.
+
+## Final structure gate
+
+```bash
+pnpm --filter codepotx check
+pnpm --filter codepotx-cli check
+pnpm check
+pnpm build
+```
 
 ## Global completion conditions
 
