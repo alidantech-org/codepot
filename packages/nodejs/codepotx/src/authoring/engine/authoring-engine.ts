@@ -113,7 +113,9 @@ export function createAuthoringEngine(dependencies: AuthoringEngineDependencies)
 }
 
 function extractConfig(loaded: LoadedModule<Record<string, unknown>>): CodepotConfig {
-  const candidate = loaded.exports.default ?? loaded.exports.config ?? loaded.exports.packageConfig;
+  const candidate = loaded.exports['default']
+    ?? loaded.exports['config']
+    ?? loaded.exports['packageConfig'];
   if (isCodepotConfig(candidate)) return candidate;
   if (isVersion(candidate)) return { contracts: [candidate] };
   const contracts = Object.values(loaded.exports).filter(isVersion);
