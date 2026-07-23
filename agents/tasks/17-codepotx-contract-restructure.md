@@ -3,8 +3,8 @@
 Status: [~]
 Issue: #15 open
 Depends on: Task 16 complete
-Commits: structural checkpoint from `646e02620f3f0dddb1b7e94913567e1edd168a10` through `0a35d951b756e1f311fb5da236d04a2409ba8269`; inventory `6ea901c9a71da0e9d4530b5e72e2bde70a8e6b3d`; guardrails `f5f574a3d9256b41c13fce1ff95ae2494f0da320`, `8eae32ff04967b9ae0cacc70f7232c8d2aafacd8`
-Validation: owned contract folders, compatibility shims, symbol inventory, and circular/import guardrails are committed. Strict typecheck is the next gate before producer adoption and full behavioral/package validation.
+Commits: structural checkpoint from `646e02620f3f0dddb1b7e94913567e1edd168a10` through `0a35d951b756e1f311fb5da236d04a2409ba8269`; inventory `6ea901c9a71da0e9d4530b5e72e2bde70a8e6b3d`; guardrails `f5f574a3d9256b41c13fce1ff95ae2494f0da320`, `8eae32ff04967b9ae0cacc70f7232c8d2aafacd8`; isolated declaration fix `9168f681f321c6e8406f361d0524b4df7dfaf977`
+Validation: owned contract folders, compatibility shims, symbol inventory, and circular/import guardrails are committed. The first strict typecheck reached `src/internal/package-info.ts` and required an explicit exported producer metadata type under `isolatedDeclarations`; the annotation is committed without changing producer values. Strict typecheck rerun is pending before producer adoption and full behavioral/package validation.
 
 ## Goal
 
