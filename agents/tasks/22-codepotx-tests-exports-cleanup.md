@@ -3,7 +3,7 @@
 Status: [~]
 Issue: #20 open
 Depends on: Task 21 implementation complete
-Commits: grouped suites from `f03bbeeefcaa03edf111f0d1099f4dc915520202` through `3670341596d6b88e648f9711f297b95e38f64197`; public export curation from `f47569f4ea8185761de89b32c9fa82b0a04421a3` through `dec866535caf745f34b79a33a93db6cb977f3bb9`; consumer/export guardrails `d5cbfdd4424182ae385dc28bd33148221e690b06`, `f3013dd42841779a5d9b87376e334b7494dc0e70`; documentation `0c703f3bee9ceaf9c915d7f674a10c4178296c82`, `708a206e209256fffca59039bdfb15dc9ce8eedc`
+Commits: grouped suites from `f03bbeeefcaa03edf111f0d1099f4dc915520202` through `3670341596d6b88e648f9711f297b95e38f64197`; public export curation from `f47569f4ea8185761de89b32c9fa82b0a04421a3` through `dec866535caf745f34b79a33a93db6cb977f3bb9`; consumer/export guardrails `d5cbfdd4424182ae385dc28bd33148221e690b06`, `f3013dd42841779a5d9b87376e334b7494dc0e70`; documentation `0c703f3bee9ceaf9c915d7f674a10c4178296c82`, `708a206e209256fffca59039bdfb15dc9ce8eedc`; final contract/root export reconciliation `c87d1cd1074cf797f739004521e26b0fb4aa7a04`, `d80f542e6e2677d04a38fc0b3d42db941513cf4a`, `116facc1ae17876fc36798e98965d7b24f38efb5`
 Validation: implementation and static guardrails are committed. Strict typecheck, complete behavior suite, declaration build, package validation, and CLI checks remain part of the combined Tasks 21–23 gate.
 
 ## Goal
@@ -47,6 +47,7 @@ tests/
 - [x] Add exact runtime-value snapshots and compile-time consumer fixtures.
 - [x] Keep only intentional source-level compatibility shims for migrated flat modules.
 - [x] Keep package export keys unchanged.
+- [x] Reconcile the explicit contract and root facades against the Task 17 inventory, including `CompiledPathToken`.
 
 ## Code cleanup completion
 
