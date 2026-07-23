@@ -3,6 +3,7 @@
   "compilerOptions": {
     "types": ["node"],
     "paths": {
+      "@/*": ["../codepotx/src/*"],
       "codepotx": ["../codepotx/src/index.ts"],
       "codepotx/*": ["../codepotx/src/*/index.ts"]
     }
