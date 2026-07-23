@@ -68,5 +68,5 @@ test('templating context is created from stable artifacts only', async () => {
   } as CompiledAuthoringArtifact;
   const context = await engine.createContext({ authoring, templates: {} as never, selectedFrontend: 'web', variables: { package: 'demo' } });
   assert.equal(context.success, true);
-  if (context.success) assert.deepEqual(context.value.variables, { package: 'demo' });
+  if (context.success) assert.deepEqual(context.value['variables'], { package: 'demo' });
 });
