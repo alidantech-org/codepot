@@ -1,7 +1,17 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "codepotx": ["./src/index.ts"],
+      "codepotx/contract": ["./src/contract/index.ts"],
+      "codepotx/runtime": ["./src/runtime/index.ts"],
+      "codepotx/platform": ["./src/platform/index.ts"],
+      "codepotx/authoring": ["./src/authoring/index.ts"],
+      "codepotx/templating": ["./src/templating/index.ts"],
+      "codepotx/generation": ["./src/generation/index.ts"]
+    }
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
   "exclude": ["dist", "node_modules"]
