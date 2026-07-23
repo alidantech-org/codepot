@@ -40,13 +40,15 @@ function normalizeTask(
 ): CodepotTaskConfig {
   const authoringInput: SourceInput = task.authoring ?? task.input ?? './codepotx.config.ts';
   const templateInput: SourceInput = task.templates ?? task.template_dir ?? './templates';
-  const defaultTransactional = typeof defaults.transactional === 'boolean' ? defaults.transactional : true;
+  const transactional = defaults['transactional'];
+  const output = defaults['output'];
+  const defaultTransactional = typeof transactional === 'boolean' ? transactional : true;
   return {
     name,
     ...(task.description ? { description: task.description } : {}),
     authoring: normalizeSource(authoringInput, sources, 'codepotx.config.ts'),
     templates: normalizeSource(templateInput, sources, 'paths.yaml'),
-    output: task.output ?? String(defaults.output ?? './generated'),
+    output: task.output ?? String(output ?? './generated'),
     clean: [...(task.clean ?? [])],
     before: (task.before ?? []).map(normalizeCommand),
     after: (task.after ?? []).map(normalizeCommand),
