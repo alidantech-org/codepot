@@ -1,24 +1,22 @@
 # Task 15 — CodepotX structure migration program
 
 Status: [~]
-Issues: child issues #14 through #18 currently cover Tasks 16-20
+Issues: #14–#18 closed; Tasks 21–23 pending
 Depends on: current CodepotX implementation baseline
-Commit: implementation proceeds through Tasks 16-23
-Validation: Task 16 is complete. Tasks 17-20 are implemented and awaiting one combined package validation gate.
+Commit: implementation proceeds through Tasks 16–23
+Validation: Tasks 16–20 passed strict typechecks, 45 CodepotX tests, 3 CLI tests, builds, Publint, and ESM package-resolution checks.
 
 ## Goal
 
 Migrate `packages/nodejs/codepotx` to the structure defined in `agents/CODEPOTX_STRUCTURE_GUIDE.md` without changing public behavior, artifact meaning, authoring inference, template behavior, generation safety, runtime events, or CLI integration.
 
-This is the umbrella task. Implementation is completed through Tasks 16-23 in order.
-
 ## Required order
 
 - [x] Task 16 — baseline and architecture guardrails
-- [~] Task 17 — contract partitioning and protocol ownership
-- [~] Task 18 — authoring compiler and engine modularization
-- [~] Task 19 — templating modularization
-- [~] Task 20 — generation modularization
+- [x] Task 17 — contract partitioning and protocol ownership
+- [x] Task 18 — authoring compiler and engine modularization
+- [x] Task 19 — templating modularization
+- [x] Task 20 — generation modularization
 - [ ] Task 21 — runtime and platform modularization
 - [ ] Task 22 — tests, exports, documentation, and cleanup
 - [ ] Task 23 — full integration and structural migration gate
@@ -38,7 +36,7 @@ This is the umbrella task. Implementation is completed through Tasks 16-23 in or
 
 ## Completion criteria
 
-- [ ] Tasks 16-23 are complete.
+- [ ] Tasks 16–23 are complete.
 - [ ] Every child issue is closed after validation.
 - [ ] The package follows the approved folder and dependency structure.
 - [ ] Public imports and generated behavior match the baseline.
