@@ -19,8 +19,16 @@ def test_release_version_is_consistent() -> None:
     package_source = Path("src/codepotg/__init__.py").read_text(encoding="utf-8")
     cli_constants = Path("cli/constants/constants.py").read_text(encoding="utf-8")
 
-    package_match = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', package_source, re.MULTILINE)
-    cli_match = re.search(r'^APP_VERSION\s*=\s*["\']([^"\']+)["\']', cli_constants, re.MULTILINE)
+    package_match = re.search(
+        r'^__version__\s*=\s*["\']([^"\']+)["\']',
+        package_source,
+        re.MULTILINE,
+    )
+    cli_match = re.search(
+        r'^APP_VERSION\s*=\s*["\']([^"\']+)["\']',
+        cli_constants,
+        re.MULTILINE,
+    )
 
     assert pyproject["project"]["version"] == EXPECTED_VERSION
     assert package_match is not None and package_match.group(1) == EXPECTED_VERSION
@@ -28,7 +36,8 @@ def test_release_version_is_consistent() -> None:
 
 
 def test_release_metadata_is_pypi_ready() -> None:
-    project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]
+    pyproject_text = Path("pyproject.toml").read_text(encoding="utf-8")
+    project = tomllib.loads(pyproject_text)["project"]
 
     assert project["description"]
     assert project["readme"]["file"] == "README.md"
@@ -37,5 +46,6 @@ def test_release_metadata_is_pypi_ready() -> None:
     assert project["requires-python"] == ">=3.11"
     assert project["urls"]["Repository"].startswith("https://github.com/")
     assert Path("README.md").is_file()
+    assert Path("RELEASE.md").is_file()
     assert Path("LICENSE").is_file()
     assert Path("MANIFEST.in").is_file()
