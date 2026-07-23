@@ -55,7 +55,7 @@ export async function buildGenerationManifest(
       encoding: file.content.encoding,
       lifecycle: file.lifecycle,
       compareMode: file.compareMode,
-      templateId: String(file.metadata?.templateId ?? file.id),
+      templateId: String(file.metadata?.['templateId'] ?? file.id),
     });
   }
   files.sort((left, right) => left.path.localeCompare(right.path));
