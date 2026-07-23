@@ -21,16 +21,19 @@ export async function assembleTemplatePack(
   diagnostics: readonly Diagnostic[],
 ): Promise<CompiledTemplatePack> {
   const folders: readonly CompiledTemplateFolder[] = Object.entries(config.folders)
-    .map(([name, folder]) => ({
-      name,
-      parts: folder.parts ?? [],
-      mode: folder.mode ?? 'once',
-      ...(folder.select ? { select: folder.select } : {}),
-      ...(folder.alias ?? folder.as ? { alias: folder.alias ?? folder.as } : {}),
-      ...(folder.lifecycle ? { lifecycle: folder.lifecycle } : {}),
-      ...(folder.description ? { description: folder.description } : {}),
-      ...(folder.metadata ? { metadata: folder.metadata } : {}),
-    }))
+    .map(([name, folder]) => {
+      const alias = folder.alias ?? folder.as;
+      return {
+        name,
+        parts: folder.parts ?? [],
+        mode: folder.mode ?? 'once',
+        ...(folder.select ? { select: folder.select } : {}),
+        ...(alias ? { alias } : {}),
+        ...(folder.lifecycle ? { lifecycle: folder.lifecycle } : {}),
+        ...(folder.description ? { description: folder.description } : {}),
+        ...(folder.metadata ? { metadata: folder.metadata } : {}),
+      };
+    })
     .sort((left, right) => left.name.localeCompare(right.name));
   const orderedTemplates = [...templates].sort((left, right) =>
     left.path.localeCompare(right.path),
@@ -47,10 +50,11 @@ export async function assembleTemplatePack(
       includeHidden: config.includeHidden,
       ignore: [...config.ignore].sort(),
       helpers: [...new Set(config.helpers)].sort(),
-      partials: orderedTemplates
-        .filter((template) => template.kind === 'partial' && template.partialName)
-        .map((template) => template.partialName!)
-        .sort(),
+      partials: orderedTemplates.flatMap((template) =>
+        template.kind === 'partial' && template.partialName
+          ? [template.partialName]
+          : [],
+      ).sort(),
       variableRequirements: config.variableRequirements,
       ...(config.metadata ? { metadata: config.metadata } : {}),
     },
