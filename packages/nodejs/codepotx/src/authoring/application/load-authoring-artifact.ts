@@ -35,7 +35,8 @@ export async function loadAuthoringArtifact(
           message: 'Authoring artifact has no content digest.',
         }]);
       }
-      const { header: _header, ...body } = artifact;
+      const { header, ...body } = artifact;
+      void header;
       const digest = await dependencies.hashes.text(JSON.stringify(body));
       if (digest !== artifact.header.contentDigest) {
         return failure([{
