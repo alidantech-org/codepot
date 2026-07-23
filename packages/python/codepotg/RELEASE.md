@@ -2,6 +2,10 @@
 
 This procedure publishes the first stable release as `codepotg==1.0.0`.
 
+## Release status
+
+The package is **not ready to upload** until `python scripts/release.py check` passes completely. The current release candidate uses `Codepotg.yaml`; the TypeScript workflow's `CodepotFile.yml` and `CodepotFile.yaml` names are intentionally rejected.
+
 ## PyPI account prerequisites
 
 - The PyPI account email address must be verified.
@@ -18,6 +22,7 @@ From the repository root in Git Bash on Windows:
 
 ```bash
 cd packages/python/codepotg
+rm -rf .venv
 python -m venv .venv
 source .venv/Scripts/activate
 python -m pip install --upgrade pip
@@ -32,7 +37,7 @@ On Linux or macOS, activate with `source .venv/bin/activate`.
 python scripts/release.py check
 ```
 
-The checker performs tests, linting, build, Twine metadata validation, wheel-content inspection, clean-environment installation, and CLI smoke tests.
+The checker performs tests, linting, build, Twine metadata validation, wheel and source-distribution inspection, clean-environment installation, and CLI smoke tests.
 
 The expected files are:
 
@@ -43,9 +48,35 @@ dist/codepotg-1.0.0.tar.gz
 
 Do not publish when any check fails.
 
+## Manual behavior gate
+
+Before upload, create a clean temporary project and verify the public config workflow:
+
+```bash
+mkdir -p .release-smoke
+cd .release-smoke
+codepotg init --yes
+cat Codepotg.yaml
+```
+
+Confirm the generated config is named `Codepotg.yaml`, contains no `templateDir` by default, and uses the bundled pack selected by `language`.
+
+Then provide a valid OpenAPI document and run:
+
+```bash
+codepotg generate sdk --dry-run --verbose
+```
+
+Return to the package directory afterward:
+
+```bash
+cd ..
+rm -rf .release-smoke
+```
+
 ## Publish
 
-Confirm `.env` contains the token without printing it:
+Confirm `.env` exists without printing it:
 
 ```bash
 test -s .env && echo "Local release environment exists"
@@ -93,9 +124,9 @@ After the first upload:
 After PyPI installation is verified:
 
 1. emit OpenAPI 3.0.3 or 3.1.0 from CodepotX;
-2. point a CodepotG `CodepotFile.yml` task at the emitted file;
+2. point a `Codepotg.yaml` task at the emitted file;
 3. run the debug template pack with `--dry-run --verbose`;
 4. run one production template pack;
-5. record any unsupported schema or `x-codegen` shape as a CodepotX OpenAPI projection issue.
+5. record unsupported schema or `x-codegen` shapes as CodepotX OpenAPI projection issues.
 
 A PyPI release cannot be replaced. Any later correction must use a new version such as `1.0.1`.
