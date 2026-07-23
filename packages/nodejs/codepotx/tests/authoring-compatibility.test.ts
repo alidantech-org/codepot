@@ -23,12 +23,17 @@ test('old-style contracts compile after import-only migration', async () => {
       name: shared.ref.name,
       status: shared.ref.status,
     },
-    UserPreview: v1.schemas.ref.User.pick({ id: true, name: true }),
+  });
+  v1.defineSchemas({
+    UserPreview: schemas.ref.User.pick({ id: true, name: true }),
   });
   const users = v1.defineResource({ name: 'users', route: '/v1/users', folders: ['platform'] });
   users.defineRoutes().routes((route) => ({
     listUsers: route.get('/').response(schemas.ref.User.array()),
-    updateUser: route.patch('/:id').body(schemas.ref.User.partial()).response(schemas.ref.User).cache((cache) => cache.invalidate.on('listUsers')),
+    updateUser: route.patch('/:id')
+      .body(schemas.ref.User.partial())
+      .response(schemas.ref.User)
+      .cache((cache) => cache.invalidate.on('listUsers')),
   }));
 
   const config = defineCodepotConfig({ contracts: [v1] });
