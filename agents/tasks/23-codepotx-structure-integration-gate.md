@@ -3,8 +3,8 @@
 Status: [~]
 Issue: #21 open
 Depends on: Tasks 16–20 complete; Tasks 21–22 implementation complete
-Commits: final audit `324004ab4a20edc2a5bb29675d5af7c48d69f285`; integration guardrail `cbe7b62394d186a923a790b0e804ffcf48e318f3`, `bedf0726dc6d67dc4c17868daf93fc52378f3bf1`; grouped architecture wiring `81839d6ba1700ece7fb3f5a0d7602787399f9192`; final public-facade reconciliation through `116facc1ae17876fc36798e98965d7b24f38efb5`; task evidence update `85f44b40d01ce80ad5c57015d80a8cd615e12886`
-Validation: static integration gate, final audit, and complete public export reconciliation are committed. One combined local execution remains required before Tasks 15, 21, 22, and 23 and issues #19–#21 can close.
+Commits: final audit `324004ab4a20edc2a5bb29675d5af7c48d69f285`; integration guardrail `cbe7b62394d186a923a790b0e804ffcf48e318f3`, `bedf0726dc6d67dc4c17868daf93fc52378f3bf1`; grouped architecture wiring `81839d6ba1700ece7fb3f5a0d7602787399f9192`; final public-facade reconciliation through `116facc1ae17876fc36798e98965d7b24f38efb5`; task evidence update `85f44b40d01ce80ad5c57015d80a8cd615e12886`; isolated declaration fix `e90283a1d1d0a364bd570305c427c0d9c69f7a55`
+Validation: the first combined local execution reached `CodepotCancellationController.signal` and failed TS9012 because the exported property lacked an explicit type annotation. Commit `e90283a1d1d0a364bd570305c427c0d9c69f7a55` adds the exact `CodepotCancellationSignal` annotation. The combined local gate must now be rerun before Tasks 15, 21, 22, and 23 and issues #19–#21 can close.
 
 ## Goal
 
@@ -41,6 +41,7 @@ Prove that the completed folder and file migration is behaviorally equivalent, t
 - [x] Runtime operation registration is exhaustive and cast-free at the dispatch boundary.
 - [x] Node and memory adapter parity remains in the complete suite.
 - [x] The explicit contract and root type facades match the Task 17 symbol inventory, including `CompiledPathToken`.
+- [x] Add the explicit exported property annotation required by `isolatedDeclarations` for `CodepotCancellationController.signal`.
 - [ ] Strict source/test typecheck and declaration generation must pass after all final commits.
 - [ ] Publint and Are The Types Wrong must pass for CodepotX and CLI.
 - [ ] Workspace check and build must pass.
