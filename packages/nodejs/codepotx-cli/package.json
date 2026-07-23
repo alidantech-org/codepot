@@ -6,9 +6,9 @@
   "license": "MIT",
   "private": false,
   "engines": { "node": ">=22.18.0" },
-  "bin": { "codepotx": "./dist/index.js" },
+  "bin": { "codepotx": "./dist/index.mjs" },
   "exports": {
-    ".": { "types": "./dist/public.d.ts", "import": "./dist/public.js" },
+    ".": { "types": "./dist/public.d.mts", "import": "./dist/public.mjs" },
     "./package.json": "./package.json"
   },
   "files": ["dist", "README.md", "LICENSE"],
