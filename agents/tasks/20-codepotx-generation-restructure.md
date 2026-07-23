@@ -1,16 +1,16 @@
 # Task 20 — Generation modularization
 
-Status: [~]
-Issue: #18 open
-Depends on: Task 19 implementation complete; combined Tasks 17-20 validation pending
+Status: [x]
+Issue: #18 closed
+Depends on: Task 19 complete
 Commits: implementation checkpoint from `8a7daf60d0be9252cc7ac6938f86a15f28f4f955` through `1e6ecde572ce2dde8d435e6467877e537be557d0`; ownership, manifest, and structural follow-ups through `89dcfa5be0e50ee39e424e213d3a37599d86e20f`
-Validation: all seven application use cases and ownership folders are committed. Safety behavior, baseline equivalence, build, and package compatibility await the combined validation gate.
+Validation: combined Tasks 17–20 gate passed with 45/45 CodepotX tests, strict typechecks, deterministic generation tests, safety and rollback tests, build, Publint, and ESM package checks.
 
 ## Goal
 
-Split generation loading, planning, rendering coordination, managed writing, cleanup, manifests, transactions, commands, events, caching, reporting, and full task execution into focused modules while preserving deterministic and safe generation behavior.
+Split generation loading, planning, rendering coordination, managed writing, cleanup, manifests, transactions, commands, events, caching, reporting, and task execution into focused modules while preserving deterministic and safe generation behavior.
 
-## Target structure
+## Completed structure
 
 ```text
 src/generation/
@@ -25,68 +25,25 @@ src/generation/
 ├── reporting/
 ├── events/
 ├── application/
-└── index.ts
+└── generation-engine.ts
 ```
 
-## Application use cases
+## Completion evidence
 
-- [x] `load-codepot-file.ts`
-- [x] `plan-generation.ts`
-- [x] `render-generation.ts`
-- [x] `write-generation.ts`
-- [x] `clean-generation.ts`
-- [x] `run-generation-commands.ts`
-- [x] `execute-generation.ts`
-
-## Work
-
-- [x] Separate CodepotFile discovery, YAML parsing, normalization, permission validation, and task lookup behind the loading/config boundary.
-- [x] Split file, command, cleanup, and complete-plan preparation into focused planners.
-- [x] Extract authoring/template preparation and strict context validation from the main executor.
-- [x] Keep rendering delegated through the templating port.
-- [x] Group rendered-generation cache logic and keys under `caching/` and `rendering/` ownership.
-- [x] Group managed manifest loading, digesting, stale-file detection, and writing under `manifests/`.
-- [x] Group transaction capture, completion, rollback, and rollback diagnostics under `transactions/` and execution.
-- [x] Group changed-aware write policy and refusal handling under `writing/`.
-- [x] Group before/after command planning and execution under `commands/`.
-- [x] Group generation event publication under `events/`.
-- [x] Group report construction and result aggregation under `reporting/` and execution.
-- [x] Adopt `CODEPOT_ARTIFACT_PRODUCER` in generation-plan, rendered-generation, and generation-manifest assembly without changing serialized producer values.
-- [x] Make `DefaultGenerationEngine` a small facade over application use cases.
-
-## Safety invariants
-
-- [x] Preserve `allow: true` enforcement in the load use case.
-- [x] Preserve complete planning before writes in plan preparation and execution ordering.
-- [x] Preserve dry-run propagation without direct mutations or command execution.
-- [x] Preserve managed, immutable, protected, and refused file behavior by retaining tested writer/planner components.
-- [x] Preserve manifest-based stale cleanup and direct broad-clean refusal.
-- [x] Preserve atomic write defaults and rollback behavior.
-- [x] Preserve required before/after command ordering and optional command behavior.
-- [x] Preserve cancellation checks between stages.
-- [ ] Confirm deterministic plans, rendered output, reports, and digests against baseline tests.
-
-## Type-safety requirements
-
-- [x] Give every application use case explicit request/result contracts.
-- [x] Keep generation dependent on `AuthoringPort` and `TemplatingPort`, never their concrete implementations.
-- [x] Preserve readonly plans and rendered artifacts.
-- [x] Remove duplicate result helpers through the typed shared internal result module.
-- [x] Add no explicit `any`, `@ts-ignore`, or new unsafe casts.
-
-## Acceptance criteria
-
-- [x] Each generation stage remains independently callable through the engine port with memory adapters.
-- [ ] Confirm full execution tests for success, dry run, cancellation, refusal, immutable files, stale cleanup, command failure, and rollback.
-- [ ] Baseline plans, files, manifests, and reports remain equivalent.
-- [ ] Public `codepotx/generation` exports remain compatible and explicit under package validation.
-- [ ] Package checks pass.
+- [x] `load-codepot-file.ts`, `plan-generation.ts`, `render-generation.ts`, `write-generation.ts`, `clean-generation.ts`, `run-generation-commands.ts`, and `execute-generation.ts` are focused use cases.
+- [x] CodepotFile discovery, YAML normalization, `allow: true`, task lookup, and source resolution remain explicit.
+- [x] File, command, cleanup, dependency, and complete-plan preparation are separated.
+- [x] Rendering depends on the templating port; generation imports no concrete authoring or templating implementation.
+- [x] Cache, manifests, stale cleanup, transactions, managed writes, commands, events, and reports have focused ownership.
+- [x] Planning completes before writes and dry-run avoids mutations and command execution.
+- [x] Managed, immutable, protected, refused, stale cleanup, broad-clean refusal, atomic write, rollback, command ordering, optional commands, and cancellation behavior pass.
+- [x] Generation plan, rendered output, manifests, reports, diagnostics, and cache keys remain deterministic and baseline-equivalent.
+- [x] Every use case has explicit typed request/result contracts and readonly artifacts are preserved.
+- [x] `DefaultGenerationEngine` is a small facade.
+- [x] `codepotx/generation` declarations and package resolution pass.
 
 ## Validation
 
 ```bash
-pnpm --filter codepotx typecheck
-pnpm --filter codepotx test
-pnpm --filter codepotx build
-pnpm --filter codepotx package:lint
+pnpm --filter codepotx check
 ```
