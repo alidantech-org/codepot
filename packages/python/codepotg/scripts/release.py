@@ -13,6 +13,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 import tomllib
 import venv
@@ -30,7 +31,10 @@ def main() -> None:
     parser.add_argument(
         "action",
         choices=("check", "publish"),
-        help="Run all checks, or run all checks and upload the exact artifacts to PyPI.",
+        help=(
+            "Run all checks, or run all checks and upload the exact artifacts "
+            "to PyPI."
+        ),
     )
     arguments = parser.parse_args()
 
@@ -40,13 +44,13 @@ def main() -> None:
     run(sys.executable, "-m", "ruff", "check", ".")
     run(sys.executable, "-m", "build")
 
-    artifacts = sorted(DIST_DIR.glob("*"))
-    if not artifacts:
-        fail("No distributions were created in dist/.")
-
+    artifacts = select_artifacts()
     run(sys.executable, "-m", "twine", "check", *map(str, artifacts))
-    wheel = select_wheel(artifacts)
+
+    wheel = next(path for path in artifacts if path.suffix == ".whl")
+    source_distribution = next(path for path in artifacts if path.name.endswith(".tar.gz"))
     inspect_wheel(wheel)
+    inspect_source_distribution(source_distribution)
     smoke_test_wheel(wheel)
 
     print(f"Release checks passed for codepotg {EXPECTED_VERSION}.")
@@ -56,25 +60,37 @@ def main() -> None:
 
 
 def verify_source_metadata() -> None:
-    pyproject = tomllib.loads((PACKAGE_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    pyproject_path = PACKAGE_ROOT / "pyproject.toml"
+    pyproject = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
     project = pyproject.get("project", {})
     metadata_version = project.get("version")
     if metadata_version != EXPECTED_VERSION:
-        fail(f"pyproject.toml version is {metadata_version!r}, expected {EXPECTED_VERSION!r}.")
+        fail(
+            f"pyproject.toml version is {metadata_version!r}, "
+            f"expected {EXPECTED_VERSION!r}."
+        )
 
-    init_text = (PACKAGE_ROOT / "src" / "codepotg" / "__init__.py").read_text(encoding="utf-8")
-    match = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', init_text, re.MULTILINE)
+    init_path = PACKAGE_ROOT / "src" / "codepotg" / "__init__.py"
+    init_text = init_path.read_text(encoding="utf-8")
+    match = re.search(
+        r'^__version__\s*=\s*["\']([^"\']+)["\']',
+        init_text,
+        re.MULTILINE,
+    )
     if match is None or match.group(1) != EXPECTED_VERSION:
         fail("codepotg.__version__ is missing or does not match 1.0.0.")
 
-    constants_text = (PACKAGE_ROOT / "cli" / "constants" / "constants.py").read_text(
-        encoding="utf-8"
+    constants_path = PACKAGE_ROOT / "cli" / "constants" / "constants.py"
+    constants_text = constants_path.read_text(encoding="utf-8")
+    match = re.search(
+        r'^APP_VERSION\s*=\s*["\']([^"\']+)["\']',
+        constants_text,
+        re.MULTILINE,
     )
-    match = re.search(r'^APP_VERSION\s*=\s*["\']([^"\']+)["\']', constants_text, re.MULTILINE)
     if match is None or match.group(1) != EXPECTED_VERSION:
         fail("CLI APP_VERSION is missing or does not match 1.0.0.")
 
-    for required in ("README.md", "LICENSE", "MANIFEST.in"):
+    for required in ("README.md", "RELEASE.md", "LICENSE", "MANIFEST.in"):
         if not (PACKAGE_ROOT / required).is_file():
             fail(f"Required release file is missing: {required}")
 
@@ -90,14 +106,24 @@ def clean_build_artifacts() -> None:
                 shutil.rmtree(directory)
 
 
-def select_wheel(artifacts: list[Path]) -> Path:
+def select_artifacts() -> list[Path]:
+    artifacts = sorted(path for path in DIST_DIR.glob("*") if path.is_file())
+    if len(artifacts) != 2:
+        fail(f"Expected exactly two release artifacts, found {len(artifacts)}.")
+
     wheels = [path for path in artifacts if path.suffix == ".whl"]
-    if len(wheels) != 1:
-        fail(f"Expected exactly one wheel, found {len(wheels)}.")
+    source_distributions = [path for path in artifacts if path.name.endswith(".tar.gz")]
+    if len(wheels) != 1 or len(source_distributions) != 1:
+        fail("Expected one wheel and one .tar.gz source distribution.")
+
     wheel = wheels[0]
-    if f"-{EXPECTED_VERSION}-" not in wheel.name:
-        fail(f"Unexpected wheel version in filename: {wheel.name}")
-    return wheel
+    source_distribution = source_distributions[0]
+    expected_wheel_suffix = f"-{EXPECTED_VERSION}-py3-none-any.whl"
+    if not wheel.name.endswith(expected_wheel_suffix):
+        fail(f"Expected a universal wheel, received: {wheel.name}")
+    if source_distribution.name != f"codepotg-{EXPECTED_VERSION}.tar.gz":
+        fail(f"Unexpected source distribution name: {source_distribution.name}")
+    return artifacts
 
 
 def inspect_wheel(wheel: Path) -> None:
@@ -116,11 +142,15 @@ def inspect_wheel(wheel: Path) -> None:
 
     with zipfile.ZipFile(wheel) as archive:
         names = set(archive.namelist())
+        reject_secret_members(names)
         missing = sorted(required_members - names)
         if missing:
             fail("Wheel is missing required runtime files:\n  - " + "\n  - ".join(missing))
 
-        metadata_name = next((name for name in names if name.endswith(".dist-info/METADATA")), None)
+        metadata_name = next(
+            (name for name in names if name.endswith(".dist-info/METADATA")),
+            None,
+        )
         entries_name = next(
             (name for name in names if name.endswith(".dist-info/entry_points.txt")),
             None,
@@ -136,6 +166,8 @@ def inspect_wheel(wheel: Path) -> None:
         entries = archive.read(entries_name).decode("utf-8")
         if f"Version: {EXPECTED_VERSION}" not in metadata:
             fail("Wheel METADATA does not report version 1.0.0.")
+        if "License-Expression: MIT" not in metadata:
+            fail("Wheel METADATA does not report the MIT SPDX license expression.")
         if "codepotg = codepotg.cli.main:app" not in entries:
             fail("Wheel does not expose the expected codepotg console script.")
 
@@ -144,25 +176,69 @@ def inspect_wheel(wheel: Path) -> None:
             fail("Wheel contains no bundled Jinja templates.")
 
 
+def inspect_source_distribution(source_distribution: Path) -> None:
+    prefix = f"codepotg-{EXPECTED_VERSION}/"
+    required_members = {
+        f"{prefix}README.md",
+        f"{prefix}RELEASE.md",
+        f"{prefix}LICENSE",
+        f"{prefix}MANIFEST.in",
+        f"{prefix}pyproject.toml",
+        f"{prefix}src/codepotg/__init__.py",
+        f"{prefix}src/codepotg/templates/typescript/paths.yaml",
+    }
+
+    with tarfile.open(source_distribution, "r:gz") as archive:
+        names = set(archive.getnames())
+        reject_secret_members(names)
+        missing = sorted(required_members - names)
+        if missing:
+            fail(
+                "Source distribution is missing required files:\n  - "
+                + "\n  - ".join(missing)
+            )
+
+
+def reject_secret_members(names: set[str]) -> None:
+    forbidden = [name for name in names if Path(name).name in {".env", ".pypirc"}]
+    if forbidden:
+        fail("Release artifacts contain secret configuration files: " + ", ".join(forbidden))
+
+
 def smoke_test_wheel(wheel: Path) -> None:
     with tempfile.TemporaryDirectory(prefix="codepotg-release-") as temporary:
         environment_root = Path(temporary) / "venv"
         venv.EnvBuilder(with_pip=True, clear=True).create(environment_root)
-        python = environment_root / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-        executable = environment_root / ("Scripts/codepotg.exe" if os.name == "nt" else "bin/codepotg")
+        scripts_directory = environment_root / ("Scripts" if os.name == "nt" else "bin")
+        python = scripts_directory / ("python.exe" if os.name == "nt" else "python")
+        executable = scripts_directory / ("codepotg.exe" if os.name == "nt" else "codepotg")
 
-        run(str(python), "-m", "pip", "install", "--disable-pip-version-check", str(wheel))
+        run(
+            str(python),
+            "-m",
+            "pip",
+            "install",
+            "--disable-pip-version-check",
+            str(wheel),
+        )
         run(
             str(python),
             "-c",
             (
                 "import codepotg; "
-                f"assert codepotg.__version__ == '{EXPECTED_VERSION}', codepotg.__version__"
+                f"assert codepotg.__version__ == '{EXPECTED_VERSION}', "
+                "codepotg.__version__"
             ),
         )
         run(str(executable), "--version", expected=f"codepotg {EXPECTED_VERSION}")
         run(str(executable), "--help")
-        run(str(python), "-m", "codepotg", "--version", expected=f"codepotg {EXPECTED_VERSION}")
+        run(
+            str(python),
+            "-m",
+            "codepotg",
+            "--version",
+            expected=f"codepotg {EXPECTED_VERSION}",
+        )
 
 
 def upload_to_pypi(artifacts: list[Path]) -> None:
@@ -186,24 +262,30 @@ def upload_to_pypi(artifacts: list[Path]) -> None:
 
 def read_publish_token() -> str:
     value = os.environ.get("PUBLISH_TOKEN", "").strip()
-    if value:
-        return value
+    if not value:
+        value = read_dotenv_token()
+    if not value:
+        fail("PUBLISH_TOKEN is not set in the environment or local .env file.")
+    if not value.startswith("pypi-"):
+        fail("PUBLISH_TOKEN does not look like a PyPI API token.")
+    return value
 
+
+def read_dotenv_token() -> str:
     dotenv = PACKAGE_ROOT / ".env"
-    if dotenv.is_file():
-        for raw_line in dotenv.read_text(encoding="utf-8").splitlines():
-            line = raw_line.strip()
-            if not line or line.startswith("#"):
-                continue
-            if line.startswith("export "):
-                line = line[7:].lstrip()
-            key, separator, raw_value = line.partition("=")
-            if separator and key.strip() == "PUBLISH_TOKEN":
-                value = raw_value.strip().strip('"\'')
-                if value:
-                    return value
+    if not dotenv.is_file():
+        return ""
 
-    fail("PUBLISH_TOKEN is not set in the environment or local .env file.")
+    for raw_line in dotenv.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[7:].lstrip()
+        key, separator, raw_value = line.partition("=")
+        if separator and key.strip() == "PUBLISH_TOKEN":
+            return raw_value.strip().strip('"\'')
+    return ""
 
 
 def run(
