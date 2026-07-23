@@ -1,8 +1,5 @@
 /** Public entry point for Codepot authoring and stable contracts. */
 export {
-  CodepotCancellationController,
-} from './platform/shared/cancellation';
-export {
   createAccessBuilder,
   createAuthoringEngine,
   createAuthoringState,
@@ -295,6 +292,7 @@ export type {
   CompiledAccessDefinition,
   CompiledArraySchema,
   CompiledAuthoringArtifact,
+  CompiledCodepotFile,
   CompiledDocumentation,
   CompiledEntity,
   CompiledEntityConstraint,
@@ -338,7 +336,6 @@ export type {
   CompiledTupleSchema,
   CompiledUnionSchema,
   CompiledWritePolicy,
-  CompiledCodepotFile,
   ContentDigest,
   DataCodecPort,
   Diagnostic,
