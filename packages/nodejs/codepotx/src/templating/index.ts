@@ -11,6 +11,20 @@ export {
   formatTemplateVariableCatalog,
   validateTemplateContext,
 } from './template-variables';
-export { compilePathParts, compilePathTokens, resolveExpression, resolveOutputTokens } from './path-tokens';
-export { createTemplatingEngine, DefaultTemplatingEngine } from './templating-engine';
-export type * from './templating.types';
+export {
+  compilePathParts,
+  compilePathTokens,
+  resolveExpression,
+  resolveOutputTokens,
+} from './path-tokens';
+export {
+  createTemplatingEngine,
+  DefaultTemplatingEngine,
+} from './templating-engine';
+export type {
+  PathsFileInput,
+  PathsFolderInput,
+  TemplateVariableRequirementInput,
+  TemplatingDependencies,
+  TemplatingEngine,
+} from './templating.types';
