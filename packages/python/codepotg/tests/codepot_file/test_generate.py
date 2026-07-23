@@ -38,6 +38,30 @@ def test_one_task_without_name_runs_task(tmp_path: Path, monkeypatch) -> None:
     assert calls[0].language == "typescript"
 
 
+def test_bundled_template_pack_is_used_when_template_dir_is_omitted(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    config = _write_config(
+        tmp_path,
+        """
+allow: true
+tasks:
+  sdk:
+    input: ./openapi.yaml
+    language: typescript
+    output: ./lib
+""",
+    )
+    calls = _patch_emit(monkeypatch)
+
+    result = generate_workflow.run_generate(GenerateInput(config_path=config))
+
+    assert calls[0].templates_path.name == "typescript"
+    assert calls[0].templates_path.is_dir()
+    assert result.tasks[0].template_dir == calls[0].templates_path
+
+
 def test_multiple_tasks_without_name_fails_with_available_names(tmp_path: Path) -> None:
     config = _write_config(
         tmp_path,
@@ -300,6 +324,6 @@ tasks:
 
 
 def _write_config(tmp_path: Path, content: str) -> Path:
-    path = tmp_path / "CodepotFile.yml"
+    path = tmp_path / "Codepotg.yaml"
     path.write_text(content.strip(), encoding="utf-8")
     return path
