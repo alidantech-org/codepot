@@ -20,7 +20,7 @@ class JsonlIndexStore:
         hot_index: HotIndexRegistry | None = None,
     ) -> None:
         self.cache_dir = Path(cache_dir)
-        self.hot_index = hot_index or HotIndexRegistry()
+        self.hot_index = hot_index if hot_index is not None else HotIndexRegistry()
 
     def get_by_ref(self, ref: str) -> RecordLocation | None:
         return self._lookup_definition("ref", ref)
