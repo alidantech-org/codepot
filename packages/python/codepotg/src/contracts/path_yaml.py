@@ -44,6 +44,31 @@ ALLOWED_IMPORT_STRATEGIES = {
     IMPORT_STRATEGY_PACKAGE,
     IMPORT_STRATEGY_NONE,
 }
+_ALLOWED_ROOT_KEYS = {
+    KEY_FOLDERS,
+    KEY_IMPORTS,
+    KEY_TEMPLATE_EXTENSION,
+    KEY_STRIP_TEMPLATE_EXTENSION,
+    KEY_ALLOW_RAW_FILES,
+    KEY_META,
+    KEY_WRITE_POLICY,
+}
+_ALLOWED_FOLDER_KEYS = {
+    KEY_SELECT,
+    KEY_AS,
+    KEY_ALIAS,
+    KEY_MODE,
+    KEY_PARTS,
+    KEY_DESCRIPTION,
+}
+_ALLOWED_IMPORT_KEYS = {KEY_STRATEGY}
+_ALLOWED_WRITE_POLICY_KEYS = {
+    KEY_DEFAULT_MODE,
+    KEY_MANAGED_ROOTS,
+    KEY_IMMUTABLE_ROOTS,
+    KEY_PROTECTED_ROOTS,
+    KEY_CLEAN_ROOTS,
+}
 
 
 class PathYamlError(ValueError):
@@ -58,8 +83,12 @@ def path_config_from_yaml(data: dict[str, Any] | None) -> PathConfig:
     if not isinstance(data, dict):
         raise PathYamlError("paths.yaml root must be an object.")
 
+    _reject_unknown_keys(data, _ALLOWED_ROOT_KEYS, owner="paths.yaml")
+    folders = _parse_folders(data.get(KEY_FOLDERS, {}))
+    _validate_unique_aliases(folders)
+
     return PathConfig(
-        folders=_parse_folders(data.get(KEY_FOLDERS, {})),
+        folders=folders,
         imports=_parse_imports(data.get(KEY_IMPORTS)),
         template_extension=_string(
             data.get(KEY_TEMPLATE_EXTENSION),
@@ -87,6 +116,7 @@ def _parse_write_policy(raw: Any) -> PathWritePolicy:
         return PathWritePolicy()
     if not isinstance(raw, dict):
         raise PathYamlError("'write_policy' must be an object.")
+    _reject_unknown_keys(raw, _ALLOWED_WRITE_POLICY_KEYS, owner=KEY_WRITE_POLICY)
     return PathWritePolicy(
         exists=True,
         default_mode=_lifecycle_mode(raw.get(KEY_DEFAULT_MODE), field_name=KEY_DEFAULT_MODE)
@@ -104,6 +134,7 @@ def _parse_imports(raw: Any) -> PathImportConfig:
 
     if not isinstance(raw, dict):
         raise PathYamlError("'imports' must be an object.")
+    _reject_unknown_keys(raw, _ALLOWED_IMPORT_KEYS, owner=KEY_IMPORTS)
 
     strategy = _string(
         raw.get(KEY_STRATEGY),
@@ -132,6 +163,7 @@ def _parse_folders(raw: Any) -> tuple[PathFolder, ...]:
 
         if not isinstance(value, dict):
             raise PathYamlError(f"Path folder '{name}' must be an object.")
+        _reject_unknown_keys(value, _ALLOWED_FOLDER_KEYS, owner=f"folders.{name}")
 
         folders.append(_parse_folder(name, value))
 
@@ -149,11 +181,7 @@ def _parse_folder(name: str, raw: dict[str, Any]) -> PathFolder:
     if lifecycle is None:
         mode = _mode(mode_value, folder=name)
     select = _optional_select(raw, name=name, mode=mode)
-    alias = _string(
-        raw.get(KEY_AS, raw.get(KEY_ALIAS)),
-        default=name,
-        field_name=f"{name}.{KEY_AS}",
-    )
+    alias = _folder_alias(raw, name=name)
 
     return PathFolder(
         name=name,
@@ -168,6 +196,29 @@ def _parse_folder(name: str, raw: dict[str, Any]) -> PathFolder:
             field_name=f"{name}.{KEY_DESCRIPTION}",
         ),
     )
+
+
+def _folder_alias(raw: dict[str, Any], *, name: str) -> str:
+    as_value = raw.get(KEY_AS)
+    alias_value = raw.get(KEY_ALIAS)
+    if as_value is not None and alias_value is not None and as_value != alias_value:
+        raise PathYamlError(
+            f"Folder '{name}' defines conflicting '{KEY_AS}' and '{KEY_ALIAS}' values."
+        )
+    value = as_value if as_value is not None else alias_value
+    return _non_empty_string(value, default=name, field_name=f"{name}.{KEY_AS}")
+
+
+def _validate_unique_aliases(folders: tuple[PathFolder, ...]) -> None:
+    owners: dict[str, str] = {}
+    for folder in folders:
+        previous = owners.get(folder.alias)
+        if previous is not None:
+            raise PathYamlError(
+                f"Folders '{previous}' and '{folder.name}' use the same alias "
+                f"'{folder.alias}'. Each effective alias must be unique."
+            )
+        owners[folder.alias] = folder.name
 
 
 def _parse_parts(raw: Any, *, folder: str) -> tuple[Any, ...]:
@@ -242,15 +293,6 @@ def _optional_select(raw: dict[str, Any], *, name: str, mode: PathSelectionMode)
     return value
 
 
-def _required_string(raw: dict[str, Any], key: str, *, owner: str) -> str:
-    value = raw.get(key)
-
-    if not isinstance(value, str) or not value:
-        raise PathYamlError(f"'{owner}.{key}' is required and must be a non-empty string.")
-
-    return value
-
-
 def _string(value: Any, *, default: str, field_name: str) -> str:
     if value is None:
         return default
@@ -259,6 +301,13 @@ def _string(value: Any, *, default: str, field_name: str) -> str:
         raise PathYamlError(f"'{field_name}' must be a string.")
 
     return value
+
+
+def _non_empty_string(value: Any, *, default: str, field_name: str) -> str:
+    result = _string(value, default=default, field_name=field_name)
+    if not result.strip():
+        raise PathYamlError(f"'{field_name}' must be a non-empty string.")
+    return result.strip()
 
 
 def _bool(value: Any, *, default: bool, field_name: str) -> bool:
@@ -279,3 +328,14 @@ def _dict(value: Any, *, field_name: str) -> dict[str, Any]:
         raise PathYamlError(f"'{field_name}' must be an object.")
 
     return dict(value)
+
+
+def _reject_unknown_keys(raw: dict[str, Any], allowed: set[str], *, owner: str) -> None:
+    unknown = sorted(str(key) for key in raw if key not in allowed)
+    if not unknown:
+        return
+    allowed_text = ", ".join(sorted(allowed))
+    unknown_text = ", ".join(unknown)
+    raise PathYamlError(
+        f"Unknown key(s) in '{owner}': {unknown_text}. Allowed keys: {allowed_text}."
+    )
