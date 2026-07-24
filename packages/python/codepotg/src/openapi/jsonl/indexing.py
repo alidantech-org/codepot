@@ -254,7 +254,7 @@ class ShardedIndexWriter:
 
 
 def index_shard(index: str, value: str, *, chars: int = 1) -> str:
-    digest = hashlib.sha256(f"{index}\0{value}".encode("utf-8")).hexdigest()
+    digest = hashlib.sha256(f"{index}\0{value}".encode()).hexdigest()
     return digest[:chars]
 
 
