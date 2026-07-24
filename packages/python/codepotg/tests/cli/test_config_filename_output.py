@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
 from app.models import EmitOutput
 from app.workflows import generate as generate_workflow
