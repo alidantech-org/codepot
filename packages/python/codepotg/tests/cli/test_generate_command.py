@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 import yaml
-from typer.testing import CliRunner
+from click.testing import CliRunner
 
 from app.models import EmitOutput
 from app.workflows import generate as generate_workflow
@@ -19,7 +19,7 @@ def test_generate_missing_config_file_fails_with_helpful_message() -> None:
     result = runner.invoke(app, ["generate"])
 
     assert result.exit_code == 1
-    assert "Codepotg.yaml not found" in result.output
+    assert "Codepotg.yaml or Codepotg.yml not found" in result.output
 
 
 def test_help_exposes_public_commands_only() -> None:
