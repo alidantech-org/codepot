@@ -6,6 +6,7 @@ import os
 import shutil
 import uuid
 from collections.abc import Mapping
+from contextlib import suppress
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -110,14 +111,10 @@ def compile_openapi_jsonl(
         _write_manifest(staging / "manifest.json", manifest)
         _replace_directory(staging, target, backup)
     except Exception:
-        try:
+        with suppress(Exception):
             sections.close()
-        except Exception:
-            pass
-        try:
+        with suppress(Exception):
             indexes.close()
-        except Exception:
-            pass
         shutil.rmtree(staging, ignore_errors=True)
         raise
 
