@@ -4,9 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from codepot_file.loader import load_codepotg_config, resolve_codepotg_config
+from codepot_file.loader import (
+    load_codepotg_config,
+    resolve_codepotg_config,
+)
 from core.errors import ConfigError
-
 
 CONFIG_BODY = """
 allow: true
