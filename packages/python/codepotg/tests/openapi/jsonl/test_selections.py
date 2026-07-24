@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+from itertools import islice
 from pathlib import Path
 
 import pytest
 
 from openapi.jsonl import (
     DEFAULT_SELECTION_CATALOG,
+    HotIndexLimits,
     JsonlSelectionError,
     JsonlSelectionStore,
     SelectionCatalog,
@@ -90,6 +92,40 @@ def test_selection_groups_are_lightweight_until_loaded(tmp_path: Path) -> None:
     dto = store.load(dto_handle)
     assert dto.raw["x-codegen"]["kind"] == "dto"
     assert store.load_count == 1
+
+
+@pytest.mark.parametrize(
+    "relative",
+    ("projects/typescript/openapi.json", "projects/dart/openapi.json"),
+)
+def test_large_fixture_selection_is_lazy_and_raw_cache_is_bounded(
+    relative: str,
+    tmp_path: Path,
+) -> None:
+    source = Path(__file__).parents[2] / "fixtures" / relative
+    result = compile_openapi_jsonl(source, tmp_path / "cache")
+    store = JsonlSelectionStore(
+        result.cache_dir,
+        raw_cache_limits=HotIndexLimits(max_entries=1, max_bytes=64 * 1024 * 1024),
+    )
+
+    schema_count = sum(1 for _ in store.iter_handles("schemas.all"))
+    assert schema_count == result.manifest.sections["components/schemas"].count
+    assert store.load_count == 0
+
+    first_handles = tuple(islice(store.iter_handles("schemas.all"), 3))
+    assert len(first_handles) == 3
+    for handle in first_handles:
+        store.load(handle)
+
+    stats = store.raw_cache_stats()
+    assert stats.entries <= 1
+    assert stats.evictions >= 2
+    assert store.load_count == 3
+
+    operation_handles = tuple(store.iter_handles("operations"))
+    assert operation_handles
+    assert all(handle.key.startswith("operation:") for handle in operation_handles)
 
 
 def _compile_fixture(tmp_path: Path) -> Path:
