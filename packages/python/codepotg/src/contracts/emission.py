@@ -83,3 +83,4 @@ class EmissionResult:
 
     plan: EmissionPlan
     write_result: EmissionWriteResult
+    output_registry: Any | None = None
