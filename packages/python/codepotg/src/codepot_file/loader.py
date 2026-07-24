@@ -1,4 +1,4 @@
-"""Load and validate ``Codepotg.yaml`` configuration files."""
+"""Load and validate CodepotG YAML configuration files."""
 
 from __future__ import annotations
 
@@ -10,19 +10,15 @@ import yaml
 from codepot_file.models import CodepotCommand, CodepotFile, CodepotTask
 from core.errors import ConfigError
 
-CODEPOTG_CONFIG_NAME = "Codepotg.yaml"
+CODEPOTG_CONFIG_YAML = "Codepotg.yaml"
+CODEPOTG_CONFIG_YML = "Codepotg.yml"
+CODEPOTG_CONFIG_NAME = CODEPOTG_CONFIG_YAML
+SUPPORTED_CONFIG_NAMES = (CODEPOTG_CONFIG_YAML, CODEPOTG_CONFIG_YML)
 LEGACY_CONFIG_NAMES = ("CodepotFile.yml", "CodepotFile.yaml")
-SUPPORTED_CONFIG_NAMES = (CODEPOTG_CONFIG_NAME,)
 
 
 def resolve_codepotg_config(config_path: Path | None = None) -> Path:
-    """Resolve the selected CodepotG configuration path.
-
-    Automatic discovery intentionally accepts only ``Codepotg.yaml`` so the
-    Python generator cannot be confused with the TypeScript Codepot task file.
-    Explicit paths are allowed for advanced usage, except the retired shared
-    CodepotFile names, which produce a migration error.
-    """
+    """Resolve an explicit config or discover a project-local CodepotG config."""
     if config_path is not None:
         path = config_path.expanduser().resolve()
         _reject_legacy_name(path)
@@ -33,23 +29,32 @@ def resolve_codepotg_config(config_path: Path | None = None) -> Path:
         return path
 
     current = Path.cwd()
+    found = [current / name for name in SUPPORTED_CONFIG_NAMES if (current / name).exists()]
+    if len(found) > 1:
+        names = ", ".join(path.name for path in found)
+        raise ConfigError(
+            f"Multiple CodepotG configs found ({names}). "
+            "Keep only one or pass an explicit --config path."
+        )
+    if found:
+        path = found[0]
+        if not path.is_file():
+            raise ConfigError(f"CodepotG config path is not a file: {path}")
+        return path.resolve()
+
     legacy = [current / name for name in LEGACY_CONFIG_NAMES if (current / name).exists()]
     if legacy:
         names = ", ".join(path.name for path in legacy)
         raise ConfigError(
             f"Legacy Codepot config detected ({names}).\n"
-            f"CodepotG now uses {CODEPOTG_CONFIG_NAME}; rename or recreate the Python generator config."
+            f"CodepotG uses {CODEPOTG_CONFIG_YAML} or {CODEPOTG_CONFIG_YML}; "
+            "rename or recreate the Python generator config."
         )
 
-    path = current / CODEPOTG_CONFIG_NAME
-    if not path.exists():
-        raise ConfigError(
-            f"{CODEPOTG_CONFIG_NAME} not found.\n"
-            f"Add {CODEPOTG_CONFIG_NAME} with allow: true before running generation in this directory."
-        )
-    if not path.is_file():
-        raise ConfigError(f"CodepotG config path is not a file: {path}")
-    return path.resolve()
+    raise ConfigError(
+        f"{CODEPOTG_CONFIG_YAML} or {CODEPOTG_CONFIG_YML} not found.\n"
+        "Add one CodepotG config with allow: true before running generation in this directory."
+    )
 
 
 def load_codepotg_config(config_path: Path | None = None) -> CodepotFile:
@@ -61,11 +66,11 @@ def load_codepotg_config(config_path: Path | None = None) -> CodepotFile:
     allow = raw.get("allow") is True
     defaults_raw = raw.get("defaults") or {}
     if not isinstance(defaults_raw, dict):
-        raise ConfigError("Codepotg.yaml defaults must be an object.")
+        raise ConfigError("CodepotG config defaults must be an object.")
 
     tasks_raw = raw.get("tasks")
     if not isinstance(tasks_raw, dict) or not tasks_raw:
-        raise ConfigError("Codepotg.yaml must define a non-empty tasks object.")
+        raise ConfigError("CodepotG config must define a non-empty tasks object.")
 
     tasks = tuple(
         _task_from_yaml(
@@ -92,7 +97,7 @@ def load_codepotg_yaml(path: Path) -> dict[str, Any]:
         raw = yaml.safe_load(file) or {}
 
     if not isinstance(raw, dict):
-        raise ConfigError("Codepotg.yaml root must be an object.")
+        raise ConfigError("CodepotG config root must be an object.")
     return raw
 
 
@@ -230,12 +235,11 @@ def _reject_legacy_name(path: Path) -> None:
     if path.name in LEGACY_CONFIG_NAMES:
         raise ConfigError(
             f"{path.name} is reserved for the TypeScript Codepot workflow. "
-            f"CodepotG uses {CODEPOTG_CONFIG_NAME}."
+            f"CodepotG uses {CODEPOTG_CONFIG_YAML} or {CODEPOTG_CONFIG_YML}."
         )
 
 
-# Internal compatibility aliases keep the existing module graph stable while all
-# public messages and generated files use the CodepotG-specific name.
+# Internal compatibility aliases keep the existing module graph stable.
 resolve_codepot_file = resolve_codepotg_config
 load_codepot_file = load_codepotg_config
 load_codepot_file_yaml = load_codepotg_yaml
