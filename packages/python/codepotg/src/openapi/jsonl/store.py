@@ -39,6 +39,31 @@ class JsonlIndexStore:
         self.hot_index.put_query(index, value, facts)
         return facts
 
+    def iter_mentions(self, index: str) -> Iterator[Mapping[str, Any]]:
+        """Stream every fact for one mention index across deterministic shards."""
+
+        directory = self._cache_file("indexes/mentions")
+        if not directory.is_dir():
+            return
+        for path in sorted(directory.glob("*.jsonl")):
+            try:
+                with path.open("rb") as stream:
+                    for raw_line in stream:
+                        try:
+                            fact = json.loads(raw_line)
+                        except json.JSONDecodeError as exc:
+                            raise JsonlLookupError(
+                                f"Invalid index JSONL line in {path}"
+                            ) from exc
+                        if (
+                            isinstance(fact, Mapping)
+                            and fact.get("index") == index
+                            and isinstance(fact.get("value"), str)
+                        ):
+                            yield fact
+            except OSError as exc:
+                raise JsonlLookupError(f"Unable to stream JSONL index: {path}") from exc
+
     def find_dependants(self, ref: str) -> tuple[Mapping[str, Any], ...]:
         cache_index = "dependency"
         cached = self.hot_index.get_query(cache_index, ref)
