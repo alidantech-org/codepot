@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from copy import deepcopy
+
 from constants.codegen import ATTR_RESOURCE, X_CODEGEN
 from inference.graph import collect_dependencies
 from inference.models import InferenceGraph, InferredResource
@@ -43,6 +45,7 @@ class InferenceEngine:
             operations=operations,
             dependencies=dependencies,
             x_codegen=x_codegen if isinstance(x_codegen, dict) else {},
+            raw=deepcopy(document.raw),
         )
 
 
