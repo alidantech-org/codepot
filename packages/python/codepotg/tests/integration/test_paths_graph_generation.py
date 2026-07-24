@@ -13,7 +13,7 @@ def test_real_typescript_project_generates_explicit_graph_incrementally(
     shutil.copytree(
         _fixtures_root() / "typescript",
         project,
-        ignore=shutil.ignore_patterns(".generated"),
+        ignore=shutil.ignore_patterns(".generated", ".codepotg"),
     )
     templates = project / "templates"
     shutil.rmtree(templates)
@@ -61,7 +61,9 @@ barrels:
         encoding="utf-8",
     )
     (templates / "enum.ts.j2").write_text(
-        "export const {{ enum.name.camel.o }}Enum = \"{{ enum.api.kind }}\";\n",
+        "export const {{ enum.name.camel.o }}Enum = \"{{ source.kind }}\";\n"
+        "export const {{ enum.name.camel.o }}Values = "
+        "\"{{ source.get('enum', ()) | join(',') }}\";\n",
         encoding="utf-8",
     )
     (templates / "enum.meta.txt.j2").write_text(
@@ -96,9 +98,12 @@ barrels:
     assert task.updated == []
     assert task.unchanged == []
     assert all(path.is_file() for path in expected)
+    assert (project / ".codepotg" / "cache" / "openapi" / "manifest.json").is_file()
 
     enum_type = (output / "models" / "user_status.ts").read_text(encoding="utf-8")
     assert "userStatusEnum" in enum_type
+    assert 'userStatusEnum = "enum"' in enum_type
+    assert "active,inactive" in enum_type
     metadata = (output / "metadata" / "user_status.txt").read_text(encoding="utf-8")
     assert "selection=enums" in metadata
     barrel = (output / "models" / "index.ts").read_text(encoding="utf-8")
@@ -117,6 +122,8 @@ barrels:
     assert any(event.stage == "file_planned" for event in events)
     assert any(event.stage == "file_rendered" for event in events)
     assert any(event.stage == "emission_complete" for event in events)
+    resolver_event = next(event for event in events if event.stage == "resolver_complete")
+    assert "loaded 1 record(s)" in resolver_event.message
 
 
 def _fixtures_root() -> Path:
