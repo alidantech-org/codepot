@@ -214,7 +214,14 @@ def _stream_direct_mapping(
             max_depth=limits.max_depth,
         )
         raw = _read_value(events, value_event, value_token, budget=budget, depth=0)
-        on_record(ExtractedRecord(section=section, name=str(name), raw=raw))
+        on_record(
+            ExtractedRecord(
+                section=section,
+                name=str(name),
+                raw=raw,
+                estimated_bytes=max(1, budget.bytes),
+            )
+        )
 
 
 def _read_value(
