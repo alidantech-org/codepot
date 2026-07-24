@@ -157,7 +157,7 @@ known unexecuted checks or environment limitations
 - [x] add real generation integration tests and exact emitted-content assertions;
 - [x] statically verify path selection, template scanning, and adapter variable compatibility;
 - [x] execute loader tests: 14 passed;
-- [x] execute project-pack integration tests: 5 passed;
+- [x] execute project-pack integration tests: 5 passed before manual fixture outputs existed;
 - [x] manually generate the TypeScript fixture: 9 files created;
 - [x] manually generate the Dart fixture: 9 files created.
 
@@ -183,4 +183,14 @@ known unexecuted checks or environment limitations
 - [x] report the actual resolved config filename in progress output;
 - [x] add a regression test proving explicit `Codepotg.yml` output;
 - [x] normalize the Ruff-flagged loader-test import block;
-- [-] rerun focused CLI tests, the complete suite, and Ruff after pulling the latest branch head.
+- [x] execute focused CLI tests: 15 passed;
+- [x] execute Ruff: all checks passed.
+
+### Batch V3 — Deterministic project-fixture isolation
+
+- [x] identify the four full-suite failures as copied `.generated/` output rather than generation failures;
+- [x] exclude `.generated` from every temporary fixture copy;
+- [x] assert copied projects begin without an output directory before generation;
+- [x] preserve manual fixture output for developer inspection without contaminating tests;
+- [-] rerun the project-pack integration test and complete suite after pulling the latest branch head;
+- [x] previous full-suite evidence before this repair: 223 passed, 4 fixture-isolation failures.
