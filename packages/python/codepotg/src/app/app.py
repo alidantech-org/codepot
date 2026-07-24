@@ -15,6 +15,8 @@ from app.models import (
     InspectOutput,
     JsonlInput,
     JsonlOutput,
+    PathsInput,
+    PathsOutput,
     ProgressSink,
     ValidateInput,
     ValidateOutput,
@@ -24,6 +26,7 @@ from app.workflows.generate import run_generate
 from app.workflows.infer import run_infer
 from app.workflows.inspect import run_inspect
 from app.workflows.jsonl import run_jsonl
+from app.workflows.paths import run_paths
 from app.workflows.validate import run_validate
 
 
@@ -120,6 +123,15 @@ class GeneratorApp:
                 progress=progress,
             )
         )
+
+    def paths(
+        self,
+        template_root: Path,
+        *,
+        progress: ProgressSink | None = None,
+    ) -> PathsOutput:
+        """Resolve and inspect a template pack paths configuration."""
+        return run_paths(PathsInput(template_root=template_root, progress=progress))
 
     def validate(self, input_path: Path) -> ValidateOutput:
         """Validate an OpenAPI document."""
