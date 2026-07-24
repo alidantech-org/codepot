@@ -33,6 +33,7 @@ class VirtualOutput:
     source_ref: str | None
     template_path: PurePosixPath
     output_path: PurePosixPath
+    refs: tuple[str, ...] = ()
     symbols: tuple[str, ...] = ()
     provides: tuple[str, ...] = ()
     resource: str | None = None
@@ -50,6 +51,7 @@ class VirtualOutput:
             "sourceRef": self.source_ref,
             "template": self.template_path.as_posix(),
             "file": self.output_path.as_posix(),
+            "refs": list(self.refs),
             "symbols": list(self.symbols),
             "provides": list(self.provides),
             "resource": self.resource,
@@ -79,6 +81,7 @@ class VirtualOutputRegistry:
         source_ref: str | None,
         template_path: str | Path | PurePosixPath,
         output_path: str | Path | PurePosixPath,
+        refs: tuple[str, ...] = (),
         symbols: tuple[str, ...] = (),
         provides: tuple[str, ...] = (),
         resource: str | None = None,
@@ -90,6 +93,9 @@ class VirtualOutputRegistry:
 
         template = normalize_registry_path(template_path, field="template")
         output = normalize_registry_path(output_path, field="output")
+        normalized_refs = tuple(sorted(set(ref for ref in refs if ref)))
+        if source_ref and source_ref not in normalized_refs:
+            normalized_refs = tuple(sorted((*normalized_refs, source_ref)))
         normalized_symbols = tuple(sorted(set(symbol for symbol in symbols if symbol)))
         normalized_provides = tuple(sorted(set(value for value in provides if value)))
         item = VirtualOutput(
@@ -99,6 +105,7 @@ class VirtualOutputRegistry:
             source_ref=source_ref,
             template_path=template,
             output_path=output,
+            refs=normalized_refs,
             symbols=normalized_symbols,
             provides=normalized_provides,
             resource=resource,
@@ -127,8 +134,8 @@ class VirtualOutputRegistry:
         self._by_path[path_key] = identity
         self._by_source.setdefault(source_key, set()).add(identity)
         self._by_emission.setdefault(emission, set()).add(identity)
-        if source_ref:
-            self._by_ref.setdefault(source_ref, set()).add(identity)
+        for ref in normalized_refs:
+            self._by_ref.setdefault(ref, set()).add(identity)
         return item
 
     def mark_written(
