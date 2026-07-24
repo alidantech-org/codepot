@@ -8,10 +8,12 @@
 | 01 | Shared contract and stable artifacts | [x] | #3 closed | Complete |
 | 02 | Runtime and platform adapters | [x] | #4 closed | Complete |
 | 03 | Authoring parity and canonical compiler | [~] | #5 | In progress |
-| 04 | Templating and Handlebars migration | [ ] | Open when ready | Stable artifacts and platform ports complete |
-| 05 | Generation and CodepotFile orchestration | [ ] | Open when ready | Authoring and templating ports usable |
-| 06 | External CLI frontend | [ ] | Open when ready | Runtime generation path stable |
-| 07 | Integration, parity, packaging, release | [ ] | Open when ready | Phases 01–06 complete |
+| 04 | Templating and Handlebars migration | [x] | #6 closed | Complete baseline |
+| 05 | Generation and CodepotFile orchestration | [x] | #7 closed | Complete baseline |
+| 06 | External CLI frontend | [x] | completed baseline | Complete baseline |
+| 07 | Integration, parity, packaging, release | [x] | completed baseline | Complete baseline |
+| 08 | Template variable contract and validation | [x] | #10 closed | Complete baseline |
+| 09 | Production-grade generation hardening | [ ] | Open after Task 24 direction gates | Task 24 architecture decisions |
 
 ## Architectural commitment
 
@@ -27,13 +29,14 @@ generation
 external CLI and other frontends
 ```
 
-The stable authoring artifact, engine ports, platform ports, requests, results, diagnostics, and events are designed before concrete implementations.
+Stable artifacts, ports, requests, results, diagnostics, and events are designed before concrete implementations. New generation work must also keep large source records and rendered blobs outside unbounded in-memory plans.
 
 ## Completed foundation
 
 - [x] Phase 00 agent/task system and issue workflow.
 - [x] Phase 01 stable artifacts, ports, operations, diagnostics, events, and contract exports.
 - [x] Phase 02 explicit-DI runtime, typed dispatch baseline, ordered events, and Node/memory adapters.
+- [x] Baseline templating, generation, CLI, release, and template-variable behavior.
 
 ## CodepotX structure hardening track
 
@@ -54,6 +57,23 @@ Final audit: `agents/audits/CODEPOTX_STRUCTURE_FINAL.md`.
 
 Tasks 16–20 passed strict source/test typechecks, 45 CodepotX tests, 3 CLI tests, package builds, Publint, and ESM package-resolution checks. Tasks 21–23 add typed runtime dispatch, capability-owned platform adapters, grouped tests, explicit package exports, consumer fixtures, final documentation, and the integration audit.
 
+## CodepotG JSONL-first lazy generation track
+
+Source of truth: `agents/tasks/24-codepotg-jsonl-lazy-generation.md`.
+
+| Order | Gate | Status | Required outcome |
+|---|---|---|---|
+| 24.1 | JSONL compiler foundation | [ ] | JSON-first streaming extraction without a full OpenAPI object |
+| 24.2 | Headless indexes | [ ] | Direct ref/resource/dependency/mention lookup with bounded hot indexes |
+| 24.3 | Queue pipeline | [ ] | Bounded reader, parser, planner, resolver, writer, and event queues |
+| 24.4 | Selection planning | [ ] | Lazy selection and virtual output registry without full rendered plans |
+| 24.5 | Human `paths.yaml` approval | [!] | No final syntax or implementation before explicit approval |
+| 24.6 | Dependencies and barrels | [ ] | Explicit providers, overlap validation, and dynamic barrel scheduling |
+| 24.7 | Context and imports | [ ] | Correct selection-specific lazy context and registry-backed imports |
+| 24.8 | Documentation and release gate | [ ] | Complete selection, variable, template, and `paths.yaml` author guides |
+
+The JSONL compiler foundation is the first compilation change. `paths.yaml` design work may inventory and propose alternatives, but the final direction requires human approval.
+
 ## Final structure gate
 
 ```bash
@@ -68,8 +88,12 @@ pnpm build
 - every phase has compatibility and behavioral validation;
 - stable artifacts are versioned and deterministic;
 - old TypeScript contracts work with import-only migration where expected;
-- Python generator behavior is intentionally ported to Handlebars/TypeScript;
+- useful Python generator behavior is preserved or intentionally evolved;
 - no domain layer performs un-injected filesystem, process, Git, cache, or terminal work;
 - external CLI contains no domain logic;
 - package export and consumer-fixture checks pass;
-- Tasks 15–23 complete the non-breaking structure hardening program before unrestricted feature expansion.
+- large OpenAPI inputs compile without requiring the full document in memory;
+- bounded queues and indexes prevent parser, planner, renderer, writer, or logger memory growth;
+- template authors can inspect all supported selections, variables, contexts, and dependency-provider rules;
+- Tasks 15–23 complete the non-breaking structure hardening program before unrestricted CodepotX feature expansion;
+- Task 24 is implemented in ordered gates, with explicit human approval for the `paths.yaml` contract.
