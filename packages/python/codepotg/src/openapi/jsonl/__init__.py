@@ -5,6 +5,7 @@ from .errors import (
     JsonlLimitError,
     JsonlLookupError,
     JsonlQueueError,
+    JsonlSelectionError,
 )
 from .hot_index import BoundedHotIndex, HotIndexRegistry, HotIndexStats
 from .models import (
@@ -17,10 +18,22 @@ from .models import (
     RecordLocation,
     SectionManifest,
 )
+from .selections import (
+    DEFAULT_SELECTION_CATALOG,
+    JsonlSelectionStore,
+    SelectionCatalog,
+    SelectionClass,
+    SelectionDefinition,
+    SelectionGroup,
+    SelectionHandle,
+    SelectionRecord,
+    SelectionScope,
+)
 from .store import JsonlIndexStore
 
 __all__ = [
     "BoundedHotIndex",
+    "DEFAULT_SELECTION_CATALOG",
     "HotIndexLimits",
     "HotIndexRegistry",
     "HotIndexStats",
@@ -35,7 +48,16 @@ __all__ = [
     "JsonlQueueError",
     "JsonlQueueLimits",
     "JsonlQueueStats",
+    "JsonlSelectionError",
+    "JsonlSelectionStore",
     "RecordLocation",
     "SectionManifest",
+    "SelectionCatalog",
+    "SelectionClass",
+    "SelectionDefinition",
+    "SelectionGroup",
+    "SelectionHandle",
+    "SelectionRecord",
+    "SelectionScope",
     "compile_openapi_jsonl",
 ]
