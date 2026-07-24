@@ -136,9 +136,9 @@ def test_schema_use_supports_inline_reference_and_resolved_forms() -> None:
 
     assert referenced.is_reference
     assert not referenced.is_resolved
-    assert inline.is_inline and inline["type"] == "string" if False else True
+    assert inline.is_inline
     assert inline.inline["type"] == "string"
-    assert resolved.is_reference is False
+    assert not resolved.is_reference
     assert resolved.is_resolved
 
 
