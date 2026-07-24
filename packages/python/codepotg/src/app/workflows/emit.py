@@ -7,6 +7,7 @@ and either legacy or approved graph-based template emission.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -132,6 +133,17 @@ def run_emit(request: EmitInput) -> EmitOutput:
         dry_run=request.dry_run,
         frontend=request.frontend,
         progress=request.progress,
+    )
+    template_contract = replace(
+        template_contract,
+        emit=replace(
+            template_contract.emit,
+            meta={
+                **template_contract.emit.meta,
+                "jsonl_cache": str(jsonl_result.cache_dir),
+                "jsonl_reused": jsonl_result.reused,
+            },
+        ),
     )
 
     path_config = load_path_config(template_root)
