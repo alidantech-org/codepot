@@ -1,0 +1,10 @@
+const fixtureProject = <String, Object?>{
+  'project': '{{ project.name.raw.o }}',
+  'apiTitle': '{{ api.info.title }}',
+  'apiVersion': '{{ api.info.api_version }}',
+  'openapiVersion': '{{ api.info.openapi_version }}',
+  'language': '{{ lang.name }}',
+  'resourceCount': {{ resources | length }},
+  'schemaCount': {{ schemas.all | length }},
+  'operationCount': {{ operations | length }},
+};
