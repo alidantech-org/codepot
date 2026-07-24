@@ -11,6 +11,7 @@ from enum import StrEnum
 from typing import Any
 
 from contracts.names import NameSet
+from contracts.source import FrozenMap
 
 MetaMap = dict[str, Any]
 
@@ -389,3 +390,5 @@ class ApiContract:
     entities: tuple[ApiEntity, ...] = ()
     dependencies: tuple[ApiDependency, ...] = ()
     meta: MetaMap = field(default_factory=dict)
+    raw: FrozenMap = field(default_factory=FrozenMap)
+    extensions: FrozenMap = field(default_factory=FrozenMap)
