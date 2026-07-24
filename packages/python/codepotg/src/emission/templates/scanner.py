@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from emission.paths.config_loader import PATH_CONFIG_FILES
 from emission.templates.descriptor import TemplateDescriptor, describe_template
-
-PATH_CONFIG_FILE = "paths.yaml"
 
 
 def scan_templates(template_root: Path) -> tuple[TemplateDescriptor, ...]:
@@ -22,7 +21,7 @@ def scan_templates(template_root: Path) -> tuple[TemplateDescriptor, ...]:
 
         relative_path = path.relative_to(template_root)
 
-        if relative_path.as_posix() == PATH_CONFIG_FILE:
+        if relative_path.as_posix() in PATH_CONFIG_FILES:
             continue
 
         if any(part.startswith("_") for part in relative_path.parts):
