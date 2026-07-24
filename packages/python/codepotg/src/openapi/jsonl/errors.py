@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 class JsonlCompilerError(RuntimeError):
-    """Base error for JSONL extraction, indexing, and lookup."""
+    """Base error for JSONL extraction, indexing, lookup, and planning."""
 
 
 class JsonlInputError(JsonlCompilerError):
@@ -19,3 +19,7 @@ class JsonlQueueError(JsonlCompilerError):
 
 class JsonlLookupError(JsonlCompilerError):
     """Raised when an indexed record cannot be read or verified."""
+
+
+class JsonlSelectionError(JsonlCompilerError):
+    """Raised when a canonical selection is unknown, duplicate, or ambiguous."""
