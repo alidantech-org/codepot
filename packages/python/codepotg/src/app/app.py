@@ -13,6 +13,8 @@ from app.models import (
     InferOutput,
     InspectInput,
     InspectOutput,
+    JsonlInput,
+    JsonlOutput,
     ProgressSink,
     ValidateInput,
     ValidateOutput,
@@ -21,6 +23,7 @@ from app.workflows.emit import run_emit
 from app.workflows.generate import run_generate
 from app.workflows.infer import run_infer
 from app.workflows.inspect import run_inspect
+from app.workflows.jsonl import run_jsonl
 from app.workflows.validate import run_validate
 
 
@@ -96,6 +99,24 @@ class GeneratorApp:
                 refresh=refresh,
                 skip_before=skip_before,
                 skip_after=skip_after,
+                progress=progress,
+            )
+        )
+
+    def jsonl(
+        self,
+        input_path: Path,
+        output_path: Path,
+        *,
+        reuse_unchanged: bool = True,
+        progress: ProgressSink | None = None,
+    ) -> JsonlOutput:
+        """Compile a user-visible indexed JSONL cache."""
+        return run_jsonl(
+            JsonlInput(
+                input_path=input_path,
+                output_path=output_path,
+                reuse_unchanged=reuse_unchanged,
                 progress=progress,
             )
         )
