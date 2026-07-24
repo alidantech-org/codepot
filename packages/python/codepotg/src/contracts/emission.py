@@ -39,6 +39,7 @@ class EmissionFile:
     provided_symbols: tuple[str, ...] = ()
     providers: Mapping[str, str] = field(default_factory=dict)
     depends_on: tuple[str, ...] = ()
+    dependency_outputs: Mapping[str, str] = field(default_factory=dict)
     is_barrel: bool = False
 
     @property
