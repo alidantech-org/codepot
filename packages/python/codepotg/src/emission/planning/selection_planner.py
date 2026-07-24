@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import TypeAlias
@@ -50,7 +50,7 @@ class JsonlSelectionPlanner:
         registry: VirtualOutputRegistry | None = None,
     ) -> None:
         self.store = store
-        self.registry = registry or VirtualOutputRegistry()
+        self.registry = registry if registry is not None else VirtualOutputRegistry()
 
     def plan(
         self,
@@ -114,7 +114,7 @@ class JsonlSelectionPlanner:
             records_loaded=self.store.load_count - before_loads,
         )
 
-    def records_for_group(self, group: SelectionGroup):
+    def records_for_group(self, group: SelectionGroup) -> Iterator[SelectionRecord]:
         """Load aggregate render contexts lazily when a template actually needs them."""
 
         return self.store.load_group(group)
