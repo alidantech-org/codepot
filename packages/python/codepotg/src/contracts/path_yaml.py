@@ -75,21 +75,28 @@ class PathYamlError(ValueError):
     """Raised when paths.yaml contains invalid structure."""
 
 
-def path_config_from_yaml(data: dict[str, Any] | None) -> PathConfig:
-    """Build a PathConfig from parsed paths.yaml data."""
+def path_config_from_yaml(
+    data: dict[str, Any] | None,
+    *,
+    strict: bool = False,
+) -> PathConfig:
+    """Build a PathConfig from parsed paths.yaml data.
+
+    Normal generation remains backward-compatible by default. Author-facing
+    validation can enable strict mode to reject unknown configuration keys.
+    """
     if data is None:
         data = {}
 
     if not isinstance(data, dict):
         raise PathYamlError("paths.yaml root must be an object.")
 
-    _reject_unknown_keys(data, _ALLOWED_ROOT_KEYS, owner="paths.yaml")
-    folders = _parse_folders(data.get(KEY_FOLDERS, {}))
-    _validate_unique_aliases(folders)
+    if strict:
+        _reject_unknown_keys(data, _ALLOWED_ROOT_KEYS, owner="paths.yaml")
 
     return PathConfig(
-        folders=folders,
-        imports=_parse_imports(data.get(KEY_IMPORTS)),
+        folders=_parse_folders(data.get(KEY_FOLDERS, {}), strict=strict),
+        imports=_parse_imports(data.get(KEY_IMPORTS), strict=strict),
         template_extension=_string(
             data.get(KEY_TEMPLATE_EXTENSION),
             default=DEFAULT_TEMPLATE_EXTENSION,
@@ -105,18 +112,19 @@ def path_config_from_yaml(data: dict[str, Any] | None) -> PathConfig:
             default=True,
             field_name=KEY_ALLOW_RAW_FILES,
         ),
-        write_policy=_parse_write_policy(data.get(KEY_WRITE_POLICY)),
+        write_policy=_parse_write_policy(data.get(KEY_WRITE_POLICY), strict=strict),
         rules=default_path_rules(),
         meta=_dict(data.get(KEY_META), field_name=KEY_META),
     )
 
 
-def _parse_write_policy(raw: Any) -> PathWritePolicy:
+def _parse_write_policy(raw: Any, *, strict: bool) -> PathWritePolicy:
     if raw is None:
         return PathWritePolicy()
     if not isinstance(raw, dict):
         raise PathYamlError("'write_policy' must be an object.")
-    _reject_unknown_keys(raw, _ALLOWED_WRITE_POLICY_KEYS, owner=KEY_WRITE_POLICY)
+    if strict:
+        _reject_unknown_keys(raw, _ALLOWED_WRITE_POLICY_KEYS, owner=KEY_WRITE_POLICY)
     return PathWritePolicy(
         exists=True,
         default_mode=_lifecycle_mode(raw.get(KEY_DEFAULT_MODE), field_name=KEY_DEFAULT_MODE)
@@ -128,13 +136,14 @@ def _parse_write_policy(raw: Any) -> PathWritePolicy:
     )
 
 
-def _parse_imports(raw: Any) -> PathImportConfig:
+def _parse_imports(raw: Any, *, strict: bool) -> PathImportConfig:
     if raw is None:
         return PathImportConfig()
 
     if not isinstance(raw, dict):
         raise PathYamlError("'imports' must be an object.")
-    _reject_unknown_keys(raw, _ALLOWED_IMPORT_KEYS, owner=KEY_IMPORTS)
+    if strict:
+        _reject_unknown_keys(raw, _ALLOWED_IMPORT_KEYS, owner=KEY_IMPORTS)
 
     strategy = _string(
         raw.get(KEY_STRATEGY),
@@ -148,7 +157,7 @@ def _parse_imports(raw: Any) -> PathImportConfig:
     return PathImportConfig(strategy=strategy)
 
 
-def _parse_folders(raw: Any) -> tuple[PathFolder, ...]:
+def _parse_folders(raw: Any, *, strict: bool) -> tuple[PathFolder, ...]:
     if raw is None:
         return ()
 
@@ -163,7 +172,8 @@ def _parse_folders(raw: Any) -> tuple[PathFolder, ...]:
 
         if not isinstance(value, dict):
             raise PathYamlError(f"Path folder '{name}' must be an object.")
-        _reject_unknown_keys(value, _ALLOWED_FOLDER_KEYS, owner=f"folders.{name}")
+        if strict:
+            _reject_unknown_keys(value, _ALLOWED_FOLDER_KEYS, owner=f"folders.{name}")
 
         folders.append(_parse_folder(name, value))
 
@@ -207,18 +217,6 @@ def _folder_alias(raw: dict[str, Any], *, name: str) -> str:
         )
     value = as_value if as_value is not None else alias_value
     return _non_empty_string(value, default=name, field_name=f"{name}.{KEY_AS}")
-
-
-def _validate_unique_aliases(folders: tuple[PathFolder, ...]) -> None:
-    owners: dict[str, str] = {}
-    for folder in folders:
-        previous = owners.get(folder.alias)
-        if previous is not None:
-            raise PathYamlError(
-                f"Folders '{previous}' and '{folder.name}' use the same alias "
-                f"'{folder.alias}'. Each effective alias must be unique."
-            )
-        owners[folder.alias] = folder.name
 
 
 def _parse_parts(raw: Any, *, folder: str) -> tuple[Any, ...]:
