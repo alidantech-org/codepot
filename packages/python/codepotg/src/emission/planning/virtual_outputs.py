@@ -83,10 +83,6 @@ class VirtualOutputRegistry:
             raise VirtualOutputConflictError(
                 "selection, emission, and source_key must be non-empty"
             )
-        if len(self._by_identity) >= self._limits.max_entries:
-            raise VirtualOutputConflictError(
-                f"Virtual output registry exceeded {self._limits.max_entries} entries"
-            )
 
         template = normalize_registry_path(template_path, field="template")
         output = normalize_registry_path(output_path, field="output")
@@ -106,6 +102,10 @@ class VirtualOutputRegistry:
             raise VirtualOutputConflictError(
                 "Virtual output was planned more than once: "
                 f"selection={selection}, emission={emission}, source={source_key}"
+            )
+        if len(self._by_identity) >= self._limits.max_entries:
+            raise VirtualOutputConflictError(
+                f"Virtual output registry exceeded {self._limits.max_entries} entries"
             )
 
         path_key = output.as_posix()
@@ -185,9 +185,11 @@ class VirtualOutputRegistry:
         )
 
     def snapshot(self, *, written_only: bool = False) -> tuple[VirtualOutput, ...]:
-        values = self._by_identity.values()
+        values = tuple(self._by_identity.values())
         if written_only:
-            values = (item for item in values if item.status == OutputStatus.WRITTEN)
+            values = tuple(
+                item for item in values if item.status == OutputStatus.WRITTEN
+            )
         return tuple(sorted(values, key=_sort_key))
 
     def __len__(self) -> int:
@@ -201,14 +203,16 @@ class VirtualOutputRegistry:
         emission: str | None,
         written_only: bool,
     ) -> tuple[VirtualOutput, ...]:
-        values = (
+        values = tuple(
             self._by_identity[identity]
             for identity in identities
             if (selection is None or identity[0] == selection)
             and (emission is None or identity[1] == emission)
         )
         if written_only:
-            values = (item for item in values if item.status == OutputStatus.WRITTEN)
+            values = tuple(
+                item for item in values if item.status == OutputStatus.WRITTEN
+            )
         return tuple(sorted(values, key=_sort_key))
 
 
@@ -222,6 +226,8 @@ def normalize_registry_path(
     text = str(value).replace("\\", "/").strip()
     if not text:
         raise VirtualOutputConflictError(f"Virtual {field} path must be non-empty")
+    if len(text) >= 2 and text[1] == ":":
+        raise VirtualOutputConflictError(f"Virtual {field} path is unsafe: {value}")
     path = PurePosixPath(text)
     if path.is_absolute() or ".." in path.parts:
         raise VirtualOutputConflictError(f"Virtual {field} path is unsafe: {value}")
