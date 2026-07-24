@@ -5,6 +5,11 @@ info:
   version: 1.0.0
 servers:
   - url: https://fixture.example.test
+x-fixture:
+  owner: codepotg
+  enabled: true
+  values: [first, second]
+  explicitNull: null
 paths:
   /users:
     x-codegen:
