@@ -9,8 +9,8 @@ from __future__ import annotations
 from app.models import EmitInput, EmitOutput, RuntimeDiagnostic, RuntimeEvent
 from app.workflows.template_paths import resolve_template_root
 from emission.engine import emit as run_legacy_emission
-from emission.graph_engine import emit_graph
 from emission.paths.config_loader import load_path_config
+from emission.queued_graph_engine import emit_graph_queued
 from inference.engine import InferenceEngine
 from inference.lossless_contract import build_api_contract
 from languages.discovery import resolve_language_adapter
@@ -76,9 +76,9 @@ def run_emit(request: EmitInput) -> EmitOutput:
         _notify(
             request,
             stage="rendering_writing_files",
-            message="Rendering/writing dependency graph incrementally",
+            message="Rendering dependency graph through bounded queues",
         )
-        emission_result = emit_graph(
+        emission_result = emit_graph_queued(
             template_contract,
             progress=request.progress,
         )
@@ -136,6 +136,20 @@ def run_emit(request: EmitInput) -> EmitOutput:
             ),
         ),
     ]
+    queue_stats = emission_result.queue_stats
+    if queue_stats is not None:
+        diagnostics.append(
+            RuntimeDiagnostic(
+                level="info",
+                message=(
+                    "Graph queues: "
+                    f"files peak={queue_stats.pending_files_high_water}, "
+                    f"bytes peak={queue_stats.pending_bytes_high_water}, "
+                    f"waits={queue_stats.queue_waits}, "
+                    f"written={queue_stats.files_written}."
+                ),
+            )
+        )
 
     diagnostics.extend(
         RuntimeDiagnostic(level="info", message=message)
