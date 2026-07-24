@@ -12,7 +12,11 @@ from app.models import (
 from app.models.inputs import EmitInput
 from app.workflows.emit import run_emit
 from app.workflows.template_paths import resolve_template_root
-from codepot_file.loader import CODEPOTG_CONFIG_NAME, load_codepotg_config
+from codepot_file.loader import (
+    CODEPOTG_CONFIG_NAME,
+    load_codepotg_config,
+    resolve_codepotg_config,
+)
 from codepot_file.models import CodepotFile, CodepotTask
 from codepot_file.runner import clean_task_paths, run_commands
 from core.errors import CommandError, ConfigError
@@ -22,8 +26,9 @@ from languages.discovery import resolve_language_adapter
 
 def run_generate(request: GenerateInput) -> GenerateOutput:
     """Run one or more CodepotG tasks."""
-    _notify(request, "loading_config", f"Loading {CODEPOTG_CONFIG_NAME}")
-    config = load_codepotg_config(request.config_path)
+    config_path = resolve_codepotg_config(request.config_path)
+    _notify(request, "loading_config", f"Loading {config_path.name}")
+    config = load_codepotg_config(config_path)
     if not config.allow:
         raise ConfigError(
             f"Generation refused. Set allow: true in {CODEPOTG_CONFIG_NAME} to enable it."
