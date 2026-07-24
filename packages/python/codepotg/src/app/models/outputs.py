@@ -160,3 +160,34 @@ class JsonlOutput:
     event_queue_high_water: int = 0
     record_waits: int = 0
     event_waits: int = 0
+
+
+@dataclass(frozen=True)
+class PathFolderSummary:
+    """Resolved folder recipe from paths.yaml/paths.yml."""
+
+    name: str
+    select: str
+    alias: str
+    mode: str
+    lifecycle: str | None
+    parts: tuple[str, ...]
+    description: str = "-"
+
+
+@dataclass(frozen=True)
+class PathsOutput:
+    """Resolved template paths configuration."""
+
+    template_root: Path
+    config_path: Path | None
+    template_extension: str
+    strip_template_extension: bool
+    allow_raw_files: bool
+    import_strategy: str
+    folders: list[PathFolderSummary] = field(default_factory=list)
+    default_lifecycle: str = "managed"
+    managed_roots: tuple[str, ...] = ()
+    immutable_roots: tuple[str, ...] = ()
+    protected_roots: tuple[str, ...] = ()
+    clean_roots: tuple[str, ...] = ()
