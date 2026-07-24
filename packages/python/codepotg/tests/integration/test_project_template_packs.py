@@ -47,6 +47,8 @@ def test_real_project_fixture_generates_custom_template_pack(
     project = _copy_project_fixture(tmp_path, case)
     config = project / case.config_name
 
+    assert not (project / ".generated").exists()
+
     result = GeneratorApp().generate(config_path=config, task_name="fixture")
 
     assert result.config_path == config.resolve()
@@ -135,6 +137,8 @@ def test_real_project_fixture_is_discovered_by_standard_config_name(
     project = _copy_project_fixture(tmp_path, case)
     monkeypatch.chdir(project)
 
+    assert not (project / ".generated").exists()
+
     result = GeneratorApp().generate(task_name="fixture")
 
     assert result.config_path == (project / case.config_name).resolve()
@@ -153,7 +157,7 @@ def test_fixture_output_directories_are_ignored() -> None:
 def _copy_project_fixture(tmp_path: Path, case: ProjectCase) -> Path:
     source = _fixtures_root() / case.folder
     target = tmp_path / case.folder
-    return Path(shutil.copytree(source, target))
+    return Path(shutil.copytree(source, target, ignore=shutil.ignore_patterns(".generated")))
 
 
 def _fixtures_root() -> Path:
