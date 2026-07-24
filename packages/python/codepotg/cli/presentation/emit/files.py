@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from os import PathLike
-
 from cli.presentation.core.tables import render_rows_table
 
 
@@ -22,6 +20,4 @@ def render_emit_files(title: str, files) -> None:
 
 
 def _display_path(path: object) -> str:
-    if isinstance(path, PathLike):
-        return path.__fspath__().replace("\\", "/")
     return str(path).replace("\\", "/")
