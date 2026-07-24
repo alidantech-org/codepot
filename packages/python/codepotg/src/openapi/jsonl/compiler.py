@@ -25,6 +25,7 @@ from .models import (
     JsonlManifest,
     SectionManifest,
 )
+from .operation_indexing import register_additional_indexes
 from .stream import stream_openapi_json
 
 _CACHE_VERSION = 1
@@ -79,10 +80,16 @@ def compile_openapi_jsonl(
             indexes=indexes,
             hot_index=hot_index,
         )
+        extra_mentions, extra_dependencies = register_additional_indexes(
+            record,
+            classification,
+            location,
+            indexes=indexes,
+        )
         counters["records"] += 1
         counters["definitions"] += definitions
-        counters["mentions"] += mentions
-        counters["dependencies"] += dependencies
+        counters["mentions"] += mentions + extra_mentions
+        counters["dependencies"] += dependencies + extra_dependencies
 
     try:
         summary = stream_openapi_json(source_path, on_record=on_record, limits=limits)
