@@ -4,7 +4,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from queue import Empty, Full, Queue
 from threading import Condition, Lock, Thread
-from typing import Any
 
 from contracts.emission import EmissionFile, EmissionWriteResult
 from contracts.paths import PathLifecycleMode
