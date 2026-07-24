@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Iterator, Mapping
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from .errors import JsonlLookupError
@@ -49,7 +49,7 @@ class JsonlIndexStore:
         return facts
 
     def read_location(self, location: RecordLocation, *, verify: bool = True) -> Any:
-        path = self.cache_dir / Path(location.file)
+        path = self._cache_file(location.file)
         try:
             with path.open("rb") as stream:
                 stream.seek(location.offset)
@@ -105,7 +105,7 @@ class JsonlIndexStore:
         match_field: str = "value",
     ) -> Iterator[Mapping[str, Any]]:
         shard = index_shard(index, value)
-        path = self.cache_dir / "indexes" / category / f"{shard}.jsonl"
+        path = self._cache_file(f"indexes/{category}/{shard}.jsonl")
         if not path.exists():
             return
         with path.open("rb") as stream:
@@ -122,6 +122,14 @@ class JsonlIndexStore:
                     matches = fact.get("index") == index and fact.get("value") == value
                 if matches:
                     yield fact
+
+    def _cache_file(self, relative: str) -> Path:
+        if "\\" in relative:
+            raise JsonlLookupError(f"Indexed cache path is not normalized: {relative}")
+        pure = PurePosixPath(relative)
+        if pure.is_absolute() or ".." in pure.parts:
+            raise JsonlLookupError(f"Indexed cache path is unsafe: {relative}")
+        return self.cache_dir / Path(*pure.parts)
 
 
 def _resolve_pointer(value: Any, pointer: str) -> Any:
