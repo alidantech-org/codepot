@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -48,6 +49,7 @@ def test_real_project_fixture_generates_custom_template_pack(
     config = project / case.config_name
 
     assert not (project / ".generated").exists()
+    assert not (project / ".codepotg").exists()
 
     result = GeneratorApp().generate(config_path=config, task_name="fixture")
 
@@ -63,6 +65,15 @@ def test_real_project_fixture_generates_custom_template_pack(
     assert len(task.planned) == 9
     assert len(task.written) == 9
     assert task.refused == []
+
+    cache = project / ".codepotg" / "cache" / "openapi"
+    assert (cache / "manifest.json").is_file()
+    assert (cache / "paths.jsonl").is_file()
+    assert (cache / "components" / "schemas.jsonl").is_file()
+    manifest = json.loads((cache / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["source"]["format"] == "yaml"
+    assert manifest["source"]["compiledFormat"] == "json"
+    assert any("JSONL cache" in diagnostic.message for diagnostic in task.diagnostics)
 
     output = project / ".generated"
     expected = _expected_output_files(output, case.extension)
@@ -95,7 +106,13 @@ def test_real_project_fixture_generates_custom_template_pack(
     collections = (output / "contract" / f"collections.{case.extension}").read_text(
         encoding="utf-8"
     )
-    for expected_name in ("UserModel", "CreateUserBody", "UserStatus", "listUsers", "createUser"):
+    for expected_name in (
+        "UserModel",
+        "CreateUserBody",
+        "UserStatus",
+        "listUsers",
+        "createUser",
+    ):
         assert expected_name in collections
 
     user_schema = (output / "schemas" / f"user_model.{case.extension}").read_text(
@@ -138,26 +155,54 @@ def test_real_project_fixture_is_discovered_by_standard_config_name(
     monkeypatch.chdir(project)
 
     assert not (project / ".generated").exists()
+    assert not (project / ".codepotg").exists()
 
     result = GeneratorApp().generate(task_name="fixture")
 
     assert result.config_path == (project / case.config_name).resolve()
     assert result.tasks[0].language == case.language
     assert len(result.tasks[0].written) == 9
+    assert (project / ".codepotg" / "cache" / "openapi" / "manifest.json").is_file()
+
+
+def test_generation_reuses_unchanged_jsonl_cache(tmp_path: Path) -> None:
+    case = CASES[0]
+    project = _copy_project_fixture(tmp_path, case)
+    config = project / case.config_name
+
+    first = GeneratorApp().generate(config_path=config, task_name="fixture")
+    second = GeneratorApp().generate(config_path=config, task_name="fixture")
+
+    assert len(first.tasks[0].written) == 9
+    assert second.tasks[0].written == []
+    assert len(second.tasks[0].unchanged) == 9
+    assert any(
+        "JSONL cache reused" in diagnostic.message
+        for diagnostic in second.tasks[0].diagnostics
+    )
 
 
 def test_fixture_output_directories_are_ignored() -> None:
     fixtures = _fixtures_root()
 
     for case in CASES:
-        ignored = (fixtures / case.folder / ".gitignore").read_text(encoding="utf-8").splitlines()
+        ignored = (fixtures / case.folder / ".gitignore").read_text(
+            encoding="utf-8"
+        ).splitlines()
         assert ".generated/" in ignored
+        assert ".codepotg/" in ignored
 
 
 def _copy_project_fixture(tmp_path: Path, case: ProjectCase) -> Path:
     source = _fixtures_root() / case.folder
     target = tmp_path / case.folder
-    return Path(shutil.copytree(source, target, ignore=shutil.ignore_patterns(".generated")))
+    return Path(
+        shutil.copytree(
+            source,
+            target,
+            ignore=shutil.ignore_patterns(".generated", ".codepotg"),
+        )
+    )
 
 
 def _fixtures_root() -> Path:
