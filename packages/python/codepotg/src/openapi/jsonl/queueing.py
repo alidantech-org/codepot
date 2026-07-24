@@ -206,10 +206,14 @@ class JsonlRecordPipeline:
             self._put_record(_SENTINEL, ignore_failure=True)
             self._queue.join()
             self._thread.join()
+            if self._failure.get() is None:
+                status = "cancelled" if self._cancelled else "completed"
+                self._event_writer.submit("compiler", status)
+            try:
+                event_manifest = self._event_writer.close()
+            finally:
+                self._closed = True
             self._failure.raise_if_failed()
-            self._event_writer.submit("compiler", "completed")
-            event_manifest = self._event_writer.close()
-            self._closed = True
             return event_manifest, self._stats.snapshot()
         self._failure.raise_if_failed()
         event_manifest = self._event_writer.close()
