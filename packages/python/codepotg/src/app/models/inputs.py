@@ -59,3 +59,13 @@ class GenerateInput:
     skip_before: bool = False
     skip_after: bool = False
     progress: ProgressSink | None = None
+
+
+@dataclass(frozen=True)
+class JsonlInput:
+    """Input for compiling a visible indexed JSONL cache."""
+
+    input_path: Path
+    output_path: Path
+    reuse_unchanged: bool = True
+    progress: ProgressSink | None = None
