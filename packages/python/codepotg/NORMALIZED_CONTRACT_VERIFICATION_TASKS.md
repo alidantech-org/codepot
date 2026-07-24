@@ -47,15 +47,15 @@ Generated output is written beneath `.generated/`. The fixture `.gitignore` must
 
 The fixture packs will grow in the same order as the normalized contract:
 
-- [ ] global variables and project metadata;
+- [x] global variables and project metadata;
 - [ ] file and emission context;
-- [ ] naming variants;
-- [ ] resource variables and collections;
-- [ ] schema groups and schema identity;
-- [ ] fields and primitive constraints;
-- [ ] defaults, constants, examples, and explicit null;
+- [x] naming variants used by template content and output paths;
+- [x] resource variables and collections;
+- [x] schema groups and schema identity;
+- [-] fields and currently available primitive facts;
+- [-] currently available defaults; constants, examples, and explicit-null presence remain pending;
 - [ ] arrays, objects, composition, and references;
-- [ ] operations, parameters, request bodies, responses, and media types;
+- [-] operation identity plus parameter, request-body, and response counts;
 - [ ] root and operation security;
 - [ ] cache read and invalidation rules;
 - [ ] access definitions and resolved uses;
@@ -78,14 +78,14 @@ Codepotg.yml
 
 Required tests:
 
-- [x] explicit `.yaml` loading;
-- [x] explicit `.yml` loading;
-- [x] automatic `.yaml` discovery;
-- [x] automatic `.yml` discovery;
-- [x] ambiguity failure when both files exist;
-- [x] legacy `CodepotFile.yml` and `CodepotFile.yaml` rejection;
-- [ ] real generation from the TypeScript `Codepotg.yml` fixture;
-- [ ] real generation from the Dart `Codepotg.yaml` fixture.
+- [x] explicit `.yaml` loading test committed;
+- [x] explicit `.yml` loading test committed;
+- [x] automatic `.yaml` discovery test committed;
+- [x] automatic `.yml` discovery test committed;
+- [x] ambiguity failure test committed for projects containing both names;
+- [x] legacy `CodepotFile.yml` and `CodepotFile.yaml` rejection test committed;
+- [-] real TypeScript generation test committed for `Codepotg.yml`; execution pending;
+- [-] real Dart generation test committed for `Codepotg.yaml`; execution pending.
 
 ## Verification commands
 
@@ -112,6 +112,19 @@ tests/fixtures/projects/typescript/.generated/
 tests/fixtures/projects/dart/.generated/
 ```
 
+Each project currently emits eight files:
+
+```text
+contract/project.<language extension>
+contract/collections.<language extension>
+schemas/user_status.<language extension>
+schemas/user_model.<language extension>
+schemas/create_user_body.<language extension>
+operations/list_users.<language extension>
+operations/create_user.<language extension>
+resources/users.<language extension>
+```
+
 ## Reporting format
 
 Every completed batch must report:
@@ -134,7 +147,8 @@ known unexecuted checks or environment limitations
 - [x] define mandatory verifiability rules;
 - [x] support `Codepotg.yaml` and `Codepotg.yml` discovery;
 - [x] add focused loader tests for both extensions and ambiguity;
-- [-] add TypeScript project fixture and shared template pack;
-- [-] add Dart project fixture and shared template pack;
-- [-] add real generation integration tests;
-- [ ] run focused tests and mark the batch complete.
+- [x] add TypeScript project fixture and shared template pack;
+- [x] add Dart project fixture and shared template pack;
+- [x] add real generation integration tests and exact emitted-content assertions;
+- [x] statically verify path selection, template scanning, and adapter variable compatibility;
+- [!] execute focused tests after pulling the branch in a networked checkout; this tool environment cannot resolve `github.com` and therefore could not clone the updated branch.
