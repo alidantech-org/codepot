@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
+from dataclasses import replace
 from typing import Any
 
 from contracts.emission import EmissionFile, EmissionPlan, EmissionResult
@@ -65,14 +65,7 @@ def emit_bounded_graph(
         exact_dependencies = tuple(
             sorted(set(file.depends_on) | set(file.dependency_outputs.values()))
         )
-        files.append(
-            EmissionFile(
-                **{
-                    **file.__dict__,
-                    "depends_on": exact_dependencies,
-                }
-            )
-        )
+        files.append(replace(file, depends_on=exact_dependencies))
 
     plan = EmissionPlan(
         language=contract.lang.name,
