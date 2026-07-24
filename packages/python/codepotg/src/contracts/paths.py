@@ -1,10 +1,10 @@
 """Template path authoring contract.
 
-This module defines the stable public rules for template path selection and
-dynamic path expansion.
+This module defines the stable public rules for template path selection,
+emission planning, dependency providers, barrels, and dynamic path expansion.
 
-Path syntax:
-- `{folder}` selects/loops a configured folder recipe from paths.yaml and emits its folder parts.
+Legacy path syntax remains supported:
+- `{folder}` selects/loops a configured legacy folder recipe and emits its parts.
 - `[expression]` emits a dynamic path/file name value.
 - `[[...]]` emits literal `[ ... ]`.
 - `{{...}}` emits literal `{ ... }`.
@@ -30,11 +30,19 @@ class PathTokenKind(StrEnum):
 
 
 class PathSelectionMode(StrEnum):
-    """How a path folder selects emission contexts."""
+    """How a legacy path folder selects emission contexts."""
 
     EACH = "each"
     GROUP = "group"
     ONCE = "once"
+
+
+class PathSelectionScope(StrEnum):
+    """How a named selection is grouped for one output emission."""
+
+    EACH = "each"
+    ALL = "all"
+    RESOURCE = "resource"
 
 
 class PathLifecycleMode(StrEnum):
@@ -58,7 +66,7 @@ class PathWritePolicy:
 
 @dataclass(frozen=True)
 class PathFolder:
-    """Configured folder recipe used by `{folder}` path segments."""
+    """Legacy configured folder recipe used by `{folder}` path segments."""
 
     name: str
     parts: tuple[Any, ...]
@@ -70,8 +78,58 @@ class PathFolder:
 
 
 @dataclass(frozen=True)
+class PathSelection:
+    """Named source selection shared by one or more emissions."""
+
+    name: str
+    select: str
+    alias: str
+    scope: PathSelectionScope = PathSelectionScope.EACH
+    description: str = "-"
+
+
+@dataclass(frozen=True)
+class PathDependencyProvider:
+    """Explicit provider for one dependency purpose used by an emission."""
+
+    purpose: str
+    source: str
+
+
+@dataclass(frozen=True)
+class PathEmission:
+    """One template/output emission consuming a named selection."""
+
+    name: str
+    selection: str
+    template: str
+    output: tuple[Any, ...]
+    providers: tuple[PathDependencyProvider, ...] = ()
+    provides: tuple[str, ...] = ()
+    lifecycle: PathLifecycleMode | None = None
+    description: str = "-"
+
+    def provider_by_purpose(self) -> dict[str, PathDependencyProvider]:
+        return {provider.purpose: provider for provider in self.providers}
+
+
+@dataclass(frozen=True)
+class PathBarrel:
+    """Aggregate output exporting one or more emission or barrel nodes."""
+
+    name: str
+    template: str
+    output: tuple[Any, ...]
+    exports: tuple[str, ...]
+    scope: PathSelectionScope = PathSelectionScope.ALL
+    alias: str = "barrel"
+    lifecycle: PathLifecycleMode | None = None
+    description: str = "-"
+
+
+@dataclass(frozen=True)
 class PathImportConfig:
-    """Configured import/link planning behavior."""
+    """Configured language import/link planning behavior."""
 
     strategy: str = "relative"
 
@@ -100,6 +158,9 @@ class PathConfig:
     """Resolved path authoring configuration."""
 
     folders: tuple[PathFolder, ...] = ()
+    selections: tuple[PathSelection, ...] = ()
+    emissions: tuple[PathEmission, ...] = ()
+    barrels: tuple[PathBarrel, ...] = ()
     imports: PathImportConfig = field(default_factory=PathImportConfig)
     template_extension: str = ".j2"
     strip_template_extension: bool = True
@@ -109,18 +170,46 @@ class PathConfig:
     meta: dict[str, Any] = field(default_factory=dict)
 
     def folder_by_name(self) -> dict[str, PathFolder]:
-        """Return folder recipes keyed by name."""
+        """Return legacy folder recipes keyed by name."""
+
         return {folder.name: folder for folder in self.folders}
+
+    def selection_by_name(self) -> dict[str, PathSelection]:
+        """Return named selections keyed by identity."""
+
+        return {selection.name: selection for selection in self.selections}
+
+    def emission_by_name(self) -> dict[str, PathEmission]:
+        """Return direct emissions keyed by identity."""
+
+        return {emission.name: emission for emission in self.emissions}
+
+    def barrel_by_name(self) -> dict[str, PathBarrel]:
+        """Return barrel emissions keyed by identity."""
+
+        return {barrel.name: barrel for barrel in self.barrels}
+
+    def output_node_names(self) -> tuple[str, ...]:
+        """Return all direct and barrel output node names deterministically."""
+
+        return tuple(sorted((*self.emission_by_name(), *self.barrel_by_name())))
+
+    @property
+    def uses_graph(self) -> bool:
+        """Whether the pack uses the named selection/emission graph."""
+
+        return bool(self.selections or self.emissions or self.barrels)
 
 
 def default_path_rules() -> tuple[PathSyntaxRule, ...]:
     """Return default path syntax rules for documentation/debug output."""
+
     return (
         PathSyntaxRule(
             syntax="{folder}",
             kind=PathTokenKind.FOLDER,
             description=(
-                "Select and loop a configured paths.yaml folder recipe. "
+                "Select and loop a configured legacy folder recipe. "
                 "The segment emits configured folder parts."
             ),
             example="{model}/[model.name.path.o].md.j2",
@@ -148,4 +237,5 @@ def default_path_rules() -> tuple[PathSyntaxRule, ...]:
 
 def default_path_config() -> PathConfig:
     """Return an empty default path config."""
+
     return PathConfig(rules=default_path_rules())
