@@ -78,16 +78,21 @@ def run_jsonl(request: JsonlInput) -> JsonlOutput:
         progress=progress,
     )
 
-    files = _cache_files(result.cache_dir, result.manifest.to_json())
+    manifest = result.manifest.to_json()
+    files = _cache_files(result.cache_dir, manifest)
     queue = result.queue_stats
+    records = result.records_written or _section_record_count(manifest)
+    definitions = result.definitions_written or _index_record_count(manifest, "definitions")
+    mentions = result.mentions_written or _index_record_count(manifest, "mentions")
+    dependencies = result.dependencies_written or _index_record_count(manifest, "dependencies")
     return JsonlOutput(
         input_path=request.input_path,
         output_path=result.cache_dir,
         reused=result.reused,
-        records=result.records_written,
-        definitions=result.definitions_written,
-        mentions=result.mentions_written,
-        dependencies=result.dependencies_written,
+        records=records,
+        definitions=definitions,
+        mentions=mentions,
+        dependencies=dependencies,
         files=files,
         record_queue_high_water=queue.record_high_water,
         pending_bytes_high_water=queue.pending_bytes_high_water,
@@ -95,6 +100,25 @@ def run_jsonl(request: JsonlInput) -> JsonlOutput:
         record_waits=queue.record_waits,
         event_waits=queue.event_waits,
     )
+
+
+def _section_record_count(manifest: Mapping[str, Any]) -> int:
+    sections = manifest.get("sections")
+    if not isinstance(sections, Mapping):
+        return 0
+    return sum(
+        int(raw.get("count", 0))
+        for raw in sections.values()
+        if isinstance(raw, Mapping)
+    )
+
+
+def _index_record_count(manifest: Mapping[str, Any], category: str) -> int:
+    indexes = manifest.get("indexes")
+    if not isinstance(indexes, Mapping):
+        return 0
+    raw = indexes.get(category)
+    return int(raw.get("records", 0)) if isinstance(raw, Mapping) else 0
 
 
 def _cache_files(cache_dir: Path, manifest: Mapping[str, Any]) -> list[Path]:
