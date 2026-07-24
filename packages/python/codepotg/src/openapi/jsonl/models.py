@@ -22,10 +22,28 @@ class HotIndexLimits:
 
 
 @dataclass(frozen=True, slots=True)
+class JsonlQueueLimits:
+    max_records: int = 32
+    max_pending_bytes: int = 32 * 1024 * 1024
+    max_events: int = 256
+    wait_timeout_seconds: float = 0.05
+
+
+@dataclass(frozen=True, slots=True)
+class JsonlQueueStats:
+    record_high_water: int = 0
+    pending_bytes_high_water: int = 0
+    event_high_water: int = 0
+    record_waits: int = 0
+    event_waits: int = 0
+
+
+@dataclass(frozen=True, slots=True)
 class ExtractedRecord:
     section: str
     name: str
     raw: Any
+    estimated_bytes: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,6 +112,15 @@ class SectionManifest:
             "sha256": self.sha256,
         }
 
+    @classmethod
+    def from_json(cls, value: Mapping[str, Any]) -> SectionManifest:
+        return cls(
+            file=str(value["file"]),
+            count=int(value["count"]),
+            bytes=int(value["bytes"]),
+            sha256=str(value["sha256"]),
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class JsonlManifest:
@@ -102,17 +129,21 @@ class JsonlManifest:
     root: Mapping[str, Any]
     sections: Mapping[str, SectionManifest]
     indexes: Mapping[str, Any]
+    events: SectionManifest | None = None
 
     def to_json(self) -> dict[str, Any]:
-        return {
+        value: dict[str, Any] = {
             "version": self.version,
             "source": dict(self.source),
             "root": dict(self.root),
             "sections": {
-                key: value.to_json() for key, value in sorted(self.sections.items())
+                key: section.to_json() for key, section in sorted(self.sections.items())
             },
             "indexes": dict(self.indexes),
         }
+        if self.events is not None:
+            value["events"] = self.events.to_json()
+        return value
 
 
 @dataclass(slots=True)
@@ -125,4 +156,5 @@ class JsonlCompileResult:
     definitions_written: int = 0
     mentions_written: int = 0
     dependencies_written: int = 0
+    queue_stats: JsonlQueueStats = field(default_factory=JsonlQueueStats)
     diagnostics: list[str] = field(default_factory=list)
