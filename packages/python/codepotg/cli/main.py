@@ -15,6 +15,7 @@ from app import GeneratorApp
 from cli.commands.generate import generate_command
 from cli.commands.init import init_command
 from cli.commands.jsonl import jsonl_command
+from cli.commands.paths import paths_command
 from cli.commands.task import app as task_app
 from cli.constants.constants import (
     APP_DESCRIPTION,
@@ -23,10 +24,12 @@ from cli.constants.constants import (
     CMD_GENERATE,
     CMD_INIT,
     CMD_JSONL,
+    CMD_PATHS,
     CMD_TASK,
     HELP_GENERATE,
     HELP_INIT,
     HELP_JSONL,
+    HELP_PATHS,
     HELP_TASK,
     HELP_VERSION,
 )
@@ -42,6 +45,9 @@ class RuntimeApi(Protocol):
 
     def jsonl(self, *args, **kwargs):
         """Compile a visible indexed JSONL cache."""
+
+    def paths(self, *args, **kwargs):
+        """Resolve and inspect a paths configuration."""
 
 
 def set_runtime(ctx: typer.Context, runtime: RuntimeApi) -> None:
@@ -91,6 +97,7 @@ def main(
 app.command(CMD_GENERATE, help=HELP_GENERATE)(generate_command)
 app.command(CMD_INIT, help=HELP_INIT)(init_command)
 app.command(CMD_JSONL, help=HELP_JSONL)(jsonl_command)
+app.command(CMD_PATHS, help=HELP_PATHS)(paths_command)
 app.add_typer(task_app, name=CMD_TASK, help=HELP_TASK)
 
 
