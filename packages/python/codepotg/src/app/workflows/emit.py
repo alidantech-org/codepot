@@ -1,14 +1,16 @@
 """App emit workflow.
 
-Orchestrates the full emission pipeline: OpenAPI loading, inference, contract
-building, language adaptation, and template emission.
+Orchestrates OpenAPI loading, inference, contract building, language adaptation,
+and either legacy or approved graph-based template emission.
 """
 
 from __future__ import annotations
 
 from app.models import EmitInput, EmitOutput, RuntimeDiagnostic, RuntimeEvent
 from app.workflows.template_paths import resolve_template_root
-from emission.engine import emit as run_emission
+from emission.engine import emit as run_legacy_emission
+from emission.graph_engine import emit_graph
+from emission.paths.config_loader import load_path_config
 from inference.engine import InferenceEngine
 from inference.lossless_contract import build_api_contract
 from languages.discovery import resolve_language_adapter
@@ -17,6 +19,7 @@ from openapi.loader import load_openapi_document
 
 def run_emit(request: EmitInput) -> EmitOutput:
     """Run the emit workflow and return structured output."""
+
     _notify(
         request,
         stage="loading_openapi",
@@ -68,15 +71,27 @@ def run_emit(request: EmitInput) -> EmitOutput:
         progress=request.progress,
     )
 
-    _notify(
-        request,
-        stage="rendering_writing_files",
-        message="Rendering/writing files",
-    )
-    emission_result = run_emission(
-        template_contract,
-        progress=request.progress,
-    )
+    path_config = load_path_config(template_root)
+    if path_config.uses_graph:
+        _notify(
+            request,
+            stage="rendering_writing_files",
+            message="Rendering/writing dependency graph incrementally",
+        )
+        emission_result = emit_graph(
+            template_contract,
+            progress=request.progress,
+        )
+    else:
+        _notify(
+            request,
+            stage="rendering_writing_files",
+            message="Rendering/writing files",
+        )
+        emission_result = run_legacy_emission(
+            template_contract,
+            progress=request.progress,
+        )
 
     _notify(
         request,
@@ -119,10 +134,13 @@ def run_emit(request: EmitInput) -> EmitOutput:
                 f"{len(write_result.immutable_skipped)} skipped existing. "
                 f"Refused: {len(write_result.refused)}."
             ),
-        )
+        ),
     ]
 
-    diagnostics.extend(RuntimeDiagnostic(level="info", message=message) for message in post_result.diagnostics)  # noqa: E501
+    diagnostics.extend(
+        RuntimeDiagnostic(level="info", message=message)
+        for message in post_result.diagnostics
+    )
 
     return EmitOutput(
         input_path=request.input_path,
@@ -151,6 +169,7 @@ def _notify(
     total: int | None = None,
 ) -> None:
     """Emit a runtime progress event when a sink is provided."""
+
     if request.progress is None:
         return
 
