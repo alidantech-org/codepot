@@ -53,7 +53,7 @@ The fixture packs will grow in the same order as the normalized contract:
 - [x] resource variables and collections;
 - [x] schema groups and schema identity;
 - [-] fields and currently available primitive facts;
-- [-] currently available defaults; constants, examples, and explicit-null presence remain pending;
+- [-] currently available defaults and explicit-null source preservation; normalized constants and examples remain pending;
 - [ ] arrays, objects, composition, and references;
 - [-] operation identity plus parameter, request-body, and response counts;
 - [ ] root and operation security;
@@ -63,7 +63,7 @@ The fixture packs will grow in the same order as the normalized contract:
 - [ ] sources and query metadata;
 - [ ] entities, inherited fields, backend fields, relations, and constraints;
 - [ ] frontend definitions, components, screens, and uses;
-- [ ] extensions, raw source, diagnostics, and loss reports;
+- [-] immutable root raw source and root extensions are implemented and tested; object-level raw data, diagnostics, and loss reports remain pending;
 - [ ] imports and dependency planning;
 - [ ] safe empty and failure behavior.
 
@@ -93,6 +93,7 @@ From `packages/python/codepotg`:
 
 ```bash
 python -m pytest tests/codepot_file/test_loader.py -q
+python -m pytest tests/contracts/test_lossless_source.py -q
 python -m pytest tests/integration/test_project_template_packs.py -q
 python -m pytest -q
 python -m ruff check .
@@ -112,11 +113,12 @@ tests/fixtures/projects/typescript/.generated/
 tests/fixtures/projects/dart/.generated/
 ```
 
-Each project currently emits eight files:
+Each project currently emits nine files:
 
 ```text
 contract/project.<language extension>
 contract/collections.<language extension>
+contract/source.<language extension>
 schemas/user_status.<language extension>
 schemas/user_model.<language extension>
 schemas/create_user_body.<language extension>
@@ -140,7 +142,7 @@ expected generated files
 known unexecuted checks or environment limitations
 ```
 
-## Current batch
+## Current batches
 
 ### Batch V0 — Project fixture foundation
 
@@ -150,5 +152,18 @@ known unexecuted checks or environment limitations
 - [x] add TypeScript project fixture and shared template pack;
 - [x] add Dart project fixture and shared template pack;
 - [x] add real generation integration tests and exact emitted-content assertions;
-- [x] statically verify path selection, template scanning, and adapter variable compatibility;
-- [!] execute focused tests after pulling the branch in a networked checkout; this tool environment cannot resolve `github.com` and therefore could not clone the updated branch.
+- [x] statically verify path selection, template scanning, and adapter variable compatibility.
+
+### Batch V1 — Lossless root OpenAPI source
+
+- [x] retain a deep copy of the complete OpenAPI root in the inference graph;
+- [x] preserve existing inference serialization output by default;
+- [x] allow explicit raw inference serialization with `include_raw=True`;
+- [x] add recursively immutable `FrozenMap` source values;
+- [x] expose `api.raw` without changing existing `api.meta` behavior;
+- [x] expose all root `x-*` values as `api.extensions`;
+- [x] add direct tests for immutability, deep-copy isolation, extensions, ordered arrays, and explicit null;
+- [x] add TypeScript and Dart source templates using collision-safe bracket access;
+- [x] assert source values through real generated project files;
+- [x] locally render-check both source templates with strict Jinja undefined handling;
+- [!] execute the committed pytest and Ruff commands after pulling the branch in a networked checkout; this tool environment cannot resolve `github.com` and therefore could not clone the updated branch.
