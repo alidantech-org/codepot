@@ -15,6 +15,13 @@ from .models import ExtractedRecord, RecordLocation
 _HTTP_METHODS = frozenset(
     {"get", "put", "post", "delete", "patch", "options", "head", "trace"}
 )
+_SEMANTIC_DEFINITION_INDEXES = {
+    "access": "access",
+    "entity": "entity",
+    "base-entity": "entity",
+    "frontend": "frontend",
+    "resource": "resource",
+}
 _SEMANTIC_KEYS = {
     "access": "access",
     "accesspolicy": "access",
@@ -81,6 +88,16 @@ def register_additional_indexes(
             file=location.file,
         )
         mentions += 1
+        semantic_index = _SEMANTIC_DEFINITION_INDEXES.get(classification.kind)
+        if semantic_index is not None:
+            indexes.mention(
+                semantic_index,
+                record.name,
+                item=classification.key,
+                purpose="record.definition",
+                file=location.file,
+            )
+            mentions += 1
 
     mentions += _register_semantic_mentions(
         record.raw,
