@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections import defaultdict
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
@@ -271,8 +270,12 @@ class JsonlSelectionStore:
         self.catalog = catalog
         self.index_store = index_store or JsonlIndexStore(self.cache_dir)
         self._sections = _load_sections(self.cache_dir)
+        limits = raw_cache_limits or HotIndexLimits(
+            max_entries=256,
+            max_bytes=32 * 1024 * 1024,
+        )
         self._raw_cache: BoundedHotIndex[SelectionRecord] = BoundedHotIndex(
-            raw_cache_limits or HotIndexLimits(max_entries=256, max_bytes=32 * 1024 * 1024),
+            limits,
             estimate=lambda key, value: len(key) + value.handle.location.length + 256,
         )
         self._loads = 0
@@ -353,8 +356,18 @@ class JsonlSelectionStore:
             )
 
     def resource_names(self) -> tuple[str, ...]:
-        names = [handle.key.split(":", 1)[1] for handle in self.iter_handles("resources")]
-        return tuple(sorted(set(names)))
+        names = {
+            str(fact["value"])
+            for fact in self.index_store.iter_mentions("resource")
+            if isinstance(fact.get("value"), str) and fact.get("value")
+        }
+        if not names:
+            names.update(
+                handle.key.split(":", 1)[1]
+                for handle in self.iter_handles("resources")
+                if ":" in handle.key
+            )
+        return tuple(sorted(names))
 
     def load(self, handle: SelectionHandle) -> SelectionRecord:
         cached = self._raw_cache.get(handle.cache_key)
