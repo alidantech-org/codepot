@@ -479,9 +479,7 @@ def _matches_definition(
 ) -> bool:
     if location.section != definition.section:
         return False
-    if definition.kinds and location.kind not in definition.kinds:
-        return False
-    return True
+    return not definition.kinds or location.kind in definition.kinds
 
 
 def _location_from_envelope(
