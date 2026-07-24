@@ -1,6 +1,6 @@
 # Codepot task tracking
 
-This folder is the ordered implementation ledger for the active `codepotx` restart.
+This folder is the ordered implementation ledger for the active `codepotx` restart and the connected CodepotG generation work.
 
 ## Status
 
@@ -70,4 +70,10 @@ Subtasks use checkboxes. A task cannot be marked `[x]` until:
 23. `22-codepotx-tests-exports-cleanup.md` — test hierarchy, curated exports, documentation, and cleanup
 24. `23-codepotx-structure-integration-gate.md` — final behavioral, type, package, and workspace validation
 
-Do not begin a phase until its dependency gates are met. For the structure migration, read `agents/CODEPOTX_STRUCTURE_GUIDE.md` before opening Task 16.
+### CodepotG lazy-generation evolution
+
+25. `24-codepotg-jsonl-lazy-generation.md` — JSON-first streaming extraction, indexed JSONL, bounded queues, lazy contexts, explicit dependency providers, dynamic barrels, progressive writes, and template-author documentation
+
+Task 24 intentionally changes future generation architecture. It does not rewrite the historical completion evidence in Tasks 04, 05, 08, 19, or 20. Where those completed tasks record full in-memory planning/rendering behavior, treat that as the validated baseline being evolved—not the final target architecture.
+
+Do not begin a phase until its dependency gates are met. For the structure migration, read `agents/CODEPOTX_STRUCTURE_GUIDE.md` before opening Task 16. For Task 24, implement the JSONL foundation first and stop for explicit human approval before finalizing the new `paths.yaml` direction.
