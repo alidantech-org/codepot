@@ -12,7 +12,7 @@ def run_paths(request: PathsInput) -> PathsOutput:
     _notify(request, "paths_loading", f"Loading paths config: {template_root}")
 
     config_path = resolve_path_config_file(template_root)
-    config = load_path_config(template_root)
+    config = load_path_config(template_root, strict=True)
     folders = [
         PathFolderSummary(
             name=folder.name,
