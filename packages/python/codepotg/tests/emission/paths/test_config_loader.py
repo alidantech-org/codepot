@@ -39,12 +39,18 @@ def test_load_path_config_rejects_both_yaml_extensions(tmp_path: Path) -> None:
         load_path_config(tmp_path)
 
 
-def test_path_config_rejects_unknown_top_level_key() -> None:
+def test_path_config_strict_mode_rejects_unknown_top_level_key() -> None:
     with pytest.raises(PathYamlError, match="Unknown key.*include_hidden"):
-        path_config_from_yaml({"include_hidden": True})
+        path_config_from_yaml({"include_hidden": True}, strict=True)
 
 
-def test_path_config_rejects_unknown_folder_key() -> None:
+def test_path_config_compatibility_mode_preserves_unknown_top_level_key() -> None:
+    config = path_config_from_yaml({"include_hidden": True})
+
+    assert config.folders == ()
+
+
+def test_path_config_strict_mode_rejects_unknown_folder_key() -> None:
     with pytest.raises(PathYamlError, match="Unknown key.*depends_on"):
         path_config_from_yaml(
             {
@@ -55,7 +61,8 @@ def test_path_config_rejects_unknown_folder_key() -> None:
                         "depends_on": ["enum"],
                     }
                 }
-            }
+            },
+            strict=True,
         )
 
 
@@ -75,21 +82,23 @@ def test_path_config_rejects_conflicting_alias_fields() -> None:
         )
 
 
-def test_path_config_rejects_duplicate_effective_aliases() -> None:
-    with pytest.raises(PathYamlError, match="same alias 'schema'"):
-        path_config_from_yaml(
-            {
-                "folders": {
-                    "dto": {
-                        "select": "schemas.emit_dtos",
-                        "as": "schema",
-                        "parts": ["src", "dto"],
-                    },
-                    "model": {
-                        "select": "schemas.emit_models",
-                        "as": "schema",
-                        "parts": ["src", "model"],
-                    },
-                }
+def test_path_config_allows_alias_reuse_across_folder_recipes() -> None:
+    config = path_config_from_yaml(
+        {
+            "folders": {
+                "route_group": {
+                    "select": "features",
+                    "as": "resource",
+                    "parts": ["routes"],
+                },
+                "feature": {
+                    "select": "features",
+                    "as": "resource",
+                    "parts": ["features"],
+                },
             }
-        )
+        },
+        strict=True,
+    )
+
+    assert [folder.alias for folder in config.folders] == ["resource", "resource"]
