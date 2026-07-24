@@ -69,3 +69,11 @@ class JsonlInput:
     output_path: Path
     reuse_unchanged: bool = True
     progress: ProgressSink | None = None
+
+
+@dataclass(frozen=True)
+class PathsInput:
+    """Input for resolving and inspecting a template pack paths config."""
+
+    template_root: Path
+    progress: ProgressSink | None = None
