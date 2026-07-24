@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .errors import JsonlLookupError
+from .hot_index import BoundedHotIndex
 from .models import HotIndexLimits, RecordLocation
-from .selections import JsonlSelectionStore
 from .store import JsonlIndexStore
 
 
@@ -96,17 +96,15 @@ class JsonlLazyResolver:
         self.cache_dir = Path(cache_dir)
         self.limits = limits or LazyResolverLimits()
         _validate_limits(self.limits)
+        self.index_store = JsonlIndexStore(self.cache_dir)
         hot_limits = HotIndexLimits(
             max_entries=self.limits.cache_entries,
             max_bytes=self.limits.cache_bytes,
         )
-        self.index_store = JsonlIndexStore(self.cache_dir)
-        self.selection_store = JsonlSelectionStore(
-            self.cache_dir,
-            raw_cache_limits=hot_limits,
-            index_store=self.index_store,
+        self._proxies: BoundedHotIndex[LazyJsonlRecord] = BoundedHotIndex(
+            hot_limits,
+            estimate=lambda key, proxy: len(key) + proxy.location.length + 256,
         )
-        self._proxies: dict[str, LazyJsonlRecord] = {}
         self._load_count = 0
 
     @property
@@ -116,26 +114,22 @@ class JsonlLazyResolver:
     def ref(self, ref: str) -> LazyJsonlRecord | None:
         """Return a lazy proxy for a canonical ref."""
 
-        location = self.index_store.get_by_ref(ref)
-        return self._proxy(location)
+        return self._proxy(self.index_store.get_by_ref(ref))
 
     def key(self, key: str) -> LazyJsonlRecord | None:
         """Return a lazy proxy for a stable source key."""
 
-        location = self.index_store.get_by_key(key)
-        return self._proxy(location)
+        return self._proxy(self.index_store.get_by_key(key))
 
     def operation(self, operation_id: str) -> LazyJsonlRecord | None:
         """Return a lazy operation proxy by operationId."""
 
-        location = self.index_store.get_by_operation_id(operation_id)
-        return self._proxy(location)
+        return self._proxy(self.index_store.get_by_operation_id(operation_id))
 
     def resource(self, resource: str) -> tuple[LazyJsonlRecord, ...]:
         """Return lazy records declaring or mentioning one resource."""
 
-        facts = self.index_store.find_mentions("resource", resource)
-        return self._facts_to_proxies(facts)
+        return self._facts_to_proxies(self.index_store.find_mentions("resource", resource))
 
     def mentions(self, index: str, value: str) -> tuple[LazyJsonlRecord, ...]:
         """Return records found through one mention index."""
@@ -151,31 +145,29 @@ class JsonlLazyResolver:
         )
 
     def chain(self, ref: str, *, depth: int = 1) -> tuple[LazyJsonlRecord, ...]:
-        """Resolve a bounded breadth-first dependency chain lazily."""
+        """Resolve a bounded breadth-first reverse-dependency chain lazily."""
 
         if depth < 0 or depth > self.limits.max_depth:
             raise JsonlLookupError(
                 f"Lazy resolver depth {depth} exceeds limit {self.limits.max_depth}"
             )
         result: list[LazyJsonlRecord] = []
-        seen_refs: set[str] = set()
+        seen_items: set[str] = set()
         frontier = [ref]
         for _ in range(depth + 1):
             next_frontier: list[str] = []
             for current in frontier:
-                if current in seen_refs:
-                    continue
-                seen_refs.add(current)
                 proxy = self.ref(current)
-                if proxy is not None:
+                if proxy is not None and proxy.key not in seen_items:
+                    seen_items.add(proxy.key)
                     result.append(proxy)
-                for fact in self.index_store.find_dependants(current):
-                    source = fact.get("from")
-                    if not isinstance(source, str):
+                for dependant in self.dependants(current):
+                    if dependant.key in seen_items:
                         continue
-                    source_proxy = self.key(source)
-                    if source_proxy is not None and source_proxy.ref:
-                        next_frontier.append(source_proxy.ref)
+                    seen_items.add(dependant.key)
+                    result.append(dependant)
+                    if dependant.ref:
+                        next_frontier.append(dependant.ref)
                 if len(result) + len(next_frontier) > self.limits.max_related_items:
                     raise JsonlLookupError(
                         "Lazy resolver related-item limit exceeded: "
@@ -184,15 +176,14 @@ class JsonlLazyResolver:
             frontier = next_frontier
             if not frontier:
                 break
-        return tuple(_unique_proxies(result))
+        return tuple(result)
 
     def stats(self) -> dict[str, Any]:
         """Return bounded resolver and source-load diagnostics."""
 
         return {
             "loads": self._load_count,
-            "proxies": len(self._proxies),
-            "rawCache": self.selection_store.raw_cache_stats(),
+            "proxyCache": self._proxies.stats(),
         }
 
     def _proxy(self, location: RecordLocation | None) -> LazyJsonlRecord | None:
@@ -204,13 +195,11 @@ class JsonlLazyResolver:
             )
         pointer = location.pointer or ""
         identity = f"{location.file}:{location.offset}:{location.length}:{pointer}"
-        proxy = self._proxies.get(identity)
-        if proxy is None:
-            if len(self._proxies) >= self.limits.cache_entries:
-                oldest = next(iter(self._proxies))
-                self._proxies.pop(oldest)
-            proxy = LazyJsonlRecord(location=location, loader=self._load)
-            self._proxies[identity] = proxy
+        cached = self._proxies.get(identity)
+        if cached is not None:
+            return cached
+        proxy = LazyJsonlRecord(location=location, loader=self._load)
+        self._proxies.put(identity, proxy)
         return proxy
 
     def _load(self, location: RecordLocation) -> Any:
@@ -224,10 +213,12 @@ class JsonlLazyResolver:
         item_field: str = "item",
     ) -> tuple[LazyJsonlRecord, ...]:
         proxies: list[LazyJsonlRecord] = []
+        seen: set[str] = set()
         for fact in facts:
             item = fact.get(item_field)
-            if not isinstance(item, str):
+            if not isinstance(item, str) or item in seen:
                 continue
+            seen.add(item)
             proxy = self.key(item)
             if proxy is not None:
                 proxies.append(proxy)
@@ -236,20 +227,7 @@ class JsonlLazyResolver:
                     "Lazy resolver related-item limit exceeded: "
                     f"{self.limits.max_related_items}"
                 )
-        return tuple(_unique_proxies(proxies))
-
-
-def _unique_proxies(values: list[LazyJsonlRecord]) -> Iterator[LazyJsonlRecord]:
-    seen: set[str] = set()
-    for value in values:
-        identity = (
-            f"{value.location.file}:{value.location.offset}:"
-            f"{value.location.length}:{value.location.pointer or ''}"
-        )
-        if identity in seen:
-            continue
-        seen.add(identity)
-        yield value
+        return tuple(proxies)
 
 
 def _validate_limits(limits: LazyResolverLimits) -> None:
