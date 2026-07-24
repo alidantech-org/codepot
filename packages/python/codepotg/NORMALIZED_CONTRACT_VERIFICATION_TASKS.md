@@ -78,14 +78,16 @@ Codepotg.yml
 
 Required tests:
 
-- [x] explicit `.yaml` loading test committed;
-- [x] explicit `.yml` loading test committed;
-- [x] automatic `.yaml` discovery test committed;
-- [x] automatic `.yml` discovery test committed;
-- [x] ambiguity failure test committed for projects containing both names;
-- [x] legacy `CodepotFile.yml` and `CodepotFile.yaml` rejection test committed;
-- [-] real TypeScript generation test committed for `Codepotg.yml`; execution pending;
-- [-] real Dart generation test committed for `Codepotg.yaml`; execution pending.
+- [x] explicit `.yaml` loading test passed;
+- [x] explicit `.yml` loading test passed;
+- [x] automatic `.yaml` discovery test passed;
+- [x] automatic `.yml` discovery test passed;
+- [x] ambiguity failure test passed for projects containing both names;
+- [x] legacy `CodepotFile.yml` and `CodepotFile.yaml` rejection test passed;
+- [x] real TypeScript generation test passed for `Codepotg.yml`;
+- [x] real Dart generation test passed for `Codepotg.yaml`;
+- [x] manual TypeScript CLI generation emitted all nine expected files;
+- [-] manual Dart CLI generation remains optional confirmation; the Dart integration generation test already passed.
 
 ## Verification commands
 
@@ -95,6 +97,7 @@ From `packages/python/codepotg`:
 python -m pytest tests/codepot_file/test_loader.py -q
 python -m pytest tests/contracts/test_lossless_source.py -q
 python -m pytest tests/integration/test_project_template_packs.py -q
+python -m pytest tests/cli/test_generate_command.py tests/cli/test_config_filename_output.py -q
 python -m pytest -q
 python -m ruff check .
 ```
@@ -152,7 +155,10 @@ known unexecuted checks or environment limitations
 - [x] add TypeScript project fixture and shared template pack;
 - [x] add Dart project fixture and shared template pack;
 - [x] add real generation integration tests and exact emitted-content assertions;
-- [x] statically verify path selection, template scanning, and adapter variable compatibility.
+- [x] statically verify path selection, template scanning, and adapter variable compatibility;
+- [x] execute loader tests: 14 passed;
+- [x] execute project-pack integration tests: 5 passed;
+- [x] manually generate the TypeScript fixture: 9 files created.
 
 ### Batch V1 — Lossless root OpenAPI source
 
@@ -166,4 +172,13 @@ known unexecuted checks or environment limitations
 - [x] add TypeScript and Dart source templates using collision-safe bracket access;
 - [x] assert source values through real generated project files;
 - [x] locally render-check both source templates with strict Jinja undefined handling;
-- [!] execute the committed pytest and Ruff commands after pulling the branch in a networked checkout; this tool environment cannot resolve `github.com` and therefore could not clone the updated branch.
+- [x] execute lossless source tests: 4 passed.
+
+### Batch V2 — Full-suite CLI compatibility repair
+
+- [x] update stale missing-config assertion for `.yaml` and `.yml` support;
+- [x] use Click's public `CliRunner` so isolated filesystem tests work with the installed Typer release;
+- [x] report the actual resolved config filename in progress output;
+- [x] add a regression test proving explicit `Codepotg.yml` output;
+- [x] normalize the Ruff-flagged loader-test import block;
+- [-] rerun focused CLI tests, the complete suite, and Ruff after pulling the latest branch head.
