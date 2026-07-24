@@ -14,6 +14,7 @@ from app import GeneratorApp
 
 from cli.commands.generate import generate_command
 from cli.commands.init import init_command
+from cli.commands.jsonl import jsonl_command
 from cli.commands.task import app as task_app
 from cli.constants.constants import (
     APP_DESCRIPTION,
@@ -21,9 +22,11 @@ from cli.constants.constants import (
     APP_VERSION,
     CMD_GENERATE,
     CMD_INIT,
+    CMD_JSONL,
     CMD_TASK,
     HELP_GENERATE,
     HELP_INIT,
+    HELP_JSONL,
     HELP_TASK,
     HELP_VERSION,
 )
@@ -36,6 +39,9 @@ class RuntimeApi(Protocol):
 
     def generate(self, **kwargs):
         """Run CodepotG configuration-driven generation."""
+
+    def jsonl(self, *args, **kwargs):
+        """Compile a visible indexed JSONL cache."""
 
 
 def set_runtime(ctx: typer.Context, runtime: RuntimeApi) -> None:
@@ -84,6 +90,7 @@ def main(
 
 app.command(CMD_GENERATE, help=HELP_GENERATE)(generate_command)
 app.command(CMD_INIT, help=HELP_INIT)(init_command)
+app.command(CMD_JSONL, help=HELP_JSONL)(jsonl_command)
 app.add_typer(task_app, name=CMD_TASK, help=HELP_TASK)
 
 
