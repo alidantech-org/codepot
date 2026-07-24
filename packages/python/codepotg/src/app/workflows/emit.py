@@ -12,9 +12,9 @@ from typing import Any
 
 from app.models import EmitInput, EmitOutput, RuntimeDiagnostic, RuntimeEvent
 from app.workflows.template_paths import resolve_template_root
+from emission.bounded_graph_engine import emit_bounded_graph
 from emission.engine import emit as run_legacy_emission
 from emission.paths.config_loader import load_path_config
-from emission.queued_graph_engine import emit_graph_queued
 from inference.engine import InferenceEngine
 from inference.lossless_contract import build_api_contract
 from languages.discovery import resolve_language_adapter
@@ -139,9 +139,9 @@ def run_emit(request: EmitInput) -> EmitOutput:
         _notify(
             request,
             stage="rendering_writing_files",
-            message="Rendering dependency graph through bounded queues",
+            message="Rendering dependency graph with bounded globals and queues",
         )
-        emission_result = emit_graph_queued(
+        emission_result = emit_bounded_graph(
             template_contract,
             progress=request.progress,
         )
