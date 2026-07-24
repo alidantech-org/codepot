@@ -1,10 +1,14 @@
 """App emit workflow.
 
-Orchestrates OpenAPI loading, inference, contract building, language adaptation,
+Orchestrates JSONL compilation, compatibility inference, language adaptation,
 and either legacy or approved graph-based template emission.
 """
 
 from __future__ import annotations
+
+from collections.abc import Mapping
+from pathlib import Path
+from typing import Any
 
 from app.models import EmitInput, EmitOutput, RuntimeDiagnostic, RuntimeEvent
 from app.workflows.template_paths import resolve_template_root
@@ -14,16 +18,75 @@ from emission.queued_graph_engine import emit_graph_queued
 from inference.engine import InferenceEngine
 from inference.lossless_contract import build_api_contract
 from languages.discovery import resolve_language_adapter
+from openapi.jsonl import compile_openapi_source_jsonl
 from openapi.loader import load_openapi_document
 
 
 def run_emit(request: EmitInput) -> EmitOutput:
     """Run the emit workflow and return structured output."""
 
+    cache_path = _generation_cache_path(request.input_path)
+    pre_diagnostics: list[RuntimeDiagnostic] = []
+    seen_jsonl_files: set[str] = set()
+
+    def jsonl_progress(event: Mapping[str, Any]) -> None:
+        stage = str(event.get("stage", "jsonl"))
+        status = str(event.get("status", "progress"))
+        relative = event.get("file")
+        if stage == "input" and status == "compatibility":
+            warning = str(event.get("warning", "YAML compatibility conversion in use"))
+            pre_diagnostics.append(RuntimeDiagnostic(level="warning", message=warning))
+            _notify(
+                request,
+                stage="jsonl_compatibility_warning",
+                message=warning,
+                level="warning",
+            )
+            return
+        if stage == "record" and status == "written" and isinstance(relative, str):
+            if relative in seen_jsonl_files:
+                return
+            seen_jsonl_files.add(relative)
+            _notify(
+                request,
+                stage="jsonl_file_writing",
+                message=f"Writing JSONL: {cache_path / Path(relative)}",
+            )
+            return
+        messages = {
+            ("compiler", "started"): "Compiling OpenAPI into indexed JSONL",
+            ("compiler", "reused"): f"Reused JSONL cache: {cache_path}",
+            ("compiler", "completed"): f"JSONL cache ready: {cache_path}",
+            ("compiler", "failed"): "JSONL compilation failed",
+        }
+        message = messages.get((stage, status))
+        if message:
+            _notify(
+                request,
+                stage=f"jsonl_{status}",
+                message=message,
+                level="error" if status == "failed" else "info",
+            )
+
+    jsonl_result = compile_openapi_source_jsonl(
+        request.input_path,
+        cache_path,
+        progress=jsonl_progress,
+    )
+    pre_diagnostics.append(
+        RuntimeDiagnostic(
+            level="info",
+            message=(
+                f"JSONL cache {'reused' if jsonl_result.reused else 'compiled'}: "
+                f"{jsonl_result.cache_dir}"
+            ),
+        )
+    )
+
     _notify(
         request,
         stage="loading_openapi",
-        message=f"Loading OpenAPI document: {request.input_path}",
+        message=f"Loading compatibility OpenAPI contract: {request.input_path}",
     )
     document = load_openapi_document(request.input_path)
 
@@ -42,7 +105,7 @@ def run_emit(request: EmitInput) -> EmitOutput:
     _notify(
         request,
         stage="building_contract",
-        message="Building API contract",
+        message="Building compatibility API contract",
     )
     api_contract = build_api_contract(graph)
 
@@ -112,6 +175,7 @@ def run_emit(request: EmitInput) -> EmitOutput:
 
     write_result = emission_result.write_result
     diagnostics = [
+        *pre_diagnostics,
         RuntimeDiagnostic(
             level="info",
             message=(
@@ -171,6 +235,11 @@ def run_emit(request: EmitInput) -> EmitOutput:
         refused=list(write_result.refused),
         diagnostics=diagnostics,
     )
+
+
+def _generation_cache_path(input_path: Path) -> Path:
+    source = input_path.expanduser().resolve()
+    return source.parent / ".codepotg" / "cache" / source.stem
 
 
 def _notify(
