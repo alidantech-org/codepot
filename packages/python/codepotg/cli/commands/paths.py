@@ -28,7 +28,8 @@ def paths_command(
     ),
     debug: bool = typer.Option(False, "--debug", help="Show traceback on failure."),
 ) -> None:
-    """Validate and inspect a template pack paths configuration."""
+    """Validate and review a template pack paths configuration."""
+
     try:
         from cli.main import get_runtime
 
@@ -52,19 +53,60 @@ def paths_command(
         )
         print_info(f"Default lifecycle: {result.default_lifecycle}")
 
-        if not result.folders:
-            print_info("Folder recipes: none")
-            return
+        if result.folders:
+            reporter.section("Legacy Folder Recipes")
+            for folder in result.folders:
+                select = folder.select or "(root context)"
+                lifecycle = folder.lifecycle or result.default_lifecycle
+                parts = "/".join(folder.parts)
+                print_info(
+                    f"{folder.name}: select={select}; as={folder.alias}; "
+                    f"mode={folder.mode}; lifecycle={lifecycle}; parts={parts}"
+                )
+        else:
+            print_info("Legacy folder recipes: none")
 
-        reporter.section("Folder Recipes")
-        for folder in result.folders:
-            select = folder.select or "(root context)"
-            lifecycle = folder.lifecycle or result.default_lifecycle
-            parts = "/".join(folder.parts)
-            print_info(
-                f"{folder.name}: select={select}; as={folder.alias}; "
-                f"mode={folder.mode}; lifecycle={lifecycle}; parts={parts}"
-            )
+        if result.selections:
+            reporter.section("Selections")
+            for selection in result.selections:
+                print_info(
+                    f"{selection.name}: select={selection.select}; "
+                    f"as={selection.alias}; scope={selection.scope}"
+                )
+        else:
+            print_info("Selections: none")
+
+        if result.emissions:
+            reporter.section("Emissions")
+            for emission in result.emissions:
+                lifecycle = emission.lifecycle or result.default_lifecycle
+                output = "/".join(emission.output)
+                providers = ", ".join(
+                    f"{provider.purpose}={provider.source}"
+                    for provider in emission.providers
+                ) or "none"
+                provides = ", ".join(emission.provides) or "none"
+                print_info(
+                    f"{emission.name}: selection={emission.selection}; "
+                    f"template={emission.template}; output={output}; "
+                    f"lifecycle={lifecycle}; provides={provides}; providers={providers}"
+                )
+        else:
+            print_info("Emissions: none")
+
+        if result.barrels:
+            reporter.section("Barrels")
+            for barrel in result.barrels:
+                lifecycle = barrel.lifecycle or result.default_lifecycle
+                output = "/".join(barrel.output)
+                exports = ", ".join(barrel.exports)
+                print_info(
+                    f"{barrel.name}: template={barrel.template}; output={output}; "
+                    f"scope={barrel.scope}; as={barrel.alias}; lifecycle={lifecycle}; "
+                    f"exports={exports}"
+                )
+        else:
+            print_info("Barrels: none")
     except Exception as exc:
         print_error(str(exc))
         if debug:
