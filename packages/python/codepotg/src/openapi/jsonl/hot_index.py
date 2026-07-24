@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass
 from threading import RLock
-from typing import Callable, Generic, TypeVar
+from typing import Generic, TypeVar
 
 from .models import HotIndexLimits
 
