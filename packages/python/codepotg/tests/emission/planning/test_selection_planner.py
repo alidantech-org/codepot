@@ -5,11 +5,10 @@ from pathlib import Path
 
 import pytest
 
+from app.planning import JsonlSelectionPlanner, SelectionEmission
 from emission.planning import (
-    JsonlSelectionPlanner,
     OutputRegistryLimits,
     OutputStatus,
-    SelectionEmission,
     VirtualOutputConflictError,
     VirtualOutputRegistry,
 )
