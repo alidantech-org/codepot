@@ -29,6 +29,7 @@ from .selections import (
     SelectionRecord,
     SelectionScope,
 )
+from .source import compile_openapi_source_jsonl, yaml_compatibility_warning
 from .store import JsonlIndexStore
 
 __all__ = [
@@ -60,4 +61,6 @@ __all__ = [
     "SelectionRecord",
     "SelectionScope",
     "compile_openapi_jsonl",
+    "compile_openapi_source_jsonl",
+    "yaml_compatibility_warning",
 ]
