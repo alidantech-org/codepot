@@ -1,7 +1,10 @@
-"""Changed-aware file writing for emission."""
+"""Changed-aware atomic file writing for emission."""
 
 from __future__ import annotations
 
+import os
+import uuid
+from contextlib import suppress
 from pathlib import Path
 
 from contracts.emission import EmissionWriteResult
@@ -13,35 +16,54 @@ def write_text_if_changed(
     *,
     compare_mode: str = "exact",
 ) -> EmissionWriteResult:
-    """Write text to file only if content changed, normalizing final newline.
+    """Atomically write normalized UTF-8 text only when content changed."""
 
-    Args:
-        path: Target file path.
-        content: New content to write.
-        compare_mode: Comparison mode - "exact", "layout_insensitive", or "raw".
-
-    Returns:
-        EmissionWriteResult indicating what happened.
-    """
-    # Normalize content to end with single newline
     normalized = content.rstrip("\n") + "\n" if content else ""
+    encoded = normalized.encode("utf-8")
 
     if not path.exists():
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(normalized, encoding="utf-8")
+        _atomic_write(path, encoded)
         return EmissionWriteResult(created=(path,))
 
     existing = path.read_text(encoding="utf-8")
-
     if _text_changed(existing, normalized, compare_mode=compare_mode):
-        path.write_text(normalized, encoding="utf-8")
+        _atomic_write(path, encoded)
         return EmissionWriteResult(updated=(path,))
 
     return EmissionWriteResult(unchanged=(path,))
 
 
+def write_bytes_if_changed(path: Path, content: bytes) -> EmissionWriteResult:
+    """Atomically write raw bytes only when content changed."""
+
+    if path.exists():
+        if path.read_bytes() == content:
+            return EmissionWriteResult(unchanged=(path,))
+        _atomic_write(path, content)
+        return EmissionWriteResult(updated=(path,))
+
+    _atomic_write(path, content)
+    return EmissionWriteResult(created=(path,))
+
+
+def _atomic_write(path: Path, content: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        with temporary.open("wb") as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    except Exception:
+        with suppress(OSError):
+            temporary.unlink()
+        raise
+
+
 def _text_changed(old: str, new: str, *, compare_mode: str = "exact") -> bool:
     """Check if text changed based on comparison mode."""
+
     old_normalized = _normalize_newlines(old)
     new_normalized = _normalize_newlines(new)
 
@@ -53,6 +75,7 @@ def _text_changed(old: str, new: str, *, compare_mode: str = "exact") -> bool:
 
 def _layout_key(value: str) -> str:
     """Remove whitespace outside quoted strings for layout-insensitive comparison."""
+
     result: list[str] = []
     in_string = False
     quote = ""
@@ -91,10 +114,12 @@ def _layout_key(value: str) -> str:
 
 
 def _normalize_newlines(value: str) -> str:
-    """Normalize line endings to \\n."""
+    """Normalize line endings to \n."""
+
     return value.replace("\r\n", "\n").replace("\r", "\n")
 
 
 def _ensure_final_newline(value: str) -> str:
     """Ensure text ends with single newline."""
+
     return value.rstrip("\n") + "\n" if value else ""
