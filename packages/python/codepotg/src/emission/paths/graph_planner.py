@@ -99,7 +99,10 @@ def plan_path_graph(
     """Plan named selections, emissions, providers, and barrels."""
 
     if not config.uses_graph:
-        return PathGraphPlan(files=(), registry=registry or VirtualOutputRegistry())
+        return PathGraphPlan(
+            files=(),
+            registry=registry if registry is not None else VirtualOutputRegistry(),
+        )
 
     output_registry = registry if registry is not None else VirtualOutputRegistry()
     selections = config.selection_by_name()
@@ -116,6 +119,7 @@ def plan_path_graph(
             context = _selection_context(base_context, selection, selected, emission)
             output_path = _expand_output(config, emission.output, context)
             source_key, source_ref = _source_identity(selected)
+            refs = _selected_refs(selected)
             symbols = _selected_symbols(selected)
             lifecycle = emission.lifecycle or config.write_policy.default_mode
             providers = {
@@ -128,6 +132,7 @@ def plan_path_graph(
                 source_ref=source_ref,
                 template_path=template_path.relative_to(template_root),
                 output_path=output_path,
+                refs=refs,
                 symbols=symbols,
                 provides=emission.provides,
                 resource=selected.resource,
@@ -151,17 +156,9 @@ def plan_path_graph(
 
     effective_refs: dict[str, frozenset[str]] = {
         emission.name: frozenset(
-            item.source_ref
+            ref
             for item in output_registry.find_emission(emission.name)
-            if item.source_ref
-        )
-        for emission in config.emissions
-    }
-    effective_symbols: dict[str, frozenset[str]] = {
-        emission.name: frozenset(
-            symbol
-            for item in output_registry.find_emission(emission.name)
-            for symbol in item.symbols
+            for ref in item.refs
         )
         for emission in config.emissions
     }
@@ -186,6 +183,7 @@ def plan_path_graph(
             )
             if not members:
                 continue
+            refs = tuple(sorted({ref for item in members for ref in item.refs}))
             symbols = tuple(sorted({symbol for item in members for symbol in item.symbols}))
             provides = tuple(
                 sorted(
@@ -221,6 +219,7 @@ def plan_path_graph(
                 source_ref=None,
                 template_path=template_path.relative_to(template_root),
                 output_path=output_path,
+                refs=refs,
                 symbols=symbols,
                 provides=provides,
                 resource=resource,
@@ -248,11 +247,6 @@ def plan_path_graph(
             for exported in exported_nodes
             for ref in effective_refs.get(exported, frozenset())
         )
-        effective_symbols[barrel.name] = frozenset(
-            symbol
-            for exported in exported_nodes
-            for symbol in effective_symbols.get(exported, frozenset())
-        )
         effective_provides[barrel.name] = frozenset(
             capability
             for exported in exported_nodes
@@ -265,8 +259,10 @@ def plan_path_graph(
         registry=output_registry,
         effective_refs=effective_refs,
     )
-    files = _topological_files(files)
-    return PathGraphPlan(files=tuple(files), registry=output_registry)
+    return PathGraphPlan(
+        files=tuple(_topological_files(files)),
+        registry=output_registry,
+    )
 
 
 def _resolve_selection(
@@ -290,6 +286,8 @@ def _resolve_selection(
             for index, item in enumerate(items)
         )
     if selection.scope == PathSelectionScope.ALL:
+        if not items:
+            return ()
         return (
             ResolvedSelectionContext(
                 name=selection.name,
@@ -301,15 +299,15 @@ def _resolve_selection(
                 items=items,
                 resource=None,
             ),
-        ) if items else ()
+        )
 
     grouped: dict[str, list[Any]] = defaultdict(list)
-    for item in items:
+    for index, item in enumerate(items):
         resource = _resource_identity(item)
         if resource is None:
             raise PathGraphPlanningError(
                 f"Selection '{selection.name}' uses resource scope but item "
-                f"'{_item_key(item, index=0, selection=selection.name)}' has no resource."
+                f"'{_item_key(item, index=index, selection=selection.name)}' has no resource."
             )
         grouped[resource].append(item)
     return tuple(
@@ -359,6 +357,16 @@ def _source_identity(selected: ResolvedSelectionContext) -> tuple[str, str | Non
     key = getattr(emit, "key", None) or selected.key
     ref = getattr(emit, "ref", None) or getattr(selected.item, "ref", None)
     return str(key), str(ref) if ref else None
+
+
+def _selected_refs(selected: ResolvedSelectionContext) -> tuple[str, ...]:
+    refs: set[str] = set()
+    for item in selected.items:
+        emit = getattr(item, "emit", None)
+        ref = getattr(emit, "ref", None) or getattr(item, "ref", None)
+        if isinstance(ref, str) and ref:
+            refs.add(ref)
+    return tuple(sorted(refs))
 
 
 def _item_key(item: Any, *, index: int, selection: str) -> str:
@@ -422,7 +430,8 @@ def _required_refs(selected: ResolvedSelectionContext) -> tuple[str, ...]:
     refs: set[str] = set()
     for item in selected.items:
         emit = getattr(item, "emit", None)
-        for dependency in tuple(getattr(emit, "dependencies", ())) if emit is not None else ():
+        dependencies = tuple(getattr(emit, "dependencies", ())) if emit is not None else ()
+        for dependency in dependencies:
             if not getattr(dependency, "is_importable", False):
                 continue
             ref = getattr(dependency, "ref", None)
@@ -534,7 +543,9 @@ def _bind_exact_dependencies(
         dependencies = set(file.depends_on)
         for ref in required_refs:
             matching = tuple(
-                source for source in configured_sources if ref in effective_refs.get(source, frozenset())
+                source
+                for source in configured_sources
+                if ref in effective_refs.get(source, frozenset())
             )
             if len(matching) > 1:
                 raise PathGraphPlanningError(
@@ -554,7 +565,7 @@ def _bind_exact_dependencies(
                 )
             else:
                 candidates = tuple(
-                    item for item in registry.find_emission(source) if item.source_ref == ref
+                    item for item in registry.find_emission(source) if ref in item.refs
                 )
             if len(candidates) != 1:
                 raise PathGraphPlanningError(
@@ -568,6 +579,8 @@ def _bind_exact_dependencies(
 
 def _topological_files(files: list[PathGraphFile]) -> list[PathGraphFile]:
     by_path = {file.output_path.as_posix(): file for file in files}
+    if len(by_path) != len(files):
+        raise PathGraphPlanningError("Planned output paths must be unique.")
     complete: set[str] = set()
     active: list[str] = []
     active_set: set[str] = set()
