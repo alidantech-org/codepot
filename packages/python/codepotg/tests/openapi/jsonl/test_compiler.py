@@ -9,7 +9,12 @@ from typing import Any
 
 import pytest
 
-from openapi.jsonl import HotIndexLimits, JsonlIndexStore, compile_openapi_jsonl
+from openapi.jsonl import (
+    HotIndexLimits,
+    JsonlIndexStore,
+    JsonlQueueLimits,
+    compile_openapi_jsonl,
+)
 
 _HTTP_METHODS = frozenset(
     {"get", "put", "post", "delete", "patch", "options", "head", "trace"}
@@ -76,6 +81,11 @@ def test_large_project_fixture_streams_to_indexed_jsonl(
         source,
         tmp_path / "cache",
         hot_limits=HotIndexLimits(max_entries=8, max_bytes=8 * 1024),
+        queue_limits=JsonlQueueLimits(
+            max_records=2,
+            max_pending_bytes=32 * 1024 * 1024,
+            max_events=2,
+        ),
     )
 
     assert not result.reused
@@ -92,6 +102,27 @@ def test_large_project_fixture_streams_to_indexed_jsonl(
     assert hot_stats.estimated_bytes <= 8 * 1024
     assert hot_stats.evictions > 0
 
+    queue_stats = result.queue_stats
+    assert 1 <= queue_stats.record_high_water <= 2
+    assert 1 <= queue_stats.event_high_water <= 2
+    assert 1 <= queue_stats.pending_bytes_high_water <= 32 * 1024 * 1024
+
+    events_manifest = result.manifest.events
+    assert events_manifest is not None
+    assert events_manifest.file == "events.jsonl"
+    assert events_manifest.count == expectation.records * 2 + 2
+    events = [
+        json.loads(line)
+        for line in (result.cache_dir / events_manifest.file).read_text().splitlines()
+    ]
+    assert [event["sequence"] for event in events] == list(range(1, len(events) + 1))
+    assert events[0] == {"sequence": 1, "stage": "compiler", "status": "started"}
+    assert events[-1] == {
+        "sequence": len(events),
+        "stage": "compiler",
+        "status": "completed",
+    }
+
     store = JsonlIndexStore(result.cache_dir, hot_index=result.hot_index)
 
     schema_ref = f"#/components/schemas/{expectation.schema_name}"
@@ -100,9 +131,7 @@ def test_large_project_fixture_streams_to_indexed_jsonl(
     assert schema_location.file == "components/schemas.jsonl"
     assert store.read_location(schema_location) == expectation.schema
 
-    operation_key = (
-        f"operation:{expectation.method}:{expectation.operation_path}"
-    )
+    operation_key = f"operation:{expectation.method}:{expectation.operation_path}"
     operation_location = store.get_by_operation_id(expectation.operation_id)
     assert operation_location is not None
     assert operation_location.key == operation_key
