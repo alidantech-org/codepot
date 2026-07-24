@@ -84,3 +84,4 @@ class EmissionResult:
     plan: EmissionPlan
     write_result: EmissionWriteResult
     output_registry: Any | None = None
+    queue_stats: Any | None = None
