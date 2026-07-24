@@ -19,6 +19,7 @@ class ProjectFixture:
     operation_id: str
     operation_path: str
     resource: str
+    dependency_ref: str
 
 
 PROJECT_FIXTURES = (
@@ -30,6 +31,7 @@ PROJECT_FIXTURES = (
         operation_id="findApps",
         operation_path="/platform/apps",
         resource="apps",
+        dependency_ref="#/components/responses/FindApps200Response",
     ),
     ProjectFixture(
         relative="projects/dart/openapi.json",
@@ -39,6 +41,7 @@ PROJECT_FIXTURES = (
         operation_id="getHello",
         operation_path="/",
         resource="application",
+        dependency_ref="#/components/responses/GetHello200Response",
     ),
 )
 
@@ -84,24 +87,23 @@ def test_large_project_fixture_streams_to_indexed_jsonl(
     assert schema_location.file == "components/schemas.jsonl"
     assert store.read_location(schema_location)["type"] == "string"
 
+    operation_key = f"operation:get:{fixture.operation_path}"
     operation_location = store.get_by_operation_id(fixture.operation_id)
     assert operation_location is not None
-    assert operation_location.key == f"operation:get:{fixture.operation_path}"
+    assert operation_location.key == operation_key
     operation = store.read_location(operation_location)
     assert operation["operationId"] == fixture.operation_id
 
     resource_mentions = store.find_mentions("resource", fixture.resource)
     assert resource_mentions
-    assert any(
-        fact["item"].startswith(("schema:", "resource:"))
-        for fact in resource_mentions
-    )
+    assert any(fact["item"] == operation_key for fact in resource_mentions)
 
-    dependants = store.find_dependants("#/components/schemas/SharedUuid")
-    assert dependants
-    assert all(
-        fact["to"] == "#/components/schemas/SharedUuid" for fact in dependants
-    )
+    operation_kind_mentions = store.find_mentions("kind", "operation")
+    assert any(fact["item"] == operation_key for fact in operation_kind_mentions)
+
+    dependants = store.find_dependants(fixture.dependency_ref)
+    assert any(fact["from"] == operation_key for fact in dependants)
+    assert all(fact["to"] == fixture.dependency_ref for fact in dependants)
 
 
 @pytest.mark.parametrize("fixture", PROJECT_FIXTURES)
