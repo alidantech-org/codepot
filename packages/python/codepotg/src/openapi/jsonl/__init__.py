@@ -8,6 +8,7 @@ from .errors import (
     JsonlSelectionError,
 )
 from .hot_index import BoundedHotIndex, HotIndexRegistry, HotIndexStats
+from .lazy_resolver import JsonlLazyResolver, LazyJsonlRecord, LazyResolverLimits
 from .models import (
     HotIndexLimits,
     JsonlCompileResult,
@@ -42,6 +43,7 @@ __all__ = [
     "JsonlCompilerError",
     "JsonlIndexStore",
     "JsonlInputError",
+    "JsonlLazyResolver",
     "JsonlLimitError",
     "JsonlLimits",
     "JsonlLookupError",
@@ -51,6 +53,8 @@ __all__ = [
     "JsonlQueueStats",
     "JsonlSelectionError",
     "JsonlSelectionStore",
+    "LazyJsonlRecord",
+    "LazyResolverLimits",
     "RecordLocation",
     "SectionManifest",
     "SelectionCatalog",
