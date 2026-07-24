@@ -6,7 +6,7 @@ import os
 import shutil
 import uuid
 from collections.abc import Mapping
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from .errors import JsonlCompilerError, JsonlInputError
@@ -18,6 +18,7 @@ from .indexing import (
     register_record_indexes,
 )
 from .models import (
+    ExtractedRecord,
     HotIndexLimits,
     JsonlCompileResult,
     JsonlLimits,
@@ -27,6 +28,7 @@ from .models import (
 from .stream import stream_openapi_json
 
 _CACHE_VERSION = 1
+_INDEX_CATEGORIES = ("definitions", "mentions", "dependencies")
 
 
 def compile_openapi_jsonl(
@@ -67,7 +69,7 @@ def compile_openapi_jsonl(
     hot_index = HotIndexRegistry(hot_limits)
     counters = {"records": 0, "definitions": 0, "mentions": 0, "dependencies": 0}
 
-    def on_record(record: Any) -> None:
+    def on_record(record: ExtractedRecord) -> None:
         classification = classify_record(record)
         location = sections.write(record, classification)
         definitions, mentions, dependencies = register_record_indexes(
@@ -167,21 +169,47 @@ def _can_reuse(
 ) -> bool:
     source = manifest.get("source")
     sections = manifest.get("sections")
+    indexes = manifest.get("indexes")
     if not (
         manifest.get("version") == _CACHE_VERSION
         and isinstance(source, Mapping)
         and source.get("sha256") == digest
         and source.get("size") == size
         and isinstance(sections, Mapping)
+        and isinstance(indexes, Mapping)
     ):
         return False
+
     for raw_section in sections.values():
         if not isinstance(raw_section, Mapping):
             return False
         relative = raw_section.get("file")
-        if not isinstance(relative, str) or not (target / Path(relative)).is_file():
+        if not isinstance(relative, str) or not _cache_file_exists(target, relative):
             return False
+
+    for category in _INDEX_CATEGORIES:
+        raw_index = indexes.get(category)
+        if not isinstance(raw_index, Mapping):
+            return False
+        directory = raw_index.get("directory")
+        shards = raw_index.get("shards")
+        if not isinstance(directory, str) or not isinstance(shards, list):
+            return False
+        for shard in shards:
+            if not isinstance(shard, str):
+                return False
+            if not _cache_file_exists(target, f"{directory}/{shard}.jsonl"):
+                return False
     return True
+
+
+def _cache_file_exists(root: Path, relative: str) -> bool:
+    if "\\" in relative:
+        return False
+    pure = PurePosixPath(relative)
+    if pure.is_absolute() or ".." in pure.parts:
+        return False
+    return (root / Path(*pure.parts)).is_file()
 
 
 def _manifest_from_json(value: Mapping[str, Any]) -> JsonlManifest:
