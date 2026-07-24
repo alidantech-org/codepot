@@ -141,3 +141,22 @@ class GenerateOutput:
     dry_run: bool = False
     tasks: list[GenerateTaskOutput] = field(default_factory=list)
     diagnostics: list[RuntimeDiagnostic] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class JsonlOutput:
+    """Output from indexed JSONL compilation."""
+
+    input_path: Path
+    output_path: Path
+    reused: bool = False
+    records: int = 0
+    definitions: int = 0
+    mentions: int = 0
+    dependencies: int = 0
+    files: list[Path] = field(default_factory=list)
+    record_queue_high_water: int = 0
+    pending_bytes_high_water: int = 0
+    event_queue_high_water: int = 0
+    record_waits: int = 0
+    event_waits: int = 0
