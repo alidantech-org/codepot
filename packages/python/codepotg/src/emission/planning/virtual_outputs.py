@@ -34,6 +34,7 @@ class VirtualOutput:
     template_path: PurePosixPath
     output_path: PurePosixPath
     symbols: tuple[str, ...] = ()
+    provides: tuple[str, ...] = ()
     resource: str | None = None
     status: OutputStatus = OutputStatus.PLANNED
 
@@ -50,13 +51,14 @@ class VirtualOutput:
             "template": self.template_path.as_posix(),
             "file": self.output_path.as_posix(),
             "symbols": list(self.symbols),
+            "provides": list(self.provides),
             "resource": self.resource,
             "status": self.status.value,
         }
 
 
 class VirtualOutputRegistry:
-    """Deterministic planned/written file registry used by future import resolution."""
+    """Deterministic planned/written file registry used by import resolution."""
 
     def __init__(self, limits: OutputRegistryLimits | None = None) -> None:
         self._limits = limits or OutputRegistryLimits()
@@ -66,6 +68,7 @@ class VirtualOutputRegistry:
         self._by_path: dict[str, tuple[str, str, str]] = {}
         self._by_ref: dict[str, set[tuple[str, str, str]]] = {}
         self._by_source: dict[str, set[tuple[str, str, str]]] = {}
+        self._by_emission: dict[str, set[tuple[str, str, str]]] = {}
 
     def register(
         self,
@@ -77,6 +80,7 @@ class VirtualOutputRegistry:
         template_path: str | Path | PurePosixPath,
         output_path: str | Path | PurePosixPath,
         symbols: tuple[str, ...] = (),
+        provides: tuple[str, ...] = (),
         resource: str | None = None,
     ) -> VirtualOutput:
         if not selection or not emission or not source_key:
@@ -87,6 +91,7 @@ class VirtualOutputRegistry:
         template = normalize_registry_path(template_path, field="template")
         output = normalize_registry_path(output_path, field="output")
         normalized_symbols = tuple(sorted(set(symbol for symbol in symbols if symbol)))
+        normalized_provides = tuple(sorted(set(value for value in provides if value)))
         item = VirtualOutput(
             selection=selection,
             emission=emission,
@@ -95,6 +100,7 @@ class VirtualOutputRegistry:
             template_path=template,
             output_path=output,
             symbols=normalized_symbols,
+            provides=normalized_provides,
             resource=resource,
         )
         identity = item.identity
@@ -120,6 +126,7 @@ class VirtualOutputRegistry:
         self._by_identity[identity] = item
         self._by_path[path_key] = identity
         self._by_source.setdefault(source_key, set()).add(identity)
+        self._by_emission.setdefault(emission, set()).add(identity)
         if source_ref:
             self._by_ref.setdefault(source_ref, set()).add(identity)
         return item
@@ -132,16 +139,18 @@ class VirtualOutputRegistry:
         source_key: str,
     ) -> VirtualOutput:
         identity = selection, emission, source_key
-        current = self._by_identity.get(identity)
-        if current is None:
+        return self._mark_identity_written(identity)
+
+    def mark_written_path(self, output_path: str | Path | PurePosixPath) -> VirtualOutput:
+        """Mark a registered output written using its portable path."""
+
+        path = normalize_registry_path(output_path, field="output").as_posix()
+        identity = self._by_path.get(path)
+        if identity is None:
             raise VirtualOutputConflictError(
-                f"Cannot mark an unknown virtual output written: {identity}"
+                f"Cannot mark an unknown virtual output written: {path}"
             )
-        if current.status == OutputStatus.WRITTEN:
-            return current
-        written = replace(current, status=OutputStatus.WRITTEN)
-        self._by_identity[identity] = written
-        return written
+        return self._mark_identity_written(identity)
 
     def get(
         self,
@@ -151,6 +160,13 @@ class VirtualOutputRegistry:
         source_key: str,
     ) -> VirtualOutput | None:
         return self._by_identity.get((selection, emission, source_key))
+
+    def get_by_path(self, output_path: str | Path | PurePosixPath) -> VirtualOutput | None:
+        """Return one registered output by portable path."""
+
+        path = normalize_registry_path(output_path, field="output").as_posix()
+        identity = self._by_path.get(path)
+        return self._by_identity.get(identity) if identity is not None else None
 
     def find_ref(
         self,
@@ -184,6 +200,26 @@ class VirtualOutputRegistry:
             written_only=written_only,
         )
 
+    def find_emission(
+        self,
+        emission: str,
+        *,
+        resource: str | None = None,
+        written_only: bool = False,
+    ) -> tuple[VirtualOutput, ...]:
+        """Return all outputs belonging to one emission node."""
+
+        identities = self._by_emission.get(emission, set())
+        values = self._filter(
+            identities,
+            selection=None,
+            emission=emission,
+            written_only=written_only,
+        )
+        if resource is None:
+            return values
+        return tuple(item for item in values if item.resource == resource)
+
     def snapshot(self, *, written_only: bool = False) -> tuple[VirtualOutput, ...]:
         values = tuple(self._by_identity.values())
         if written_only:
@@ -194,6 +230,21 @@ class VirtualOutputRegistry:
 
     def __len__(self) -> int:
         return len(self._by_identity)
+
+    def _mark_identity_written(
+        self,
+        identity: tuple[str, str, str],
+    ) -> VirtualOutput:
+        current = self._by_identity.get(identity)
+        if current is None:
+            raise VirtualOutputConflictError(
+                f"Cannot mark an unknown virtual output written: {identity}"
+            )
+        if current.status == OutputStatus.WRITTEN:
+            return current
+        written = replace(current, status=OutputStatus.WRITTEN)
+        self._by_identity[identity] = written
+        return written
 
     def _filter(
         self,
