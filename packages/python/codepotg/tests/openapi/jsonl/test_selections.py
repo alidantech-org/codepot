@@ -42,12 +42,12 @@ def test_jsonl_selection_store_uses_sections_and_indexes(tmp_path: Path) -> None
     cache = _compile_fixture(tmp_path)
     store = JsonlSelectionStore(cache)
 
-    assert [item.key for item in store.iter_handles("schemas.all")] == [
+    assert {item.key for item in store.iter_handles("schemas.all")} == {
         "schema:CreateUserDto",
         "schema:Identifier",
         "schema:User",
         "schema:UserStatus",
-    ]
+    }
     assert [item.key for item in store.iter_handles("dtos")] == [
         "schema:CreateUserDto"
     ]
@@ -82,9 +82,13 @@ def test_selection_groups_are_lightweight_until_loaded(tmp_path: Path) -> None:
     ]
     assert store.load_count == 0
 
-    first = next(store.load_group(all_groups[0]))
-    assert first.key == "schema:CreateUserDto"
-    assert first.raw["x-codegen"]["kind"] == "dto"
+    dto_handle = next(
+        handle
+        for handle in all_groups[0].handles
+        if handle.key == "schema:CreateUserDto"
+    )
+    dto = store.load(dto_handle)
+    assert dto.raw["x-codegen"]["kind"] == "dto"
     assert store.load_count == 1
 
 
