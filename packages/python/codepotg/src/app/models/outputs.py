@@ -164,7 +164,7 @@ class JsonlOutput:
 
 @dataclass(frozen=True)
 class PathFolderSummary:
-    """Resolved folder recipe from paths.yaml/paths.yml."""
+    """Resolved legacy folder recipe from paths.yaml/paths.yml."""
 
     name: str
     select: str
@@ -172,6 +172,53 @@ class PathFolderSummary:
     mode: str
     lifecycle: str | None
     parts: tuple[str, ...]
+    description: str = "-"
+
+
+@dataclass(frozen=True)
+class PathSelectionSummary:
+    """Resolved named source selection."""
+
+    name: str
+    select: str
+    alias: str
+    scope: str
+    description: str = "-"
+
+
+@dataclass(frozen=True)
+class PathProviderSummary:
+    """Resolved explicit dependency provider edge."""
+
+    purpose: str
+    source: str
+
+
+@dataclass(frozen=True)
+class PathEmissionSummary:
+    """Resolved direct output emission."""
+
+    name: str
+    selection: str
+    template: str
+    output: tuple[str, ...]
+    providers: tuple[PathProviderSummary, ...] = ()
+    provides: tuple[str, ...] = ()
+    lifecycle: str | None = None
+    description: str = "-"
+
+
+@dataclass(frozen=True)
+class PathBarrelSummary:
+    """Resolved aggregate barrel output."""
+
+    name: str
+    template: str
+    output: tuple[str, ...]
+    exports: tuple[str, ...]
+    scope: str
+    alias: str
+    lifecycle: str | None = None
     description: str = "-"
 
 
@@ -186,6 +233,9 @@ class PathsOutput:
     allow_raw_files: bool
     import_strategy: str
     folders: list[PathFolderSummary] = field(default_factory=list)
+    selections: list[PathSelectionSummary] = field(default_factory=list)
+    emissions: list[PathEmissionSummary] = field(default_factory=list)
+    barrels: list[PathBarrelSummary] = field(default_factory=list)
     default_lifecycle: str = "managed"
     managed_roots: tuple[str, ...] = ()
     immutable_roots: tuple[str, ...] = ()
