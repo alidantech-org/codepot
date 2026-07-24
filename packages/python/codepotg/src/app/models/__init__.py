@@ -6,7 +6,14 @@ servers, and other adapters.
 
 from app.models.diagnostics import RuntimeDiagnostic
 from app.models.events import ProgressSink, RuntimeEvent
-from app.models.inputs import EmitInput, GenerateInput, InferInput, InspectInput, ValidateInput
+from app.models.inputs import (
+    EmitInput,
+    GenerateInput,
+    InferInput,
+    InspectInput,
+    JsonlInput,
+    ValidateInput,
+)
 from app.models.outputs import (
     AliasSchemaSummary,
     EmitOutput,
@@ -14,6 +21,7 @@ from app.models.outputs import (
     GenerateTaskOutput,
     InferOutput,
     InspectOutput,
+    JsonlOutput,
     ResourceSummary,
     UnknownSchemaSummary,
     ValidateOutput,
@@ -24,12 +32,14 @@ __all__ = [
     "GenerateInput",
     "InferInput",
     "InspectInput",
+    "JsonlInput",
     "ValidateInput",
     "EmitOutput",
     "GenerateOutput",
     "GenerateTaskOutput",
     "InferOutput",
     "InspectOutput",
+    "JsonlOutput",
     "ValidateOutput",
     "ResourceSummary",
     "UnknownSchemaSummary",
