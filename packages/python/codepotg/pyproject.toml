@@ -95,6 +95,7 @@ exclude = ["tests*"]
 codepotg = [
   "templates/**/*.j2",
   "templates/**/*.yaml",
+  "templates/**/*.yml",
   "templates/**/*.json",
   "templates/**/*.md",
   "templates/**/.gitignore",
