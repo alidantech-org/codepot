@@ -5,7 +5,7 @@ import json
 import os
 import shutil
 import uuid
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from contextlib import suppress
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -34,6 +34,7 @@ from .stream import stream_openapi_json
 
 _CACHE_VERSION = 2
 _INDEX_CATEGORIES = ("definitions", "mentions", "dependencies")
+JsonlProgressSink = Callable[[Mapping[str, Any]], None]
 
 
 def compile_openapi_jsonl(
@@ -44,6 +45,7 @@ def compile_openapi_jsonl(
     hot_limits: HotIndexLimits | None = None,
     queue_limits: JsonlQueueLimits | None = None,
     reuse_unchanged: bool = True,
+    progress: JsonlProgressSink | None = None,
 ) -> JsonlCompileResult:
     source_path = Path(source)
     target = Path(cache_dir)
@@ -53,11 +55,25 @@ def compile_openapi_jsonl(
             "bounded extraction."
         )
 
+    _notify(
+        progress,
+        stage="compiler",
+        status="started",
+        source=str(source_path),
+        cache=str(target),
+    )
     source_digest = _hash_file(source_path)
     source_size = source_path.stat().st_size
     existing = _read_manifest(target / "manifest.json") if reuse_unchanged else None
     if existing is not None and _can_reuse(existing, source_digest, source_size, target):
         manifest = _manifest_from_json(existing)
+        _notify(
+            progress,
+            stage="compiler",
+            status="reused",
+            source=str(source_path),
+            cache=str(target),
+        )
         return JsonlCompileResult(
             cache_dir=target,
             manifest=manifest,
@@ -97,6 +113,15 @@ def compile_openapi_jsonl(
         counters["definitions"] += definitions
         counters["mentions"] += mentions + extra_mentions
         counters["dependencies"] += dependencies + extra_dependencies
+        _notify(
+            progress,
+            stage="record",
+            status="written",
+            section=record.section,
+            name=record.name,
+            file=location.file,
+            records=counters["records"],
+        )
 
     try:
         pipeline = JsonlRecordPipeline(
@@ -113,6 +138,30 @@ def compile_openapi_jsonl(
         event_manifest, queue_stats = pipeline.close()
         section_manifests = sections.close()
         indexes.close()
+        index_manifest = indexes.manifest()
+
+        for section, section_manifest in sorted(section_manifests.items()):
+            _notify(
+                progress,
+                stage="section",
+                status="written",
+                section=section,
+                file=section_manifest.file,
+                records=section_manifest.count,
+                bytes=section_manifest.bytes,
+            )
+
+        for category, raw_index in sorted(index_manifest.items()):
+            _notify(
+                progress,
+                stage="index",
+                status="written",
+                category=category,
+                directory=raw_index["directory"],
+                records=raw_index["records"],
+                shards=len(raw_index["shards"]),
+            )
+
         manifest = JsonlManifest(
             version=_CACHE_VERSION,
             source={
@@ -123,7 +172,7 @@ def compile_openapi_jsonl(
             },
             root=summary.root,
             sections=section_manifests,
-            indexes=indexes.manifest(),
+            indexes=index_manifest,
             events=event_manifest,
         )
         _write_manifest(staging / "manifest.json", manifest)
@@ -138,8 +187,23 @@ def compile_openapi_jsonl(
         with suppress(Exception):
             indexes.close()
         shutil.rmtree(staging, ignore_errors=True)
+        _notify(
+            progress,
+            stage="compiler",
+            status="failed",
+            source=str(source_path),
+            cache=str(target),
+        )
         raise
 
+    _notify(
+        progress,
+        stage="compiler",
+        status="completed",
+        source=str(source_path),
+        cache=str(target),
+        records=counters["records"],
+    )
     return JsonlCompileResult(
         cache_dir=target,
         manifest=manifest,
@@ -151,6 +215,18 @@ def compile_openapi_jsonl(
         dependencies_written=counters["dependencies"],
         queue_stats=queue_stats,
     )
+
+
+def _notify(
+    progress: JsonlProgressSink | None,
+    *,
+    stage: str,
+    status: str,
+    **details: Any,
+) -> None:
+    if progress is None:
+        return
+    progress({"stage": stage, "status": status, **details})
 
 
 def _hash_file(path: Path) -> str:
