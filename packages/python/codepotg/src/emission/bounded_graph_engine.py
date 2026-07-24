@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from pathlib import Path
 from typing import Any
 
 from contracts.emission import EmissionFile, EmissionPlan, EmissionResult
@@ -13,6 +14,7 @@ from emission.graph_queue import GraphQueueLimits
 from emission.paths.config_loader import load_path_config
 from emission.paths.graph_planner import plan_path_graph
 from emission.queued_graph_engine import execute_queued_graph_emission
+from openapi.jsonl import JsonlLazyResolver, LazyJsonlRecord
 
 
 def emit_bounded_graph(
@@ -31,6 +33,7 @@ def emit_bounded_graph(
     if not path_config.uses_graph:
         raise ValueError("emit_bounded_graph requires a named paths graph")
 
+    resolver = _resolver_from_contract(contract)
     base_context = bounded_graph_context(contract)
     _notify(progress, "selection_started", "Resolving named selections")
     graph = plan_path_graph(
@@ -65,7 +68,24 @@ def emit_bounded_graph(
         exact_dependencies = tuple(
             sorted(set(file.depends_on) | set(file.dependency_outputs.values()))
         )
-        files.append(replace(file, depends_on=exact_dependencies))
+        context = dict(file.context)
+        sources = _lazy_sources(
+            resolver,
+            output_root=output_root,
+            file=file,
+            registry=graph.registry,
+        )
+        context["source"] = sources[0] if len(sources) == 1 else None
+        context["sources"] = sources
+        context["resolve"] = resolver
+        context["resolver_stats"] = resolver.stats
+        files.append(
+            replace(
+                file,
+                context=context,
+                depends_on=exact_dependencies,
+            )
+        )
 
     plan = EmissionPlan(
         language=contract.lang.name,
@@ -82,13 +102,49 @@ def emit_bounded_graph(
             total=len(plan.files),
         )
 
-    return execute_queued_graph_emission(
+    result = execute_queued_graph_emission(
         plan,
         registry=graph.registry,
         dry_run=contract.emit.dry_run,
         progress=progress,
         limits=limits,
     )
+    _notify(
+        progress,
+        "resolver_complete",
+        f"Lazy JSONL resolver loaded {resolver.load_count} record(s)",
+    )
+    return result
+
+
+def _resolver_from_contract(contract: Any) -> JsonlLazyResolver:
+    cache = contract.emit.meta.get("jsonl_cache")
+    if not isinstance(cache, str | Path):
+        raise ConfigError("Graph emission requires emit.meta.jsonl_cache")
+    return JsonlLazyResolver(Path(cache))
+
+
+def _lazy_sources(
+    resolver: JsonlLazyResolver,
+    *,
+    output_root: Path,
+    file: EmissionFile,
+    registry: Any,
+) -> tuple[LazyJsonlRecord, ...]:
+    relative = file.output_path.relative_to(output_root)
+    output = registry.get_by_path(relative)
+    if output is None:
+        return ()
+    values: list[LazyJsonlRecord] = []
+    for ref in output.refs:
+        source = resolver.ref(ref)
+        if source is not None:
+            values.append(source)
+    if not values and file.source_key:
+        source = resolver.key(file.source_key)
+        if source is not None:
+            values.append(source)
+    return tuple(values)
 
 
 def _notify(
