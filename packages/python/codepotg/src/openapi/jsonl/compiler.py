@@ -24,12 +24,15 @@ from .models import (
     JsonlCompileResult,
     JsonlLimits,
     JsonlManifest,
+    JsonlQueueLimits,
+    JsonlQueueStats,
     SectionManifest,
 )
 from .operation_indexing import register_additional_indexes
+from .queueing import JsonlRecordPipeline, create_event_writer_factory
 from .stream import stream_openapi_json
 
-_CACHE_VERSION = 1
+_CACHE_VERSION = 2
 _INDEX_CATEGORIES = ("definitions", "mentions", "dependencies")
 
 
@@ -39,6 +42,7 @@ def compile_openapi_jsonl(
     *,
     limits: JsonlLimits | None = None,
     hot_limits: HotIndexLimits | None = None,
+    queue_limits: JsonlQueueLimits | None = None,
     reuse_unchanged: bool = True,
 ) -> JsonlCompileResult:
     source_path = Path(source)
@@ -70,8 +74,10 @@ def compile_openapi_jsonl(
     indexes = ShardedIndexWriter(staging)
     hot_index = HotIndexRegistry(hot_limits)
     counters = {"records": 0, "definitions": 0, "mentions": 0, "dependencies": 0}
+    queue_stats = JsonlQueueStats()
+    pipeline: JsonlRecordPipeline | None = None
 
-    def on_record(record: ExtractedRecord) -> None:
+    def process_record(record: ExtractedRecord) -> None:
         classification = classify_record(record)
         location = sections.write(record, classification)
         definitions, mentions, dependencies = register_record_indexes(
@@ -93,7 +99,18 @@ def compile_openapi_jsonl(
         counters["dependencies"] += dependencies + extra_dependencies
 
     try:
-        summary = stream_openapi_json(source_path, on_record=on_record, limits=limits)
+        pipeline = JsonlRecordPipeline(
+            process_record,
+            limits=queue_limits,
+            event_writer_factory=create_event_writer_factory(staging),
+        )
+        pipeline.start()
+        summary = stream_openapi_json(
+            source_path,
+            on_record=pipeline.submit,
+            limits=limits,
+        )
+        event_manifest, queue_stats = pipeline.close()
         section_manifests = sections.close()
         indexes.close()
         manifest = JsonlManifest(
@@ -107,10 +124,15 @@ def compile_openapi_jsonl(
             root=summary.root,
             sections=section_manifests,
             indexes=indexes.manifest(),
+            events=event_manifest,
         )
         _write_manifest(staging / "manifest.json", manifest)
         _replace_directory(staging, target, backup)
     except Exception:
+        if pipeline is not None:
+            pipeline.cancel()
+            with suppress(Exception):
+                pipeline.close()
         with suppress(Exception):
             sections.close()
         with suppress(Exception):
@@ -127,6 +149,7 @@ def compile_openapi_jsonl(
         definitions_written=counters["definitions"],
         mentions_written=counters["mentions"],
         dependencies_written=counters["dependencies"],
+        queue_stats=queue_stats,
     )
 
 
@@ -174,6 +197,7 @@ def _can_reuse(
     source = manifest.get("source")
     sections = manifest.get("sections")
     indexes = manifest.get("indexes")
+    events = manifest.get("events")
     if not (
         manifest.get("version") == _CACHE_VERSION
         and isinstance(source, Mapping)
@@ -181,6 +205,7 @@ def _can_reuse(
         and source.get("size") == size
         and isinstance(sections, Mapping)
         and isinstance(indexes, Mapping)
+        and isinstance(events, Mapping)
     ):
         return False
 
@@ -190,6 +215,10 @@ def _can_reuse(
         relative = raw_section.get("file")
         if not isinstance(relative, str) or not _cache_file_exists(target, relative):
             return False
+
+    event_file = events.get("file")
+    if not isinstance(event_file, str) or not _cache_file_exists(target, event_file):
+        return False
 
     for category in _INDEX_CATEGORIES:
         raw_index = indexes.get(category)
@@ -224,19 +253,16 @@ def _manifest_from_json(value: Mapping[str, Any]) -> JsonlManifest:
     for key, raw in raw_sections.items():
         if not isinstance(raw, Mapping):
             raise JsonlCompilerError("Existing JSONL manifest has invalid section metadata")
-        sections[str(key)] = SectionManifest(
-            file=str(raw["file"]),
-            count=int(raw["count"]),
-            bytes=int(raw["bytes"]),
-            sha256=str(raw["sha256"]),
-        )
+        sections[str(key)] = SectionManifest.from_json(raw)
     source = value.get("source")
     root = value.get("root")
     indexes = value.get("indexes")
+    raw_events = value.get("events")
     if not (
         isinstance(source, Mapping)
         and isinstance(root, Mapping)
         and isinstance(indexes, Mapping)
+        and isinstance(raw_events, Mapping)
     ):
         raise JsonlCompilerError("Existing JSONL manifest is incomplete")
     return JsonlManifest(
@@ -245,6 +271,7 @@ def _manifest_from_json(value: Mapping[str, Any]) -> JsonlManifest:
         root=root,
         sections=sections,
         indexes=indexes,
+        events=SectionManifest.from_json(raw_events),
     )
 
 
