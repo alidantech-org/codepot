@@ -20,6 +20,7 @@ from contracts.emission import EmissionFile, EmissionPlan, EmissionResult, Emiss
 from contracts.events import EventLevel, ProgressSink, RuntimeEvent
 from contracts.language import LanguageAdapter, LanguagePostAction, LanguagePostResult
 from contracts.names import NameSet
+from contracts.source import FrozenMap, freeze_source_map, freeze_source_value, thaw_source_value
 from contracts.template import (
     TemplateContract,
     TemplateContractMeta,
@@ -76,15 +77,16 @@ __all__ = [
     "ApiResource",
     "ApiResponse",
     "ApiSchema",
-    "NameSet",
     "EmissionFile",
     "EmissionPlan",
     "EmissionResult",
     "EmissionWriteResult",
     "EventLevel",
+    "FrozenMap",
     "LanguageAdapter",
     "LanguagePostAction",
     "LanguagePostResult",
+    "NameSet",
     "ProgressSink",
     "RuntimeEvent",
     "TemplateContract",
@@ -129,4 +131,7 @@ __all__ = [
     "TemplateSchemaGroups",
     "TemplateSchemaLang",
     "TemplateSchemaMeta",
+    "freeze_source_map",
+    "freeze_source_value",
+    "thaw_source_value",
 ]
