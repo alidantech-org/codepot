@@ -87,7 +87,7 @@ Required tests:
 - [x] real TypeScript generation test passed for `Codepotg.yml`;
 - [x] real Dart generation test passed for `Codepotg.yaml`;
 - [x] manual TypeScript CLI generation emitted all nine expected files;
-- [-] manual Dart CLI generation remains optional confirmation; the Dart integration generation test already passed.
+- [x] manual Dart CLI generation emitted all nine expected files.
 
 ## Verification commands
 
@@ -158,7 +158,8 @@ known unexecuted checks or environment limitations
 - [x] statically verify path selection, template scanning, and adapter variable compatibility;
 - [x] execute loader tests: 14 passed;
 - [x] execute project-pack integration tests: 5 passed;
-- [x] manually generate the TypeScript fixture: 9 files created.
+- [x] manually generate the TypeScript fixture: 9 files created;
+- [x] manually generate the Dart fixture: 9 files created.
 
 ### Batch V1 — Lossless root OpenAPI source
 
@@ -177,7 +178,8 @@ known unexecuted checks or environment limitations
 ### Batch V2 — Full-suite CLI compatibility repair
 
 - [x] update stale missing-config assertion for `.yaml` and `.yml` support;
-- [x] use Click's public `CliRunner` so isolated filesystem tests work with the installed Typer release;
+- [x] remove the accidental direct `click.testing` dependency;
+- [x] keep Typer's public `CliRunner` and isolate filesystem scenarios with Python 3.11 `contextlib.chdir`;
 - [x] report the actual resolved config filename in progress output;
 - [x] add a regression test proving explicit `Codepotg.yml` output;
 - [x] normalize the Ruff-flagged loader-test import block;
