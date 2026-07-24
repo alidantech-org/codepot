@@ -12,6 +12,7 @@ from app.models.inputs import (
     InferInput,
     InspectInput,
     JsonlInput,
+    PathsInput,
     ValidateInput,
 )
 from app.models.outputs import (
@@ -22,6 +23,8 @@ from app.models.outputs import (
     InferOutput,
     InspectOutput,
     JsonlOutput,
+    PathFolderSummary,
+    PathsOutput,
     ResourceSummary,
     UnknownSchemaSummary,
     ValidateOutput,
@@ -33,6 +36,7 @@ __all__ = [
     "InferInput",
     "InspectInput",
     "JsonlInput",
+    "PathsInput",
     "ValidateInput",
     "EmitOutput",
     "GenerateOutput",
@@ -40,6 +44,8 @@ __all__ = [
     "InferOutput",
     "InspectOutput",
     "JsonlOutput",
+    "PathFolderSummary",
+    "PathsOutput",
     "ValidateOutput",
     "ResourceSummary",
     "UnknownSchemaSummary",
