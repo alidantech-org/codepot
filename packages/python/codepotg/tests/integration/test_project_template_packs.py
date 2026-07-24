@@ -82,7 +82,7 @@ def test_real_project_fixture_generates_custom_template_pack(
     for expected_name in ("UserModel", "CreateUserBody", "UserStatus", "listUsers", "createUser"):
         assert expected_name in collections
 
-    user_schema = (output / "schemas" / f"user-model.{case.extension}").read_text(
+    user_schema = (output / "schemas" / f"user_model.{case.extension}").read_text(
         encoding="utf-8"
     )
     assert "UserModel" in user_schema
@@ -90,14 +90,14 @@ def test_real_project_fixture_generates_custom_template_pack(
     assert "age" in user_schema
     assert "18" in user_schema
 
-    list_operation = (output / "operations" / f"list-users.{case.extension}").read_text(
+    list_operation = (output / "operations" / f"list_users.{case.extension}").read_text(
         encoding="utf-8"
     )
     assert "listUsers" in list_operation
     assert "parameterCount" in list_operation
     assert "1" in list_operation
 
-    create_operation = (output / "operations" / f"create-user.{case.extension}").read_text(
+    create_operation = (output / "operations" / f"create_user.{case.extension}").read_text(
         encoding="utf-8"
     )
     assert "createUser" in create_operation
@@ -150,10 +150,10 @@ def _expected_output_files(output: Path, extension: str) -> tuple[Path, ...]:
     return (
         output / "contract" / f"project.{extension}",
         output / "contract" / f"collections.{extension}",
-        output / "schemas" / f"user-status.{extension}",
-        output / "schemas" / f"user-model.{extension}",
-        output / "schemas" / f"create-user-body.{extension}",
-        output / "operations" / f"list-users.{extension}",
-        output / "operations" / f"create-user.{extension}",
+        output / "schemas" / f"user_status.{extension}",
+        output / "schemas" / f"user_model.{extension}",
+        output / "schemas" / f"create_user_body.{extension}",
+        output / "operations" / f"list_users.{extension}",
+        output / "operations" / f"create_user.{extension}",
         output / "resources" / f"users.{extension}",
     )
