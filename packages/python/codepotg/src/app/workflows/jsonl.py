@@ -7,17 +7,28 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 from app.models import JsonlInput, JsonlOutput, RuntimeEvent
-from openapi.jsonl import compile_openapi_jsonl
+from openapi.jsonl import compile_openapi_source_jsonl
 
 
 def run_jsonl(request: JsonlInput) -> JsonlOutput:
-    """Compile OpenAPI JSON into a visible indexed JSONL cache."""
+    """Compile OpenAPI JSON or compatible YAML into an indexed JSONL cache."""
+
     seen_files: set[str] = set()
 
     def progress(event: Mapping[str, Any]) -> None:
         stage = str(event.get("stage", "jsonl"))
         status = str(event.get("status", "progress"))
         relative = event.get("file")
+
+        if stage == "input" and status == "compatibility":
+            _notify(
+                request,
+                stage="jsonl_compatibility_warning",
+                message=str(event.get("warning", "YAML compatibility conversion in use")),
+                level="warning",
+                details=dict(event),
+            )
+            return
 
         if stage == "record" and status == "written" and isinstance(relative, str):
             if relative in seen_files:
@@ -71,7 +82,7 @@ def run_jsonl(request: JsonlInput) -> JsonlOutput:
                 details=dict(event),
             )
 
-    result = compile_openapi_jsonl(
+    result = compile_openapi_source_jsonl(
         request.input_path,
         request.output_path,
         reuse_unchanged=request.reuse_unchanged,
