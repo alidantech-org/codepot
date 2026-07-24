@@ -27,6 +27,8 @@ and emission behavior remain supported.
 - [Template variables](template-variables.md) is the fixed public variable reference for `project`,
   `api`, resources, schemas, operations, entities, access policies, frontends, language helpers,
   emission information, and contextual items.
+- [Normalized contract architecture](normalized-contract.md) explains how loading, inference,
+  language-neutral contracts, template contracts, adapters, and emission remain separate.
 - [Normalized x-codegen metadata](x-codegen-metadata.md) explains how resources, query rules,
   cache behavior, access rules, runtime hooks, sources, entities, relations, constraints,
   frontends, UI metadata, and structured notes become predictable template variables.
