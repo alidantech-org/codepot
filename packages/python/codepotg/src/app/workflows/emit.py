@@ -9,8 +9,8 @@ from __future__ import annotations
 from app.models import EmitInput, EmitOutput, RuntimeDiagnostic, RuntimeEvent
 from app.workflows.template_paths import resolve_template_root
 from emission.engine import emit as run_emission
-from inference.contract import build_api_contract
 from inference.engine import InferenceEngine
+from inference.lossless_contract import build_api_contract
 from languages.discovery import resolve_language_adapter
 from openapi.loader import load_openapi_document
 
