@@ -58,8 +58,8 @@ def test_real_project_fixture_generates_custom_template_pack(
     assert task.language == case.language
     assert task.output_path == (project / ".generated").resolve()
     assert task.template_dir == (project / "templates").resolve()
-    assert len(task.planned) == 8
-    assert len(task.written) == 8
+    assert len(task.planned) == 9
+    assert len(task.written) == 9
     assert task.refused == []
 
     output = project / ".generated"
@@ -75,6 +75,20 @@ def test_real_project_fixture_generates_custom_template_pack(
     assert "resourceCount" in project_content
     assert "schemaCount" in project_content
     assert "operationCount" in project_content
+
+    source_content = (output / "contract" / f"source.{case.extension}").read_text(
+        encoding="utf-8"
+    )
+    for expected_source_value in (
+        "3.1.0",
+        "CodepotG Fixture API",
+        "listUsers",
+        "codepotg",
+        "first",
+        "second",
+        "True",
+    ):
+        assert expected_source_value in source_content
 
     collections = (output / "contract" / f"collections.{case.extension}").read_text(
         encoding="utf-8"
@@ -125,7 +139,7 @@ def test_real_project_fixture_is_discovered_by_standard_config_name(
 
     assert result.config_path == (project / case.config_name).resolve()
     assert result.tasks[0].language == case.language
-    assert len(result.tasks[0].written) == 8
+    assert len(result.tasks[0].written) == 9
 
 
 def test_fixture_output_directories_are_ignored() -> None:
@@ -150,6 +164,7 @@ def _expected_output_files(output: Path, extension: str) -> tuple[Path, ...]:
     return (
         output / "contract" / f"project.{extension}",
         output / "contract" / f"collections.{extension}",
+        output / "contract" / f"source.{extension}",
         output / "schemas" / f"user_status.{extension}",
         output / "schemas" / f"user_model.{extension}",
         output / "schemas" / f"create_user_body.{extension}",
