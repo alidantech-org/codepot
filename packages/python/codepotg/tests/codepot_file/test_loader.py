@@ -8,17 +8,7 @@ from codepot_file.loader import load_codepotg_config, resolve_codepotg_config
 from core.errors import ConfigError
 
 
-def test_missing_config_file_fails_with_helpful_message(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.chdir(tmp_path)
-
-    with pytest.raises(ConfigError, match="Codepotg.yaml not found"):
-        resolve_codepotg_config()
-
-
-def test_codepotg_yaml_loading_parses_yaml(tmp_path: Path) -> None:
-    config = tmp_path / "Codepotg.yaml"
-    config.write_text(
-        """
+CONFIG_BODY = """
 allow: true
 tasks:
   sdk:
@@ -26,18 +16,58 @@ tasks:
     language: typescript
     templateDir: ./templates
     output: ./lib
-""".strip(),
-        encoding="utf-8",
-    )
+""".strip()
+
+
+def test_missing_config_file_fails_with_helpful_message(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(ConfigError, match="Codepotg.yaml or Codepotg.yml not found"):
+        resolve_codepotg_config()
+
+
+@pytest.mark.parametrize("config_name", ["Codepotg.yaml", "Codepotg.yml"])
+def test_codepotg_yaml_extensions_load_the_same_config(
+    tmp_path: Path,
+    config_name: str,
+) -> None:
+    config = tmp_path / config_name
+    config.write_text(CONFIG_BODY, encoding="utf-8")
 
     loaded = load_codepotg_config(config)
 
+    assert loaded.path == config.resolve()
     assert loaded.allow is True
     assert loaded.tasks[0].name == "sdk"
     assert loaded.tasks[0].input == (tmp_path / "openapi.yaml").resolve()
     assert loaded.tasks[0].template_dir == (tmp_path / "templates").resolve()
     assert loaded.tasks[0].output == (tmp_path / "lib").resolve()
     assert loaded.tasks[0].frontend is None
+
+
+@pytest.mark.parametrize("config_name", ["Codepotg.yaml", "Codepotg.yml"])
+def test_default_discovery_supports_both_yaml_extensions(
+    tmp_path: Path,
+    monkeypatch,
+    config_name: str,
+) -> None:
+    config = tmp_path / config_name
+    config.write_text(CONFIG_BODY, encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    assert resolve_codepotg_config() == config.resolve()
+
+
+def test_default_discovery_rejects_ambiguous_yaml_and_yml_configs(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    (tmp_path / "Codepotg.yaml").write_text(CONFIG_BODY, encoding="utf-8")
+    (tmp_path / "Codepotg.yml").write_text(CONFIG_BODY, encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(ConfigError, match="Multiple CodepotG configs found"):
+        resolve_codepotg_config()
 
 
 def test_bundled_templates_are_selected_when_template_path_is_omitted(tmp_path: Path) -> None:
@@ -60,7 +90,7 @@ tasks:
 
 
 def test_task_frontend_option_is_parsed(tmp_path: Path) -> None:
-    config = tmp_path / "Codepotg.yaml"
+    config = tmp_path / "Codepotg.yml"
     config.write_text(
         """
 allow: true
@@ -109,14 +139,14 @@ def test_legacy_codepot_file_names_are_rejected(
     (tmp_path / legacy_name).write_text("allow: true\ntasks: {}\n", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
 
-    with pytest.raises(ConfigError, match="CodepotG now uses Codepotg.yaml"):
+    with pytest.raises(ConfigError, match="CodepotG uses Codepotg.yaml or Codepotg.yml"):
         resolve_codepotg_config()
 
 
 def test_relative_paths_resolve_from_config_directory(tmp_path: Path) -> None:
     project = tmp_path / "project"
     project.mkdir()
-    config = project / "Codepotg.yaml"
+    config = project / "Codepotg.yml"
     config.write_text(
         """
 allow: true
@@ -171,7 +201,7 @@ tasks:
 
 
 def test_task_list_fields_override_defaults_without_concatenation(tmp_path: Path) -> None:
-    config = tmp_path / "Codepotg.yaml"
+    config = tmp_path / "Codepotg.yml"
     config.write_text(
         """
 allow: true
