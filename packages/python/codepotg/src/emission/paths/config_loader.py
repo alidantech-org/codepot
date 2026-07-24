@@ -24,11 +24,15 @@ def resolve_path_config_file(template_root: Path) -> Path | None:
     return found[0] if found else None
 
 
-def load_path_config(template_root: Path) -> PathConfig:
-    """Load paths.yaml/paths.yml from a template root if present."""
+def load_path_config(template_root: Path, *, strict: bool = False) -> PathConfig:
+    """Load paths.yaml/paths.yml from a template root if present.
+
+    Generation uses compatibility mode by default. Author-facing inspection can
+    enable strict mode to reject unknown keys before generation starts.
+    """
     path = resolve_path_config_file(template_root)
     if path is None:
         return default_path_config()
 
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    return path_config_from_yaml(data if isinstance(data, dict) else data)
+    return path_config_from_yaml(data if isinstance(data, dict) else data, strict=strict)
