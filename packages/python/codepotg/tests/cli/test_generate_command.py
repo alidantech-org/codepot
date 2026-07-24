@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import sys
+from contextlib import chdir
 from pathlib import Path
 
 import yaml
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
 from app.models import EmitOutput
 from app.workflows import generate as generate_workflow
@@ -13,10 +14,11 @@ from cli.main import app
 CONFIG_NAME = "Codepotg.yaml"
 
 
-def test_generate_missing_config_file_fails_with_helpful_message() -> None:
+def test_generate_missing_config_file_fails_with_helpful_message(tmp_path: Path) -> None:
     runner = CliRunner()
 
-    result = runner.invoke(app, ["generate"])
+    with chdir(tmp_path):
+        result = runner.invoke(app, ["generate"])
 
     assert result.exit_code == 1
     assert "Codepotg.yaml or Codepotg.yml not found" in result.output
@@ -59,7 +61,7 @@ def test_task_help_exposes_add_command_only() -> None:
 def test_init_yes_creates_minimal_starter_with_bundled_templates(tmp_path: Path) -> None:
     runner = CliRunner()
 
-    with runner.isolated_filesystem(temp_dir=tmp_path):
+    with chdir(tmp_path):
         result = runner.invoke(app, ["init", "--yes"])
         config = _read_yaml(Path(CONFIG_NAME))
 
@@ -80,7 +82,7 @@ def test_init_yes_creates_minimal_starter_with_bundled_templates(tmp_path: Path)
 def test_init_refuses_to_overwrite_existing_config(tmp_path: Path) -> None:
     runner = CliRunner()
 
-    with runner.isolated_filesystem(temp_dir=tmp_path):
+    with chdir(tmp_path):
         Path(CONFIG_NAME).write_text("allow: true\ntasks: {}\n", encoding="utf-8")
         result = runner.invoke(app, ["init", "--yes"])
 
@@ -91,7 +93,7 @@ def test_init_refuses_to_overwrite_existing_config(tmp_path: Path) -> None:
 def test_init_force_overwrites_existing_config(tmp_path: Path) -> None:
     runner = CliRunner()
 
-    with runner.isolated_filesystem(temp_dir=tmp_path):
+    with chdir(tmp_path):
         Path(CONFIG_NAME).write_text("allow: false\ntasks: {}\n", encoding="utf-8")
         result = runner.invoke(app, ["init", "--yes", "--force"])
         config = _read_yaml(Path(CONFIG_NAME))
@@ -104,7 +106,7 @@ def test_init_force_overwrites_existing_config(tmp_path: Path) -> None:
 def test_init_with_flags_creates_valid_task(tmp_path: Path) -> None:
     runner = CliRunner()
 
-    with runner.isolated_filesystem(temp_dir=tmp_path):
+    with chdir(tmp_path):
         result = runner.invoke(
             app,
             [
@@ -143,7 +145,7 @@ def test_init_with_flags_creates_valid_task(tmp_path: Path) -> None:
 def test_task_add_adds_task_and_preserves_defaults_and_existing_tasks(tmp_path: Path) -> None:
     runner = CliRunner()
 
-    with runner.isolated_filesystem(temp_dir=tmp_path):
+    with chdir(tmp_path):
         Path(CONFIG_NAME).write_text(
             """
 allow: true
@@ -187,7 +189,7 @@ tasks:
 def test_task_add_refuses_duplicate_task(tmp_path: Path) -> None:
     runner = CliRunner()
 
-    with runner.isolated_filesystem(temp_dir=tmp_path):
+    with chdir(tmp_path):
         _write_basic_config(Path(CONFIG_NAME))
         result = runner.invoke(app, ["task", "add", "sdk", "--yes"])
 
@@ -198,7 +200,7 @@ def test_task_add_refuses_duplicate_task(tmp_path: Path) -> None:
 def test_task_add_force_replaces_only_that_task(tmp_path: Path) -> None:
     runner = CliRunner()
 
-    with runner.isolated_filesystem(temp_dir=tmp_path):
+    with chdir(tmp_path):
         Path(CONFIG_NAME).write_text(
             """
 allow: true
@@ -243,7 +245,7 @@ tasks:
 def test_task_add_refuses_when_allow_is_not_true(tmp_path: Path) -> None:
     runner = CliRunner()
 
-    with runner.isolated_filesystem(temp_dir=tmp_path):
+    with chdir(tmp_path):
         Path(CONFIG_NAME).write_text(
             """
 allow: false
@@ -265,7 +267,7 @@ def test_generate_output_includes_major_stage_messages(tmp_path: Path, monkeypat
     runner = CliRunner()
     _patch_emit(monkeypatch)
 
-    with runner.isolated_filesystem(temp_dir=tmp_path):
+    with chdir(tmp_path):
         _write_basic_config(Path(CONFIG_NAME))
         result = runner.invoke(app, ["generate"])
 
@@ -284,7 +286,7 @@ def test_generate_failure_includes_command_output_and_context(tmp_path: Path, mo
         "import sys; print('bad output'); print('bad err', file=sys.stderr); sys.exit(3)"
     )
 
-    with runner.isolated_filesystem(temp_dir=tmp_path):
+    with chdir(tmp_path):
         Path(CONFIG_NAME).write_text(
             yaml.safe_dump(
                 {
