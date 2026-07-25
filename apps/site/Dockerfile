@@ -16,7 +16,7 @@ RUN corepack enable
 COPY . .
 
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    pnpm install --frozen-lockfile
+    pnpm install --frozen-lockfile --filter @codepot/site...
 RUN pnpm --filter @codepot/site validate:docs
 RUN pnpm --filter @codepot/site build
 
