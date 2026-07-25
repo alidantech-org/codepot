@@ -1,0 +1,103 @@
+template_extension: ".j2"
+strip_template_extension: true
+allow_raw_files: false
+
+imports:
+  strategy: relative
+
+write_policy:
+  default_mode: managed
+  managed_roots: [generated]
+  immutable_roots: [generated/barrels]
+  protected_roots: [generated]
+  clean_roots: [generated]
+
+selections:
+  models:
+    select: schemas.emit_models
+    as: model
+    scope: each
+
+  dtos:
+    select: schemas.emit_dtos
+    as: dto
+    scope: each
+
+  enums:
+    select: schemas.emit_enums
+    as: enum
+    scope: each
+
+  every_schema:
+    select: schemas.all
+    as: all_schemas
+    scope: all
+
+  operations:
+    select: operations
+    as: operation
+    scope: each
+
+  resource_operations:
+    select: operations
+    as: operations
+    scope: resource
+
+emissions:
+  model-types:
+    selection: models
+    template: model.txt.j2
+    output: [generated, models, "[model.name.path.o].txt"]
+    provides: [models]
+    imports:
+      enums: enum-types
+
+  model-audit:
+    selection: models
+    template: model-audit.txt.j2
+    output: [generated, audits, "[model.name.path.o].txt"]
+    provides: [model-audits]
+
+  dto-types:
+    selection: dtos
+    template: dto.txt.j2
+    output: [generated, dtos, "[dto.name.path.o].txt"]
+    provides: [dtos]
+    imports:
+      enums: enum-types
+
+  enum-types:
+    selection: enums
+    template: enum.txt.j2
+    output: [generated, enums, "[enum.name.path.o].txt"]
+    provides: [enums]
+
+  schema-inventory:
+    selection: every_schema
+    template: schemas.txt.j2
+    output: [generated, schema-inventory.txt]
+    provides: [schema-inventory]
+
+  operation-files:
+    selection: operations
+    template: operation.txt.j2
+    output: [generated, operations, "[operation.name.path.o].txt"]
+    provides: [operations]
+    imports:
+      models: model-types
+      dtos: dto-types
+      enums: enum-types
+
+  resource-operation-files:
+    selection: resource_operations
+    template: resource-operations.txt.j2
+    output: [generated, resources, "[selection.resource]", operations.txt]
+    provides: [resource-operations]
+
+barrels:
+  schema-barrel:
+    template: barrel.txt.j2
+    output: [generated, barrels, schemas.txt]
+    exports: [model-types, dto-types, enum-types]
+    scope: all
+    lifecycle: immutable
