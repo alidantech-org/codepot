@@ -27,7 +27,7 @@ preserved.
 
 The realistic gate verifies:
 
-- the generated input remains larger than 1 MB;
+- the generated input remains substantial and retains at least 100 paths and 100 schemas;
 - every planned output path is unique;
 - every planned file is physically written;
 - each pack emits a substantial project rather than nine toy files;
@@ -36,6 +36,10 @@ The realistic gate verifies:
 - the SQLite/JSONL cache is reused on a second generation;
 - real company and product branding is absent from committed fixture packs;
 - representative generated examples remain inspectable in the repository.
+
+Serialized byte size is recorded as supporting evidence, not used as the sole definition of a
+realistic contract. Formatting or sanitization changes may alter byte size without changing the
+contract's resource, operation, and schema coverage.
 
 ## Generate visible output
 
