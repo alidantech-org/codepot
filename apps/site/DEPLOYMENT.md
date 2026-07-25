@@ -52,6 +52,19 @@ CODEPOT_SITE_IMAGE=codepot-site:latest
 
 `NEXT_PUBLIC_SITE_URL` is passed as both a Docker build argument and a runtime environment variable. Rebuild the image when this value changes because Next.js public values and generated metadata can be embedded during the production build.
 
+## Standalone monorepo layout
+
+Next.js preserves the workspace path inside standalone output:
+
+```text
+apps/site/.next/standalone/
+├── apps/site/server.js
+├── node_modules/
+└── package.json
+```
+
+The runtime image therefore starts from `/app/apps/site/server.js`, while traced dependencies remain available under `/app`. The Dockerfile verifies that the nested server file exists before the runtime image is created.
+
 ## Validate the Compose configuration
 
 ```bash
@@ -66,9 +79,33 @@ Confirm the rendered port mapping is:
 
 ## Build and start
 
+For a normal clean deployment:
+
 ```bash
 docker compose build --pull site
-docker compose up -d site
+docker compose up -d --force-recreate site
+```
+
+After changing Docker runtime paths or recovering from a broken cached image, rebuild without cache:
+
+```bash
+docker compose down --remove-orphans
+docker compose build --no-cache --pull site
+docker compose up -d --force-recreate site
+```
+
+## Check the runtime image
+
+Confirm the standalone server exists inside the built image:
+
+```bash
+docker compose run --rm --entrypoint sh site -c 'test -f /app/apps/site/server.js && echo standalone-server-ok'
+```
+
+Expected output:
+
+```text
+standalone-server-ok
 ```
 
 ## Check health
@@ -97,7 +134,7 @@ docker compose logs -f --tail=200 site
 ```bash
 git pull --ff-only origin chatgpt/develop
 docker compose build --pull site
-docker compose up -d --remove-orphans site
+docker compose up -d --force-recreate --remove-orphans site
 ```
 
 ## Stop
@@ -120,12 +157,12 @@ The container itself still listens on port `3000`; only the host-published port 
 
 The builder stage copies the monorepo so pnpm workspace resolution and root documentation synchronization work correctly. `.dockerignore` excludes dependency folders, build output, archives, the old CodepotX package, and the Python package.
 
-The final runtime image copies only:
+The final runtime image copies:
 
 ```text
-.next/standalone
-.next/static
-public
+.next/standalone -> /app
+.next/static     -> /app/apps/site/.next/static
+public           -> /app/apps/site/public
 ```
 
 The application runs as the non-root `nextjs` user. The Compose service drops Linux capabilities and enables `no-new-privileges`.
@@ -141,6 +178,7 @@ pnpm --filter @codepot/site typecheck
 pnpm --filter @codepot/site build
 docker compose config
 docker compose build site
-docker compose up -d site
+docker compose run --rm --entrypoint sh site -c 'test -f /app/apps/site/server.js'
+docker compose up -d --force-recreate site
 curl --fail http://127.0.0.1:3020/health
 ```

@@ -1,9 +1,15 @@
 .workspace {
+  min-width: 0;
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+.editorPane {
   --editor-scale: 1;
   --editor-font-size: 11px;
   position: relative;
   min-width: 0;
-  border: 1px solid var(--border);
+  min-height: 0;
   background: var(--background);
 }
 
@@ -31,24 +37,28 @@
 }
 
 .tabBar::-webkit-scrollbar,
-.editor :global(.cm-scroller)::-webkit-scrollbar {
+.editor :global(.cm-scroller)::-webkit-scrollbar,
+.fileTree::-webkit-scrollbar {
   width: 4px;
   height: 4px;
 }
 
 .tabBar::-webkit-scrollbar-track,
-.editor :global(.cm-scroller)::-webkit-scrollbar-track {
+.editor :global(.cm-scroller)::-webkit-scrollbar-track,
+.fileTree::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .tabBar::-webkit-scrollbar-thumb,
-.editor :global(.cm-scroller)::-webkit-scrollbar-thumb {
+.editor :global(.cm-scroller)::-webkit-scrollbar-thumb,
+.fileTree::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: transparent;
 }
 
 .tabBar:hover::-webkit-scrollbar-thumb,
-.editor :global(.cm-scroller):hover::-webkit-scrollbar-thumb {
+.editor :global(.cm-scroller):hover::-webkit-scrollbar-thumb,
+.fileTree:hover::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
 }
 
@@ -112,7 +122,9 @@
 .moreButton svg,
 .actionButton svg,
 .menu svg,
-.stepper svg {
+.stepper svg,
+.explorer svg,
+.statusBar svg {
   width: calc(0.82rem * var(--editor-scale));
   height: calc(0.82rem * var(--editor-scale));
 }
@@ -144,7 +156,7 @@
   position: absolute;
   top: calc(100% + 0.3rem);
   right: 0;
-  z-index: 40;
+  z-index: 60;
   width: 13.5rem;
   border: 1px solid var(--border);
   background: var(--card);
@@ -271,23 +283,193 @@
 .fullscreenOverlay {
   position: fixed;
   inset: 0;
-  z-index: 100;
-  display: grid;
-  background: color-mix(in srgb, var(--background) 96%, transparent);
-  backdrop-filter: blur(10px);
+  z-index: 2147483647;
+  isolation: isolate;
+  background: var(--background);
 }
 
 .fullscreenWorkspace {
+  display: grid;
   width: 100vw;
   height: 100dvh;
-  border: 0;
+  grid-template-columns: minmax(12rem, 17rem) minmax(0, 1fr);
+  overflow: hidden;
+  background: var(--background);
 }
 
-.fullscreenWorkspace .editorBar {
-  border-top: 1px solid var(--border);
+.fullscreenWorkspace .editorPane {
+  display: grid;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border-left: 1px solid var(--border);
 }
 
-@media (max-width: 640px) {
+.explorer {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--card) 84%, var(--background));
+  color: var(--foreground);
+}
+
+.explorerHeader {
+  display: flex;
+  height: 2.1rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-inline: 0.7rem 0.35rem;
+  color: var(--muted-foreground);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+}
+
+.explorerHeader button {
+  display: inline-flex;
+  width: 1.65rem;
+  height: 1.65rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.explorerHeader button:hover {
+  background: var(--card-muted);
+  color: var(--foreground);
+}
+
+.folderRow {
+  display: flex;
+  height: 1.8rem;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.32rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  padding-inline: 0.45rem;
+  color: var(--foreground);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.collapsedChevron {
+  transform: rotate(-90deg);
+}
+
+.fileTree {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding-block: 0.2rem;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.fileRow {
+  display: flex;
+  min-width: 0;
+  height: 1.7rem;
+  align-items: center;
+  color: var(--muted-foreground);
+}
+
+.fileRow > button:first-child {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 0.38rem;
+  padding-inline: 1.15rem 0.3rem;
+  font-size: 0.72rem;
+  text-align: left;
+}
+
+.fileRow span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileRow:hover,
+.activeFileRow {
+  background: color-mix(in srgb, var(--card-muted) 72%, transparent);
+  color: var(--foreground);
+}
+
+.deleteFileButton {
+  display: inline-flex;
+  width: 1.55rem;
+  height: 1.55rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+
+.fileRow:hover .deleteFileButton,
+.deleteFileButton:focus-visible {
+  opacity: 1;
+}
+
+.deleteFileButton:hover {
+  color: var(--destructive, #b91c1c);
+}
+
+.newFileForm {
+  display: flex;
+  height: 1.8rem;
+  align-items: center;
+  gap: 0.38rem;
+  padding-inline: 1.15rem 0.35rem;
+}
+
+.newFileForm input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid var(--primary);
+  background: var(--background);
+  padding: 0.15rem 0.25rem;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  outline: none;
+}
+
+.statusBar {
+  display: flex;
+  height: 1.65rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.85rem;
+  border-top: 1px solid color-mix(in srgb, var(--primary) 65%, var(--border));
+  background: color-mix(in srgb, var(--primary) 86%, var(--background));
+  padding-inline: 0.65rem;
+  color: white;
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+}
+
+@media (max-width: 760px) {
+  .fullscreenWorkspace {
+    grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr);
+  }
+
+  .statusBar {
+    gap: 0.45rem;
+  }
+
+  .statusBar span:nth-child(3),
+  .statusBar span:nth-child(4) {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .fullscreenWorkspace {
+    grid-template-columns: 8.5rem minmax(0, 1fr);
+  }
+
   .tab {
     min-width: calc(6.8rem * var(--editor-scale));
     max-width: calc(9.5rem * var(--editor-scale));
@@ -296,5 +478,14 @@
   .menu {
     right: 0.25rem;
     width: min(13.5rem, calc(100vw - 2rem));
+  }
+
+  .explorerHeader {
+    padding-inline: 0.4rem 0.2rem;
+  }
+
+  .fileRow > button:first-child,
+  .newFileForm {
+    padding-left: 0.65rem;
   }
 }
