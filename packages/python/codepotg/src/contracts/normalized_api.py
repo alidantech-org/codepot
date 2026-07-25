@@ -13,10 +13,7 @@ from contracts.normalized import (
     DiagnosticCategory,
     DiagnosticLevel,
     PresenceValue,
-    ReferenceKind,
-    ResolutionState,
     SchemaUse,
-    SchemaUseKind,
     SourceObject,
     StructuredNotes,
     contract_collection,
@@ -24,13 +21,12 @@ from contracts.normalized import (
     source_object,
     structured_notes,
 )
+from contracts.normalized_builders import build_schema_use
 from contracts.source import FrozenMap, freeze_source_map
 
 
 @dataclass(frozen=True)
 class NormalizedSchemaConstraints:
-    """Presence-aware JSON Schema values and validation constraints."""
-
     default: PresenceValue[Any] = field(default_factory=PresenceValue.missing)
     const: PresenceValue[Any] = field(default_factory=PresenceValue.missing)
     example: PresenceValue[Any] = field(default_factory=PresenceValue.missing)
@@ -59,8 +55,6 @@ class NormalizedSchemaConstraints:
 
 @dataclass(frozen=True)
 class NormalizedComposition:
-    """Reference and inline branches for one schema composition keyword."""
-
     kind: str
     branches: tuple[SchemaUse[ApiSchema], ...] = ()
 
@@ -69,7 +63,7 @@ class NormalizedComposition:
         return tuple(
             reference
             for branch in self.branches
-            for reference in branch.refs
+            for reference in (branch.refs or ((branch.ref,) if branch.ref else ()))
         )
 
     @property
@@ -79,13 +73,13 @@ class NormalizedComposition:
 
 @dataclass(frozen=True)
 class NormalizedFieldView:
-    """Additive normalized view of one schema field."""
-
     api: ApiField
     source: SourceObject = field(default_factory=SourceObject)
     schema_use: SchemaUse[ApiSchema] = field(default_factory=SchemaUse)
     item_use: SchemaUse[ApiSchema] = field(default_factory=SchemaUse)
-    constraints: NormalizedSchemaConstraints = field(default_factory=NormalizedSchemaConstraints)
+    constraints: NormalizedSchemaConstraints = field(
+        default_factory=NormalizedSchemaConstraints
+    )
     notes: StructuredNotes = field(default_factory=StructuredNotes)
 
     @property
@@ -99,15 +93,17 @@ class NormalizedFieldView:
 
 @dataclass(frozen=True)
 class NormalizedSchemaView:
-    """Additive normalized and lossless schema view."""
-
     api: ApiSchema
     source: SourceObject = field(default_factory=SourceObject)
     types: tuple[str, ...] = ()
     format: PresenceValue[Any] = field(default_factory=PresenceValue.missing)
     nullable: PresenceValue[Any] = field(default_factory=PresenceValue.missing)
-    constraints: NormalizedSchemaConstraints = field(default_factory=NormalizedSchemaConstraints)
-    fields: ContractCollection[NormalizedFieldView] = field(default_factory=ContractCollection)
+    constraints: NormalizedSchemaConstraints = field(
+        default_factory=NormalizedSchemaConstraints
+    )
+    fields: ContractCollection[NormalizedFieldView] = field(
+        default_factory=ContractCollection
+    )
     items: SchemaUse[ApiSchema] = field(default_factory=SchemaUse)
     prefix_items: tuple[SchemaUse[ApiSchema], ...] = ()
     contains: SchemaUse[ApiSchema] = field(default_factory=SchemaUse)
@@ -144,8 +140,6 @@ class NormalizedSchemaView:
 
 @dataclass(frozen=True)
 class NormalizedOperationView:
-    """Lossless operation source plus existing typed operation facts."""
-
     api: ApiOperation
     source: SourceObject = field(default_factory=SourceObject)
     notes: StructuredNotes = field(default_factory=StructuredNotes)
@@ -161,8 +155,6 @@ class NormalizedOperationView:
 
 @dataclass(frozen=True)
 class NormalizedResourceView:
-    """Lossless resource source plus linked typed collections."""
-
     api: ApiResource
     source: SourceObject = field(default_factory=SourceObject)
     operations: ContractCollection[NormalizedOperationView] = field(
@@ -184,8 +176,6 @@ class NormalizedResourceView:
 
 @dataclass(frozen=True)
 class NormalizedApiView:
-    """Parallel migration root for lossless normalized template facts."""
-
     source: SourceObject
     schemas: ContractCollection[NormalizedSchemaView] = field(
         default_factory=ContractCollection
@@ -202,51 +192,48 @@ class NormalizedApiView:
     )
 
     @property
-    def loss_count(self) -> int:
-        return sum(
-            1
-            for diagnostic in self.all_diagnostics
-            if diagnostic.category == DiagnosticCategory.LOST
-        )
-
-    @property
-    def unresolved_count(self) -> int:
-        return sum(
-            1
-            for diagnostic in self.all_diagnostics
-            if diagnostic.category == DiagnosticCategory.UNRESOLVED
-        )
-
-    @property
-    def raw_only_count(self) -> int:
-        return sum(
-            1
-            for diagnostic in self.all_diagnostics
-            if diagnostic.category == DiagnosticCategory.RAW_ONLY
-        )
-
-    @property
     def all_diagnostics(self) -> tuple[ContractDiagnostic, ...]:
         values = list(self.diagnostics)
         values.extend(self.source.diagnostics)
         for source in self.raw_objects.values():
             values.extend(source.diagnostics)
+        for schema in self.schemas.all:
+            values.extend(_schema_diagnostics(schema))
         return tuple(values)
+
+    @property
+    def loss_count(self) -> int:
+        return sum(
+            diagnostic.category == DiagnosticCategory.LOST
+            for diagnostic in self.all_diagnostics
+        )
+
+    @property
+    def unresolved_count(self) -> int:
+        return sum(
+            diagnostic.category == DiagnosticCategory.UNRESOLVED
+            for diagnostic in self.all_diagnostics
+        )
+
+    @property
+    def raw_only_count(self) -> int:
+        return sum(
+            diagnostic.category == DiagnosticCategory.RAW_ONLY
+            for diagnostic in self.all_diagnostics
+        )
 
 
 def build_normalized_api_view(
     api: ApiContract,
     raw: Mapping[str, Any] | None,
 ) -> NormalizedApiView:
-    """Build a lossless additive view without replacing compatibility fields."""
-
-    document = raw or {}
+    document = _mapping(raw)
     schema_raw = _nested_mapping(document, "components", "schemas")
     path_raw = _mapping(document.get("paths"))
     codegen_raw = _mapping(document.get("x-codegen"))
     resource_raw = _mapping(codegen_raw.get("resources"))
-
     schema_targets = {schema.ref: schema for schema in api.schemas.all}
+
     normalized_schemas = tuple(
         _schema_view(
             schema,
@@ -255,16 +242,9 @@ def build_normalized_api_view(
         )
         for schema in api.schemas.all
     )
-    schema_views_by_id = {schema.id: schema for schema in normalized_schemas}
-
     normalized_operations = tuple(
-        _operation_view(operation, path_raw=path_raw)
-        for operation in api.operations
+        _operation_view(operation, path_raw=path_raw) for operation in api.operations
     )
-    operation_views_by_id = {
-        operation.id: operation for operation in normalized_operations
-    }
-
     normalized_resources = tuple(
         _resource_view(
             resource,
@@ -275,62 +255,54 @@ def build_normalized_api_view(
         for resource in api.resources
     )
 
-    raw_objects: dict[str, SourceObject] = {}
-    raw_objects.update(
-        {f"schema:{schema.id}": schema.source for schema in normalized_schemas}
-    )
+    raw_objects: dict[str, SourceObject] = {
+        **{f"schema:{schema.id}": schema.source for schema in normalized_schemas},
+        **{
+            f"operation:{operation.id}": operation.source
+            for operation in normalized_operations
+        },
+        **{
+            f"resource:{resource.id}": resource.source
+            for resource in normalized_resources
+        },
+    }
     for schema in normalized_schemas:
         raw_objects.update(
             {
-                f"schema:{schema.id}:field:{field.id}": field.source
-                for field in schema.fields.all
+                f"schema:{schema.id}:field:{item.id}": item.source
+                for item in schema.fields.all
             }
         )
-    raw_objects.update(
-        {
-            f"operation:{operation.id}": operation.source
-            for operation in normalized_operations
-        }
-    )
-    raw_objects.update(
-        {
-            f"resource:{resource.id}": resource.source
-            for resource in normalized_resources
-        }
-    )
 
-    diagnostics: list[ContractDiagnostic] = []
-    for dependency in api.dependencies:
-        if dependency.target_ref not in schema_targets:
-            diagnostics.append(
-                ContractDiagnostic(
-                    category=DiagnosticCategory.UNRESOLVED,
-                    level=DiagnosticLevel.WARNING,
-                    message=f"Internal schema ref is unresolved: {dependency.target_ref}",
-                    ref=dependency.target_ref,
-                    owner=dependency.source_ref,
-                )
-            )
-
-    source = source_object(
-        document,
-        source_path="$",
-        known_keys={
-            "openapi",
-            "jsonSchemaDialect",
-            "info",
-            "servers",
-            "paths",
-            "webhooks",
-            "components",
-            "security",
-            "tags",
-            "externalDocs",
-            "x-codegen",
-        },
+    diagnostics = tuple(
+        ContractDiagnostic(
+            category=DiagnosticCategory.UNRESOLVED,
+            level=DiagnosticLevel.WARNING,
+            message=f"Internal schema ref is unresolved: {dependency.target_ref}",
+            ref=dependency.target_ref,
+            owner=dependency.source_ref,
+        )
+        for dependency in api.dependencies
+        if dependency.target_ref not in schema_targets
     )
     return NormalizedApiView(
-        source=source,
+        source=source_object(
+            document,
+            source_path="$",
+            known_keys={
+                "openapi",
+                "jsonSchemaDialect",
+                "info",
+                "servers",
+                "paths",
+                "webhooks",
+                "components",
+                "security",
+                "tags",
+                "externalDocs",
+                "x-codegen",
+            },
+        ),
         schemas=contract_collection(
             normalized_schemas,
             classifiers={
@@ -343,7 +315,7 @@ def build_normalized_api_view(
         ),
         operations=contract_collection(normalized_operations),
         resources=contract_collection(normalized_resources),
-        diagnostics=tuple(diagnostics),
+        diagnostics=diagnostics,
         raw_objects=MappingProxyType(raw_objects),
     )
 
@@ -358,26 +330,18 @@ def _schema_view(
     properties = _mapping(raw.get("properties"))
     fields = tuple(
         _field_view(
-            field,
-            _mapping(properties.get(field.id)),
-            owner_ref=schema.ref,
+            item,
+            _mapping(properties.get(item.id)),
+            owner=schema.ref,
+            source_path=f"{source_path}.properties.{item.id}",
             schema_targets=schema_targets,
         )
-        for field in schema.fields
-    )
-    types = _types(raw.get("type"), fallback=schema.primitive_type)
-    x_codegen = _mapping(raw.get("x-codegen"))
-    notes = structured_notes(
-        x_codegen.get("info", x_codegen.get("notes", raw.get("description")))
+        for item in schema.fields
     )
     return NormalizedSchemaView(
         api=schema,
-        source=source_object(
-            raw,
-            source_path=source_path,
-            known_keys=_SCHEMA_KNOWN_KEYS,
-        ),
-        types=types,
+        source=source_object(raw, source_path=source_path, known_keys=_SCHEMA_KEYS),
+        types=_types(raw.get("type"), fallback=schema.primitive_type),
         format=presence_from_mapping(raw, "format", source_path=source_path),
         nullable=presence_from_mapping(raw, "nullable", source_path=source_path),
         constraints=_constraints(raw, source_path=source_path),
@@ -416,13 +380,13 @@ def _schema_view(
         ),
         pattern_properties=MappingProxyType(
             {
-                str(pattern): _schema_use(
+                str(name): _schema_use(
                     value,
                     owner=schema.ref,
-                    source_path=f"{source_path}.patternProperties.{pattern}",
+                    source_path=f"{source_path}.patternProperties.{name}",
                     schema_targets=schema_targets,
                 )
-                for pattern, value in _mapping(raw.get("patternProperties")).items()
+                for name, value in _mapping(raw.get("patternProperties")).items()
             }
         ),
         dependent_required=MappingProxyType(
@@ -443,51 +407,56 @@ def _schema_view(
             }
         ),
         compositions=tuple(
-            _composition(
-                kind,
-                raw.get(kind),
-                owner=schema.ref,
-                source_path=f"{source_path}.{kind}",
-                schema_targets=schema_targets,
+            NormalizedComposition(
+                kind=keyword,
+                branches=tuple(
+                    _schema_use(
+                        value,
+                        owner=schema.ref,
+                        source_path=f"{source_path}.{keyword}.{index}",
+                        schema_targets=schema_targets,
+                    )
+                    for index, value in enumerate(_sequence(raw.get(keyword)))
+                ),
             )
-            for kind in ("allOf", "anyOf", "oneOf", "not", "if", "then", "else")
-            if kind in raw
+            for keyword in ("allOf", "anyOf", "oneOf")
+            if _sequence(raw.get(keyword))
         ),
-        notes=notes,
+        notes=structured_notes(
+            _mapping(raw.get("x-codegen")).get(
+                "info",
+                _mapping(raw.get("x-codegen")).get("notes", raw.get("description")),
+            )
+        ),
     )
 
 
 def _field_view(
-    field_value: ApiField,
+    item: ApiField,
     raw: Mapping[str, Any],
     *,
-    owner_ref: str,
+    owner: str,
+    source_path: str,
     schema_targets: Mapping[str, ApiSchema],
 ) -> NormalizedFieldView:
-    source_path = f"{owner_ref}.properties.{field_value.id}"
-    x_codegen = _mapping(raw.get("x-codegen"))
     return NormalizedFieldView(
-        api=field_value,
-        source=source_object(
-            raw,
-            source_path=source_path,
-            known_keys=_SCHEMA_KNOWN_KEYS,
-        ),
+        api=item,
+        source=source_object(raw, source_path=source_path, known_keys=_SCHEMA_KEYS),
         schema_use=_schema_use(
             raw,
-            owner=owner_ref,
+            owner=owner,
             source_path=source_path,
             schema_targets=schema_targets,
         ),
         item_use=_schema_use(
-            raw.get("items"),
-            owner=owner_ref,
+            _mapping(raw.get("items")),
+            owner=owner,
             source_path=f"{source_path}.items",
             schema_targets=schema_targets,
         ),
         constraints=_constraints(raw, source_path=source_path),
         notes=structured_notes(
-            x_codegen.get("info", x_codegen.get("notes", raw.get("description")))
+            _mapping(raw.get("x-codegen")).get("info", raw.get("description"))
         ),
     )
 
@@ -497,19 +466,14 @@ def _operation_view(
     *,
     path_raw: Mapping[str, Any],
 ) -> NormalizedOperationView:
-    path_item = _mapping(path_raw.get(operation.path))
-    raw = _mapping(path_item.get(str(operation.method)))
-    source_path = f"paths.{operation.path}.{operation.method}"
-    x_codegen = _mapping(raw.get("x-codegen"))
+    method = str(operation.method)
+    raw = _mapping(_mapping(path_raw.get(operation.path)).get(method))
+    source_path = f"paths.{operation.path}.{method}"
     return NormalizedOperationView(
         api=operation,
-        source=source_object(
-            raw,
-            source_path=source_path,
-            known_keys=_OPERATION_KNOWN_KEYS,
-        ),
+        source=source_object(raw, source_path=source_path, known_keys=_OPERATION_KEYS),
         notes=structured_notes(
-            x_codegen.get("info", x_codegen.get("notes", raw.get("description")))
+            _mapping(raw.get("x-codegen")).get("info", raw.get("description"))
         ),
     )
 
@@ -522,31 +486,15 @@ def _resource_view(
     operations: tuple[NormalizedOperationView, ...],
 ) -> NormalizedResourceView:
     source_path = f"x-codegen.resources.{resource.id}"
-    selected_schemas = tuple(
-        schema for schema in schemas if schema.api.resource == resource.id
-    )
-    selected_operations = tuple(
-        operation for operation in operations if operation.api.resource == resource.id
-    )
     return NormalizedResourceView(
         api=resource,
-        source=source_object(
-            raw,
-            source_path=source_path,
-            known_keys={
-                "name",
-                "path",
-                "route",
-                "tags",
-                "ui",
-                "access",
-                "hooks",
-                "info",
-                "notes",
-            },
+        source=source_object(raw, source_path=source_path, known_keys=_RESOURCE_KEYS),
+        operations=contract_collection(
+            item for item in operations if item.api.resource == resource.id
         ),
-        operations=contract_collection(selected_operations),
-        schemas=contract_collection(selected_schemas),
+        schemas=contract_collection(
+            item for item in schemas if item.api.resource == resource.id
+        ),
         notes=structured_notes(raw.get("info", raw.get("notes"))),
     )
 
@@ -557,71 +505,10 @@ def _constraints(
     source_path: str,
 ) -> NormalizedSchemaConstraints:
     return NormalizedSchemaConstraints(
-        default=presence_from_mapping(raw, "default", source_path=source_path),
-        const=presence_from_mapping(raw, "const", source_path=source_path),
-        example=presence_from_mapping(raw, "example", source_path=source_path),
-        examples=presence_from_mapping(raw, "examples", source_path=source_path),
-        minimum=presence_from_mapping(raw, "minimum", source_path=source_path),
-        maximum=presence_from_mapping(raw, "maximum", source_path=source_path),
-        exclusive_minimum=presence_from_mapping(
-            raw, "exclusiveMinimum", source_path=source_path
-        ),
-        exclusive_maximum=presence_from_mapping(
-            raw, "exclusiveMaximum", source_path=source_path
-        ),
-        multiple_of=presence_from_mapping(raw, "multipleOf", source_path=source_path),
-        min_length=presence_from_mapping(raw, "minLength", source_path=source_path),
-        max_length=presence_from_mapping(raw, "maxLength", source_path=source_path),
-        pattern=presence_from_mapping(raw, "pattern", source_path=source_path),
-        content_encoding=presence_from_mapping(
-            raw, "contentEncoding", source_path=source_path
-        ),
-        content_media_type=presence_from_mapping(
-            raw, "contentMediaType", source_path=source_path
-        ),
-        min_items=presence_from_mapping(raw, "minItems", source_path=source_path),
-        max_items=presence_from_mapping(raw, "maxItems", source_path=source_path),
-        unique_items=presence_from_mapping(
-            raw, "uniqueItems", source_path=source_path
-        ),
-        min_contains=presence_from_mapping(
-            raw, "minContains", source_path=source_path
-        ),
-        max_contains=presence_from_mapping(
-            raw, "maxContains", source_path=source_path
-        ),
-        min_properties=presence_from_mapping(
-            raw, "minProperties", source_path=source_path
-        ),
-        max_properties=presence_from_mapping(
-            raw, "maxProperties", source_path=source_path
-        ),
-        read_only=presence_from_mapping(raw, "readOnly", source_path=source_path),
-        write_only=presence_from_mapping(raw, "writeOnly", source_path=source_path),
-        deprecated=presence_from_mapping(raw, "deprecated", source_path=source_path),
-    )
-
-
-def _composition(
-    kind: str,
-    value: Any,
-    *,
-    owner: str,
-    source_path: str,
-    schema_targets: Mapping[str, ApiSchema],
-) -> NormalizedComposition:
-    values = _sequence(value) if kind in {"allOf", "anyOf", "oneOf"} else (value,)
-    return NormalizedComposition(
-        kind=kind,
-        branches=tuple(
-            _schema_use(
-                branch,
-                owner=owner,
-                source_path=f"{source_path}.{index}",
-                schema_targets=schema_targets,
-            )
-            for index, branch in enumerate(values)
-        ),
+        **{
+            attribute: presence_from_mapping(raw, key, source_path=source_path)
+            for attribute, key in _CONSTRAINT_KEYS.items()
+        }
     )
 
 
@@ -632,106 +519,33 @@ def _schema_use(
     source_path: str,
     schema_targets: Mapping[str, ApiSchema],
 ) -> SchemaUse[ApiSchema]:
-    raw = _mapping(value)
-    if not raw:
-        return SchemaUse(source_path=source_path)
-    refs = tuple(
-        _reference(
-            ref,
-            owner=owner,
-            source_path=source_path,
-            schema_targets=schema_targets,
-        )
-        for ref in _direct_refs(raw)
-    )
-    primary = refs[0] if refs else None
-    inline_keys = {key: item for key, item in raw.items() if key != "$ref"}
-    inline = freeze_source_map(inline_keys) if inline_keys else FrozenMap()
-    resolved_targets = tuple(
-        reference.target for reference in refs if reference.target is not None
-    )
-    schema = resolved_targets[0] if len(resolved_targets) == 1 else None
-    if refs and inline:
-        kind = SchemaUseKind.MIXED
-    elif len(refs) > 1:
-        kind = SchemaUseKind.MULTIPLE_REFERENCES
-    elif refs:
-        kind = SchemaUseKind.REFERENCE
-    elif inline:
-        kind = SchemaUseKind.INLINE
-    else:
-        kind = SchemaUseKind.EMPTY
-    return SchemaUse(
-        kind=kind,
-        ref=primary,
-        refs=refs,
-        schema=schema,
-        inline=inline,
-        source_path=source_path,
-        diagnostics=tuple(
-            diagnostic
-            for reference in refs
-            for diagnostic in reference.diagnostics
-        ),
-    )
-
-
-def _reference(
-    ref: str,
-    *,
-    owner: str,
-    source_path: str,
-    schema_targets: Mapping[str, ApiSchema],
-) -> ContractReference[ApiSchema]:
-    target = schema_targets.get(ref)
-    if target is not None:
-        return ContractReference(
-            ref=ref,
-            kind=ReferenceKind.SCHEMA,
-            name=target.id,
-            owner=owner,
-            state=ResolutionState.RESOLVED,
-            target=target,
-            source_path=source_path,
-        )
-    if not ref.startswith("#/"):
-        return ContractReference(
-            ref=ref,
-            kind=ReferenceKind.SCHEMA,
-            owner=owner,
-            state=ResolutionState.EXTERNAL,
-            source_path=source_path,
-        )
-    diagnostic = ContractDiagnostic(
-        category=DiagnosticCategory.UNRESOLVED,
-        level=DiagnosticLevel.WARNING,
-        message=f"Internal schema ref is unresolved: {ref}",
-        source_path=source_path,
-        ref=ref,
+    return build_schema_use(
+        value,
         owner=owner,
-    )
-    return ContractReference(
-        ref=ref,
-        kind=ReferenceKind.SCHEMA,
-        owner=owner,
-        state=ResolutionState.MISSING,
         source_path=source_path,
-        diagnostics=(diagnostic,),
+        schema_targets=schema_targets,
     )
 
 
-def _direct_refs(value: Mapping[str, Any]) -> tuple[str, ...]:
-    refs: list[str] = []
-    direct = value.get("$ref")
-    if isinstance(direct, str):
-        refs.append(direct)
-    for keyword in ("allOf", "anyOf", "oneOf"):
-        for branch in _sequence(value.get(keyword)):
-            if isinstance(branch, Mapping):
-                ref = branch.get("$ref")
-                if isinstance(ref, str):
-                    refs.append(ref)
-    return tuple(dict.fromkeys(refs))
+def _schema_diagnostics(schema: NormalizedSchemaView) -> tuple[ContractDiagnostic, ...]:
+    values: list[ContractDiagnostic] = list(schema.source.diagnostics)
+    for schema_use in (
+        schema.items,
+        schema.contains,
+        schema.property_names,
+        *schema.prefix_items,
+        *schema.pattern_properties.values(),
+        *schema.dependent_schemas.values(),
+    ):
+        values.extend(schema_use.diagnostics)
+    for composition in schema.compositions:
+        for branch in composition.branches:
+            values.extend(branch.diagnostics)
+    for item in schema.fields.all:
+        values.extend(item.source.diagnostics)
+        values.extend(item.schema_use.diagnostics)
+        values.extend(item.item_use.diagnostics)
+    return tuple(values)
 
 
 def _types(value: Any, *, fallback: str | None) -> tuple[str, ...]:
@@ -742,39 +556,63 @@ def _types(value: Any, *, fallback: str | None) -> tuple[str, ...]:
     return (fallback,) if fallback else ()
 
 
-def _nested_mapping(source: Mapping[str, Any], *keys: str) -> Mapping[str, Any]:
-    current: Any = source
+def _mapping(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _nested_mapping(value: Mapping[str, Any], *keys: str) -> Mapping[str, Any]:
+    current: Any = value
     for key in keys:
         current = _mapping(current).get(key)
     return _mapping(current)
 
 
-def _mapping(value: Any) -> Mapping[str, Any]:
-    return value if isinstance(value, Mapping) else {}
-
-
 def _sequence(value: Any) -> tuple[Any, ...]:
-    if isinstance(value, list | tuple):
-        return tuple(value)
-    return ()
+    return tuple(value) if isinstance(value, list | tuple) else ()
 
 
-_SCHEMA_KNOWN_KEYS = {
+_CONSTRAINT_KEYS = {
+    "default": "default",
+    "const": "const",
+    "example": "example",
+    "examples": "examples",
+    "minimum": "minimum",
+    "maximum": "maximum",
+    "exclusive_minimum": "exclusiveMinimum",
+    "exclusive_maximum": "exclusiveMaximum",
+    "multiple_of": "multipleOf",
+    "min_length": "minLength",
+    "max_length": "maxLength",
+    "pattern": "pattern",
+    "content_encoding": "contentEncoding",
+    "content_media_type": "contentMediaType",
+    "min_items": "minItems",
+    "max_items": "maxItems",
+    "unique_items": "uniqueItems",
+    "min_contains": "minContains",
+    "max_contains": "maxContains",
+    "min_properties": "minProperties",
+    "max_properties": "maxProperties",
+    "read_only": "readOnly",
+    "write_only": "writeOnly",
+    "deprecated": "deprecated",
+}
+_SCHEMA_KEYS = {
     "$ref",
     "$id",
     "$schema",
     "$anchor",
-    "$dynamicAnchor",
     "$dynamicRef",
-    "title",
-    "summary",
-    "description",
+    "$dynamicAnchor",
+    "$defs",
     "type",
     "format",
     "nullable",
-    "enum",
+    "title",
+    "description",
     "default",
     "const",
+    "enum",
     "example",
     "examples",
     "minimum",
@@ -787,26 +625,26 @@ _SCHEMA_KNOWN_KEYS = {
     "pattern",
     "contentEncoding",
     "contentMediaType",
-    "contentSchema",
-    "items",
-    "prefixItems",
-    "contains",
-    "minContains",
-    "maxContains",
     "minItems",
     "maxItems",
     "uniqueItems",
-    "unevaluatedItems",
-    "properties",
+    "minContains",
+    "maxContains",
+    "minProperties",
+    "maxProperties",
+    "readOnly",
+    "writeOnly",
+    "deprecated",
     "required",
+    "properties",
     "additionalProperties",
     "patternProperties",
     "propertyNames",
-    "minProperties",
-    "maxProperties",
     "dependentRequired",
     "dependentSchemas",
-    "unevaluatedProperties",
+    "items",
+    "prefixItems",
+    "contains",
     "allOf",
     "anyOf",
     "oneOf",
@@ -815,18 +653,15 @@ _SCHEMA_KNOWN_KEYS = {
     "then",
     "else",
     "discriminator",
-    "readOnly",
-    "writeOnly",
-    "deprecated",
-    "externalDocs",
     "xml",
-    "x-codegen",
+    "externalDocs",
 }
-_OPERATION_KNOWN_KEYS = {
-    "operationId",
+_OPERATION_KEYS = {
+    "tags",
     "summary",
     "description",
-    "tags",
+    "externalDocs",
+    "operationId",
     "parameters",
     "requestBody",
     "responses",
@@ -834,6 +669,17 @@ _OPERATION_KNOWN_KEYS = {
     "deprecated",
     "security",
     "servers",
-    "externalDocs",
     "x-codegen",
+}
+_RESOURCE_KEYS = {
+    "name",
+    "path",
+    "route",
+    "description",
+    "info",
+    "notes",
+    "hooks",
+    "access",
+    "cache",
+    "runtime",
 }
