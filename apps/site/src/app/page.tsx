@@ -7,10 +7,10 @@ import { Features } from "@/components/landing/Features";
 import { Hero } from "@/components/landing/Hero";
 import { Pipeline } from "@/components/landing/Pipeline";
 import { UseCases } from "@/components/landing/UseCases";
-import { CONTRACT_CODE, RUNTIME_CODE, TASK_CODE } from "@/data/code-examples";
 import { FEATURES } from "@/data/features";
 import { PIPELINE_STEPS } from "@/data/pipeline";
 import { USE_CASES } from "@/data/use-cases";
+import { getLandingWorkflowExamples } from "@/lib/landing-workflow-examples";
 
 import styles from "./landing.module.css";
 
@@ -24,6 +24,8 @@ export const metadata: Metadata = {
 };
 
 const Home: NextPage = () => {
+  const workflowExamples = getLandingWorkflowExamples();
+
   return (
     <div className={`landing-page landing-shell relative w-full ${styles.page}`}>
       <div aria-hidden="true" className="landing-free-curves">
@@ -35,11 +37,7 @@ const Home: NextPage = () => {
       <Ecosystem />
       <Features features={FEATURES} />
       <Pipeline steps={PIPELINE_STEPS} />
-      <Examples
-        contractCode={CONTRACT_CODE}
-        taskCode={TASK_CODE}
-        runtimeCode={RUNTIME_CODE}
-      />
+      <Examples examples={workflowExamples} />
       <UseCases useCases={USE_CASES} />
       <CTABanner />
     </div>

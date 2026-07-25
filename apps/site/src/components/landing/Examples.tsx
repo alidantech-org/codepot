@@ -9,78 +9,69 @@ import { useTheme } from "next-themes";
 import { RotateCcw } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import type { CodeExample } from "@/data/types";
+import type { WorkflowCodeExample, WorkflowExampleKey } from "@/data/types";
 
 interface ExamplesProps {
-  contractCode: CodeExample;
-  taskCode: CodeExample;
-  runtimeCode: CodeExample;
+  examples: WorkflowCodeExample[];
 }
-
-type ExampleKey = "contract" | "task" | "runtime";
-
-const examples: Array<{
-  key: ExampleKey;
-  eyebrow: string;
-  title: string;
-  description: string;
-}> = [
-  {
-    key: "contract",
-    eyebrow: "01 · Contract",
-    title: "Author typed contracts",
-    description: "Use codepot-openapi to produce portable OpenAPI and x-codegen metadata.",
-  },
-  {
-    key: "task",
-    eyebrow: "02 · Generation",
-    title: "Generate with Jinja",
-    description: "Use codepotg tasks and bundled or project-owned template packs.",
-  },
-  {
-    key: "runtime",
-    eyebrow: "03 · Runtime",
-    title: "Embed the runtime",
-    description: "Drive codepotx through the CLI, editor tools, web clients, or another frontend.",
-  },
-];
 
 function languageExtension(language: string) {
   if (language === "yaml" || language === "yml") return yaml();
+
   return javascript({
-    typescript: language === "typescript" || language === "tsx",
+    typescript:
+      language === "typescript" ||
+      language === "tsx" ||
+      language === "jinja",
     jsx: language === "jsx" || language === "tsx",
   });
 }
 
-export function Examples({ contractCode, taskCode, runtimeCode }: ExamplesProps) {
-  const { resolvedTheme } = useTheme();
-  const initialCode = useMemo(
-    () => ({ contract: contractCode, task: taskCode, runtime: runtimeCode }),
-    [contractCode, taskCode, runtimeCode],
-  );
-  const [activeKey, setActiveKey] = useState<ExampleKey>("contract");
-  const [drafts, setDrafts] = useState<Record<ExampleKey, string>>({
-    contract: contractCode.code,
-    task: taskCode.code,
-    runtime: runtimeCode.code,
-  });
+function createDrafts(
+  examples: WorkflowCodeExample[],
+): Record<WorkflowExampleKey, string> {
+  return Object.fromEntries(
+    examples.map((example) => [example.key, example.code]),
+  ) as Record<WorkflowExampleKey, string>;
+}
 
-  const activeExample = initialCode[activeKey];
-  const extensions = useMemo(
-    () => [languageExtension(activeExample.language)],
-    [activeExample.language],
+export function Examples({ examples }: ExamplesProps) {
+  const { resolvedTheme } = useTheme();
+  const examplesByKey = useMemo(
+    () =>
+      Object.fromEntries(
+        examples.map((example) => [example.key, example]),
+      ) as Record<WorkflowExampleKey, WorkflowCodeExample>,
+    [examples],
   );
+  const [activeKey, setActiveKey] = useState<WorkflowExampleKey>(
+    examples[0]?.key ?? "contract",
+  );
+  const [drafts, setDrafts] = useState<Record<WorkflowExampleKey, string>>(
+    () => createDrafts(examples),
+  );
+
+  const activeExample = examplesByKey[activeKey] ?? examples[0];
+  const extensions = useMemo(
+    () => (activeExample ? [languageExtension(activeExample.language)] : []),
+    [activeExample],
+  );
+
+  if (!activeExample) return null;
 
   return (
     <section id="examples" className="border-y border-border bg-card/35">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
-        <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-accent">Workflows</p>
+        <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-accent">
+          Workflows
+        </p>
         <h2 className="max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-          One editable workspace for the full Codepot flow
+          Real files from contract to generated code
         </h2>
-        <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
-          Select a workflow step to load its syntax-highlighted code into the shared editor. Your edits remain available while you move between steps.
+        <p className="mt-4 max-w-3xl text-[15px] leading-7 text-muted-foreground">
+          Each tab is loaded from a real source file in the website project. Edit
+          the contract, CodepotG task, paths configuration, or Jinja template in
+          the shared syntax-highlighted editor.
         </p>
 
         <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] xl:items-stretch">
@@ -92,14 +83,21 @@ export function Examples({ contractCode, taskCode, runtimeCode }: ExamplesProps)
                   <span className="h-2.5 w-2.5 rounded-full bg-secondary" />
                   <span className="h-2.5 w-2.5 rounded-full bg-accent" />
                 </div>
-                <span className="truncate font-mono text-xs text-[#d8c4b0]">{activeExample.filename}</span>
+                <span className="truncate font-mono text-xs text-[#d8c4b0]">
+                  {activeExample.filename}
+                </span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-[#a9907c]">Editable</span>
+                <span className="font-mono text-[10px] uppercase tracking-widest text-[#a9907c]">
+                  Editable preview
+                </span>
                 <button
                   type="button"
                   onClick={() =>
-                    setDrafts((current) => ({ ...current, [activeKey]: activeExample.code }))
+                    setDrafts((current) => ({
+                      ...current,
+                      [activeKey]: activeExample.code,
+                    }))
                   }
                   className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2.5 py-1.5 text-xs text-[#d8c4b0] transition-colors hover:bg-white/5 hover:text-white"
                 >
@@ -110,13 +108,16 @@ export function Examples({ contractCode, taskCode, runtimeCode }: ExamplesProps)
             </div>
 
             <CodeMirror
-              value={drafts[activeKey]}
+              value={drafts[activeKey] ?? activeExample.code}
               onChange={(value) =>
-                setDrafts((current) => ({ ...current, [activeKey]: value }))
+                setDrafts((current) => ({
+                  ...current,
+                  [activeKey]: value,
+                }))
               }
               extensions={extensions}
               theme={resolvedTheme === "dark" ? oneDark : "light"}
-              height="clamp(25rem, 52vw, 36rem)"
+              height="clamp(30rem, 58vw, 44rem)"
               width="100%"
               basicSetup={{
                 lineNumbers: true,
@@ -134,7 +135,7 @@ export function Examples({ contractCode, taskCode, runtimeCode }: ExamplesProps)
             />
           </div>
 
-          <div className="order-1 grid gap-2 sm:grid-cols-3 xl:order-2 xl:grid-cols-1 xl:content-start">
+          <div className="order-1 grid gap-2 sm:grid-cols-2 xl:order-2 xl:grid-cols-1 xl:content-start">
             {examples.map((example) => {
               const isActive = activeKey === example.key;
               return (
@@ -149,9 +150,15 @@ export function Examples({ contractCode, taskCode, runtimeCode }: ExamplesProps)
                       : "border-border hover:border-primary/45 hover:bg-card-muted/45"
                   }`}
                 >
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-primary">{example.eyebrow}</span>
-                  <span className="mt-2 block text-sm font-semibold text-foreground">{example.title}</span>
-                  <span className="mt-2 block text-sm leading-6 text-muted-foreground">{example.description}</span>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                    {example.eyebrow}
+                  </span>
+                  <span className="mt-2 block text-sm font-semibold text-foreground">
+                    {example.title}
+                  </span>
+                  <span className="mt-2 block text-sm leading-6 text-muted-foreground">
+                    {example.description}
+                  </span>
                 </button>
               );
             })}
@@ -159,9 +166,13 @@ export function Examples({ contractCode, taskCode, runtimeCode }: ExamplesProps)
         </div>
 
         <div className="mt-6 text-sm text-muted-foreground">
-          <Link href="/docs/choose-workflow" className="font-medium text-primary hover:underline">Compare workflows</Link>
+          <Link href="/docs/prototype-workflow" className="font-medium text-primary hover:underline">
+            Read the complete prototype workflow
+          </Link>
           <span className="mx-2">·</span>
-          <Link href="/docs/codepot-platform" className="font-medium text-foreground hover:underline">Explore the final platform</Link>
+          <Link href="/docs/template-packs" className="font-medium text-foreground hover:underline">
+            Learn about template packs
+          </Link>
         </div>
       </div>
     </section>

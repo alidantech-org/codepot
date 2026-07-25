@@ -1,43 +1,25 @@
-<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="160" height="252" viewBox="12 -2 40 63" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="clay" x1="24" y1="24" x2="78" y2="88" gradientUnits="userSpaceOnUse">
+    <linearGradient id="clay" x1="12" y1="12" x2="52" y2="58" gradientUnits="userSpaceOnUse">
       <stop stop-color="#D49352"/>
-      <stop offset="0.45" stop-color="#A85E2E"/>
+      <stop offset="0.5" stop-color="#A85E2E"/>
       <stop offset="1" stop-color="#673B24"/>
     </linearGradient>
-    <linearGradient id="rim" x1="31" y1="29" x2="69" y2="42" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F0C58E"/>
-      <stop offset="1" stop-color="#8A4B28"/>
-    </linearGradient>
-    <linearGradient id="smoke" x1="32" y1="3" x2="62" y2="35" gradientUnits="userSpaceOnUse">
+    <linearGradient id="smoke" x1="19" y1="0" x2="40" y2="24" gradientUnits="userSpaceOnUse">
       <stop stop-color="#E8D3B5" stop-opacity="0"/>
-      <stop offset="0.45" stop-color="#D3A873" stop-opacity="0.9"/>
-      <stop offset="1" stop-color="#8C5A38" stop-opacity="0.22"/>
+      <stop offset="0.55" stop-color="#D3A873"/>
+      <stop offset="1" stop-color="#8C5A38" stop-opacity="0.25"/>
     </linearGradient>
-    <filter id="shadow" x="15" y="17" width="74" height="78" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#3A2115" flood-opacity="0.24"/>
-    </filter>
   </defs>
-
-  <path d="M45 31C30 22 39 13 52 10C63 7 67 2 63 0" stroke="url(#smoke)" stroke-width="5" stroke-linecap="round"/>
-  <path d="M52 31C42 24 50 18 59 15C67 12 70 8 68 4" stroke="url(#smoke)" stroke-width="2.6" stroke-linecap="round" opacity="0.72"/>
-
-  <g transform="rotate(-12 52 59)" filter="url(#shadow)">
-    <path d="M30 38C27 49 27.5 67 37 80C43 88 58 91 69 82C79 73 80 53 72 38H30Z" fill="url(#clay)" stroke="#5C321D" stroke-width="2"/>
-    <ellipse cx="51" cy="38" rx="22" ry="8.5" fill="url(#rim)" stroke="#5C321D" stroke-width="2"/>
-    <ellipse cx="51" cy="38" rx="14.5" ry="4.7" fill="#2D1A13"/>
-    <ellipse cx="51" cy="36.8" rx="11" ry="2.7" fill="#160E0A" opacity="0.9"/>
-
-    <path d="M33 49C45 54 60 55 74 49" stroke="#E2AC6D" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
-    <path d="M34 73C46 78 59 79 72 73" stroke="#4D2919" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>
-    <path d="M36 45L40 49L44 45L48 49L52 45L56 49L60 45L64 49L68 45" stroke="#66361F" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.78"/>
-    <path d="M40 76L44 72L48 76L52 72L56 76L60 72L64 76" stroke="#D99A55" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.62"/>
-
-    <path d="M45 56L37.5 62L45 68" stroke="#2D1A13" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M55 54L49 70" stroke="#2D1A13" stroke-width="3.2" stroke-linecap="round"/>
-    <path d="M60 56L67.5 62L60 68" stroke="#2D1A13" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M46 57L39.5 62L46 67" stroke="#F0C58E" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
-    <path d="M56 55L50.5 69" stroke="#F0C58E" stroke-width="1" stroke-linecap="round" opacity="0.7"/>
-    <path d="M59 57L65.5 62L59 67" stroke="#F0C58E" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+  <path d="M29 21C20 16 25 9 34 7C42 5 44 2 42 0" stroke="url(#smoke)" stroke-width="3.4" stroke-linecap="round"/>
+  <g transform="rotate(8 32 41)">
+    <!-- perfect circle body -->
+    <circle cx="32" cy="41" r="18" fill="url(#clay)" stroke="#5C321D" stroke-width="1.2"/>
+    <ellipse cx="32" cy="24" rx="13" ry="5" fill="#D49352" stroke="#5C321D" stroke-width="1.2"/>
+    <ellipse cx="32" cy="24" rx="8" ry="2.6" fill="#1A0F0A"/>
+    <!-- centered "</>" mark -->
+    <path d="M28 36L23 40L28 44" stroke="#2A1810" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M36 36L41 40L36 44" stroke="#2A1810" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M29 45L35 35" stroke="#2A1810" stroke-width="2.2" stroke-linecap="round"/>
   </g>
 </svg>
