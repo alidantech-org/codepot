@@ -2,13 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
-from contracts.normalized import SourceObject
 from contracts.path_yaml import path_config_from_yaml
 from contracts.template import TemplateDependency
 from emission.graph_engine import _emission_file
-from emission.imports.planner import RelativeImportPlanner
 from emission.paths.graph_planner import plan_path_graph
+
+
+class _NoopImportPlanner:
+    def plan_imports(self, context: Any) -> tuple[Any, ...]:
+        return ()
 
 
 @dataclass(frozen=True)
@@ -29,7 +33,6 @@ class FakeSchema:
     name: str
     emit: FakeEmit
     lang: FakeLang
-    source: SourceObject = SourceObject()
 
 
 def test_same_emission_can_provide_sibling_outputs_without_node_cycle(
@@ -88,7 +91,7 @@ def test_same_emission_can_provide_sibling_outputs_without_node_cycle(
         template_root=tmp_path,
         output_root=tmp_path / "generated",
         path_config=config,
-        import_planner=RelativeImportPlanner(extension=".ts"),
+        import_planner=_NoopImportPlanner(),
         package_name=None,
     )
 
@@ -144,7 +147,7 @@ def test_same_file_reference_is_marked_self_and_not_scheduled(tmp_path: Path) ->
         template_root=tmp_path,
         output_root=tmp_path / "generated",
         path_config=config,
-        import_planner=RelativeImportPlanner(extension=".ts"),
+        import_planner=_NoopImportPlanner(),
         package_name=None,
     )
 
