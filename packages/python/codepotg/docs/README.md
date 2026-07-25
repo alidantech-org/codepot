@@ -21,6 +21,7 @@ Existing template variables and folder packs remain supported while graph packs 
 
 - [`paths.yaml` graph](paths-yaml.md) defines named selections, emissions, explicit dependency providers, barrels, bounded contexts, lazy source variables, graph scheduling, and legacy migration.
 - [Bounded normalized roots](bounded-normalized-roots.md) lists the public graph-template roots for complete schema keywords, HTTP/domain facts, resource and operation runtime metadata, inherited entities, and authored frontends.
+- [Adaptive performance architecture](performance.md) defines the SQLite lookup index, JSONL raw sections, host-aware memory budgets, Jinja caching, batched writes, and headless selected-document foundation.
 - [Performance and memory tracing](performance-memory.md) explains the JSON/YAML memory paths, stage profiler, runtime trace variables, leak interpretation, and test fixture tiers.
 - [Template authoring](template-authoring.md) explains template-pack composition, scopes,
   collections, contextual variables, naming, imports, path selection, and safe authoring rules.
