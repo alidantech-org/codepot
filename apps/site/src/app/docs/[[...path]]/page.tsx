@@ -6,26 +6,17 @@ import { DocsPager } from "@/components/docs/DocsPager";
 import { DocsToc } from "@/components/docs/DocsToc";
 import { MarkdownRenderer } from "@/components/docs/MarkdownRenderer";
 import { ProductBar } from "@/components/docs/ProductBar";
-import {
-  generateDocMetadata,
-  generateStaticParams as generatePublicDocParams,
-  getDocByPath,
-  type GeneratedDocParams,
-} from "@/lib/docs";
+import { generateDocMetadata, getDocByPath } from "@/lib/docs";
 
 interface DocPageProps {
   params: Promise<{ path?: string[] }>;
 }
 
-// Known documentation paths are still prerendered at build time. Keep dynamic
-// params enabled so the bundled resolver can recover a valid page if Next.js'
-// production static-param manifest does not match an optional catch-all URL.
-// Unknown paths still call notFound() below.
-export const dynamicParams = true;
-
-export function generateStaticParams(): GeneratedDocParams[] {
-  return generatePublicDocParams();
-}
+// Documentation content and navigation are compiled into the server bundle.
+// Resolve every requested path directly from that bundled index instead of
+// creating a Next.js static fallback route for the optional catch-all segment.
+// Unknown paths still reach notFound() below.
+export const dynamic = "force-dynamic";
 
 function resolvePath(path: string[] | undefined): string {
   return path?.join("/") ?? "";
