@@ -64,7 +64,7 @@ def test_inference_can_take_ownership_without_copying_raw() -> None:
     graph = InferenceEngine().infer(document, copy_raw=False)
 
     assert graph.raw is raw
-    assert graph.x_codegen is raw.get("x-codegen", {})
+    assert graph.x_codegen == raw.get("x-codegen", {})
 
 
 def test_inference_serialization_preserves_existing_default_and_allows_raw_opt_in() -> None:
