@@ -9,6 +9,7 @@ from contracts.normalized_api import build_normalized_api_view
 from contracts.normalized_codegen_contract import build_normalized_codegen_contract
 from contracts.normalized_domains import build_normalized_domain_view
 from contracts.normalized_entity_contract import build_normalized_entity_contract
+from contracts.normalized_frontend_contract import build_normalized_frontend_contract
 from contracts.normalized_schema_contract import build_normalized_schema_contract
 from contracts.normalized_sources import extend_normalized_source_registry
 from contracts.source import freeze_source_map
@@ -34,6 +35,7 @@ def build_api_contract(graph: InferenceGraph) -> ApiContract:
     schema_contract = build_normalized_schema_contract(contract, raw)
     codegen_contract = build_normalized_codegen_contract(contract, raw, domains)
     entity_contract = build_normalized_entity_contract(contract, raw)
+    frontend_contract = build_normalized_frontend_contract(contract, raw)
 
     return replace(
         contract,
@@ -46,6 +48,7 @@ def build_api_contract(graph: InferenceGraph) -> ApiContract:
             "normalized_schemas": schema_contract,
             "normalized_codegen": codegen_contract,
             "normalized_entities": entity_contract,
+            "normalized_frontends": frontend_contract,
             "loss_count": normalized.loss_count + schema_contract.loss_count,
             "unresolved_count": (
                 normalized.unresolved_count
@@ -53,6 +56,7 @@ def build_api_contract(graph: InferenceGraph) -> ApiContract:
                 + schema_contract.unresolved_count
                 + codegen_contract.unresolved_count
                 + entity_contract.unresolved_count
+                + frontend_contract.unresolved_count
             ),
             "cycle_count": entity_contract.cycle_count,
             "raw_only_count": normalized.raw_only_count,
