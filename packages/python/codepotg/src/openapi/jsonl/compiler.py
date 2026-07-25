@@ -10,14 +10,11 @@ from contextlib import suppress
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from core.system_resources import tune_runtime
+
 from .errors import JsonlCompilerError, JsonlInputError
 from .hot_index import HotIndexRegistry
-from .indexing import (
-    SectionWriter,
-    ShardedIndexWriter,
-    classify_record,
-    register_record_indexes,
-)
+from .indexing import SectionWriter, classify_record, register_record_indexes
 from .models import (
     ExtractedRecord,
     HotIndexLimits,
@@ -30,9 +27,10 @@ from .models import (
 )
 from .operation_indexing import register_additional_indexes
 from .queueing import JsonlRecordPipeline, create_event_writer_factory
+from .sqlite_index import SqliteIndexWriter
 from .stream import stream_openapi_json
 
-_CACHE_VERSION = 2
+_CACHE_VERSION = 3
 _INDEX_CATEGORIES = ("definitions", "mentions", "dependencies")
 JsonlProgressSink = Callable[[Mapping[str, Any]], None]
 
@@ -64,6 +62,26 @@ def compile_openapi_jsonl(
     )
     source_digest = _hash_file(source_path)
     source_size = source_path.stat().st_size
+    tuning = tune_runtime(source_size)
+    effective_hot_limits = hot_limits or HotIndexLimits(
+        max_entries=tuning.hot_index_entries,
+        max_bytes=tuning.hot_index_bytes,
+    )
+    effective_queue_limits = queue_limits or JsonlQueueLimits(
+        max_records=tuning.jsonl_pending_records,
+        max_pending_bytes=tuning.jsonl_pending_bytes,
+        max_events=tuning.jsonl_event_queue,
+        emit_record_events=_record_events_enabled(),
+    )
+    _notify(
+        progress,
+        stage="runtime",
+        status="tuned",
+        message=tuning.summary(),
+        availableMemory=tuning.available_memory,
+        sourceBytes=source_size,
+    )
+
     existing = _read_manifest(target / "manifest.json") if reuse_unchanged else None
     if existing is not None and _can_reuse(existing, source_digest, source_size, target):
         manifest = _manifest_from_json(existing)
@@ -77,8 +95,9 @@ def compile_openapi_jsonl(
         return JsonlCompileResult(
             cache_dir=target,
             manifest=manifest,
-            hot_index=HotIndexRegistry(hot_limits),
+            hot_index=HotIndexRegistry(effective_hot_limits),
             reused=True,
+            diagnostics=[tuning.summary()],
         )
 
     staging = target.with_name(f".{target.name}.staging-{uuid.uuid4().hex}")
@@ -87,8 +106,12 @@ def compile_openapi_jsonl(
     staging.mkdir(parents=True, exist_ok=False)
 
     sections = SectionWriter(staging)
-    indexes = ShardedIndexWriter(staging)
-    hot_index = HotIndexRegistry(hot_limits)
+    indexes = SqliteIndexWriter(
+        staging,
+        cache_bytes=tuning.sqlite_cache_bytes,
+        batch_size=max(2_000, tuning.jsonl_pending_records * 4),
+    )
+    hot_index = HotIndexRegistry(effective_hot_limits)
     counters = {"records": 0, "definitions": 0, "mentions": 0, "dependencies": 0}
     queue_stats = JsonlQueueStats()
     pipeline: JsonlRecordPipeline | None = None
@@ -126,7 +149,7 @@ def compile_openapi_jsonl(
     try:
         pipeline = JsonlRecordPipeline(
             process_record,
-            limits=queue_limits,
+            limits=effective_queue_limits,
             event_writer_factory=create_event_writer_factory(staging),
         )
         pipeline.start()
@@ -157,9 +180,9 @@ def compile_openapi_jsonl(
                 stage="index",
                 status="written",
                 category=category,
-                directory=raw_index["directory"],
+                backend=raw_index["backend"],
+                database=raw_index["database"],
                 records=raw_index["records"],
-                shards=len(raw_index["shards"]),
             )
 
         manifest = JsonlManifest(
@@ -214,6 +237,7 @@ def compile_openapi_jsonl(
         mentions_written=counters["mentions"],
         dependencies_written=counters["dependencies"],
         queue_stats=queue_stats,
+        diagnostics=[tuning.summary()],
     )
 
 
@@ -236,7 +260,7 @@ def _hash_file(path: Path) -> str:
         raise JsonlInputError(f"OpenAPI input is not a file: {path}")
     digest = hashlib.sha256()
     with path.open("rb") as stream:
-        while chunk := stream.read(1024 * 1024):
+        while chunk := stream.read(4 * 1024 * 1024):
             digest.update(chunk)
     return f"sha256:{digest.hexdigest()}"
 
@@ -296,20 +320,16 @@ def _can_reuse(
     if not isinstance(event_file, str) or not _cache_file_exists(target, event_file):
         return False
 
+    databases: set[str] = set()
     for category in _INDEX_CATEGORIES:
         raw_index = indexes.get(category)
         if not isinstance(raw_index, Mapping):
             return False
-        directory = raw_index.get("directory")
-        shards = raw_index.get("shards")
-        if not isinstance(directory, str) or not isinstance(shards, list):
+        database = raw_index.get("database")
+        if not isinstance(database, str):
             return False
-        for shard in shards:
-            if not isinstance(shard, str):
-                return False
-            if not _cache_file_exists(target, f"{directory}/{shard}.jsonl"):
-                return False
-    return True
+        databases.add(database)
+    return all(_cache_file_exists(target, database) for database in databases)
 
 
 def _cache_file_exists(root: Path, relative: str) -> bool:
@@ -365,3 +385,12 @@ def _replace_directory(staging: Path, target: Path, backup: Path) -> None:
         raise
     finally:
         shutil.rmtree(backup, ignore_errors=True)
+
+
+def _record_events_enabled() -> bool:
+    return os.getenv("CODEPOTG_JSONL_RECORD_EVENTS", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
