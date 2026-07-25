@@ -46,7 +46,7 @@ def test_api_contract_exposes_root_extensions_without_removing_meta() -> None:
     assert contract.meta["x-codegen"] == {}
 
 
-def test_inference_graph_owns_a_deep_copy_of_the_document() -> None:
+def test_inference_graph_owns_a_deep_copy_by_default() -> None:
     document = load_openapi_document(_fixture_path())
     graph = InferenceEngine().infer(document)
 
@@ -55,6 +55,16 @@ def test_inference_graph_owns_a_deep_copy_of_the_document() -> None:
 
     assert graph.raw["info"]["title"] == "CodepotG Fixture API"
     assert graph.raw["paths"]["/users"]["get"]["operationId"] == "listUsers"
+
+
+def test_inference_can_take_ownership_without_copying_raw() -> None:
+    document = load_openapi_document(_fixture_path())
+    raw = document.raw
+
+    graph = InferenceEngine().infer(document, copy_raw=False)
+
+    assert graph.raw is raw
+    assert graph.x_codegen is raw.get("x-codegen", {})
 
 
 def test_inference_serialization_preserves_existing_default_and_allows_raw_opt_in() -> None:
