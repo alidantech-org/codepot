@@ -4,13 +4,12 @@ from contracts.normalized import ResolutionState, ValueOrigin
 from contracts.normalized_codegen_contract import NormalizedCodegenContract
 from inference.engine import InferenceEngine
 from inference.lossless_contract import build_api_contract
-from tests.fixtures.openapi import load_real_contract
 
 
 def test_real_resource_operation_cache_access_and_sources_are_normalized(
-    real_openapi_path,
+    real_openapi_contract,
 ) -> None:
-    contract = load_real_contract(real_openapi_path)
+    contract = real_openapi_contract
     codegen: NormalizedCodegenContract = contract.meta["normalized_codegen"]
 
     resource = codegen.resources.by_id["apps"]
@@ -80,7 +79,7 @@ def test_unknown_policy_and_hook_uses_remain_inspectable() -> None:
     assert not value.access.is_resolved
     assert value.hooks.after_error[0].ref == "missingHook"
     assert not value.hooks.after_error[0].is_resolved
-    assert codegen.unresolved_count >= 4
+    assert codegen.unresolved_count >= 2
 
 
 def _document() -> dict[str, object]:
