@@ -55,7 +55,7 @@ export function Footer() {
     .filter((link) => link.kind === "npm" || link.kind === "pypi");
 
   return (
-    <footer className="relative z-10 overflow-hidden border-t border-border bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_72%,transparent),var(--card))]">
+    <footer className="relative overflow-hidden border-t border-border bg-[linear-gradient(180deg,color-mix(in_srgb,var(--card)_72%,transparent),var(--card))]">
       <div
         aria-hidden="true"
         className="absolute -left-24 top-8 h-72 w-72 rounded-full bg-primary/8 blur-3xl"

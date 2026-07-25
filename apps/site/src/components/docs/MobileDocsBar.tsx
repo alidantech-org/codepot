@@ -22,8 +22,8 @@ export function MobileDocsBar({ docs }: { docs: DocItem[] }) {
 
   return (
     <>
-      <div className="sticky top-16 z-[100] border-b border-border bg-background/90 backdrop-blur-xl lg:hidden">
-        <div className="flex h-12 items-center justify-between px-3">
+      <div className="sticky top-15 z-20 border-b border-border bg-background/90 backdrop-blur-xl lg:hidden">
+        <div className="flex h-15 items-center justify-between px-3">
           <button type="button" onClick={() => setOpen(true)} className="flex items-center gap-2 px-2 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
             <List className="h-4 w-4" />
             Docs

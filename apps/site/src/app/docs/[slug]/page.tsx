@@ -43,7 +43,7 @@ export default async function DocPage({ params }: DocPageProps) {
   return (
     <>
       <TocRenderer headings={page.headings} />
-      <article className="mx-auto w-full max-w-6xl">
+      <article className="mx-auto w-full max-w-6xl px-2 md:px-4">
         {productId && <ProductBar productId={productId} />}
         <MarkdownRenderer content={page.content} />
         <DocsPager doc={page} />
