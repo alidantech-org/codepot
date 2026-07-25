@@ -1,14 +1,14 @@
 import type { Feature } from "./types";
 
 export const FEATURES: Feature[] = [
-  { label: "Typed contracts give developers and AI one source of truth", color: "blue" },
-  { label: "Reusable template packs preserve your real architecture patterns", color: "purple" },
-  { label: "Consumer-owned tasks decide what is generated and where", color: "teal" },
-  { label: "Deterministic output replaces repeated prompt-based recreation", color: "blue" },
-  { label: "Validated template variables make generation understandable", color: "purple" },
-  { label: "Safe manifests protect edited and immutable files", color: "teal" },
-  { label: "Local, package, and Git sources work through the same workflow", color: "blue" },
-  { label: "Framework-neutral templates can target any stack", color: "purple" },
-  { label: "AI agents spend fewer tokens rediscovering project conventions", color: "teal" },
-  { label: "Code reviews focus on intent instead of generated repetition", color: "blue" },
+  { label: "codepot-openapi turns typed TypeScript contracts into portable OpenAPI and x-codegen metadata", color: "blue" },
+  { label: "codepotg applies proven Jinja template packs to real OpenAPI-driven projects", color: "purple" },
+  { label: "codepotx stabilizes validated ideas behind a typed, frontend-neutral JavaScript runtime", color: "teal" },
+  { label: "codepotx-cli stays thin so terminal behavior never diverges from the runtime", color: "blue" },
+  { label: "Codepot Lang gives software intent a strongly typed language implemented in Rust", color: "purple" },
+  { label: "The codepot CLI, LSP, and extension share one compiler and diagnostic model", color: "teal" },
+  { label: "Template packs preserve project-owned frameworks, folders, naming, and code style", color: "blue" },
+  { label: "Planning, manifests, guarded cleanup, and dry runs keep generation reviewable", color: "purple" },
+  { label: "Runtime operations can be reused by web, editor, MCP, desktop, and embedded clients", color: "teal" },
+  { label: "AI agents receive structured intent instead of repeatedly guessing repository conventions", color: "blue" },
 ];

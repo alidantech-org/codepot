@@ -15,10 +15,10 @@ function Dot({ color }: { color: Feature["color"] }) {
 export function Features({ features }: { features: Feature[] }) {
   return (
     <section id="features" className="pb-24">
-      <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-primary">Features</p>
-      <h2 className="mb-3 text-3xl font-semibold tracking-tight text-foreground">A better foundation for AI coding</h2>
-      <p className="mb-12 max-w-xl text-[15px] leading-7 text-muted-foreground">
-        Codepot makes the important parts of a software system explicit, reusable, and reviewable before generated code reaches your repository.
+      <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-primary">Why Codepot</p>
+      <h2 className="mb-3 text-3xl font-semibold tracking-tight text-foreground">One project, clear responsibilities</h2>
+      <p className="mb-12 max-w-2xl text-[15px] leading-7 text-muted-foreground">
+        Each package has a deliberate role. Contracts describe intent, template systems preserve real project conventions, runtimes coordinate safe work, and language tooling makes the same meaning available to editors and AI.
       </p>
 
       <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">

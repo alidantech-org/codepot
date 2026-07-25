@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { DocsPager } from "@/components/docs/DocsPager";
 import { MarkdownRenderer } from "@/components/docs/MarkdownRenderer";
+import { ProductBar } from "@/components/docs/ProductBar";
 import { TocRenderer } from "@/components/docs/TocRenderer";
 import {
   generateDocMetadata,
@@ -37,10 +38,13 @@ export default async function DocPage({ params }: DocPageProps) {
   const page = getDocBySlug(slug);
   if (!page) notFound();
 
+  const productId = typeof page.frontmatter.product === "string" ? page.frontmatter.product : null;
+
   return (
     <>
       <TocRenderer headings={page.headings} />
       <article className="mx-auto w-full max-w-3xl px-4 py-8 md:px-6 lg:py-10">
+        {productId && <ProductBar productId={productId} />}
         <MarkdownRenderer content={page.content} />
         <DocsPager doc={page} />
       </article>

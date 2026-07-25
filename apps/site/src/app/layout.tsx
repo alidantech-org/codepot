@@ -14,11 +14,11 @@ const fontMono = JetBrains_Mono({ variable: "--font-mono", subsets: ["latin"], d
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://codepot.dev"),
   title: {
-    default: "Codepot — a reliable foundation for AI-generated software",
+    default: "Codepot — typed software intent and reusable generation",
     template: "%s — Codepot",
   },
   description:
-    "Define typed software contracts, choose reusable template packs, and generate consistent production code that gives developers and AI agents a shared source of truth.",
+    "Codepot connects supported OpenAPI and Jinja packages, an official JavaScript runtime, and a final Rust language platform for developers, tools, and AI agents.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

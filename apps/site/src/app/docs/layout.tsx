@@ -7,7 +7,7 @@ import { getAllDocs } from "@/lib/docs";
 
 export const metadata: Metadata = {
   title: "Documentation - Codepot",
-  description: "Learn the three-layer Codepot workflow for typed contracts, reusable templates, and safe project-owned generation.",
+  description: "Documentation for codepot-openapi, codepotg, codepotx, codepotx-cli, Codepot Lang, and the final Codepot platform.",
 };
 
 export default function DocsLayout({ children }: Readonly<{ children: ReactNode }>) {

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Code, Package, X } from "lucide-react";
+import { BookOpen, Boxes, Languages, X } from "lucide-react";
 
 import { GitHubIcon } from "@/components/icons/GitHubIcon";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -11,11 +11,18 @@ interface MobileSidebarProps {
   onClose: () => void;
 }
 
+const links = [
+  { label: "Docs", href: "/docs", icon: BookOpen },
+  { label: "Packages", href: "/docs/codepot-openapi", icon: Boxes },
+  { label: "Guides", href: "/docs/guides", icon: BookOpen },
+  { label: "Codepot Lang", href: "/docs/codepot-lang", icon: Languages },
+] as const;
+
 export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   return (
     <>
       {isOpen && <div className="fixed inset-0 z-60 bg-black/50 lg:hidden" onClick={onClose} />}
-      <div className={`fixed inset-y-0 left-0 z-70 w-64 transform border-r border-border bg-card transition-transform duration-300 ease-in-out lg:hidden ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <div className={`fixed inset-y-0 left-0 z-70 w-72 transform border-r border-border bg-card transition-transform duration-300 ease-in-out lg:hidden ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-border p-4">
             <Link href="/" className="flex items-center gap-2.5" onClick={onClose}>
@@ -29,17 +36,26 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
           <nav className="flex-1 overflow-y-auto p-4">
             <div className="space-y-2">
-              <Link href="/#features" className="block rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-card-muted" onClick={onClose}>Features</Link>
-              <Link href="/#pipeline" className="block rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-card-muted" onClick={onClose}>How it works</Link>
-              <Link href="/#examples" className="block rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-card-muted" onClick={onClose}>Examples</Link>
-              <Link href="/docs" className="block rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-card-muted" onClick={onClose}>Documentation</Link>
+              {links.map(({ label, href, icon: Icon }) => (
+                <Link key={href} href={href} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground hover:bg-card-muted" onClick={onClose}>
+                  <Icon className="h-4 w-4 text-primary" />
+                  {label}
+                </Link>
+              ))}
+              <a href="https://github.com/alidantech-org/codepot" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground hover:bg-card-muted">
+                <GitHubIcon />
+                GitHub
+              </a>
             </div>
 
-            <div className="mt-8 space-y-2">
-              <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Links</div>
-              <a href="https://github.com/alidantech-org/codepot" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground hover:bg-card-muted"><GitHubIcon />GitHub</a>
-              <a href="https://www.npmjs.com/package/codepotx" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground hover:bg-card-muted"><Package className="h-4 w-4" />NPM</a>
-              <a href="https://github.com/alidantech-org/codepot_lang" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground hover:bg-card-muted"><Code className="h-4 w-4" />Codepot Lang</a>
+            <div className="mt-8 rounded-2xl border border-border bg-background p-4">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-primary">Ecosystem</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Supported prototypes feed the official JavaScript runtime and the final Rust language platform.
+              </p>
+              <Link href="/docs/ecosystem" className="mt-3 inline-block text-sm font-medium text-foreground hover:text-primary" onClick={onClose}>
+                View ecosystem →
+              </Link>
             </div>
           </nav>
 

@@ -1,14 +1,97 @@
 import Link from "next/link";
 
+import { ecosystem, getAvailableLinks, getProductById } from "@/lib/ecosystem";
+
+const footerGroups = [
+  {
+    title: "Codepot",
+    links: [
+      ["Overview", "/docs/overview"],
+      ["Getting started", "/docs/getting-started"],
+      ["Ecosystem", "/docs/ecosystem"],
+      ["Architecture", "/docs/architecture"],
+      ["Choose a workflow", "/docs/choose-workflow"],
+    ],
+  },
+  {
+    title: "Packages",
+    links: [
+      ["codepot-openapi", "/docs/codepot-openapi"],
+      ["codepotg", "/docs/codepotg"],
+      ["codepotx", "/docs/codepotx"],
+      ["codepotx-cli", "/docs/codepotx-cli"],
+      ["Package links", "/docs/package-links"],
+    ],
+  },
+  {
+    title: "Platform",
+    links: [
+      ["Codepot Lang", "/docs/codepot-lang"],
+      ["codepot CLI", "/docs/codepot-cli"],
+      ["Codepot LSP", "/docs/codepot-lsp"],
+      ["Language extension", "/docs/codepot-extension"],
+      ["Web and MCP", "/docs/codepot-web-mcp"],
+    ],
+  },
+  {
+    title: "Learn",
+    links: [
+      ["Guides", "/docs/guides"],
+      ["Typed intent", "/docs/typed-intent"],
+      ["Template packs", "/docs/template-packs"],
+      ["Generation safety", "/docs/generation-safety"],
+      ["Contributing", "/docs/repository-structure"],
+    ],
+  },
+] as const;
+
 export function Footer() {
+  const openapi = getProductById("codepot-openapi");
+  const codepotg = getProductById("codepotg");
+  const registryLinks = [openapi, codepotg]
+    .flatMap((product) => product ? getAvailableLinks(product) : [])
+    .filter((link) => link.kind === "npm" || link.kind === "pypi");
+
   return (
-    <footer className="relative z-10 border-t border-border py-8">
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 text-xs text-muted-foreground sm:flex-row">
-        <span>{new Date().getFullYear()} codepot · MIT License</span>
-        <div className="flex gap-5">
-          <a href="https://github.com/alidantech-org/codepot" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-foreground">GitHub</a>
-          <Link href="/docs" className="transition-colors hover:text-foreground">Docs</Link>
-          <a href="https://www.npmjs.com/package/codepotx" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-foreground">npm</a>
+    <footer className="relative z-10 border-t border-border bg-card/30">
+      <div className="mx-auto max-w-7xl px-6 py-12">
+        <div className="grid gap-10 lg:grid-cols-[1.4fr_3fr]">
+          <div>
+            <Link href="/" className="bg-linear-to-r from-primary to-secondary bg-clip-text text-xl font-bold tracking-tight text-transparent">
+              codepot
+            </Link>
+            <p className="mt-4 max-w-sm text-sm leading-7 text-muted-foreground">{ecosystem.project.tagline}</p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              <a href={ecosystem.project.github} target="_blank" rel="noopener noreferrer" className="rounded-full border border-border bg-background px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-card-muted">
+                GitHub
+              </a>
+              {registryLinks.map((link) => (
+                <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" className="rounded-full border border-border bg-background px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-card-muted">
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+            {footerGroups.map((group) => (
+              <div key={group.title}>
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground">{group.title}</h2>
+                <ul className="mt-4 space-y-3">
+                  {group.links.map(([label, href]) => (
+                    <li key={href}>
+                      <Link href={href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">{label}</Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-10 flex flex-col gap-3 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <span>{new Date().getFullYear()} Codepot · {ecosystem.project.license} License</span>
+          <span>Typed software intent · reusable templates · safe generation</span>
         </div>
       </div>
     </footer>

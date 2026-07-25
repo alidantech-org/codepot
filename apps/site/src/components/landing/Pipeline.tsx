@@ -19,10 +19,10 @@ export function Pipeline({ steps }: { steps: PipelineStep[] }) {
 
   return (
     <section id="pipeline" className="pb-24">
-      <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-secondary">Three-layer architecture</p>
-      <h2 className="mb-3 text-3xl font-semibold tracking-tight text-foreground">How Codepot works</h2>
-      <p className="mb-12 max-w-xl text-[15px] leading-7 text-muted-foreground">
-        Typed contracts describe intent, template packs preserve implementation patterns, and consumer tasks control generation inside each project.
+      <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-secondary">Feature maturity path</p>
+      <h2 className="mb-3 text-3xl font-semibold tracking-tight text-foreground">How Codepot evolves without abandoning working tools</h2>
+      <p className="mb-12 max-w-2xl text-[15px] leading-7 text-muted-foreground">
+        New ideas can be proven in mature packages, stabilized behind the frontend-neutral codepotx runtime, and finally expressed through the Rust language and toolchain.
       </p>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card/50">

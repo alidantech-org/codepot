@@ -1,5 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import matter from "gray-matter";
 
@@ -9,15 +9,25 @@ const workspaceRoot = resolve(appRoot, "../..");
 const docsRoot = resolve(workspaceRoot, "docs");
 const output = resolve(appRoot, "src/generated/docs.ts");
 
-/**
- * Root docs remain the maintained source. Only slugs explicitly listed in
- * navigation.json are embedded into the public site, keeping maintainer-only
- * notes and release documents outside public routes.
- */
 const navigation = JSON.parse(await readFile(resolve(docsRoot, "navigation.json"), "utf8"));
+const ecosystem = JSON.parse(await readFile(resolve(docsRoot, "ecosystem.json"), "utf8"));
 const documents = {};
 const index = [];
 const seen = new Set();
+
+function resolveDocumentSource(item) {
+  const source = typeof item.source === "string" ? item.source : item.slug;
+  if (!/^[a-z0-9][a-z0-9/_-]*$/.test(source) || source.includes("..") || source.endsWith("/")) {
+    throw new Error(`Invalid documentation source: ${String(source)}`);
+  }
+
+  const sourceFile = resolve(docsRoot, `${source}.md`);
+  const relativePath = relative(docsRoot, sourceFile);
+  if (!relativePath || relativePath.startsWith("..") || relativePath.split(sep).includes("..")) {
+    throw new Error(`Documentation source escapes docs/: ${source}`);
+  }
+  return { source, sourceFile };
+}
 
 for (const section of navigation.sections ?? []) {
   for (const item of section.items ?? []) {
@@ -30,14 +40,17 @@ for (const section of navigation.sections ?? []) {
     }
     seen.add(slug);
 
-    const source = await readFile(resolve(docsRoot, `${slug}.md`), "utf8");
-    const parsed = matter(source);
-    documents[slug] = source;
+    const { source, sourceFile } = resolveDocumentSource(item);
+    const markdown = await readFile(sourceFile, "utf8");
+    const parsed = matter(markdown);
+    documents[slug] = markdown;
     index.push({
       slug,
+      source,
       title: String(parsed.data.title ?? item.title ?? slug),
       description: String(parsed.data.description ?? ""),
       section: String(section.title ?? "Documentation"),
+      product: typeof parsed.data.product === "string" ? parsed.data.product : null,
       searchText: `${parsed.data.title ?? item.title ?? slug} ${parsed.data.description ?? ""} ${parsed.content}`
         .replace(/[`*_#[\]()>{}|]/g, " ")
         .replace(/\s+/g, " ")
@@ -52,10 +65,11 @@ const source = [
   `export const DOCS = ${JSON.stringify(documents, null, 2)} as const;`,
   `export const NAVIGATION = ${JSON.stringify(navigation, null, 2)} as const;`,
   `export const DOC_INDEX = ${JSON.stringify(index, null, 2)} as const;`,
+  `export const ECOSYSTEM = ${JSON.stringify(ecosystem, null, 2)} as const;`,
   "export type DocSlug = keyof typeof DOCS;",
   "",
 ].join("\n");
 
 await mkdir(dirname(output), { recursive: true });
 await writeFile(output, source, "utf8");
-console.log(`Synced ${Object.keys(documents).length} public documentation files.`);
+console.log(`Synced ${Object.keys(documents).length} public documentation files and ecosystem metadata.`);

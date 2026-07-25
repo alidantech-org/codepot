@@ -1,16 +1,33 @@
 # codepotx
 
-`codepotx` is the active TypeScript implementation of Codepot. It provides typed authoring, deterministic Handlebars template compilation, safe generation planning and execution, a typed runtime, and Node/in-memory platform adapters.
+`codepotx` is the official JavaScript runtime rewrite and long-term-supported release line for Codepot.
 
-## Ownership model
+It stabilizes ideas proven in `codepot-openapi` and `codepotg` behind explicit package boundaries, versioned JSON-safe artifacts, deterministic planning, safe generation, platform adapters, and a frontend-neutral runtime. The current package is under active development and has not yet reached its first stable npm release.
 
-Codepot combines three independently reusable inputs:
+## Role in the ecosystem
 
-1. **Authoring source** — normally `codepotx.config.ts`, describing contracts and semantic metadata.
-2. **Template pack** — Handlebars templates and `paths.yaml`, describing output structure and rendering rules.
-3. **Consumer project** — `CodepotFile.yml`, selecting sources, tasks, outputs, commands, and cleanup policy.
+```text
+codepot-openapi + codepotg
+        ↓ prove contract and generation behavior in real projects
+codepotx
+        ↓ stabilize typed artifacts and runtime operations
+Codepot Lang + final Codepot platform
+```
 
-Authoring does not prescribe framework or folder conventions. Template packs decide generated architecture. Consumer projects control when and where generation runs.
+The supported prototype packages continue to complement `codepotx`. They are not treated as abandoned simply because the rewrite exists.
+
+## Frontend-neutral runtime
+
+`codepotx` is not just a CLI implementation. Its runtime can be driven by:
+
+- `codepotx-cli`;
+- programmatic Node.js applications;
+- editor extensions;
+- web or desktop interfaces;
+- MCP servers and AI integrations;
+- test and in-memory harnesses.
+
+The CLI remains a thin frontend so every client shares the same authoring, planning, safety, diagnostics, and execution behavior.
 
 ## Package entrypoints
 
@@ -24,7 +41,7 @@ import { createTemplatingEngine } from 'codepotx/templating';
 import { createGenerationEngine } from 'codepotx/generation';
 ```
 
-Published entrypoints are explicit and curated:
+Supported exports:
 
 - `codepotx`
 - `codepotx/contract`
@@ -40,48 +57,32 @@ Internal folders are not supported package subpaths.
 
 ```text
 contract
-  protocol, artifacts, operations, ports, diagnostics, events, sources
+  versioned protocols, artifacts, operations, ports, diagnostics, events, sources
 
 internal
   package metadata, portable paths, shared operation results
 
 authoring
-  DSL domains, compiler passes, schema normalization, validation,
-  application use cases, source/cache infrastructure
+  typed DSL domains, compiler passes, normalization, validation, source loading
 
 templating
-  raw and normalized config, discovery, descriptor compilation,
-  paths, references, context, variables, secure rendering
+  paths.yaml, discovery, descriptors, references, variables, secure Handlebars rendering
 
 generation
-  CodepotFile config, planning, rendering coordination, writing,
-  manifests, transactions, commands, caching, reports, events, use cases
+  CodepotFile.yml, planning, rendering, manifests, transactions, commands, reports
 
 platform
-  node adapters, memory adapters, shared infrastructure capabilities
+  Node adapters, memory adapters, cancellation, codecs, hashing, events, source resolution
 
 runtime
-  run context, exhaustive typed dispatch, lifecycle events, composition
+  typed requests, exhaustive dispatch, lifecycle events, composition
 ```
 
-Dependency direction is enforced by architecture tests:
-
-```text
-contract   -> contract only
-internal   -> internal + contract
-platform   -> platform + contract + internal
-authoring  -> authoring + contract + internal
-templating -> templating + contract + internal
-generation -> generation + contract + internal
-runtime    -> contract + platform + engine public APIs + internal
-CLI        -> published runtime and contract APIs
-```
-
-Generation depends on `AuthoringPort` and `TemplatingPort`, never concrete engine implementations. Authoring and templating do not import generation. Domain layers do not call un-injected filesystem, process, Git, cache, or terminal APIs.
+Architecture tests enforce dependency direction. Generation depends on authoring and templating ports rather than concrete engine implementations. Domain layers do not reach directly into filesystem, process, Git, cache, or terminal APIs.
 
 ## Stable artifacts
 
-The layers communicate through versioned, readonly, JSON-safe artifacts:
+The major layers communicate through readonly, deterministic, JSON-safe artifacts such as:
 
 - `CompiledAuthoringArtifact`
 - `CompiledTemplatePack`
@@ -91,7 +92,7 @@ The layers communicate through versioned, readonly, JSON-safe artifacts:
 - `GenerationManifest`
 - `GenerationResult`
 
-Artifacts contain no functions, Zod instances, Handlebars instances, mutable builders, CLI presentation state, or platform implementation objects. Producer metadata is centralized and artifact digests are deterministic.
+Artifacts do not contain Zod instances, Handlebars instances, mutable builders, CLI presentation state, or platform implementation objects.
 
 ## Authoring
 
@@ -104,7 +105,7 @@ const v1 = defineVersionContract({
 
 const schemas = v1.defineSchemas({
   User: {
-    id: z.string(),
+    id: z.string().uuid(),
     name: z.string().min(1),
   },
 });
@@ -127,109 +128,64 @@ users.defineRoutes()
 export default defineCodepotConfig({ contracts: [v1] });
 ```
 
-Fields are selectable and editable by default. `.immutable()` permits create-time assignment but not updates. `.managed()` means the backend owns the value and implies readonly behavior. Route cache support is intentionally limited to operation-ID invalidation.
-
-The compiler is an ordered facade over focused passes for properties, schemas, entities, relations, access, hooks, frontends, resources, operations, and cross-operation validation.
+Fields are selectable and editable by default. `.immutable()` permits create-time assignment but blocks updates. `.managed()` marks backend-owned readonly values. Cache metadata is intentionally limited to operation-ID invalidation in the current contract.
 
 ## Template packs
 
-A template pack owns `paths.yaml`, Handlebars templates, partials, static files, selections, naming, lifecycle policy, and optional helper declarations.
+A template pack owns generated architecture through:
 
-Compilation is separated into:
+- `paths.yaml`;
+- Handlebars templates and partials;
+- selectors and aliases;
+- output path tokens;
+- raw and static files;
+- variables and requirements;
+- managed and immutable lifecycle rules.
 
-- raw YAML input and normalized config;
-- source discovery and ignore/hidden-file handling;
-- partial and raw-file detection;
-- folder recipes and output path tokens;
-- descriptor and reference compilation;
-- compiled-pack validation and digesting.
-
-Context construction and variable introspection operate only on stable artifacts. Rendering uses a dedicated Handlebars instance with strict missing-variable behavior and prototype access disabled.
+Rendering uses strict missing-variable behavior with prototype access disabled. Context and variable inspection operate only on stable artifacts.
 
 ## Generation
 
-`CodepotFile.yml` must explicitly set `allow: true` before configured generation work or commands can run.
-
-Generation follows staged use cases:
+`CodepotFile.yml` binds authoring, templates, output, commands, cleanup scopes, and project variables. It must explicitly include `allow: true` before generation or configured commands can run.
 
 ```text
-load CodepotFile
-  -> resolve and validate task
-  -> compile authoring and templates
-  -> build and strictly validate context
-  -> plan every file, command, and cleanup operation
-  -> render virtual files
+load CodepotFile.yml
+  -> resolve task and sources
+  -> compile authoring and template artifacts
+  -> validate context and variables
+  -> plan every output, command, and cleanup action
+  -> render virtual files in memory
   -> apply managed writes and manifest cleanup
   -> run approved commands
-  -> report outcomes and diagnostics
+  -> return reports and diagnostics
 ```
 
-Complete planning happens before mutation. Dry runs do not write or execute commands. Managed, immutable, protected, refused, stale cleanup, atomic write, cancellation, command failure, and rollback behavior are explicit and tested.
+Dry runs do not write files or execute commands. Managed, immutable, protected, refused, stale-cleanup, cancellation, command-failure, and rollback behavior are explicit and tested.
 
 ## Runtime
 
-`CodepotRuntime` accepts `RuntimeRequest<TKind>` and returns `RuntimeResponse<TKind>`. Operation request/result inference is indexed by `RuntimeOperationMap`.
-
-The runtime uses an exhaustive mapped handler registry. Adding an operation requires a matching typed handler; lifecycle orchestration does not contain a growing switch statement. Runtime events are ordered and observational, and listener failures cannot alter required control flow.
-
 ```ts
-const runtime = createDefaultCodepotRuntime({ projectRoot: process.cwd() });
+import { createDefaultCodepotRuntime } from 'codepotx/runtime';
 
-const result = await runtime.execute({
+const runtime = createDefaultCodepotRuntime({
+  projectRoot: process.cwd(),
+});
+
+const response = await runtime.execute({
   kind: 'generation.execute',
   input: { task: 'sdk' },
 });
 ```
 
-## Platform
+Runtime request/result inference is indexed by `RuntimeOperationMap`. Adding an operation requires a matching typed handler. Lifecycle events are observational, and listener failures cannot alter required control flow.
 
-`platform/node/` owns production adapters such as filesystem, command execution, TypeScript module loading, filesystem cache, and local/package/Git/artifact source resolution.
+## Platform adapters
 
-`platform/memory/` owns deterministic filesystem, command, module, cache, and source-registry adapters for tests and embedded use.
+- `platform/node` owns production filesystem, command, TypeScript module, cache, and source-resolution adapters.
+- `platform/memory` owns deterministic adapters for tests and embedded use.
+- `platform/shared` owns storage-independent capabilities such as cancellation, hashing, codecs, changed-aware writing, events, paths, clocks, IDs, and errors.
 
-`platform/shared/` owns capabilities that are independent of one storage mode: cancellation, codec, events, changed-aware writing, hashing, portable path checks, clocks, IDs, errors, and source-resolver contracts.
-
-Both default and memory composition satisfy the same `PlatformServices` contract.
-
-## Extending CodepotX
-
-### Add an authoring compiler pass
-
-1. Add a focused file under `authoring/compiler/passes/`.
-2. Give the pass an explicit typed input and output.
-3. Invoke it in the intended order from `authoring-compiler.ts`.
-4. Add validation in `compiler/validation/` when the rule spans passes.
-5. Update authoring compatibility and artifact baseline tests.
-
-### Add a template capability
-
-1. Extend raw config only when `paths.yaml` needs new syntax.
-2. Normalize it once in `templating/config/`.
-3. Keep discovery, compilation, context, variables, references, and rendering separate.
-4. Keep Handlebars runtime objects out of public artifacts.
-5. Add focused unit tests plus rendered-file baseline coverage.
-
-### Add a generation stage
-
-1. Define or extend the stable request/result contract.
-2. Add a focused use case under `generation/application/`.
-3. Depend on ports, not authoring or templating implementations.
-4. Preserve planning-before-write, dry-run, cancellation, and rollback invariants.
-5. Add memory-adapter tests for success and failure behavior.
-
-### Add a runtime operation
-
-1. Add its exact request/result pair to `RuntimeOperationMap`.
-2. Register a matching handler in `runtime/dispatch/create-runtime-handlers.ts`.
-3. Keep lifecycle events and context handling outside the handler.
-4. Add runtime inference and dispatch tests.
-
-### Add a platform adapter
-
-1. Implement an existing contract port under `platform/node/`, `platform/memory/`, or `platform/shared/`.
-2. Wire it through a typed platform factory.
-3. Do not place business orchestration or domain validation in platform code.
-4. Add adapter parity tests when more than one implementation exists.
+Both compositions satisfy the same `PlatformServices` contract.
 
 ## Validation
 
@@ -240,24 +196,14 @@ pnpm --filter codepotx build
 pnpm --filter codepotx package:lint
 ```
 
-Focused suites are also available:
+Focused suites include architecture, compatibility, contract, authoring, templating, generation, runtime, platform, and integration tests.
 
-```bash
-pnpm --filter codepotx test:architecture
-pnpm --filter codepotx test:compatibility
-pnpm --filter codepotx test:contract
-pnpm --filter codepotx test:unit:authoring
-pnpm --filter codepotx test:unit:templating
-pnpm --filter codepotx test:unit:generation
-pnpm --filter codepotx test:unit:runtime
-pnpm --filter codepotx test:unit:platform
-pnpm --filter codepotx test:integration
-```
-
-The package is ESM-only, targets Node.js 22.18 or newer, builds with tsdown, and validates publishability with Publint and Are The Types Wrong.
+The package is ESM-only, targets Node.js 22.18 or newer, and validates publishability with Publint and Are The Types Wrong.
 
 ## Compatibility policy
 
-Supported package entrypoints are stable. Thin source-level compatibility shims remain where migrated flat modules were previously imported inside the repository. New implementation code must import the owned folders, not those shims.
+Published entrypoints are the supported boundary. Compatibility shims may remain inside the implementation while code is migrated, but new work should import the owned public modules. Active implementation must not depend on stale historical packages.
 
-The preserved Python generator and `codepotx-old` remain behavioral references; active TypeScript code must not import them.
+## License
+
+MIT

@@ -1,29 +1,31 @@
 import type { Metadata, NextPage } from "next";
 
 import { CTABanner } from "@/components/landing/CTABanner";
+import { Ecosystem } from "@/components/landing/Ecosystem";
 import { Examples } from "@/components/landing/Examples";
 import { Features } from "@/components/landing/Features";
 import { Hero } from "@/components/landing/Hero";
 import { Pipeline } from "@/components/landing/Pipeline";
 import { UseCases } from "@/components/landing/UseCases";
-import { CONTRACT_CODE, TASK_CODE, TEMPLATE_CODE } from "@/data/code-examples";
+import { CONTRACT_CODE, RUNTIME_CODE, TASK_CODE } from "@/data/code-examples";
 import { FEATURES } from "@/data/features";
 import { PIPELINE_STEPS } from "@/data/pipeline";
 import { USE_CASES } from "@/data/use-cases";
 
 export const metadata: Metadata = {
-  title: "Codepot — reliable context for developers and AI",
+  title: "Codepot — typed software intent and reusable code generation",
   description:
-    "Use typed contracts, reusable template packs, and project-owned generation tasks to keep developer and AI-generated code consistent.",
+    "Explore Codepot's supported OpenAPI and Jinja packages, official JavaScript runtime, and final Rust language platform for developers, tools, and AI agents.",
 };
 
 const Home: NextPage = () => {
   return (
     <div className="mx-auto w-full max-w-7xl px-3 md:px-6">
       <Hero />
+      <Ecosystem />
       <Features features={FEATURES} />
       <Pipeline steps={PIPELINE_STEPS} />
-      <Examples contractCode={CONTRACT_CODE} templateCode={TEMPLATE_CODE} taskCode={TASK_CODE} />
+      <Examples contractCode={CONTRACT_CODE} taskCode={TASK_CODE} runtimeCode={RUNTIME_CODE} />
       <UseCases useCases={USE_CASES} />
       <CTABanner />
     </div>

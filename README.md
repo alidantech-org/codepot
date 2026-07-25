@@ -1,114 +1,88 @@
 # Codepot
 
-Codepot gives developers and AI agents a shared, reusable source of truth for building software.
+Codepot is a family of complementary tools for describing software intent, producing portable contracts, applying reusable template packs, and generating code safely for developers and AI agents.
 
-It separates software generation into three user-owned layers:
+The project grows through a deliberate feature-maturity path:
 
-1. **Typed contracts** in `codepotx.config.ts` describe resources, schemas, fields, operations, relationships, access rules, and other software intent.
-2. **Template packs** combine `paths.yaml` with Handlebars files to preserve a team’s real framework, naming, folder, and code-style conventions.
-3. **Consumer tasks** in `CodepotFile.yml` choose the contract and templates, control output paths, provide project variables, and run project-owned commands.
+```text
+codepot-openapi + codepotg
+          ↓ prove ideas in real projects
+       codepotx
+          ↓ stabilize a frontend-neutral runtime
+Codepot Lang + compiler/runtime + codepot CLI + LSP + extension + web + MCP
+```
 
-This helps AI-assisted development by making intent and implementation patterns explicit instead of forcing every agent to rediscover or guess them from the repository.
+The current packages do not compete with or automatically replace one another. The prototype workflow remains supported while the official runtime and final language platform mature.
+
+## Ecosystem
+
+### Supported working prototypes
+
+- **`codepot-openapi`** is the original TypeScript-first contract builder. It emits OpenAPI 3.1 JSON/YAML and compiler-resolved `x-codegen` metadata.
+- **`codepotg`** is the stable Python and Jinja template-pack manager and generator. It consumes OpenAPI from `codepot-openapi`, infers a normalized generation model, and renders project code.
+
+These packages are mature, continue to be worked on, and have been used in real projects.
+
+### Official JavaScript ecosystem
+
+- **`codepotx`** is the official stable rewrite and long-term JavaScript runtime. It owns typed authoring, templating, planning, safe generation, platform adapters, and runtime operations.
+- **`codepotx-cli`** is a thin terminal frontend for `codepotx`. Domain behavior remains in the runtime so web tools, editor extensions, MCP servers, desktop applications, and embedded clients can reuse the same operations.
+
+The JavaScript packages are under active development and are not yet presented as published stable releases.
+
+### Final Codepot platform
+
+[`codepot_lang`](https://github.com/alidantech-org/codepot_lang) is the Rust-based language and tooling direction. The active repository includes the strongly typed language, compiler, semantic analysis host, target-neutral IR, canonical formatter, final `codepot` CLI, LSP, and VS Code extension. Web and MCP frontends are part of the planned platform.
 
 ## Workspace
 
 ```text
-apps/site                         Codepot website and Markdown documentation
-packages/nodejs/codepotx          TypeScript authoring, templating, generation, and runtime
-packages/nodejs/codepotx-cli      External codepotx CLI
-packages/nodejs/codepotx-old      Archived previous TypeScript implementation
-packages/python/codepotg          Deprecated Python generator reference
-docs                              Shared Markdown documentation
+apps/site                              Website and root documentation renderer
+packages/nodejs/codepot-openapi        Supported TypeScript OpenAPI prototype
+packages/python/codepotg               Supported Python/Jinja generator
+packages/nodejs/codepotx               Official JavaScript runtime rewrite
+packages/nodejs/codepotx-cli           Thin CLI frontend for codepotx
+docs                                   Public documentation source
 ```
 
-## Install
+## Documentation
+
+All public site documentation is authored under root [`docs/`](./docs). The site reads `docs/navigation.json`, loads the listed Markdown sources, and renders them under `/docs`.
+
+The central [`docs/ecosystem.json`](./docs/ecosystem.json) file records product status, documentation routes, install commands, source links, package registries, and reserved links for future releases.
+
+Run the site locally:
 
 ```bash
 corepack enable
 pnpm install
+pnpm --filter @codepot/site dev
 ```
 
-## Common commands
+Validate and build the documentation site:
+
+```bash
+pnpm --filter @codepot/site validate:docs
+pnpm --filter @codepot/site build
+```
+
+## Workspace commands
 
 ```bash
 pnpm typecheck
 pnpm test
 pnpm build
 pnpm check
-pnpm dev:site
 ```
 
-## Three-layer example
+## Project principles
 
-### Typed contract
-
-```ts
-import { defineCodepotConfig, schema } from 'codepotx';
-
-export default defineCodepotConfig({
-  project: { name: 'example-platform' },
-  contracts: [v1],
-});
-```
-
-### Template pack
-
-```text
-templates/typescript/
-├── paths.yaml
-├── _partials/
-└── {model}/[model.name.kebab].ts.hbs
-```
-
-### Consumer task
-
-```yaml
-allow: true
-
-tasks:
-  sdk:
-    authoring: ./codepotx.config.ts
-    templates: ./templates/typescript
-    output: ./src/generated
-    transactional: true
-```
-
-```bash
-codepotx variables sdk
-codepotx plan sdk
-codepotx generate sdk --dry-run
-codepotx generate sdk
-```
-
-## Website and documentation
-
-The active website under `apps/site` preserves the design and component system from `archives/site` while updating the product content for the current Codepot direction.
-
-Root `docs/*.md` files are the documentation source. `docs/navigation.json` allowlists the consumer-facing pages published through:
-
-```text
-/docs
-/docs/[slug]
-```
-
-Run the site locally:
-
-```bash
-pnpm dev:site
-```
-
-## Codepot Lang
-
-[`codepot_lang`](https://github.com/alidantech-org/codepot_lang) is the larger in-progress language direction. Its goal is to express software intent in a purpose-built strongly typed language for developers, compilers, tools, generators, and AI agents.
-
-Use `codepotx` for the TypeScript workflow today. Codepot Lang remains experimental and does not replace it yet.
-
-## Project rules
-
-- Contracts, template packs, and consumer tasks remain independently reusable.
-- Codepot does not hardcode a framework, ORM, language, or folder structure.
-- Generation is planned and rendered before files are changed.
-- Managed manifests protect user-edited and immutable files.
+- Software meaning and generated implementation patterns remain explicit and reviewable.
+- Contracts, template packs, generation tasks, runtimes, and frontends keep clear ownership boundaries.
+- Frameworks, ORMs, target languages, and folder structures are not hardcoded into the project identity.
+- Planning and validation happen before filesystem mutation.
+- Supported prototypes remain useful while validated behavior moves into stable rewrites.
+- The final Codepot platform gives developers, tools, and AI agents the same typed semantic foundation.
 - No GitHub Actions workflows are used in this repository.
 
 ## License

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Code, Menu, Package, Search } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { GitHubIcon } from "@/components/icons/GitHubIcon";
@@ -10,6 +10,13 @@ import { MobileSidebar } from "@/components/layout/MobileSidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Command } from "@/components/ui/command";
 import { DOC_INDEX } from "@/generated/docs";
+
+const primaryLinks = [
+  { label: "Docs", href: "/docs" },
+  { label: "Packages", href: "/docs/codepot-openapi" },
+  { label: "Guides", href: "/docs/guides" },
+  { label: "Codepot Lang", href: "/docs/codepot-lang" },
+] as const;
 
 export function NavBar() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -31,7 +38,7 @@ export function NavBar() {
       <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 items-center justify-between gap-3 px-2 md:px-6">
+        <div className="mx-auto flex h-14 max-w-[1600px] items-center justify-between gap-3 px-2 md:px-6">
           <div className="flex min-w-0 items-center gap-3 lg:gap-8">
             <button type="button" onClick={() => setSidebarOpen(true)} aria-label="Open navigation menu" className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground lg:hidden">
               <Menu className="h-5 w-5" />
@@ -43,10 +50,15 @@ export function NavBar() {
             </Link>
 
             <div className="hidden items-center gap-1 text-sm text-muted-foreground lg:flex">
-              <Link href="/#features" className="rounded-xl px-3 py-2 transition-colors hover:bg-card-muted hover:text-foreground">Features</Link>
-              <Link href="/#pipeline" className="rounded-xl px-3 py-2 transition-colors hover:bg-card-muted hover:text-foreground">How it works</Link>
-              <Link href="/#examples" className="rounded-xl px-3 py-2 transition-colors hover:bg-card-muted hover:text-foreground">Examples</Link>
-              <Link href="/docs" className="rounded-xl px-3 py-2 transition-colors hover:bg-card-muted hover:text-foreground">Docs</Link>
+              {primaryLinks.map((link) => (
+                <Link key={link.href} href={link.href} className="rounded-xl px-3 py-2 transition-colors hover:bg-card-muted hover:text-foreground">
+                  {link.label}
+                </Link>
+              ))}
+              <a href="https://github.com/alidantech-org/codepot" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl px-3 py-2 transition-colors hover:bg-card-muted hover:text-foreground">
+                <GitHubIcon />
+                GitHub
+              </a>
             </div>
           </div>
 
@@ -54,14 +66,8 @@ export function NavBar() {
             <ThemeToggle />
             <button type="button" onClick={() => setSearchOpen(true)} aria-label="Search documentation" className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground sm:w-auto md:border md:border-border md:bg-card md:px-3 lg:min-w-52 lg:justify-start">
               <Search className="h-4 w-4 shrink-0" />
-              <span className="ml-2 hidden text-sm sm:inline">Search...</span>
+              <span className="ml-2 hidden text-sm sm:inline">Search docs</span>
             </button>
-
-            <div className="hidden items-center gap-1 md:flex">
-              <a href="https://github.com/alidantech-org/codepot" target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm text-foreground transition-colors hover:bg-card-muted"><GitHubIcon /><span className="hidden xl:inline">GitHub</span></a>
-              <a href="https://www.npmjs.com/package/codepotx" target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm text-foreground transition-colors hover:bg-card-muted"><Package className="h-4 w-4" /><span className="hidden xl:inline">NPM</span></a>
-              <a href="https://github.com/alidantech-org/codepot_lang" target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm text-foreground transition-colors hover:bg-card-muted"><Code className="h-4 w-4" /><span className="hidden xl:inline">Language</span></a>
-            </div>
           </div>
         </div>
       </nav>
@@ -76,7 +82,7 @@ export function NavBar() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={(event) => { if (event.key === "Escape") closeSearch(); }}
-                  placeholder="Search documentation..."
+                  placeholder="Search all Codepot documentation..."
                   className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                   autoFocus
                 />

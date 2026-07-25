@@ -1,43 +1,50 @@
 import type { CodeExample } from "./types";
 
 export const CONTRACT_CODE: CodeExample = {
-  filename: "codepotx.config.ts",
+  filename: "codepot-openapi.config.ts",
   language: "typescript",
-  code: `import { defineCodepotConfig, schema } from "codepotx";
+  code: `import {
+  definePackageConfig,
+  defineVersionContract,
+} from "codepot-openapi";
 
-const Email = schema.primitive(
-  schema.string().email(),
-);
+const v1 = defineVersionContract({
+  info: { title: "Example API", version: "v1" },
+});
 
-export default defineCodepotConfig({
-  project: { name: "rescue-platform" },
+export default definePackageConfig({
   contracts: [v1],
+  output: { formats: ["json", "yaml"] },
 });`,
 };
 
-export const TEMPLATE_CODE: CodeExample = {
-  filename: "{model}/[model.name.kebab].ts.hbs",
-  language: "handlebars",
-  code: `export interface {{model.name.pascal}} {
-{{#each model.fields}}
-  {{name.camel}}: {{lang.type}};
-{{/each}}
-}
-
-// Exact imports and output facts are available
-// through file, emit, imports, and dependencies.`,
-};
-
 export const TASK_CODE: CodeExample = {
-  filename: "CodepotFile.yml",
+  filename: "Codepotg.yaml",
   language: "yaml",
   code: `allow: true
 
 tasks:
   sdk:
-    authoring: ./codepotx.config.ts
-    templates: ./templates/typescript
-    output: ./src/generated
-    clean: [models]
-    transactional: true`,
+    input: ./openapi.json
+    language: typescript
+    output: ./generated/sdk
+    # templateDir is optional;
+    # bundled packs are available.`,
+};
+
+export const RUNTIME_CODE: CodeExample = {
+  filename: "run-codepotx.ts",
+  language: "typescript",
+  code: `import {
+  createDefaultCodepotRuntime,
+} from "codepotx/runtime";
+
+const runtime = createDefaultCodepotRuntime({
+  projectRoot: process.cwd(),
+});
+
+await runtime.execute({
+  kind: "generation.plan",
+  input: { task: "sdk" },
+});`,
 };

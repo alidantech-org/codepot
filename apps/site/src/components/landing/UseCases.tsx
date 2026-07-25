@@ -6,10 +6,10 @@ interface UseCase {
 export function UseCases({ useCases }: { useCases: UseCase[] }) {
   return (
     <section className="pb-24">
-      <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-primary">Use cases</p>
-      <h2 className="mb-3 text-3xl font-semibold tracking-tight text-foreground">Build with less repetition and less drift</h2>
-      <p className="mb-12 max-w-xl text-[15px] leading-7 text-muted-foreground">
-        Keep the decisions that matter explicit, then reuse them across teams, applications, target languages, and AI-assisted workflows.
+      <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-primary">Who it serves</p>
+      <h2 className="mb-3 text-3xl font-semibold tracking-tight text-foreground">A shared foundation for teams, tools, and AI</h2>
+      <p className="mb-12 max-w-2xl text-[15px] leading-7 text-muted-foreground">
+        Codepot keeps domain meaning and implementation patterns explicit, whether you are maintaining today&apos;s OpenAPI workflow or building the next generation of developer tooling.
       </p>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
