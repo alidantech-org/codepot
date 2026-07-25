@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from contracts.normalized import ResolutionState
-from tests.fixtures.openapi import load_real_contract
 
 
-def test_real_schema_and_entity_contracts(real_openapi_path) -> None:
-    contract = load_real_contract(real_openapi_path)
+def test_real_schema_entity_http_access_and_frontend_contracts(
+    real_openapi_contract,
+) -> None:
+    contract = real_openapi_contract
     schemas = contract.meta["normalized_schemas"]
     entities = contract.meta["normalized_entities"]
+    domains = contract.meta["normalized_domains"]
+    frontends = contract.meta["normalized_frontends"]
 
     status = schemas.by_id["AppStatus"]
     assert status.types == ("string",)
@@ -75,16 +78,6 @@ def test_real_schema_and_entity_contracts(real_openapi_path) -> None:
     assert key_hash.schema_use.ref.is_resolved
     assert key_hash.schema_use.ref.name == "SharedToken"
 
-    assert schemas.loss_count == 0
-    assert entities.cycle_count == 0
-    assert entities.unresolved_count == 0
-
-
-def test_real_http_access_and_frontend_domains(real_openapi_path) -> None:
-    contract = load_real_contract(real_openapi_path)
-    domains = contract.meta["normalized_domains"]
-    frontends = contract.meta["normalized_frontends"]
-
     assert "global.public" in domains.access.by_id
     assert "global.authenticated" in domains.access.by_id
     assert "users.admin" in domains.access.by_id
@@ -106,4 +99,7 @@ def test_real_http_access_and_frontend_domains(real_openapi_path) -> None:
     assert "findApps" in admin.operations.by_id
     assert "getAppById" in admin.operations.by_id
 
+    assert schemas.loss_count == 0
+    assert entities.cycle_count == 0
+    assert entities.unresolved_count == 0
     assert contract.meta["loss_count"] == 0
