@@ -9,22 +9,22 @@ function Dot({ color }: { color: Feature["color"] }) {
     purple: "bg-secondary",
     teal: "bg-accent",
   };
-  return <span className={`mt-[5px] h-3 w-3 shrink-0 rounded-full ${map[color]}`} />;
+  return <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${map[color]}`} />;
 }
 
 export function Features({ features }: { features: Feature[] }) {
   return (
-    <section id="features" className="landing-card-section max-w-7xl mx-auto px-3 md:px-6">
+    <section id="features" className="landing-card-section mx-4 my-14 max-w-7xl sm:mx-6 sm:my-16 lg:mx-auto lg:my-20">
       <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-primary">Why Codepot</p>
-      <h2 className="mb-3 text-3xl font-semibold tracking-tight text-foreground">One project, clear responsibilities</h2>
-      <p className="mb-12 max-w-2xl text-[15px] leading-7 text-muted-foreground">
+      <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">One project, clear responsibilities</h2>
+      <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
         Each package has a deliberate role. Contracts describe intent, template systems preserve real project conventions, runtimes coordinate safe work, and language tooling makes the same meaning available to editors and AI.
       </p>
 
-      <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <ul className="mt-8 grid grid-cols-1 gap-x-6 md:grid-cols-2">
         {features.map(({ label, color }) => (
-          <li key={label} className="flex items-start gap-3  border-t border-b border-border/50 px-4 py-3 text-[14px] text-foreground transition-colors hover:bg-background/80">
-            <Dot color={color}  />
+          <li key={label} className="flex items-start gap-3 border-b border-border/60 px-1 py-3.5 text-[14px] leading-6 text-foreground transition-colors hover:bg-background/45 sm:px-3">
+            <Dot color={color} />
             {label}
           </li>
         ))}
