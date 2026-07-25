@@ -6,10 +6,14 @@ from tests.fixtures.openapi import load_real_contract
 
 
 def test_real_json_and_yaml_fixtures_produce_the_same_contract(
-    real_openapi_contract,
+    real_openapi_json_path,
     real_openapi_yaml_path,
 ) -> None:
-    json_signature = _contract_signature(real_openapi_contract)
+    json_contract = load_real_contract(real_openapi_json_path)
+    json_signature = _contract_signature(json_contract)
+    del json_contract
+    gc.collect()
+
     yaml_contract = load_real_contract(real_openapi_yaml_path)
     yaml_signature = _contract_signature(yaml_contract)
     del yaml_contract
