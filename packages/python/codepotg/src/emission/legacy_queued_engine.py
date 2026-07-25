@@ -14,6 +14,7 @@ from typing import Any
 
 from contracts.emission import EmissionFile, EmissionPlan, EmissionResult, TemplateContext
 from contracts.events import ProgressSink, RuntimeEvent
+from contracts.normalized_document_contract import build_normalized_document_contract
 from core.system_resources import tune_runtime
 from emission import engine as legacy
 from emission.graph_queue import GraphQueueLimits
@@ -160,6 +161,7 @@ def _legacy_template_context(contract: Any) -> TemplateContext:
     meta: Mapping[str, Any] = api_meta if isinstance(api_meta, Mapping) else {}
     context.update(
         {
+            "document_contract": build_normalized_document_contract(contract.api.raw),
             "normalized": meta.get("normalized"),
             "domains": meta.get("normalized_domains"),
             "schema_contract": meta.get("normalized_schemas"),
