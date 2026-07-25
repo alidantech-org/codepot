@@ -1,0 +1,7 @@
+node={{ file.meta.node }}
+selection={{ selection.name }}
+scope={{ selection.scope }}
+resource={{ selection.resource }}
+count={{ selection.count }}
+operations={% for operation in operations %}{{ operation.name.camel.o }}{% if not loop.last %},{% endif %}{% endfor %}
+source_count={{ sources | length }}
