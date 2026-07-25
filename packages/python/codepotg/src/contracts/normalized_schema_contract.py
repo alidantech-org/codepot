@@ -163,8 +163,8 @@ class NormalizedSchemaKeywordView:
         values.extend(self.additional_properties.diagnostics)
         values.extend(self.unevaluated_items.diagnostics)
         values.extend(self.unevaluated_properties.diagnostics)
-        for use in self._schema_uses():
-            values.extend(use.diagnostics)
+        for schema_use in self._schema_uses():
+            values.extend(schema_use.diagnostics)
         return tuple(values)
 
     def _schema_uses(self) -> tuple[SchemaUse[ApiSchema], ...]:
@@ -267,22 +267,29 @@ def _schema(
     schema_targets: Mapping[str, ApiSchema],
 ) -> NormalizedSchemaKeywordView:
     source_path = f"components.schemas.{name}"
-    use = lambda value, suffix: build_schema_use(
-        value,
-        owner=owner,
-        source_path=f"{source_path}.{suffix}",
-        schema_targets=schema_targets,
-    )
-    sequence_uses = lambda key: tuple(
-        use(value, f"{key}.{index}")
-        for index, value in enumerate(_sequence(raw.get(key)))
-    )
-    mapping_uses = lambda key: MappingProxyType(
-        {
-            str(item_name): use(value, f"{key}.{item_name}")
-            for item_name, value in _mapping(raw.get(key)).items()
-        }
-    )
+
+    def schema_use(value: Any, suffix: str) -> SchemaUse[ApiSchema]:
+        return build_schema_use(
+            value,
+            owner=owner,
+            source_path=f"{source_path}.{suffix}",
+            schema_targets=schema_targets,
+        )
+
+    def sequence_uses(key: str) -> tuple[SchemaUse[ApiSchema], ...]:
+        return tuple(
+            schema_use(value, f"{key}.{index}")
+            for index, value in enumerate(_sequence(raw.get(key)))
+        )
+
+    def mapping_uses(key: str) -> Mapping[str, SchemaUse[ApiSchema]]:
+        return MappingProxyType(
+            {
+                str(item_name): schema_use(value, f"{key}.{item_name}")
+                for item_name, value in _mapping(raw.get(key)).items()
+            }
+        )
+
     return NormalizedSchemaKeywordView(
         id=name,
         source=source_object(raw, source_path=source_path, known_keys=_SCHEMA_KEYS),
@@ -316,10 +323,10 @@ def _schema(
         content_media_type=presence_from_mapping(
             raw, "contentMediaType", source_path=source_path
         ),
-        content_schema=use(raw.get("contentSchema"), "contentSchema"),
-        items=use(raw.get("items"), "items"),
+        content_schema=schema_use(raw.get("contentSchema"), "contentSchema"),
+        items=schema_use(raw.get("items"), "items"),
         prefix_items=sequence_uses("prefixItems"),
-        contains=use(raw.get("contains"), "contains"),
+        contains=schema_use(raw.get("contains"), "contains"),
         min_contains=presence_from_mapping(raw, "minContains", source_path=source_path),
         max_contains=presence_from_mapping(raw, "maxContains", source_path=source_path),
         min_items=presence_from_mapping(raw, "minItems", source_path=source_path),
@@ -341,7 +348,7 @@ def _schema(
             schema_targets=schema_targets,
         ),
         pattern_properties=mapping_uses("patternProperties"),
-        property_names=use(raw.get("propertyNames"), "propertyNames"),
+        property_names=schema_use(raw.get("propertyNames"), "propertyNames"),
         min_properties=presence_from_mapping(raw, "minProperties", source_path=source_path),
         max_properties=presence_from_mapping(raw, "maxProperties", source_path=source_path),
         dependent_required=MappingProxyType(
@@ -361,10 +368,10 @@ def _schema(
         all_of=sequence_uses("allOf"),
         any_of=sequence_uses("anyOf"),
         one_of=sequence_uses("oneOf"),
-        not_schema=use(raw.get("not"), "not"),
-        if_schema=use(raw.get("if"), "if"),
-        then_schema=use(raw.get("then"), "then"),
-        else_schema=use(raw.get("else"), "else"),
+        not_schema=schema_use(raw.get("not"), "not"),
+        if_schema=schema_use(raw.get("if"), "if"),
+        then_schema=schema_use(raw.get("then"), "then"),
+        else_schema=schema_use(raw.get("else"), "else"),
         defs=mapping_uses("$defs"),
         discriminator=freeze_source_map(_mapping(raw.get("discriminator"))),
         read_only=presence_from_mapping(raw, "readOnly", source_path=source_path),
