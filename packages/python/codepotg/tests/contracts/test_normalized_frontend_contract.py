@@ -4,56 +4,67 @@ from contracts.normalized import ResolutionState
 from contracts.normalized_frontend_contract import NormalizedFrontendContract
 from inference.engine import InferenceEngine
 from inference.lossless_contract import build_api_contract
+from tests.fixtures.openapi import load_real_contract
 
 
-def test_frontend_folders_components_screens_and_uses_are_normalized() -> None:
-    contract = build_api_contract(InferenceEngine().infer(_document()))
+def test_real_frontend_components_screens_and_uses_are_normalized(
+    real_openapi_path,
+) -> None:
+    contract = load_real_contract(real_openapi_path)
     frontends: NormalizedFrontendContract = contract.meta["normalized_frontends"]
 
     assert frontends.count == 1
     admin = frontends.by_id["admin"]
-    assert admin.title == "Admin Console"
+    assert admin.title == "Admin"
     assert admin.route_prefix == "/admin"
-    assert admin.folders["components"] == "src/components"
-    assert admin.folders["screens"] == "src/screens"
+    assert admin.source.raw["folders"] == ("admin",)
 
-    table = admin.components.by_id["user-table"]
-    assert table.folder == "components"
+    table = admin.components.by_id["AppsTable"]
     assert table.props.ref is not None and table.props.ref.is_resolved
-    assert table.schemas[0].ref is not None and table.schemas[0].ref.is_resolved
-    assert table.tags == ("users", "table")
-    assert table.notes.explain == ("Render user rows",)
-    assert table.uses[0].alias == "loadUsers"
+    assert table.props.ref.name == "AdminAppsTableProps"
+    assert table.schemas[0].ref is not None
+    assert table.schemas[0].ref.is_resolved
+    assert table.schemas[0].ref.name == "AppPartial"
+    assert table.notes.explain == (
+        "Displays apps returned by the list operation.",
+    )
+    assert table.notes.ux == (
+        "Support loading, empty, and pagination states.",
+    )
+    assert table.uses[0].alias == "findApps"
     assert table.uses[0].operation is not None
     assert table.uses[0].operation.state == ResolutionState.RESOLVED
-    assert table.uses[0].schema.ref is not None
-    assert table.uses[0].schema.ref.state == ResolutionState.RESOLVED
-    assert table.uses[0].purpose == "list"
+    assert table.uses[0].operation.name == "findApps"
 
-    screen = admin.screens.by_id["users"]
-    assert screen.route == "/users"
-    assert screen.full_route == "/admin/users"
-    assert screen.folder == "screens"
-    assert screen.params.ref is not None and screen.params.ref.is_resolved
-    assert screen.query.ref is not None and screen.query.ref.is_resolved
-    assert screen.body.ref is not None and screen.body.ref.is_resolved
-    assert screen.response.ref is not None and screen.response.ref.is_resolved
-    assert screen.components == ("user-table", "user-filter")
-    assert screen.placement["user-table"]["area"] == "main"
-    assert screen.placement["user-filter"]["area"] == "sidebar"
+    screen = admin.screens.by_id["AppsListScreen"]
+    assert screen.route == "/apps"
+    assert screen.full_route == "/admin/apps"
+    assert screen.components == ("table", "filters")
+    assert screen.placement["table"]["$ref"] == (
+        "#/x-codegen/frontends/admin/components/AppsTable"
+    )
+    assert screen.placement["filters"]["$ref"] == (
+        "#/x-codegen/frontends/admin/components/AppsFilters"
+    )
     assert screen.uses[0].operation is not None
     assert screen.uses[0].operation.is_resolved
-    assert screen.tags == ("users", "list")
-    assert screen.notes.ux == ("Keep filters visible",)
+    assert screen.uses[0].operation.name == "findApps"
+    assert screen.notes.implement == (
+        "Render filters above the table and keep pagination in URL state.",
+    )
 
-    assert admin.operations.count == 1
-    assert admin.operations.by_id["listUsers"].id == "listUsers"
-    assert set(admin.schemas.by_id) == {
-        "UserFilter",
-        "UserList",
-        "UserModel",
-    }
-    assert admin.source.raw["futureFrontendFlag"] is True
+    detail = admin.screens.by_id["AppDetailScreen"]
+    assert detail.route == "/apps/:id"
+    assert detail.full_route == "/admin/apps/:id"
+    assert detail.params.ref is not None and detail.params.ref.is_resolved
+    assert detail.params.ref.name == "AppRouteParams"
+
+    assert "findApps" in admin.operations.by_id
+    assert "getAppById" in admin.operations.by_id
+    assert "updateApp" in admin.operations.by_id
+    assert "AdminAppsTableProps" in admin.schemas.by_id
+    assert "AppListQuery" in admin.schemas.by_id
+    assert "AppPublic" in admin.schemas.by_id
     assert frontends.unresolved_count == 0
     assert contract.meta["loss_count"] == 0
 
