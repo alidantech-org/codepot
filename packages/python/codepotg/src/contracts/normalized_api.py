@@ -22,7 +22,7 @@ from contracts.normalized import (
     structured_notes,
 )
 from contracts.normalized_builders import build_schema_use
-from contracts.source import FrozenMap, freeze_source_map
+from contracts.source import FrozenMap
 
 
 @dataclass(frozen=True)
