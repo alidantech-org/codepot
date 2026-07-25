@@ -15,6 +15,32 @@ def test_real_typescript_project_generates_explicit_graph_incrementally(
         project,
         ignore=shutil.ignore_patterns(".generated", ".codepotg"),
     )
+    (project / "openapi.yaml").write_text(
+        """
+openapi: 3.1.0
+info:
+  title: Graph API
+  version: 1.0.0
+paths:
+  /users:
+    get:
+      operationId: listUsers
+      x-codegen:
+        resource:
+          name: users
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    UserStatus:
+      type: string
+      enum: [active, inactive]
+      x-codegen:
+        kind: enum
+""".strip(),
+        encoding="utf-8",
+    )
     templates = project / "templates"
     shutil.rmtree(templates)
     templates.mkdir()
