@@ -24,3 +24,4 @@ Thumbs.db
 .codepot/cache/
 .codepot/backups/
 .build/
+.idea/
