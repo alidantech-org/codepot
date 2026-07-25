@@ -225,7 +225,7 @@ def _emission_file(
     output_root: Path,
     path_config: Any,
     import_planner: Any,
-    package_name: str,
+    package_name: str | None,
 ) -> EmissionFile:
     relative = PurePosixPath(graph_file.output_path.as_posix())
     output_path = output_root / Path(*relative.parts)
@@ -355,7 +355,8 @@ def _resolve_graph_dependencies(
         candidate = candidates[0]
         provider_path = output_root / Path(*candidate.output_path.parts)
         is_self = candidate.output_path == current_file.relative_path
-        outputs[dependency.ref] = candidate.output_path.as_posix()
+        if not is_self:
+            outputs[dependency.ref] = candidate.output_path.as_posix()
         resolved.append(
             replace(
                 dependency,
@@ -377,7 +378,9 @@ def _item_dependencies(context: Mapping[str, Any]) -> tuple[TemplateDependency, 
     dependencies: list[TemplateDependency] = []
     for item in selected.items:
         emit = getattr(item, "emit", None)
-        dependencies.extend(tuple(getattr(emit, "dependencies", ())) if emit is not None else ())
+        dependencies.extend(
+            tuple(getattr(emit, "dependencies", ())) if emit is not None else ()
+        )
     return tuple(dependencies)
 
 
