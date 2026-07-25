@@ -45,7 +45,7 @@ export function Examples({ contractCode, taskCode, runtimeCode }: ExamplesProps)
   const code = { contract: contractCode, task: taskCode, runtime: runtimeCode };
 
   return (
-    <section id="examples" className="pb-24">
+    <section id="examples" className="pb-24 max-w-7xl mx-auto px-3 md:px-6">
       <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-accent">Workflows</p>
       <h2 className="mb-3 text-3xl font-semibold tracking-tight text-foreground">Use today&apos;s packages and follow the stable runtime path</h2>
       <p className="mb-12 max-w-2xl text-[15px] leading-7 text-muted-foreground">

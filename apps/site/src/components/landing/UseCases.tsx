@@ -5,7 +5,7 @@ interface UseCase {
 
 export function UseCases({ useCases }: { useCases: UseCase[] }) {
   return (
-    <section className="pb-24">
+    <section className="pb-24 max-w-7xl mx-auto px-3 md:px-6">
       <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-primary">Who it serves</p>
       <h2 className="mb-3 text-3xl font-semibold tracking-tight text-foreground">A shared foundation for teams, tools, and AI</h2>
       <p className="mb-12 max-w-2xl text-[15px] leading-7 text-muted-foreground">

@@ -18,7 +18,7 @@ export function Pipeline({ steps }: { steps: PipelineStep[] }) {
   }
 
   return (
-    <section id="pipeline" className="landing-section">
+    <section id="pipeline" className="landing-section max-w-7xl mx-auto py-4 px-3 md:px-6">
       <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-secondary">Feature maturity path</p>
       <h2 className="mb-3 text-3xl font-semibold tracking-tight text-foreground">How Codepot evolves without abandoning working tools</h2>
       <p className="mb-12 max-w-2xl text-[15px] leading-7 text-muted-foreground">

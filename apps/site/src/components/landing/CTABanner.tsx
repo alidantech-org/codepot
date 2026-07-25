@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function CTABanner() {
   return (
-    <section className="landing-card-section relative mb-24 overflow-hidden rounded-[2.5rem_1.5rem_4.5rem_1.5rem] border border-primary/25 bg-[linear-gradient(135deg,#21130c_0%,#3b2114_52%,#24140c_100%)] px-6 py-14 text-center shadow-2xl shadow-primary/10 sm:px-12 sm:py-16 dark:border-primary/20">
+    <section className="landing-card-section max-w-7xl mx-auto px-3 md:px-6 relative mb-24 overflow-hidden rounded-[2.5rem_1.5rem_4.5rem_1.5rem] border border-primary/25 bg-[linear-gradient(135deg,#21130c_0%,#3b2114_52%,#24140c_100%)] px-6 py-14 text-center shadow-2xl shadow-primary/10 sm:px-12 sm:py-16 dark:border-primary/20">
       <div aria-hidden="true" className="absolute -left-24 -top-28 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
       <div aria-hidden="true" className="absolute -bottom-32 -right-20 h-72 w-72 rounded-full bg-accent/15 blur-3xl" />
       <div aria-hidden="true" className="hero-orbit absolute -right-14 top-6 h-44 w-44 rounded-full border border-dashed border-accent/25" />

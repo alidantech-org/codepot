@@ -11,7 +11,7 @@ const stageIcons = {
 
 export function Ecosystem() {
   return (
-    <section id="ecosystem" className="landing-section landing-tone-section">
+    <section id="ecosystem" className="landing-section landing-tone-section max-w-7xl mx-auto py-20 px-3 md:px-6 lg:py-28">
       <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-primary">One ecosystem</p>
       <h2 className="mb-3 max-w-3xl text-3xl font-semibold tracking-tight text-foreground">
         Proven packages, an official runtime, and a complete language platform

@@ -5,7 +5,7 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import { Check, Copy } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { vs, vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import { cn } from "@/lib/utils";
 
@@ -49,7 +49,7 @@ export function CodeBlock(props: HTMLAttributes<HTMLPreElement>) {
   const isDark = resolvedTheme === "dark";
 
   return (
-    <figure className={cn("group my-6 overflow-hidden rounded-xl border border-border shadow-sm", isDark ? "bg-[#282c34]" : "bg-[#fafafa]")}>
+    <figure className={cn("group my-6 overflow-hidden rounded-xl border border-border shadow-sm", isDark ? "bg-background" : "bg-card")}>
       <div className={cn("flex items-center justify-between border-b px-4 py-2", isDark ? "border-white/10 bg-white/5" : "border-black/8 bg-black/3")}>
         <span className={cn("text-xs font-medium uppercase tracking-wide", isDark ? "text-white/40" : "text-black/40")}>{language}</span>
         <button type="button" onClick={copyCode} aria-label={copied ? "Copied code" : "Copy code"} className={cn("inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors", isDark ? "text-white/40 hover:bg-white/10 hover:text-white/80" : "text-black/40 hover:bg-black/5 hover:text-black/70")}>
@@ -58,7 +58,7 @@ export function CodeBlock(props: HTMLAttributes<HTMLPreElement>) {
       </div>
       <SyntaxHighlighter
         language={language}
-        style={isDark ? oneDark : oneLight}
+        style={isDark ? vscDarkPlus : vs}
         PreTag="div"
         customStyle={{ margin: 0, padding: "1rem", fontSize: "0.875rem", lineHeight: "1.5", background: "transparent" }}
         codeTagProps={{ style: { display: "block", fontFamily: "var(--font-mono, ui-monospace, 'Cascadia Code', monospace)" } }}

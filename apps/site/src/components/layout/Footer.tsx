@@ -58,10 +58,10 @@ export function Footer() {
       <div aria-hidden="true" className="absolute -left-24 top-8 h-72 w-72 rounded-full bg-primary/8 blur-3xl" />
       <div aria-hidden="true" className="absolute -right-24 bottom-0 h-64 w-64 rounded-full bg-accent/8 blur-3xl" />
 
-      <div className="relative mx-auto max-w-7xl px-6 py-14">
+      <div className="relative mx-auto  px-6 py-12">
         <div className="grid gap-12 lg:grid-cols-[1.4fr_3fr]">
           <div>
-            <Link href="/" className="group inline-flex items-center gap-3" aria-label="Codepot home">
+            <Link href="/" className="group inline-flex items-center" aria-label="Codepot home">
               <Image src="/logo.svg" alt="" width={58} height={58} className="h-14 w-14 transition-transform duration-300 group-hover:-rotate-3 motion-reduce:transition-none" />
               <span className="landing-display text-3xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary">Codepot</span>
             </Link>

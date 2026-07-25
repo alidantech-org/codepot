@@ -38,13 +38,13 @@ export function NavBar() {
       <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <nav className="sticky top-0 z-50 border-b border-border bg-background/82 shadow-[0_8px_32px_color-mix(in_srgb,var(--surface-cocoa)_6%,transparent)] backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-3 px-2 md:px-6">
+        <div className="mx-auto flex h-15 items-center justify-between gap-3 px-2 md:px-6">
           <div className="flex min-w-0 items-center gap-3 lg:gap-8">
             <button type="button" onClick={() => setSidebarOpen(true)} aria-label="Open navigation menu" className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground lg:hidden">
               <Menu className="h-5 w-5" />
             </button>
 
-            <Link href="/" className="group flex min-w-0 items-center gap-1.5" aria-label="Codepot home">
+            <Link href="/" className="group flex min-w-0 items-center" aria-label="Codepot home">
               <Image src="/logo.svg" alt="" width={42} height={42} priority className="h-10 w-10 shrink-0 transition-transform duration-300 group-hover:-rotate-3 motion-reduce:transition-none" />
               <span className="landing-display truncate text-xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary">Codepot</span>
             </Link>
