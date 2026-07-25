@@ -152,7 +152,9 @@ async function addDocument(item, sectionTitle, ancestors = [], inheritedPackage 
   const { source, sourceFile } = resolveDocumentSource(item);
   const markdown = await readFile(sourceFile, "utf8");
   const parsed = matter(markdown);
-  const title = String(parsed.data.title ?? item.title ?? publicPath || "Documentation");
+  const title = String(
+    parsed.data.title ?? item.title ?? (publicPath || "Documentation"),
+  );
   const description = String(parsed.data.description ?? "");
   const packageId =
     typeof item.package === "string"
