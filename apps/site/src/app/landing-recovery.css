@@ -1,3 +1,9 @@
+/*
+ * Landing recovery rules:
+ * - keep the page open and section-based;
+ * - retain card treatment only inside Why Codepot and Craft the next layer;
+ * - keep decorative curves independent from content containers.
+ */
 .landing-shell > section:not(:first-child):not(:last-child) {
   margin-bottom: 0 !important;
   overflow: visible !important;
