@@ -75,20 +75,20 @@ export function Examples({ examples }: ExamplesProps) {
         </p>
 
         <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] xl:items-stretch">
-          <div className="order-2 min-w-0 overflow-hidden rounded-2xl border border-border bg-[#17100b] shadow-xl shadow-black/10 xl:order-1">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+          <div className="order-2 min-w-0 overflow-hidden rounded-2xl border border-border bg-background shadow-lg shadow-primary/5 ring-1 ring-inset ring-white/50 xl:order-1 dark:bg-[#17100b] dark:shadow-xl dark:shadow-black/10 dark:ring-white/5">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card/80 px-4 py-3 dark:border-white/10 dark:bg-white/[0.03]">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
                   <span className="h-2.5 w-2.5 rounded-full bg-primary" />
                   <span className="h-2.5 w-2.5 rounded-full bg-secondary" />
                   <span className="h-2.5 w-2.5 rounded-full bg-accent" />
                 </div>
-                <span className="truncate font-mono text-xs text-[#d8c4b0]">
+                <span className="truncate font-mono text-xs text-foreground dark:text-[#d8c4b0]">
                   {activeExample.filename}
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-[#a9907c]">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground dark:text-[#a9907c]">
                   Editable preview
                 </span>
                 <button
@@ -99,7 +99,7 @@ export function Examples({ examples }: ExamplesProps) {
                       [activeKey]: activeExample.code,
                     }))
                   }
-                  className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2.5 py-1.5 text-xs text-[#d8c4b0] transition-colors hover:bg-white/5 hover:text-white"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground shadow-sm transition-colors hover:border-primary/30 hover:bg-card-muted dark:border-white/10 dark:bg-white/[0.03] dark:text-[#d8c4b0] dark:shadow-none dark:hover:bg-white/5 dark:hover:text-white"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
                   Reset
@@ -131,7 +131,7 @@ export function Examples({ examples }: ExamplesProps) {
                 syntaxHighlighting: true,
               }}
               aria-label={`Editable ${activeExample.filename} example`}
-              className="w-full min-w-0 overflow-hidden text-[13px] [&_.cm-content]:min-w-max [&_.cm-content]:py-4 [&_.cm-editor]:w-full [&_.cm-editor]:bg-transparent [&_.cm-gutters]:border-r [&_.cm-gutters]:border-border/50 [&_.cm-scroller]:overflow-auto [&_.cm-scroller]:font-mono [&_.cm-scroller]:leading-6"
+              className="w-full min-w-0 overflow-hidden bg-background text-[13px] dark:bg-[#17100b] [&_.cm-content]:min-w-max [&_.cm-content]:py-4 [&_.cm-editor]:w-full [&_.cm-editor]:bg-background dark:[&_.cm-editor]:bg-[#17100b] [&_.cm-focused]:outline-none [&_.cm-gutters]:border-r [&_.cm-gutters]:border-border [&_.cm-gutters]:bg-card-muted/70 [&_.cm-gutters]:text-muted-foreground dark:[&_.cm-gutters]:border-white/10 dark:[&_.cm-gutters]:bg-[#211811] dark:[&_.cm-gutters]:text-[#9e8875] [&_.cm-scroller]:overflow-auto [&_.cm-scroller]:font-mono [&_.cm-scroller]:leading-6"
             />
           </div>
 
