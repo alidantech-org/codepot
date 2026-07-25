@@ -16,11 +16,14 @@ export const metadata: Metadata = {
   title: "Codepot — typed software intent and reusable code generation",
   description:
     "Explore Codepot's supported OpenAPI and Jinja packages, official JavaScript runtime, and final Rust language platform for developers, tools, and AI agents.",
+  alternates: {
+    canonical: "/",
+  },
 };
 
 const Home: NextPage = () => {
   return (
-    <div className="mx-auto w-full max-w-7xl px-3 md:px-6">
+    <div className="landing-shell mx-auto w-full max-w-7xl px-3 md:px-6">
       <Hero />
       <Ecosystem />
       <Features features={FEATURES} />
