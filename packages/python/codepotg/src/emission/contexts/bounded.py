@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping
 from typing import Any
 
+from contracts.normalized_document_contract import build_normalized_document_contract
 from contracts.template import TemplateContract
 
 
@@ -53,11 +54,13 @@ class BoundedGraphContext(Mapping[str, Any]):
 def bounded_graph_context(contract: TemplateContract) -> BoundedGraphContext:
     """Build bounded globals and internal-only selection roots."""
 
+    document_contract = build_normalized_document_contract(contract.api.raw)
     public = {
         "project": contract.project,
         "lang": contract.lang,
         "emit": contract.emit,
         "meta": contract.meta,
+        "document_contract": document_contract,
         "selected_frontend": contract.selected_frontend,
         "selected_frontends": contract.selected_frontends,
         "frontend_count": contract.frontend_count,
