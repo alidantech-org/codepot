@@ -34,7 +34,10 @@ class SqliteIndexWriter:
         self._locations: dict[str, tuple[Any, ...]] = {}
         self._mentions: list[tuple[str, str, str, str, str]] = []
         self._dependencies: list[tuple[str, str, str, str]] = []
-        self._connection = sqlite3.connect(self.path)
+        # The compiler constructs the writer on the producer thread, then transfers
+        # exclusive use to its single record worker. Closing happens only after that
+        # worker has joined, so cross-thread access is sequential rather than concurrent.
+        self._connection = sqlite3.connect(self.path, check_same_thread=False)
         self._closed = False
         _configure_writer(self._connection, cache_bytes=cache_bytes)
         self._create_schema()
