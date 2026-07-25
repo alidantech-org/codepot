@@ -10,6 +10,7 @@ import {
   generateDocMetadata,
   generateStaticParams as generatePublicDocParams,
   getDocByPath,
+  type GeneratedDocParams,
 } from "@/lib/docs";
 
 interface DocPageProps {
@@ -18,7 +19,7 @@ interface DocPageProps {
 
 export const dynamicParams = false;
 
-export function generateStaticParams(): { path: string[] }[] {
+export function generateStaticParams(): GeneratedDocParams[] {
   return generatePublicDocParams();
 }
 
