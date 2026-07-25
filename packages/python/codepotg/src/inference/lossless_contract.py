@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 from contracts.api import ApiContract
+from contracts.normalized import contract_collection
 from contracts.normalized_api import build_normalized_api_view
 from contracts.normalized_codegen_contract import build_normalized_codegen_contract
 from contracts.normalized_domains import build_normalized_domain_view
@@ -33,8 +34,25 @@ def build_api_contract(graph: InferenceGraph) -> ApiContract:
     )
     domains = build_normalized_domain_view(contract, raw)
     schema_contract = build_normalized_schema_contract(contract, raw)
-    codegen_contract = build_normalized_codegen_contract(contract, raw, domains)
     entity_contract = build_normalized_entity_contract(contract, raw)
+    codegen_contract = build_normalized_codegen_contract(contract, raw, domains)
+    codegen_contract = replace(
+        codegen_contract,
+        resources=contract_collection(
+            replace(
+                resource,
+                entities=contract_collection(
+                    entity
+                    for entity in entity_contract.entities.all
+                    if entity.resource is not None
+                    and entity.resource.is_resolved
+                    and entity.resource.target is not None
+                    and entity.resource.target.id == resource.id
+                ),
+            )
+            for resource in codegen_contract.resources.all
+        ),
+    )
     frontend_contract = build_normalized_frontend_contract(contract, raw)
 
     return replace(
