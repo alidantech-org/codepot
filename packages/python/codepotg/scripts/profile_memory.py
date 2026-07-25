@@ -26,13 +26,14 @@ for value in (str(SOURCE_ROOT), str(PACKAGE_ROOT)):
         sys.path.insert(0, value)
 
 from app.models import EmitInput  # noqa: E402
+from app.workflows.normalization import required_normalized_roots  # noqa: E402
 from app.workflows.template_paths import resolve_template_root  # noqa: E402
 from core.memory_trace import MemoryTrace  # noqa: E402
 from emission.bounded_graph_engine import emit_bounded_graph  # noqa: E402
 from emission.legacy_queued_engine import emit_legacy_queued as emit_legacy  # noqa: E402
 from emission.paths.config_loader import load_path_config  # noqa: E402
 from inference.engine import InferenceEngine  # noqa: E402
-from inference.lossless_contract import build_api_contract  # noqa: E402
+from inference.generation_contract import build_generation_contract  # noqa: E402
 from languages.discovery import resolve_language_adapter  # noqa: E402
 from openapi.jsonl import compile_openapi_source_jsonl  # noqa: E402
 from openapi.loader import load_openapi_document  # noqa: E402
@@ -97,15 +98,23 @@ def main() -> int:
             del document
             trace.snapshot("graph_inferred")
 
-            contract = build_api_contract(graph)
-            del graph
-            trace.snapshot("contract_built")
-
             adapter = resolve_language_adapter(args.language)
             template_root = resolve_template_root(
                 adapter=adapter,
                 templates_path=args.templates,
             )
+            normalized_roots = required_normalized_roots(template_root)
+            print(
+                "normalized roots: "
+                + (", ".join(sorted(normalized_roots)) if normalized_roots else "none")
+            )
+            contract = build_generation_contract(
+                graph,
+                normalized_roots=normalized_roots,
+            )
+            del graph
+            trace.snapshot("contract_built")
+
             request = EmitInput(
                 input_path=source,
                 language=args.language,
@@ -135,6 +144,7 @@ def main() -> int:
                         "jsonl_reused": jsonl.reused,
                         "jsonl_source_size": source_size,
                         "jsonl_index_backend": "sqlite",
+                        "normalized_roots": tuple(sorted(normalized_roots)),
                     },
                 ),
             )
