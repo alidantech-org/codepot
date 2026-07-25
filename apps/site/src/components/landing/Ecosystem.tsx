@@ -20,31 +20,33 @@ export function Ecosystem() {
         Codepot evolves features through three complementary stages. The mature prototype packages remain supported while validated ideas move into codepotx and then into the final Rust platform.
       </p>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="relative grid gap-10 border-y border-border py-8 lg:grid-cols-3 lg:gap-0">
+        <div aria-hidden="true" className="absolute left-0 right-0 top-0 h-px bg-linear-to-r from-transparent via-primary/45 to-transparent" />
         {ecosystem.stages.map((stage, stageIndex) => {
           const Icon = stageIcons[stage.id as keyof typeof stageIcons] ?? Boxes;
           const products = getProductsForStage(stage.id);
           return (
-            <article key={stage.id} className="relative overflow-hidden rounded-2xl border border-border bg-card/70 p-6">
-              <div className="mb-5 flex items-center justify-between">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-background text-primary">
-                  <Icon className="h-5 w-5" />
-                </span>
+            <article
+              key={stage.id}
+              className="relative lg:border-l lg:border-border lg:px-8 first:lg:border-l-0 first:lg:pl-0 last:lg:pr-0"
+            >
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <Icon className="h-6 w-6 text-primary" />
                 <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                   Stage {stageIndex + 1}
                 </span>
               </div>
               <h3 className="text-lg font-semibold tracking-tight text-foreground">{stage.title}</h3>
               <p className="mt-2 min-h-20 text-sm leading-6 text-muted-foreground">{stage.summary}</p>
-              <div className="mt-5 space-y-2 border-t border-border pt-5">
+              <div className="mt-5 border-t border-border">
                 {products.map((product) => (
                   <Link
                     key={product.id}
                     href={`/docs/${product.docsSlug}`}
-                    className="group flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-card-muted"
+                    className="group flex items-center justify-between gap-3 border-b border-border py-3 transition-colors hover:text-primary"
                   >
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium text-foreground">{product.name}</span>
+                      <span className="block truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary">{product.name}</span>
                       <span className="block truncate text-[11px] text-muted-foreground">{product.availability}</span>
                     </span>
                     <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
