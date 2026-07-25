@@ -12,9 +12,11 @@ npm install codepot-openapi zod
 
 `zod` is a peer dependency.
 
+- documentation: https://code.alidantech.org/docs/packages/codepot-openapi
 - npm: https://www.npmjs.com/package/codepot-openapi
 - source: https://github.com/alidantech-org/codepot/tree/main/packages/nodejs/codepot-openapi
-- ecosystem documentation: https://github.com/alidantech-org/codepot/tree/main/docs/packages/codepot-openapi.md
+
+The complete documentation includes getting started, architecture, configuration, schemas, resources, routes, entities, application metadata, `x-codegen`, compiler APIs, validation, best practices, and troubleshooting.
 
 ## What it provides
 
