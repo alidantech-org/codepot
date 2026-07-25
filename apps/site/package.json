@@ -11,12 +11,13 @@
     "dev": "next dev",
     "prebuild": "pnpm prepare:docs",
     "build": "next build",
+    "postbuild": "node scripts/prepare-standalone.mjs",
     "pretypecheck": "pnpm prepare:docs",
     "typecheck": "tsc6 --noEmit",
     "prelint": "pnpm prepare:docs",
     "lint": "eslint .",
     "test": "pnpm validate:docs",
-    "start": "next start",
+    "start": "node .next/standalone/apps/site/server.js",
     "clean": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('.next', { recursive: true, force: true }); rmSync('src/generated', { recursive: true, force: true });\""
   },
   "dependencies": {

@@ -72,11 +72,29 @@ pnpm --filter @codepot/site validate:docs
 pnpm --filter @codepot/site sync:docs
 ```
 
-## Type checking and build
+## Type checking and production build
 
 ```bash
 pnpm --filter @codepot/site typecheck
 pnpm --filter @codepot/site build
+```
+
+The build's `postbuild` step copies `public` and `.next/static` into the monorepo standalone output. Start that production artifact with:
+
+```bash
+pnpm --filter @codepot/site start
+```
+
+From `apps/site`, the equivalent command is:
+
+```bash
+npm start
+```
+
+Do not use `next start` while `output: "standalone"` is enabled. The package start script runs:
+
+```text
+node .next/standalone/apps/site/server.js
 ```
 
 A direct TypeScript check is also supported after dependencies are installed:
@@ -94,6 +112,8 @@ Use the repository root as the build context because the site consumes root docu
 docker compose build --pull site
 docker compose up -d site
 ```
+
+Docker copies the same postbuild-prepared standalone tree used by `npm start` and checks `/docs` plus a nested package page before the image is accepted.
 
 The production mapping is:
 
