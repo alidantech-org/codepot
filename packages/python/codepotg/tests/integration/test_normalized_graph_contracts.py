@@ -4,12 +4,12 @@ import shutil
 from pathlib import Path
 
 from app import GeneratorApp
-from tests.fixtures.openapi import load_real_contract
 
 
 def test_graph_templates_render_real_normalized_entity_and_frontend_roots(
     tmp_path: Path,
-    real_openapi_yaml_path: Path,
+    real_openapi_json_path: Path,
+    real_openapi_contract,
 ) -> None:
     project = tmp_path / "normalized-graph"
     shutil.copytree(
@@ -17,9 +17,17 @@ def test_graph_templates_render_real_normalized_entity_and_frontend_roots(
         project,
         ignore=shutil.ignore_patterns(".generated", ".codepotg"),
     )
-    shutil.copy2(real_openapi_yaml_path, project / "openapi.yaml")
+    shutil.copy2(real_openapi_json_path, project / "openapi.json")
+    config = project / "Codepotg.yml"
+    config.write_text(
+        config.read_text(encoding="utf-8").replace(
+            "input: ./openapi.yaml",
+            "input: ./openapi.json",
+        ),
+        encoding="utf-8",
+    )
 
-    contract = load_real_contract(real_openapi_yaml_path)
+    contract = real_openapi_contract
     entity_contract = contract.meta["normalized_entities"]
     frontend_contract = contract.meta["normalized_frontends"]
     app_entity = entity_contract.entities.by_id["App"]
@@ -78,7 +86,7 @@ emissions:
     )
 
     result = GeneratorApp().generate(
-        config_path=project / "Codepotg.yml",
+        config_path=config,
         task_name="fixture",
     )
 
