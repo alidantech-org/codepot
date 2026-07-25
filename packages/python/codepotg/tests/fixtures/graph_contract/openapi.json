@@ -1,0 +1,82 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Graph Contract API",
+    "version": "v1",
+    "description": "Selection, provider, barrel, and lazy-source fixture"
+  },
+  "paths": {
+    "/widgets": {
+      "get": {
+        "operationId": "listWidgets",
+        "tags": ["widgets"],
+        "responses": {
+          "200": {
+            "description": "Widget list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Widget"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createWidget",
+        "tags": ["widgets"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWidgetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Widget created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Widget"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "WidgetStatus": {
+        "type": "string",
+        "enum": ["active", "disabled"]
+      },
+      "Widget": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "id": {"type": "string"},
+          "status": {"$ref": "#/components/schemas/WidgetStatus"}
+        }
+      },
+      "CreateWidgetDto": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {"$ref": "#/components/schemas/WidgetStatus"}
+        },
+        "x-codegen": {"kind": "dto"}
+      }
+    }
+  },
+  "x-graph-marker": "complete"
+}
