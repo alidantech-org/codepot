@@ -18,6 +18,7 @@ from core.memory_trace import MemoryTrace
 from emission.bounded_graph_engine import emit_bounded_graph
 from emission.legacy_queued_engine import emit_legacy_queued as run_legacy_emission
 from emission.paths.config_loader import load_path_config
+from emission.templates.renderer import clear_environment_cache
 from inference.engine import InferenceEngine
 from inference.generation_contract import build_generation_contract
 from languages.discovery import resolve_language_adapter
@@ -31,6 +32,7 @@ def run_emit(request: EmitInput) -> EmitOutput:
     try:
         return _run_emit(request, trace=trace)
     finally:
+        clear_environment_cache()
         trace.close()
 
 
