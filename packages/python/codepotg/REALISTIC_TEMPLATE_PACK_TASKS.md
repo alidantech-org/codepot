@@ -41,7 +41,8 @@ Status legend:
 
 ## Honest verification gate
 
-- [-] Assert the generated sanitized OpenAPI remains larger than 1 MB.
+- [-] Assert the sanitized contract remains substantial and retains at least 100 paths and 100 schemas.
+- [-] Record serialized input size as evidence without treating formatting-dependent byte size as the sole realism gate.
 - [-] Assert all planned output paths are unique.
 - [-] Assert every planned output is physically written.
 - [-] Assert substantial minimum output counts per pack.
