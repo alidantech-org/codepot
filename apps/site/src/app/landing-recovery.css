@@ -46,7 +46,7 @@
   right: -16rem;
   width: 38rem;
   height: 22rem;
-  transform: rotate(-18deg);
+  --curve-rotation: -18deg;
   animation: free-curve-drift 18s ease-in-out infinite;
 }
 
@@ -55,8 +55,8 @@
   left: -18rem;
   width: 42rem;
   height: 25rem;
+  --curve-rotation: 16deg;
   border-color: color-mix(in srgb, var(--accent) 16%, transparent);
-  transform: rotate(16deg);
   animation: free-curve-drift 22s ease-in-out -6s infinite reverse;
 }
 
@@ -65,18 +65,18 @@
   bottom: 24rem;
   width: 22rem;
   height: 12rem;
+  --curve-rotation: -10deg;
   border-style: dashed;
   border-color: color-mix(in srgb, var(--secondary) 16%, transparent);
-  transform: rotate(-10deg);
   animation: free-curve-drift 20s ease-in-out -10s infinite;
 }
 
 @keyframes free-curve-drift {
   0%, 100% {
-    translate: 0 0;
+    transform: translate3d(0, 0, 0) rotate(var(--curve-rotation));
   }
   50% {
-    translate: 0 -14px;
+    transform: translate3d(0, -14px, 0) rotate(var(--curve-rotation));
   }
 }
 
@@ -98,5 +98,6 @@
 @media (prefers-reduced-motion: reduce) {
   .landing-free-curves span {
     animation: none;
+    transform: rotate(var(--curve-rotation));
   }
 }
