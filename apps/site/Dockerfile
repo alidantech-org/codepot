@@ -20,16 +20,14 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 RUN pnpm --filter @codepot/site validate:docs
 RUN pnpm --filter @codepot/site build
 
-# In a pnpm monorepo, Next.js standalone output preserves the workspace path.
-# Fail the image build if the server, generated nested docs, or production docs
-# routes are missing. This catches static-param and standalone regressions before
-# a broken image can reach the reverse proxy.
+# The package postbuild step prepares one complete standalone artifact for both
+# local `npm start` and Docker. Fail the image build unless the server, static
+# assets, generated nested docs, and representative production routes work.
 RUN set -eux; \
     test -f /workspace/apps/site/.next/standalone/apps/site/server.js; \
+    test -d /workspace/apps/site/.next/standalone/apps/site/.next/static; \
+    test -d /workspace/apps/site/.next/standalone/apps/site/public; \
     grep -q '"packages/codepotg"' /workspace/apps/site/src/generated/docs.ts; \
-    mkdir -p /workspace/apps/site/.next/standalone/apps/site/.next; \
-    cp -R /workspace/apps/site/.next/static /workspace/apps/site/.next/standalone/apps/site/.next/static; \
-    cp -R /workspace/apps/site/public /workspace/apps/site/.next/standalone/apps/site/public; \
     cd /workspace/apps/site/.next/standalone/apps/site; \
     HOSTNAME=127.0.0.1 PORT=3000 node server.js >/tmp/codepot-site.log 2>&1 & \
     server_pid=$!; \
@@ -66,11 +64,9 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 --ingroup nodejs nextjs
 
-# Copy the complete standalone tree because it contains the traced monorepo
-# dependencies at the root and the site server under apps/site.
+# The complete postbuild-prepared standalone tree includes traced dependencies,
+# the monorepo server entrypoint, public files, and Next.js static assets.
 COPY --from=builder --chown=nextjs:nodejs /workspace/apps/site/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /workspace/apps/site/.next/static ./apps/site/.next/static
-COPY --from=builder --chown=nextjs:nodejs /workspace/apps/site/public ./apps/site/public
 
 WORKDIR /app/apps/site
 
