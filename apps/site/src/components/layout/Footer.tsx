@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { ecosystem, getAvailableLinks, getProductById } from "@/lib/ecosystem";
+
 import Logo from "./Logo";
 
 const footerGroups = [
@@ -18,11 +18,11 @@ const footerGroups = [
   {
     title: "Packages",
     links: [
-      ["codepot-openapi", "/docs/codepot-openapi"],
-      ["codepotg", "/docs/codepotg"],
-      ["codepotx", "/docs/codepotx"],
-      ["codepotx-cli", "/docs/codepotx-cli"],
-      ["Package links", "/docs/package-links"],
+      ["All packages", "/docs/packages"],
+      ["codepot-openapi", "/docs/packages/codepot-openapi"],
+      ["codepotg", "/docs/packages/codepotg"],
+      ["codepotx", "/docs/packages/codepotx"],
+      ["codepotx-cli", "/docs/packages/codepotx-cli"],
     ],
   },
   {
@@ -65,7 +65,7 @@ export function Footer() {
         className="absolute -right-24 bottom-0 h-64 w-64 rounded-full bg-accent/8 blur-3xl"
       />
 
-      <div className="relative mx-auto  px-6 py-12">
+      <div className="relative mx-auto px-6 py-12">
         <div className="grid gap-12 lg:grid-cols-[1.4fr_3fr]">
           <div>
             <Logo />
@@ -124,9 +124,7 @@ export function Footer() {
             {new Date().getFullYear()} Codepot · {ecosystem.project.license}{" "}
             License
           </span>
-          <span>
-            Typed software intent · reusable templates · safe generation
-          </span>
+          <span>Typed software intent · reusable templates · safe generation</span>
         </div>
       </div>
     </footer>

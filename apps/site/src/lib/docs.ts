@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import matter from "gray-matter";
 
 import tocData from "@/generated/docs-toc.json";
-import { DOCS, NAVIGATION, type DocSlug } from "@/generated/docs";
+import {
+  DOC_INDEX as GENERATED_DOC_INDEX,
+  DOCS as GENERATED_DOCS,
+  NAVIGATION as GENERATED_NAVIGATION,
+} from "@/generated/docs";
 
 export interface DocFrontmatter {
   title?: string;
@@ -10,6 +14,7 @@ export interface DocFrontmatter {
   order?: number;
   published?: boolean;
   group?: string;
+  product?: string;
   [key: string]: unknown;
 }
 
@@ -19,82 +24,230 @@ export interface Heading {
   level: number;
 }
 
+export interface BreadcrumbItem {
+  title: string;
+  path: string;
+}
+
 export interface DocSummary {
-  slug: string;
+  path: string;
   title: string;
   description?: string;
+  href: string;
 }
 
 export interface Doc extends DocSummary {
   content: string;
   frontmatter: DocFrontmatter;
   headings: Heading[];
+  packageId?: string;
+  section: string;
+  breadcrumbs: BreadcrumbItem[];
   prev?: DocSummary;
   next?: DocSummary;
 }
 
 export interface DocItem extends DocSummary {
-  group?: string;
+  packageId?: string;
   children?: DocItem[];
 }
 
-const DOC_TOCS = tocData as Partial<Record<DocSlug, Heading[]>>;
+export interface DocSection {
+  title: string;
+  description?: string;
+  items: DocItem[];
+}
 
-function loadDoc(slug: DocSlug): Doc {
-  const parsed = matter(DOCS[slug]);
-  const frontmatter = parsed.data as DocFrontmatter;
+interface RawNavigationItem {
+  title: string;
+  path: string;
+  source: string;
+  package?: string;
+  children?: RawNavigationItem[];
+}
+
+interface NavigationConfig {
+  home: RawNavigationItem;
+  redirects?: Record<string, string>;
+  sections: Array<{
+    title: string;
+    description?: string;
+    items: RawNavigationItem[];
+  }>;
+}
+
+interface GeneratedIndexRecord {
+  path: string;
+  source: string;
+  title: string;
+  description: string;
+  section: string;
+  package: string | null;
+  breadcrumbs: BreadcrumbItem[];
+  searchText: string;
+}
+
+export interface GeneratedDocParams {
+  path?: string[];
+}
+
+const DOCS = GENERATED_DOCS as unknown as Record<string, string>;
+const NAVIGATION = GENERATED_NAVIGATION as unknown as NavigationConfig;
+const DOC_INDEX = GENERATED_DOC_INDEX as unknown as GeneratedIndexRecord[];
+const DOC_TOCS = tocData as Record<string, Heading[]>;
+const DOC_REDIRECTS = NAVIGATION.redirects ?? {};
+
+export function hrefForDocPath(path: string): string {
+  return path ? `/docs/${path}` : "/docs";
+}
+
+function indexRecord(path: string): GeneratedIndexRecord | undefined {
+  return DOC_INDEX.find((entry) => entry.path === path);
+}
+
+function navigationItemToDocItem(
+  item: RawNavigationItem,
+  inheritedPackage?: string,
+): DocItem {
+  const record = indexRecord(item.path);
+  const packageId = item.package ?? inheritedPackage ?? record?.package ?? undefined;
   return {
-    slug,
-    title: typeof frontmatter.title === "string" ? frontmatter.title : slug,
-    ...(typeof frontmatter.description === "string" ? { description: frontmatter.description } : {}),
-    content: parsed.content.trim(),
-    frontmatter,
-    headings: DOC_TOCS[slug] ?? [],
+    path: item.path,
+    title: record?.title ?? item.title,
+    ...(record?.description ? { description: record.description } : {}),
+    href: hrefForDocPath(item.path),
+    ...(packageId ? { packageId } : {}),
+    ...(item.children?.length
+      ? {
+          children: item.children.map((child) =>
+            navigationItemToDocItem(child, packageId),
+          ),
+        }
+      : {}),
   };
+}
+
+export function getDocsNavigation(): DocSection[] {
+  return NAVIGATION.sections.map((section) => ({
+    title: section.title,
+    ...(section.description ? { description: section.description } : {}),
+    items: section.items.map((item) => navigationItemToDocItem(item)),
+  }));
+}
+
+export function flattenDocItems(items: readonly DocItem[]): DocItem[] {
+  return items.flatMap((item) => [
+    item,
+    ...(item.children ? flattenDocItems(item.children) : []),
+  ]);
 }
 
 export function getAllDocs(): DocItem[] {
-  return NAVIGATION.sections.flatMap((section) =>
-    section.items.flatMap((item) => {
-      if (!(item.slug in DOCS)) return [];
-      const doc = loadDoc(item.slug as DocSlug);
-      return [{
-        slug: doc.slug,
-        title: doc.title,
-        ...(doc.description ? { description: doc.description } : {}),
-        group: section.title,
-      }];
-    }),
-  );
+  const home = navigationItemToDocItem(NAVIGATION.home);
+  return [
+    home,
+    ...getDocsNavigation().flatMap((section) => flattenDocItems(section.items)),
+  ];
 }
 
-export function getDocBySlug(slug: string): Doc | null {
-  if (!(slug in DOCS)) return null;
-  const docs = getAllDocs();
-  const currentIndex = docs.findIndex((doc) => doc.slug === slug);
-  const doc = loadDoc(slug as DocSlug);
+function findDocItem(items: readonly DocItem[], path: string): DocItem | undefined {
+  for (const item of items) {
+    if (item.path === path) return item;
+    const child = item.children ? findDocItem(item.children, path) : undefined;
+    if (child) return child;
+  }
+  return undefined;
+}
+
+export function getPackageRoot(path: string): DocItem | undefined {
+  const segments = path.split("/");
+  if (segments[0] !== "packages" || !segments[1]) return undefined;
+  const packagePath = `packages/${segments[1]}`;
+  const packageSection = getDocsNavigation().find(
+    (section) => section.title === "Packages",
+  );
+  return packageSection
+    ? findDocItem(packageSection.items, packagePath)
+    : undefined;
+}
+
+function getNavigationScope(path: string): DocItem[] {
+  const packageRoot = getPackageRoot(path);
+  if (packageRoot) return flattenDocItems([packageRoot]);
+
+  return getDocsNavigation().flatMap((section) => {
+    if (section.title !== "Packages") return flattenDocItems(section.items);
+    return section.items;
+  });
+}
+
+function loadDoc(path: string): Doc {
+  const parsed = matter(DOCS[path]);
+  const frontmatter = parsed.data as DocFrontmatter;
+  const record = indexRecord(path);
+  const title =
+    typeof frontmatter.title === "string"
+      ? frontmatter.title
+      : record?.title ?? (path || "Codepot documentation");
+  const description =
+    typeof frontmatter.description === "string"
+      ? frontmatter.description
+      : record?.description;
+  const packageId =
+    typeof frontmatter.product === "string"
+      ? frontmatter.product
+      : record?.package ?? undefined;
+
   return {
-    ...doc,
-    ...(currentIndex > 0 ? { prev: docs[currentIndex - 1] } : {}),
-    ...(currentIndex >= 0 && currentIndex < docs.length - 1 ? { next: docs[currentIndex + 1] } : {}),
+    path,
+    title,
+    ...(description ? { description } : {}),
+    href: hrefForDocPath(path),
+    content: parsed.content.trim(),
+    frontmatter,
+    headings: DOC_TOCS[path] ?? [],
+    ...(packageId ? { packageId } : {}),
+    section: record?.section ?? "Documentation",
+    breadcrumbs: record?.breadcrumbs
+      ? [...record.breadcrumbs]
+      : [{ title, path }],
   };
 }
 
-export function generateStaticParams(): { slug: string }[] {
-  return Object.keys(DOCS).map((slug) => ({ slug }));
+export function getDocByPath(path: string): Doc | null {
+  if (!(path in DOCS)) return null;
+  const doc = loadDoc(path);
+  const scope = getNavigationScope(path);
+  const currentIndex = scope.findIndex((item) => item.path === path);
+
+  return {
+    ...doc,
+    ...(currentIndex > 0 ? { prev: scope[currentIndex - 1] } : {}),
+    ...(currentIndex >= 0 && currentIndex < scope.length - 1
+      ? { next: scope[currentIndex + 1] }
+      : {}),
+  };
+}
+
+export function getRedirectTarget(path: string): string | null {
+  return DOC_REDIRECTS[path] ?? null;
+}
+
+export function generateStaticParams(): GeneratedDocParams[] {
+  return Object.keys(DOCS).map((path) =>
+    path ? { path: path.split("/") } : {},
+  );
 }
 
 export function generateDocMetadata(doc: Doc): Metadata {
   const title = `${doc.title} - Codepot Documentation`;
   const description = doc.description ?? `Documentation for ${doc.title}`;
-  const canonical = `/docs/${doc.slug}`;
+  const canonical = doc.href;
 
   return {
     title,
     description,
-    alternates: {
-      canonical,
-    },
+    alternates: { canonical },
     openGraph: {
       type: "article",
       title,
@@ -120,14 +273,20 @@ export function generateDocMetadata(doc: Doc): Metadata {
 }
 
 export function searchDocs(query: string): DocItem[] {
-  const value = query.trim().toLowerCase();
-  if (!value) return [];
-  return getAllDocs().filter((item) => {
-    const doc = loadDoc(item.slug as DocSlug);
-    return [item.title, item.description, doc.content, item.slug]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase()
-      .includes(value);
-  });
+  const tokens = query
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!tokens.length) return [];
+
+  return DOC_INDEX.filter((item) =>
+    tokens.every((token) => item.searchText.includes(token)),
+  ).map((item) => ({
+    path: item.path,
+    title: item.title,
+    ...(item.description ? { description: item.description } : {}),
+    href: hrefForDocPath(item.path),
+    ...(item.package ? { packageId: item.package } : {}),
+  }));
 }

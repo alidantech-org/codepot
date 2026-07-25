@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import type { Doc } from "@/lib/docs";
 import { cn } from "@/lib/utils";
@@ -8,28 +8,41 @@ export function DocsPager({ doc, className }: { doc: Doc; className?: string }) 
   if (!doc.prev && !doc.next) return null;
 
   return (
-    <div className={cn("mt-16 border-t border-border pt-8", className)}>
-      <div className="flex justify-between gap-4 sm:flex-row">
-        {doc.prev ? (
-          <Link href={`/docs/${doc.prev.slug}`} className="group flex max-w-xs items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
-            <ChevronLeft className="h-4 w-4 shrink-0" />
-            <div className="text-left">
-              <div className="font-medium text-foreground group-hover:text-primary">{doc.prev.title}</div>
-              <div className="text-xs">Previous</div>
-            </div>
-          </Link>
-        ) : <div />}
+    <nav
+      aria-label="Documentation pagination"
+      className={cn("mt-14 grid gap-3 border-t border-border pt-6 sm:grid-cols-2", className)}
+    >
+      {doc.prev ? (
+        <Link
+          href={doc.prev.href}
+          className="group min-w-0 border border-border px-4 py-4 transition-colors hover:border-primary/35 hover:bg-primary/5"
+        >
+          <span className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
+            Previous
+          </span>
+          <span className="mt-2 block truncate text-sm font-semibold text-foreground group-hover:text-primary">
+            {doc.prev.title}
+          </span>
+        </Link>
+      ) : (
+        <span className="hidden sm:block" />
+      )}
 
-        {doc.next ? (
-          <Link href={`/docs/${doc.next.slug}`} className="group flex max-w-xs items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:ml-auto">
-            <div className="text-right">
-              <div className="font-medium text-foreground group-hover:text-primary">{doc.next.title}</div>
-              <div className="text-xs">Next</div>
-            </div>
-            <ChevronRight className="h-4 w-4 shrink-0" />
-          </Link>
-        ) : <div />}
-      </div>
-    </div>
+      {doc.next ? (
+        <Link
+          href={doc.next.href}
+          className="group min-w-0 border border-border px-4 py-4 text-right transition-colors hover:border-primary/35 hover:bg-primary/5 sm:col-start-2"
+        >
+          <span className="flex items-center justify-end gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            Next
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </span>
+          <span className="mt-2 block truncate text-sm font-semibold text-foreground group-hover:text-primary">
+            {doc.next.title}
+          </span>
+        </Link>
+      ) : null}
+    </nav>
   );
 }

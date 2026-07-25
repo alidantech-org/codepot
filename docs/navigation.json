@@ -1,78 +1,166 @@
 {
+  "home": {
+    "title": "Codepot documentation",
+    "path": "",
+    "source": "index"
+  },
+  "redirects": {
+    "codepot-openapi": "packages/codepot-openapi",
+    "codepotg": "packages/codepotg",
+    "codepotx": "packages/codepotx",
+    "codepotx-cli": "packages/codepotx-cli"
+  },
   "sections": [
     {
       "title": "Start",
       "description": "Understand Codepot and choose the right workflow.",
       "items": [
-        { "title": "Overview", "slug": "overview", "source": "getting-started/overview" },
-        { "title": "Getting started", "slug": "getting-started", "source": "getting-started/getting-started" },
-        { "title": "Ecosystem", "slug": "ecosystem", "source": "getting-started/ecosystem" },
-        { "title": "Choose a workflow", "slug": "choose-workflow", "source": "getting-started/choose-workflow" },
-        { "title": "Architecture", "slug": "architecture", "source": "getting-started/architecture" }
+        { "title": "Overview", "path": "overview", "source": "getting-started/overview" },
+        { "title": "Getting started", "path": "getting-started", "source": "getting-started/getting-started" },
+        { "title": "Ecosystem", "path": "ecosystem", "source": "getting-started/ecosystem" },
+        { "title": "Choose a workflow", "path": "choose-workflow", "source": "getting-started/choose-workflow" },
+        { "title": "Architecture", "path": "architecture", "source": "getting-started/architecture" }
       ]
     },
     {
       "title": "Packages",
-      "description": "Current supported packages and the official JavaScript rewrite.",
+      "description": "Complete documentation for supported packages and the official JavaScript runtime.",
       "items": [
-        { "title": "codepot-openapi", "slug": "codepot-openapi", "source": "packages/codepot-openapi" },
-        { "title": "codepotg", "slug": "codepotg", "source": "packages/codepotg" },
-        { "title": "codepotx", "slug": "codepotx", "source": "packages/codepotx" },
-        { "title": "codepotx-cli", "slug": "codepotx-cli", "source": "packages/codepotx-cli" }
+        {
+          "title": "Package directory",
+          "path": "packages",
+          "source": "packages/index",
+          "children": [
+            {
+              "title": "codepot-openapi",
+              "path": "packages/codepot-openapi",
+              "source": "packages/codepot-openapi/index",
+              "package": "codepot-openapi",
+              "children": [
+                { "title": "Getting started", "path": "packages/codepot-openapi/getting-started", "source": "packages/codepot-openapi/getting-started" },
+                { "title": "Architecture", "path": "packages/codepot-openapi/architecture", "source": "packages/codepot-openapi/architecture" },
+                { "title": "Configuration", "path": "packages/codepot-openapi/configuration", "source": "packages/codepot-openapi/configuration" },
+                { "title": "Schemas and properties", "path": "packages/codepot-openapi/schemas", "source": "packages/codepot-openapi/schemas" },
+                { "title": "Resources and routes", "path": "packages/codepot-openapi/resources-routes", "source": "packages/codepot-openapi/resources-routes" },
+                { "title": "Entities", "path": "packages/codepot-openapi/entities", "source": "packages/codepot-openapi/entities" },
+                { "title": "Application metadata", "path": "packages/codepot-openapi/application-metadata", "source": "packages/codepot-openapi/application-metadata" },
+                { "title": "x-codegen metadata", "path": "packages/codepot-openapi/x-codegen", "source": "packages/codepot-openapi/x-codegen" },
+                { "title": "Generation and validation", "path": "packages/codepot-openapi/generation-validation", "source": "packages/codepot-openapi/generation-validation" },
+                { "title": "API reference", "path": "packages/codepot-openapi/api-reference", "source": "packages/codepot-openapi/api-reference" },
+                { "title": "Best practices", "path": "packages/codepot-openapi/best-practices", "source": "packages/codepot-openapi/best-practices" }
+              ]
+            },
+            {
+              "title": "codepotg",
+              "path": "packages/codepotg",
+              "source": "packages/codepotg/index",
+              "package": "codepotg",
+              "children": [
+                { "title": "Getting started", "path": "packages/codepotg/getting-started", "source": "packages/codepotg/getting-started" },
+                { "title": "Architecture", "path": "packages/codepotg/architecture", "source": "packages/codepotg/architecture" },
+                { "title": "Configuration", "path": "packages/codepotg/configuration", "source": "packages/codepotg/configuration" },
+                { "title": "Tasks and CLI", "path": "packages/codepotg/tasks-cli", "source": "packages/codepotg/tasks-cli" },
+                { "title": "Template packs", "path": "packages/codepotg/template-packs", "source": "packages/codepotg/template-packs" },
+                { "title": "paths.yaml", "path": "packages/codepotg/paths-yaml", "source": "packages/codepotg/paths-yaml" },
+                { "title": "Jinja templates", "path": "packages/codepotg/jinja-templates", "source": "packages/codepotg/jinja-templates" },
+                { "title": "Template context", "path": "packages/codepotg/template-context", "source": "packages/codepotg/template-context" },
+                { "title": "Variable overview", "path": "packages/codepotg/template-variables", "source": "packages/codepotg/template-variables" },
+                { "title": "Schema and field variables", "path": "packages/codepotg/variables-schemas-fields", "source": "packages/codepotg/variables-schemas-fields" },
+                { "title": "Operation and HTTP variables", "path": "packages/codepotg/variables-operations-http", "source": "packages/codepotg/variables-operations-http" },
+                { "title": "Entity and access variables", "path": "packages/codepotg/variables-entities-access", "source": "packages/codepotg/variables-entities-access" },
+                { "title": "Frontend and output variables", "path": "packages/codepotg/variables-frontends-output", "source": "packages/codepotg/variables-frontends-output" },
+                { "title": "OpenAPI normalization", "path": "packages/codepotg/openapi-normalization", "source": "packages/codepotg/openapi-normalization" },
+                { "title": "Lifecycle and safety", "path": "packages/codepotg/lifecycle-safety", "source": "packages/codepotg/lifecycle-safety" },
+                { "title": "Performance", "path": "packages/codepotg/performance", "source": "packages/codepotg/performance" },
+                { "title": "Best practices", "path": "packages/codepotg/best-practices", "source": "packages/codepotg/best-practices" }
+              ]
+            },
+            {
+              "title": "codepotx",
+              "path": "packages/codepotx",
+              "source": "packages/codepotx/index",
+              "package": "codepotx",
+              "children": [
+                { "title": "Getting started", "path": "packages/codepotx/getting-started", "source": "packages/codepotx/getting-started" },
+                { "title": "Architecture", "path": "packages/codepotx/architecture", "source": "packages/codepotx/architecture" },
+                { "title": "Authoring", "path": "packages/codepotx/authoring", "source": "packages/codepotx/authoring" },
+                { "title": "Template packs", "path": "packages/codepotx/templating", "source": "packages/codepotx/templating" },
+                { "title": "Generation", "path": "packages/codepotx/generation", "source": "packages/codepotx/generation" },
+                { "title": "Stable artifacts", "path": "packages/codepotx/artifacts", "source": "packages/codepotx/artifacts" },
+                { "title": "Runtime and platform", "path": "packages/codepotx/runtime-platform", "source": "packages/codepotx/runtime-platform" },
+                { "title": "Best practices", "path": "packages/codepotx/best-practices", "source": "packages/codepotx/best-practices" }
+              ]
+            },
+            {
+              "title": "codepotx-cli",
+              "path": "packages/codepotx-cli",
+              "source": "packages/codepotx-cli/index",
+              "package": "codepotx-cli",
+              "children": [
+                { "title": "Getting started", "path": "packages/codepotx-cli/getting-started", "source": "packages/codepotx-cli/getting-started" },
+                { "title": "Commands", "path": "packages/codepotx-cli/commands", "source": "packages/codepotx-cli/commands" },
+                { "title": "Options", "path": "packages/codepotx-cli/options", "source": "packages/codepotx-cli/options" },
+                { "title": "Runtime resolution", "path": "packages/codepotx-cli/runtime-resolution", "source": "packages/codepotx-cli/runtime-resolution" },
+                { "title": "JSON and automation", "path": "packages/codepotx-cli/automation", "source": "packages/codepotx-cli/automation" },
+                { "title": "Troubleshooting", "path": "packages/codepotx-cli/troubleshooting", "source": "packages/codepotx-cli/troubleshooting" }
+              ]
+            }
+          ]
+        }
       ]
     },
     {
       "title": "Codepot Platform",
       "description": "The Rust language and the final integrated toolchain.",
       "items": [
-        { "title": "Platform overview", "slug": "codepot-platform", "source": "platform/overview" },
-        { "title": "Codepot Lang", "slug": "codepot-lang", "source": "platform/language" },
-        { "title": "codepot CLI", "slug": "codepot-cli", "source": "platform/cli" },
-        { "title": "Codepot LSP", "slug": "codepot-lsp", "source": "platform/lsp" },
-        { "title": "Language extension", "slug": "codepot-extension", "source": "platform/extension" },
-        { "title": "Web and MCP", "slug": "codepot-web-mcp", "source": "platform/web-mcp" }
+        { "title": "Platform overview", "path": "codepot-platform", "source": "platform/overview" },
+        { "title": "Codepot Lang", "path": "codepot-lang", "source": "platform/language" },
+        { "title": "codepot CLI", "path": "codepot-cli", "source": "platform/cli" },
+        { "title": "Codepot LSP", "path": "codepot-lsp", "source": "platform/lsp" },
+        { "title": "Language extension", "path": "codepot-extension", "source": "platform/extension" },
+        { "title": "Web and MCP", "path": "codepot-web-mcp", "source": "platform/web-mcp" }
       ]
     },
     {
       "title": "Concepts",
       "description": "Ideas shared across packages and platform generations.",
       "items": [
-        { "title": "Typed software intent", "slug": "typed-intent", "source": "concepts/typed-intent" },
-        { "title": "Contracts and artifacts", "slug": "contracts", "source": "concepts/contracts" },
-        { "title": "Template packs", "slug": "template-packs", "source": "concepts/template-packs" },
-        { "title": "Generation", "slug": "generation", "source": "concepts/generation" },
-        { "title": "Runtime frontends", "slug": "runtime-frontends", "source": "concepts/runtime-frontends" },
-        { "title": "Generation safety", "slug": "generation-safety", "source": "concepts/generation-safety" }
+        { "title": "Typed software intent", "path": "typed-intent", "source": "concepts/typed-intent" },
+        { "title": "Contracts and artifacts", "path": "contracts", "source": "concepts/contracts" },
+        { "title": "Template packs", "path": "template-packs", "source": "concepts/template-packs" },
+        { "title": "Generation", "path": "generation", "source": "concepts/generation" },
+        { "title": "Runtime frontends", "path": "runtime-frontends", "source": "concepts/runtime-frontends" },
+        { "title": "Generation safety", "path": "generation-safety", "source": "concepts/generation-safety" }
       ]
     },
     {
       "title": "Guides",
       "description": "Task-oriented walkthroughs for current and future workflows.",
       "items": [
-        { "title": "Guide index", "slug": "guides", "source": "guides/overview" },
-        { "title": "Prototype workflow", "slug": "prototype-workflow", "source": "guides/prototype-workflow" },
-        { "title": "codepotx workflow", "slug": "codepotx-workflow", "source": "guides/codepotx-workflow" },
-        { "title": "Build a runtime frontend", "slug": "build-runtime-frontend", "source": "guides/build-runtime-frontend" },
-        { "title": "Migration strategy", "slug": "migration", "source": "guides/migration" }
+        { "title": "Guide index", "path": "guides", "source": "guides/overview" },
+        { "title": "Prototype workflow", "path": "prototype-workflow", "source": "guides/prototype-workflow" },
+        { "title": "codepotx workflow", "path": "codepotx-workflow", "source": "guides/codepotx-workflow" },
+        { "title": "Build a runtime frontend", "path": "build-runtime-frontend", "source": "guides/build-runtime-frontend" },
+        { "title": "Migration strategy", "path": "migration", "source": "guides/migration" }
       ]
     },
     {
       "title": "Reference",
       "description": "Commands, configuration, links, and terminology.",
       "items": [
-        { "title": "CLI reference", "slug": "cli-reference", "source": "reference/cli" },
-        { "title": "Configuration reference", "slug": "configuration", "source": "reference/configuration" },
-        { "title": "Package links", "slug": "package-links", "source": "reference/package-links" },
-        { "title": "Glossary", "slug": "glossary", "source": "reference/glossary" }
+        { "title": "CLI reference", "path": "cli-reference", "source": "reference/cli" },
+        { "title": "Configuration reference", "path": "configuration", "source": "reference/configuration" },
+        { "title": "Package links", "path": "package-links", "source": "reference/package-links" },
+        { "title": "Glossary", "path": "glossary", "source": "reference/glossary" }
       ]
     },
     {
       "title": "Contributing",
       "description": "How the repository, documentation, and feature lifecycle are maintained.",
       "items": [
-        { "title": "Repository structure", "slug": "repository-structure", "source": "contributing/repository-structure" },
-        { "title": "Feature lifecycle", "slug": "feature-lifecycle", "source": "contributing/feature-lifecycle" },
-        { "title": "Documentation guide", "slug": "documentation-guide", "source": "contributing/documentation" }
+        { "title": "Repository structure", "path": "repository-structure", "source": "contributing/repository-structure" },
+        { "title": "Feature lifecycle", "path": "feature-lifecycle", "source": "contributing/feature-lifecycle" },
+        { "title": "Documentation guide", "path": "documentation-guide", "source": "contributing/documentation" }
       ]
     }
   ]
