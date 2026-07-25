@@ -152,16 +152,18 @@ export function DocsSidebar({ sections, className, onNavigate }: DocsSidebarProp
           All packages
         </Link>
 
-        <div className="mb-5 border-b border-border pb-4">
-          <span className="mb-2 inline-flex h-8 w-8 items-center justify-center border border-primary/25 bg-primary/8 text-primary">
+        <div className="mb-5 border-b border-border pb-4 flex items-center gap-3">
+          <span className="mb-2 inline-flex h-9 w-9 items-center justify-center border border-primary/25 bg-primary/8 text-primary">
             <PackageOpen className="h-4 w-4" />
           </span>
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-            Package documentation
-          </p>
-          <h2 className="mt-1 truncate text-base font-semibold text-foreground">
-            {packageRoot.title}
-          </h2>
+          <div className="min-w-0">
+            <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
+              Package documentation
+            </p>
+            <h2 className="truncate text-base font-semibold text-foreground">
+              {packageRoot.title}
+            </h2>
+          </div>
         </div>
 
         <div className="space-y-0.5">

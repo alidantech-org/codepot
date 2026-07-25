@@ -1,4 +1,46 @@
 {
+  "": [
+    {
+      "id": "codepot-documentation",
+      "text": "Codepot documentation",
+      "level": 1
+    },
+    {
+      "id": "choose-where-to-begin",
+      "text": "Choose where to begin",
+      "level": 2
+    },
+    {
+      "id": "build-with-supported-packages",
+      "text": "Build with supported packages",
+      "level": 3
+    },
+    {
+      "id": "evaluate-the-official-javascript-runtime",
+      "text": "Evaluate the official JavaScript runtime",
+      "level": 3
+    },
+    {
+      "id": "explore-the-final-platform",
+      "text": "Explore the final platform",
+      "level": 3
+    },
+    {
+      "id": "complete-package-documentation",
+      "text": "Complete package documentation",
+      "level": 2
+    },
+    {
+      "id": "understand-the-ecosystem",
+      "text": "Understand the ecosystem",
+      "level": 2
+    },
+    {
+      "id": "documentation-behavior",
+      "text": "Documentation behavior",
+      "level": 2
+    }
+  ],
   "overview": [
     {
       "id": "codepot",
@@ -209,72 +251,708 @@
       "level": 2
     }
   ],
-  "codepot-openapi": [
+  "packages": [
+    {
+      "id": "codepot-packages",
+      "text": "Codepot packages",
+      "level": 1
+    },
+    {
+      "id": "available-packages",
+      "text": "Available packages",
+      "level": 2
+    },
+    {
+      "id": "supported-prototype-workflow",
+      "text": "Supported prototype workflow",
+      "level": 3
+    },
+    {
+      "id": "official-javascript-runtime",
+      "text": "Official JavaScript runtime",
+      "level": 3
+    },
+    {
+      "id": "how-to-choose",
+      "text": "How to choose",
+      "level": 2
+    },
+    {
+      "id": "documentation-policy",
+      "text": "Documentation policy",
+      "level": 2
+    }
+  ],
+  "packages/codepot-openapi": [
     {
       "id": "codepot-openapi",
       "text": "codepot-openapi",
       "level": 1
     },
     {
+      "id": "package-status",
+      "text": "Package status",
+      "level": 2
+    },
+    {
+      "id": "what-the-package-owns",
+      "text": "What the package owns",
+      "level": 2
+    },
+    {
+      "id": "learning-path",
+      "text": "Learning path",
+      "level": 2
+    },
+    {
+      "id": "typical-workflow",
+      "text": "Typical workflow",
+      "level": 2
+    },
+    {
       "id": "install",
       "text": "Install",
       "level": 2
+    }
+  ],
+  "packages/codepot-openapi/getting-started": [
+    {
+      "id": "getting-started",
+      "text": "Getting started",
+      "level": 1
     },
     {
-      "id": "what-it-owns",
-      "text": "What it owns",
+      "id": "requirements",
+      "text": "Requirements",
       "level": 2
     },
     {
-      "id": "basic-contract",
-      "text": "Basic contract",
+      "id": "create-a-contract-file",
+      "text": "Create a contract file",
       "level": 2
     },
     {
-      "id": "openapi-plus-codepot-metadata",
-      "text": "OpenAPI plus Codepot metadata",
+      "id": "generate-files",
+      "text": "Generate files",
       "level": 2
     },
     {
-      "id": "schemas-and-properties",
-      "text": "Schemas and properties",
+      "id": "validate-without-changing-contracts",
+      "text": "Validate without changing contracts",
       "level": 2
     },
     {
-      "id": "entities-and-relations",
-      "text": "Entities and relations",
+      "id": "initialize-a-project",
+      "text": "Initialize a project",
       "level": 2
     },
     {
-      "id": "frontend-metadata",
-      "text": "Frontend metadata",
+      "id": "programmatic-generation",
+      "text": "Programmatic generation",
+      "level": 2
+    },
+    {
+      "id": "next-steps",
+      "text": "Next steps",
+      "level": 2
+    }
+  ],
+  "packages/codepot-openapi/architecture": [
+    {
+      "id": "architecture-and-compilation",
+      "text": "Architecture and compilation",
+      "level": 1
+    },
+    {
+      "id": "authoring-layer",
+      "text": "Authoring layer",
+      "level": 2
+    },
+    {
+      "id": "compilation-layer",
+      "text": "Compilation layer",
+      "level": 2
+    },
+    {
+      "id": "validation-stages",
+      "text": "Validation stages",
+      "level": 2
+    },
+    {
+      "id": "reference-resolution",
+      "text": "Reference resolution",
+      "level": 2
+    },
+    {
+      "id": "output-layer",
+      "text": "Output layer",
+      "level": 2
+    },
+    {
+      "id": "public-boundaries",
+      "text": "Public boundaries",
       "level": 2
     },
     {
       "id": "relationship-to-codepotg",
       "text": "Relationship to codepotg",
       "level": 2
+    }
+  ],
+  "packages/codepot-openapi/configuration": [
+    {
+      "id": "package-configuration",
+      "text": "Package configuration",
+      "level": 1
     },
     {
-      "id": "relationship-to-codepotx",
-      "text": "Relationship to codepotx",
+      "id": "contracts",
+      "text": "contracts",
       "level": 2
     },
     {
-      "id": "cli",
-      "text": "CLI",
+      "id": "output",
+      "text": "output",
       "level": 2
     },
     {
-      "id": "development",
-      "text": "Development",
+      "id": "server",
+      "text": "server",
+      "level": 2
+    },
+    {
+      "id": "compile",
+      "text": "compile",
+      "level": 2
+    },
+    {
+      "id": "validation",
+      "text": "validation",
+      "level": 2
+    },
+    {
+      "id": "logging",
+      "text": "logging",
+      "level": 2
+    },
+    {
+      "id": "configuration-resolution",
+      "text": "Configuration resolution",
+      "level": 2
+    },
+    {
+      "id": "recommended-layout",
+      "text": "Recommended layout",
       "level": 2
     }
   ],
-  "codepotg": [
+  "packages/codepot-openapi/schemas": [
+    {
+      "id": "properties-schemas-and-references",
+      "text": "Properties, schemas, and references",
+      "level": 1
+    },
+    {
+      "id": "shared-properties",
+      "text": "Shared properties",
+      "level": 2
+    },
+    {
+      "id": "resource-schemas",
+      "text": "Resource schemas",
+      "level": 2
+    },
+    {
+      "id": "projections",
+      "text": "Projections",
+      "level": 2
+    },
+    {
+      "id": "primitive-and-composite-fields",
+      "text": "Primitive and composite fields",
+      "level": 2
+    },
+    {
+      "id": "reusable-components",
+      "text": "Reusable components",
+      "level": 2
+    },
+    {
+      "id": "naming",
+      "text": "Naming",
+      "level": 2
+    },
+    {
+      "id": "best-practices",
+      "text": "Best practices",
+      "level": 2
+    }
+  ],
+  "packages/codepot-openapi/resources-routes": [
+    {
+      "id": "resources-and-routes",
+      "text": "Resources and routes",
+      "level": 1
+    },
+    {
+      "id": "define-a-resource",
+      "text": "Define a resource",
+      "level": 2
+    },
+    {
+      "id": "define-routes",
+      "text": "Define routes",
+      "level": 2
+    },
+    {
+      "id": "http-methods",
+      "text": "HTTP methods",
+      "level": 2
+    },
+    {
+      "id": "parameters",
+      "text": "Parameters",
+      "level": 2
+    },
+    {
+      "id": "request-bodies",
+      "text": "Request bodies",
+      "level": 2
+    },
+    {
+      "id": "responses",
+      "text": "Responses",
+      "level": 2
+    },
+    {
+      "id": "route-sources",
+      "text": "Route sources",
+      "level": 2
+    },
+    {
+      "id": "cache-metadata",
+      "text": "Cache metadata",
+      "level": 2
+    },
+    {
+      "id": "operation-roles",
+      "text": "Operation roles",
+      "level": 2
+    },
+    {
+      "id": "route-design-guidance",
+      "text": "Route design guidance",
+      "level": 2
+    }
+  ],
+  "packages/codepot-openapi/entities": [
+    {
+      "id": "entities-fields-relations-and-constraints",
+      "text": "Entities, fields, relations, and constraints",
+      "level": 1
+    },
+    {
+      "id": "define-entities",
+      "text": "Define entities",
+      "level": 2
+    },
+    {
+      "id": "field-behavior",
+      "text": "Field behavior",
+      "level": 2
+    },
+    {
+      "id": "relations",
+      "text": "Relations",
+      "level": 2
+    },
+    {
+      "id": "constraints",
+      "text": "Constraints",
+      "level": 2
+    },
+    {
+      "id": "base-entities",
+      "text": "Base entities",
+      "level": 2
+    },
+    {
+      "id": "schema-and-entity-separation",
+      "text": "Schema and entity separation",
+      "level": 2
+    },
+    {
+      "id": "best-practices",
+      "text": "Best practices",
+      "level": 2
+    }
+  ],
+  "packages/codepot-openapi/application-metadata": [
+    {
+      "id": "access-hooks-frontends-and-information-notes",
+      "text": "Access, hooks, frontends, and information notes",
+      "level": 1
+    },
+    {
+      "id": "access-policies",
+      "text": "Access policies",
+      "level": 2
+    },
+    {
+      "id": "runtime-hooks",
+      "text": "Runtime hooks",
+      "level": 2
+    },
+    {
+      "id": "frontend-definitions",
+      "text": "Frontend definitions",
+      "level": 2
+    },
+    {
+      "id": "screens",
+      "text": "Screens",
+      "level": 3
+    },
+    {
+      "id": "components",
+      "text": "Components",
+      "level": 3
+    },
+    {
+      "id": "ui-metadata",
+      "text": "UI metadata",
+      "level": 2
+    },
+    {
+      "id": "information-notes",
+      "text": "Information notes",
+      "level": 2
+    },
+    {
+      "id": "design-guidance",
+      "text": "Design guidance",
+      "level": 2
+    }
+  ],
+  "packages/codepot-openapi/x-codegen": [
+    {
+      "id": "x-codegen-metadata",
+      "text": "x-codegen metadata",
+      "level": 1
+    },
+    {
+      "id": "extension-key",
+      "text": "Extension key",
+      "level": 2
+    },
+    {
+      "id": "metadata-categories",
+      "text": "Metadata categories",
+      "level": 2
+    },
+    {
+      "id": "codegen-kind",
+      "text": "Codegen kind",
+      "level": 2
+    },
+    {
+      "id": "dto-roles",
+      "text": "DTO roles",
+      "level": 2
+    },
+    {
+      "id": "entity-variants",
+      "text": "Entity variants",
+      "level": 2
+    },
+    {
+      "id": "ui-metadata",
+      "text": "UI metadata",
+      "level": 2
+    },
+    {
+      "id": "operation-effects",
+      "text": "Operation effects",
+      "level": 2
+    },
+    {
+      "id": "reference-pointers",
+      "text": "Reference pointers",
+      "level": 2
+    },
+    {
+      "id": "applying-metadata-programmatically",
+      "text": "Applying metadata programmatically",
+      "level": 2
+    },
+    {
+      "id": "compatibility-rules",
+      "text": "Compatibility rules",
+      "level": 2
+    },
+    {
+      "id": "plain-openapi-compatibility",
+      "text": "Plain OpenAPI compatibility",
+      "level": 2
+    }
+  ],
+  "packages/codepot-openapi/generation-validation": [
+    {
+      "id": "generation-validation-and-cli",
+      "text": "Generation, validation, and CLI",
+      "level": 1
+    },
+    {
+      "id": "cli-commands",
+      "text": "CLI commands",
+      "level": 2
+    },
+    {
+      "id": "init",
+      "text": "init",
+      "level": 2
+    },
+    {
+      "id": "generate",
+      "text": "generate",
+      "level": 2
+    },
+    {
+      "id": "validate",
+      "text": "validate",
+      "level": 2
+    },
+    {
+      "id": "programmatic-compiler",
+      "text": "Programmatic compiler",
+      "level": 2
+    },
+    {
+      "id": "programmatic-generation",
+      "text": "Programmatic generation",
+      "level": 2
+    },
+    {
+      "id": "file-writing",
+      "text": "File writing",
+      "level": 2
+    },
+    {
+      "id": "document-validation",
+      "text": "Document validation",
+      "level": 2
+    },
+    {
+      "id": "logging",
+      "text": "Logging",
+      "level": 2
+    },
+    {
+      "id": "release-checks",
+      "text": "Release checks",
+      "level": 2
+    },
+    {
+      "id": "troubleshooting",
+      "text": "Troubleshooting",
+      "level": 2
+    },
+    {
+      "id": "config-cannot-be-loaded",
+      "text": "Config cannot be loaded",
+      "level": 3
+    },
+    {
+      "id": "a-reference-cannot-be-resolved",
+      "text": "A reference cannot be resolved",
+      "level": 3
+    },
+    {
+      "id": "openapi-validation-fails",
+      "text": "OpenAPI validation fails",
+      "level": 3
+    }
+  ],
+  "packages/codepot-openapi/api-reference": [
+    {
+      "id": "public-api-reference",
+      "text": "Public API reference",
+      "level": 1
+    },
+    {
+      "id": "core-builders",
+      "text": "Core builders",
+      "level": 2
+    },
+    {
+      "id": "package-configuration",
+      "text": "Package configuration",
+      "level": 2
+    },
+    {
+      "id": "schema-and-components",
+      "text": "Schema and components",
+      "level": 2
+    },
+    {
+      "id": "routes",
+      "text": "Routes",
+      "level": 2
+    },
+    {
+      "id": "compiler-and-validation",
+      "text": "Compiler and validation",
+      "level": 2
+    },
+    {
+      "id": "generation-and-output",
+      "text": "Generation and output",
+      "level": 2
+    },
+    {
+      "id": "high-level-facade",
+      "text": "High-level facade",
+      "level": 2
+    },
+    {
+      "id": "openapi-constants-and-types",
+      "text": "OpenAPI constants and types",
+      "level": 2
+    },
+    {
+      "id": "x-codegen",
+      "text": "x-codegen",
+      "level": 2
+    },
+    {
+      "id": "naming-helpers",
+      "text": "Naming helpers",
+      "level": 2
+    },
+    {
+      "id": "logging",
+      "text": "Logging",
+      "level": 2
+    },
+    {
+      "id": "export-stability",
+      "text": "Export stability",
+      "level": 2
+    }
+  ],
+  "packages/codepot-openapi/best-practices": [
+    {
+      "id": "best-practices-and-troubleshooting",
+      "text": "Best practices and troubleshooting",
+      "level": 1
+    },
+    {
+      "id": "organize-by-domain",
+      "text": "Organize by domain",
+      "level": 2
+    },
+    {
+      "id": "preserve-stable-identities",
+      "text": "Preserve stable identities",
+      "level": 2
+    },
+    {
+      "id": "prefer-semantic-metadata",
+      "text": "Prefer semantic metadata",
+      "level": 2
+    },
+    {
+      "id": "reuse-with-intent",
+      "text": "Reuse with intent",
+      "level": 2
+    },
+    {
+      "id": "keep-validation-strict",
+      "text": "Keep validation strict",
+      "level": 2
+    },
+    {
+      "id": "review-generated-documents",
+      "text": "Review generated documents",
+      "level": 2
+    },
+    {
+      "id": "avoid-raw-extension-authoring",
+      "text": "Avoid raw extension authoring",
+      "level": 2
+    },
+    {
+      "id": "common-failures",
+      "text": "Common failures",
+      "level": 2
+    },
+    {
+      "id": "duplicate-schema-or-operation",
+      "text": "Duplicate schema or operation",
+      "level": 3
+    },
+    {
+      "id": "path-parameter-mismatch",
+      "text": "Path parameter mismatch",
+      "level": 3
+    },
+    {
+      "id": "cross-version-reference",
+      "text": "Cross-version reference",
+      "level": 3
+    },
+    {
+      "id": "cache-invalidation-target-missing",
+      "text": "Cache invalidation target missing",
+      "level": 3
+    },
+    {
+      "id": "frontend-operation-cannot-resolve",
+      "text": "Frontend operation cannot resolve",
+      "level": 3
+    },
+    {
+      "id": "generator-output-is-incomplete",
+      "text": "Generator output is incomplete",
+      "level": 3
+    },
+    {
+      "id": "migration-discipline",
+      "text": "Migration discipline",
+      "level": 2
+    }
+  ],
+  "packages/codepotg": [
     {
       "id": "codepotg",
       "text": "codepotg",
+      "level": 1
+    },
+    {
+      "id": "package-status",
+      "text": "Package status",
+      "level": 2
+    },
+    {
+      "id": "what-codepotg-owns",
+      "text": "What CodepotG owns",
+      "level": 2
+    },
+    {
+      "id": "learning-path",
+      "text": "Learning path",
+      "level": 2
+    },
+    {
+      "id": "basic-workflow",
+      "text": "Basic workflow",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/getting-started": [
+    {
+      "id": "getting-started",
+      "text": "Getting started",
       "level": 1
     },
     {
@@ -283,43 +961,33 @@
       "level": 2
     },
     {
-      "id": "what-it-owns",
-      "text": "What it owns",
+      "id": "create-a-project-configuration",
+      "text": "Create a project configuration",
       "level": 2
     },
     {
-      "id": "quick-start",
-      "text": "Quick start",
+      "id": "preview-the-task",
+      "text": "Preview the task",
       "level": 2
     },
     {
-      "id": "configuration-ownership",
-      "text": "Configuration ownership",
+      "id": "generate",
+      "text": "Generate",
       "level": 2
     },
     {
-      "id": "custom-template-packs",
-      "text": "Custom template packs",
+      "id": "use-a-custom-template-pack",
+      "text": "Use a custom template pack",
       "level": 2
     },
     {
-      "id": "lifecycle-policy",
-      "text": "Lifecycle policy",
+      "id": "inspect-a-pack-before-generation",
+      "text": "Inspect a pack before generation",
       "level": 2
     },
     {
-      "id": "performance-and-memory-paths",
-      "text": "Performance and memory paths",
-      "level": 2
-    },
-    {
-      "id": "input-from-codepot-openapi",
-      "text": "Input from codepot-openapi",
-      "level": 2
-    },
-    {
-      "id": "frontend-metadata",
-      "text": "Frontend metadata",
+      "id": "typical-development-loop",
+      "text": "Typical development loop",
       "level": 2
     },
     {
@@ -328,98 +996,93 @@
       "level": 2
     },
     {
-      "id": "relationship-to-codepotx",
-      "text": "Relationship to codepotx",
-      "level": 2
-    },
-    {
-      "id": "development-and-validation",
-      "text": "Development and validation",
+      "id": "next-steps",
+      "text": "Next steps",
       "level": 2
     }
   ],
-  "codepotx": [
+  "packages/codepotg/architecture": [
     {
-      "id": "codepotx",
-      "text": "codepotx",
+      "id": "generation-architecture",
+      "text": "Generation architecture",
       "level": 1
     },
     {
-      "id": "current-status",
-      "text": "Current status",
+      "id": "pipeline",
+      "text": "Pipeline",
       "level": 2
     },
     {
-      "id": "core-model",
-      "text": "Core model",
+      "id": "source-layer",
+      "text": "Source layer",
       "level": 2
     },
     {
-      "id": "public-entrypoints",
-      "text": "Public entrypoints",
+      "id": "normalization-layer",
+      "text": "Normalization layer",
       "level": 2
     },
     {
-      "id": "architecture",
-      "text": "Architecture",
+      "id": "language-adapter",
+      "text": "Language adapter",
       "level": 2
     },
     {
-      "id": "stable-artifacts",
-      "text": "Stable artifacts",
+      "id": "template-planning",
+      "text": "Template planning",
       "level": 2
     },
     {
-      "id": "authoring",
-      "text": "Authoring",
+      "id": "rendering",
+      "text": "Rendering",
       "level": 2
     },
     {
-      "id": "template-packs",
-      "text": "Template packs",
+      "id": "mutation-layer",
+      "text": "Mutation layer",
       "level": 2
     },
     {
-      "id": "generation-safety",
-      "text": "Generation safety",
-      "level": 2
-    },
-    {
-      "id": "runtime",
-      "text": "Runtime",
-      "level": 2
-    },
-    {
-      "id": "multiple-frontends",
-      "text": "Multiple frontends",
-      "level": 2
-    },
-    {
-      "id": "relationship-to-the-prototypes",
-      "text": "Relationship to the prototypes",
-      "level": 2
-    },
-    {
-      "id": "validation",
-      "text": "Validation",
+      "id": "reports-and-diagnostics",
+      "text": "Reports and diagnostics",
       "level": 2
     }
   ],
-  "codepotx-cli": [
+  "packages/codepotg/configuration": [
     {
-      "id": "codepotx-cli",
-      "text": "codepotx-cli",
+      "id": "codepotgyaml-configuration",
+      "text": "Codepotg.yaml configuration",
       "level": 1
     },
     {
-      "id": "command",
-      "text": "Command",
+      "id": "root-shape",
+      "text": "Root shape",
       "level": 2
     },
     {
-      "id": "runtime-resolution",
-      "text": "Runtime resolution",
+      "id": "allow",
+      "text": "allow",
       "level": 2
+    },
+    {
+      "id": "defaults",
+      "text": "defaults",
+      "level": 2
+    },
+    {
+      "id": "tasks",
+      "text": "tasks",
+      "level": 2
+    },
+    {
+      "id": "required-task-fields",
+      "text": "Required task fields",
+      "level": 3
+    },
+    {
+      "id": "optional-task-fields",
+      "text": "Optional task fields",
+      "level": 3
     },
     {
       "id": "commands",
@@ -427,13 +1090,60 @@
       "level": 2
     },
     {
-      "id": "options",
-      "text": "Options",
+      "id": "frontend-selection",
+      "text": "Frontend selection",
       "level": 2
     },
     {
-      "id": "machine-readable-use",
-      "text": "Machine-readable use",
+      "id": "multiple-tasks",
+      "text": "Multiple tasks",
+      "level": 2
+    },
+    {
+      "id": "legacy-filename-rejection",
+      "text": "Legacy filename rejection",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/tasks-cli": [
+    {
+      "id": "tasks-and-cli-reference",
+      "text": "Tasks and CLI reference",
+      "level": 1
+    },
+    {
+      "id": "global-commands",
+      "text": "Global commands",
+      "level": 2
+    },
+    {
+      "id": "generate",
+      "text": "generate",
+      "level": 2
+    },
+    {
+      "id": "generation-summary",
+      "text": "Generation summary",
+      "level": 2
+    },
+    {
+      "id": "init",
+      "text": "init",
+      "level": 2
+    },
+    {
+      "id": "paths",
+      "text": "paths",
+      "level": 2
+    },
+    {
+      "id": "jsonl",
+      "text": "jsonl",
+      "level": 2
+    },
+    {
+      "id": "task",
+      "text": "task",
       "level": 2
     },
     {
@@ -442,18 +1152,1776 @@
       "level": 2
     },
     {
-      "id": "why-it-is-a-separate-package",
-      "text": "Why it is a separate package",
+      "id": "recommended-scripts",
+      "text": "Recommended scripts",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/template-packs": [
+    {
+      "id": "template-packs",
+      "text": "Template packs",
+      "level": 1
+    },
+    {
+      "id": "pack-structure",
+      "text": "Pack structure",
       "level": 2
     },
     {
-      "id": "status-and-publishing",
-      "text": "Status and publishing",
+      "id": "pack-selection-in-a-task",
+      "text": "Pack selection in a task",
+      "level": 2
+    },
+    {
+      "id": "two-compatible-planning-models",
+      "text": "Two compatible planning models",
+      "level": 2
+    },
+    {
+      "id": "graph-packs",
+      "text": "Graph packs",
+      "level": 3
+    },
+    {
+      "id": "legacy-folder-packs",
+      "text": "Legacy folder packs",
+      "level": 3
+    },
+    {
+      "id": "templates-and-partials",
+      "text": "Templates and partials",
+      "level": 2
+    },
+    {
+      "id": "raw-and-static-files",
+      "text": "Raw and static files",
+      "level": 2
+    },
+    {
+      "id": "language-adapters",
+      "text": "Language adapters",
+      "level": 2
+    },
+    {
+      "id": "pack-ownership",
+      "text": "Pack ownership",
+      "level": 2
+    },
+    {
+      "id": "versioning",
+      "text": "Versioning",
+      "level": 2
+    },
+    {
+      "id": "recommended-workflow",
+      "text": "Recommended workflow",
+      "level": 2
+    },
+    {
+      "id": "design-principles",
+      "text": "Design principles",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/paths-yaml": [
+    {
+      "id": "pathsyaml-planning",
+      "text": "paths.yaml planning",
+      "level": 1
+    },
+    {
+      "id": "complete-graph-example",
+      "text": "Complete graph example",
+      "level": 2
+    },
+    {
+      "id": "pack-metadata",
+      "text": "Pack metadata",
+      "level": 2
+    },
+    {
+      "id": "write_policy",
+      "text": "write_policy",
+      "level": 2
+    },
+    {
+      "id": "selections",
+      "text": "selections",
+      "level": 2
+    },
+    {
+      "id": "emissions",
+      "text": "emissions",
+      "level": 2
+    },
+    {
+      "id": "grouped-emissions",
+      "text": "Grouped emissions",
+      "level": 2
+    },
+    {
+      "id": "providers",
+      "text": "Providers",
+      "level": 2
+    },
+    {
+      "id": "provided-facts",
+      "text": "Provided facts",
+      "level": 2
+    },
+    {
+      "id": "barrels",
+      "text": "Barrels",
+      "level": 2
+    },
+    {
+      "id": "legacy-folders",
+      "text": "Legacy folders",
+      "level": 2
+    },
+    {
+      "id": "validate-a-paths-file",
+      "text": "Validate a paths file",
+      "level": 2
+    },
+    {
+      "id": "common-errors",
+      "text": "Common errors",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/jinja-templates": [
+    {
+      "id": "writing-jinja-templates",
+      "text": "Writing Jinja templates",
+      "level": 1
+    },
+    {
+      "id": "basic-model-template",
+      "text": "Basic model template",
+      "level": 2
+    },
+    {
+      "id": "context-boundaries",
+      "text": "Context boundaries",
+      "level": 2
+    },
+    {
+      "id": "normalized-values-first",
+      "text": "Normalized values first",
+      "level": 2
+    },
+    {
+      "id": "filters",
+      "text": "Filters",
+      "level": 2
+    },
+    {
+      "id": "includes",
+      "text": "Includes",
+      "level": 2
+    },
+    {
+      "id": "macros",
+      "text": "Macros",
+      "level": 2
+    },
+    {
+      "id": "template-inheritance",
+      "text": "Template inheritance",
+      "level": 2
+    },
+    {
+      "id": "whitespace-control",
+      "text": "Whitespace control",
+      "level": 2
+    },
+    {
+      "id": "imports-and-dependencies",
+      "text": "Imports and dependencies",
+      "level": 2
+    },
+    {
+      "id": "conditional-output",
+      "text": "Conditional output",
+      "level": 2
+    },
+    {
+      "id": "raw-files",
+      "text": "Raw files",
+      "level": 2
+    },
+    {
+      "id": "debugging",
+      "text": "Debugging",
+      "level": 2
+    },
+    {
+      "id": "safety",
+      "text": "Safety",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/template-context": [
+    {
+      "id": "template-context-model",
+      "text": "Template context model",
+      "level": 1
+    },
+    {
+      "id": "global-context",
+      "text": "Global context",
+      "level": 2
+    },
+    {
+      "id": "project",
+      "text": "project",
+      "level": 2
+    },
+    {
+      "id": "api",
+      "text": "api",
+      "level": 2
+    },
+    {
+      "id": "collection-contracts",
+      "text": "Collection contracts",
+      "level": 2
+    },
+    {
+      "id": "selection-aliases",
+      "text": "Selection aliases",
+      "level": 2
+    },
+    {
+      "id": "providers",
+      "text": "Providers",
+      "level": 2
+    },
+    {
+      "id": "emit",
+      "text": "emit",
+      "level": 2
+    },
+    {
+      "id": "file",
+      "text": "file",
+      "level": 2
+    },
+    {
+      "id": "documentation-values",
+      "text": "Documentation values",
+      "level": 2
+    },
+    {
+      "id": "language-values",
+      "text": "Language values",
+      "level": 2
+    },
+    {
+      "id": "raw-and-extensions",
+      "text": "Raw and extensions",
+      "level": 2
+    },
+    {
+      "id": "context-stability",
+      "text": "Context stability",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/template-variables": [
+    {
+      "id": "template-variable-reference",
+      "text": "Template variable reference",
+      "level": 1
+    },
+    {
+      "id": "global-values",
+      "text": "Global values",
+      "level": 2
+    },
+    {
+      "id": "reference-groups",
+      "text": "Reference groups",
+      "level": 2
+    },
+    {
+      "id": "root-api-information",
+      "text": "Root API information",
+      "level": 2
+    },
+    {
+      "id": "servers",
+      "text": "Servers",
+      "level": 2
+    },
+    {
+      "id": "security",
+      "text": "Security",
+      "level": 2
+    },
+    {
+      "id": "resources",
+      "text": "Resources",
+      "level": 2
+    },
+    {
+      "id": "names",
+      "text": "Names",
+      "level": 2
+    },
+    {
+      "id": "information-notes",
+      "text": "Information notes",
+      "level": 2
+    },
+    {
+      "id": "documentation-fields",
+      "text": "Documentation fields",
+      "level": 2
+    },
+    {
+      "id": "lossless-compatibility",
+      "text": "Lossless compatibility",
+      "level": 2
+    },
+    {
+      "id": "variable-availability",
+      "text": "Variable availability",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/variables-schemas-fields": [
+    {
+      "id": "schema-and-field-variables",
+      "text": "Schema and field variables",
+      "level": 1
+    },
+    {
+      "id": "schema-collections",
+      "text": "Schema collections",
+      "level": 2
+    },
+    {
+      "id": "schema-values",
+      "text": "Schema values",
+      "level": 2
+    },
+    {
+      "id": "identity-and-role",
+      "text": "Identity and role",
+      "level": 3
+    },
+    {
+      "id": "constraints",
+      "text": "Constraints",
+      "level": 2
+    },
+    {
+      "id": "composition",
+      "text": "Composition",
+      "level": 2
+    },
+    {
+      "id": "array-information",
+      "text": "Array information",
+      "level": 2
+    },
+    {
+      "id": "object-information",
+      "text": "Object information",
+      "level": 2
+    },
+    {
+      "id": "fields",
+      "text": "Fields",
+      "level": 2
+    },
+    {
+      "id": "query-capabilities",
+      "text": "Query capabilities",
+      "level": 2
+    },
+    {
+      "id": "enum-values",
+      "text": "Enum values",
+      "level": 2
+    },
+    {
+      "id": "dependencies",
+      "text": "Dependencies",
+      "level": 2
+    },
+    {
+      "id": "example",
+      "text": "Example",
+      "level": 2
+    },
+    {
+      "id": "guidance",
+      "text": "Guidance",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/variables-operations-http": [
+    {
+      "id": "operation-and-http-variables",
+      "text": "Operation and HTTP variables",
+      "level": 1
+    },
+    {
+      "id": "operation-collections",
+      "text": "Operation collections",
+      "level": 2
+    },
+    {
+      "id": "operation-values",
+      "text": "Operation values",
+      "level": 2
+    },
+    {
+      "id": "parameters",
+      "text": "Parameters",
+      "level": 2
+    },
+    {
+      "id": "request-bodies",
+      "text": "Request bodies",
+      "level": 2
+    },
+    {
+      "id": "responses",
+      "text": "Responses",
+      "level": 2
+    },
+    {
+      "id": "media-types",
+      "text": "Media types",
+      "level": 2
+    },
+    {
+      "id": "security",
+      "text": "Security",
+      "level": 2
+    },
+    {
+      "id": "sources",
+      "text": "Sources",
+      "level": 2
+    },
+    {
+      "id": "cache",
+      "text": "Cache",
+      "level": 2
+    },
+    {
+      "id": "query-targets",
+      "text": "Query targets",
+      "level": 2
+    },
+    {
+      "id": "example-service-template",
+      "text": "Example service template",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/variables-entities-access": [
+    {
+      "id": "entity-relation-access-and-runtime-variables",
+      "text": "Entity, relation, access, and runtime variables",
+      "level": 1
+    },
+    {
+      "id": "entity-collections",
+      "text": "Entity collections",
+      "level": 2
+    },
+    {
+      "id": "entity-values",
+      "text": "Entity values",
+      "level": 2
+    },
+    {
+      "id": "entity-fields",
+      "text": "Entity fields",
+      "level": 2
+    },
+    {
+      "id": "relations",
+      "text": "Relations",
+      "level": 2
+    },
+    {
+      "id": "constraints",
+      "text": "Constraints",
+      "level": 2
+    },
+    {
+      "id": "access-collections",
+      "text": "Access collections",
+      "level": 2
+    },
+    {
+      "id": "runtime-values",
+      "text": "Runtime values",
+      "level": 2
+    },
+    {
+      "id": "transport",
+      "text": "Transport",
+      "level": 3
+    },
+    {
+      "id": "hooks",
+      "text": "Hooks",
+      "level": 3
+    },
+    {
+      "id": "cache-effects",
+      "text": "Cache effects",
+      "level": 2
+    },
+    {
+      "id": "ui-and-behavior-flags",
+      "text": "UI and behavior flags",
+      "level": 2
+    },
+    {
+      "id": "example-entity-template",
+      "text": "Example entity template",
+      "level": 2
+    },
+    {
+      "id": "guidance",
+      "text": "Guidance",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/variables-frontends-output": [
+    {
+      "id": "frontend-language-and-output-variables",
+      "text": "Frontend, language, and output variables",
+      "level": 1
+    },
+    {
+      "id": "frontend-collections",
+      "text": "Frontend collections",
+      "level": 2
+    },
+    {
+      "id": "frontend-values",
+      "text": "Frontend values",
+      "level": 2
+    },
+    {
+      "id": "components",
+      "text": "Components",
+      "level": 2
+    },
+    {
+      "id": "screens",
+      "text": "Screens",
+      "level": 2
+    },
+    {
+      "id": "selected-frontends",
+      "text": "Selected frontends",
+      "level": 2
+    },
+    {
+      "id": "lang",
+      "text": "lang",
+      "level": 2
+    },
+    {
+      "id": "emit",
+      "text": "emit",
+      "level": 2
+    },
+    {
+      "id": "file",
+      "text": "file",
+      "level": 2
+    },
+    {
+      "id": "project-metadata",
+      "text": "Project metadata",
+      "level": 2
+    },
+    {
+      "id": "features",
+      "text": "Features",
+      "level": 2
+    },
+    {
+      "id": "example-screen-template",
+      "text": "Example screen template",
+      "level": 2
+    },
+    {
+      "id": "guidance",
+      "text": "Guidance",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/openapi-normalization": [
+    {
+      "id": "openapi-normalization-and-preservation",
+      "text": "OpenAPI normalization and preservation",
+      "level": 1
+    },
+    {
+      "id": "preservation-rules",
+      "text": "Preservation rules",
+      "level": 2
+    },
+    {
+      "id": "root-raw-document",
+      "text": "Root raw document",
+      "level": 2
+    },
+    {
+      "id": "object-raw-values",
+      "text": "Object raw values",
+      "level": 2
+    },
+    {
+      "id": "extensions",
+      "text": "Extensions",
+      "level": 2
+    },
+    {
+      "id": "references",
+      "text": "References",
+      "level": 2
+    },
+    {
+      "id": "presence-aware-values",
+      "text": "Presence-aware values",
+      "level": 2
+    },
+    {
+      "id": "openapi-root",
+      "text": "OpenAPI root",
+      "level": 2
+    },
+    {
+      "id": "components",
+      "text": "Components",
+      "level": 2
+    },
+    {
+      "id": "json-schema",
+      "text": "JSON Schema",
+      "level": 2
+    },
+    {
+      "id": "version-compatibility",
+      "text": "Version compatibility",
+      "level": 2
+    },
+    {
+      "id": "diagnostics",
+      "text": "Diagnostics",
+      "level": 2
+    },
+    {
+      "id": "template-guidance",
+      "text": "Template guidance",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/lifecycle-safety": [
+    {
+      "id": "lifecycle-cleanup-and-write-safety",
+      "text": "Lifecycle, cleanup, and write safety",
+      "level": 1
+    },
+    {
+      "id": "lifecycle-modes",
+      "text": "Lifecycle modes",
+      "level": 2
+    },
+    {
+      "id": "managed",
+      "text": "Managed",
+      "level": 3
+    },
+    {
+      "id": "immutable",
+      "text": "Immutable",
+      "level": 3
+    },
+    {
+      "id": "write-policy",
+      "text": "Write policy",
+      "level": 2
+    },
+    {
+      "id": "managed_roots",
+      "text": "managed_roots",
+      "level": 3
+    },
+    {
+      "id": "immutable_roots",
+      "text": "immutable_roots",
+      "level": 3
+    },
+    {
+      "id": "protected_roots",
+      "text": "protected_roots",
+      "level": 3
+    },
+    {
+      "id": "clean_roots",
+      "text": "clean_roots",
+      "level": 3
+    },
+    {
+      "id": "task-cleanup",
+      "text": "Task cleanup",
+      "level": 2
+    },
+    {
+      "id": "dry-runs",
+      "text": "Dry runs",
+      "level": 2
+    },
+    {
+      "id": "refused-writes",
+      "text": "Refused writes",
+      "level": 2
+    },
+    {
+      "id": "atomic-writes",
+      "text": "Atomic writes",
+      "level": 2
+    },
+    {
+      "id": "commands",
+      "text": "Commands",
+      "level": 2
+    },
+    {
+      "id": "refresh-discipline",
+      "text": "Refresh discipline",
+      "level": 2
+    },
+    {
+      "id": "source-control",
+      "text": "Source control",
+      "level": 2
+    },
+    {
+      "id": "security-guidance",
+      "text": "Security guidance",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/performance": [
+    {
+      "id": "performance-jsonl-and-memory-tracing",
+      "text": "Performance, JSONL, and memory tracing",
+      "level": 1
+    },
+    {
+      "id": "json-input",
+      "text": "JSON input",
+      "level": 2
+    },
+    {
+      "id": "yaml-input",
+      "text": "YAML input",
+      "level": 2
+    },
+    {
+      "id": "build-or-inspect-jsonl",
+      "text": "Build or inspect JSONL",
+      "level": 2
+    },
+    {
+      "id": "profile-a-pipeline",
+      "text": "Profile a pipeline",
+      "level": 2
+    },
+    {
+      "id": "profile-stages",
+      "text": "Profile stages",
+      "level": 2
+    },
+    {
+      "id": "metrics",
+      "text": "Metrics",
+      "level": 2
+    },
+    {
+      "id": "trace-normal-generation",
+      "text": "Trace normal generation",
+      "level": 2
+    },
+    {
+      "id": "template-performance",
+      "text": "Template performance",
+      "level": 2
+    },
+    {
+      "id": "cache-behavior",
+      "text": "Cache behavior",
+      "level": 2
+    },
+    {
+      "id": "fixture-strategy",
+      "text": "Fixture strategy",
+      "level": 2
+    }
+  ],
+  "packages/codepotg/best-practices": [
+    {
+      "id": "best-practices-and-troubleshooting",
+      "text": "Best practices and troubleshooting",
+      "level": 1
+    },
+    {
+      "id": "start-from-a-real-project",
+      "text": "Start from a real project",
+      "level": 2
+    },
+    {
+      "id": "keep-concerns-separate",
+      "text": "Keep concerns separate",
+      "level": 2
+    },
+    {
+      "id": "prefer-normalized-variables",
+      "text": "Prefer normalized variables",
+      "level": 2
+    },
+    {
+      "id": "test-paths-first",
+      "text": "Test paths first",
+      "level": 2
+    },
+    {
+      "id": "dry-run-every-change",
+      "text": "Dry-run every change",
+      "level": 2
+    },
+    {
+      "id": "keep-generated-roots-narrow",
+      "text": "Keep generated roots narrow",
+      "level": 2
+    },
+    {
+      "id": "test-packs",
+      "text": "Test packs",
+      "level": 2
+    },
+    {
+      "id": "diagnose-common-failures",
+      "text": "Diagnose common failures",
+      "level": 2
+    },
+    {
+      "id": "codepotgyaml-not-found",
+      "text": "Codepotg.yaml not found",
+      "level": 3
+    },
+    {
+      "id": "legacy-config-rejected",
+      "text": "Legacy config rejected",
+      "level": 3
+    },
+    {
+      "id": "unknown-language",
+      "text": "Unknown language",
+      "level": 3
+    },
+    {
+      "id": "template-variable-missing",
+      "text": "Template variable missing",
+      "level": 3
+    },
+    {
+      "id": "duplicate-output-path",
+      "text": "Duplicate output path",
+      "level": 3
+    },
+    {
+      "id": "refused-write",
+      "text": "Refused write",
+      "level": 3
+    },
+    {
+      "id": "import-missing",
+      "text": "Import missing",
+      "level": 3
+    },
+    {
+      "id": "yaml-generation-uses-high-memory",
+      "text": "YAML generation uses high memory",
+      "level": 3
+    },
+    {
+      "id": "upgrade-discipline",
+      "text": "Upgrade discipline",
+      "level": 2
+    },
+    {
+      "id": "source-control-policy",
+      "text": "Source-control policy",
+      "level": 2
+    },
+    {
+      "id": "security",
+      "text": "Security",
+      "level": 2
+    }
+  ],
+  "packages/codepotx": [
+    {
+      "id": "codepotx",
+      "text": "codepotx",
+      "level": 1
+    },
+    {
+      "id": "package-status",
+      "text": "Package status",
+      "level": 2
+    },
+    {
+      "id": "public-entrypoints",
+      "text": "Public entrypoints",
+      "level": 2
+    },
+    {
+      "id": "what-the-runtime-owns",
+      "text": "What the runtime owns",
+      "level": 2
+    },
+    {
+      "id": "learning-path",
+      "text": "Learning path",
+      "level": 2
+    },
+    {
+      "id": "ecosystem-role",
+      "text": "Ecosystem role",
+      "level": 2
+    }
+  ],
+  "packages/codepotx/getting-started": [
+    {
+      "id": "getting-started",
+      "text": "Getting started",
+      "level": 1
+    },
+    {
+      "id": "requirements",
+      "text": "Requirements",
+      "level": 2
+    },
+    {
+      "id": "author-a-contract",
+      "text": "Author a contract",
+      "level": 2
+    },
+    {
+      "id": "add-a-template-pack",
+      "text": "Add a template pack",
+      "level": 2
+    },
+    {
+      "id": "add-codepotfileyml",
+      "text": "Add CodepotFile.yml",
+      "level": 2
+    },
+    {
+      "id": "use-the-runtime",
+      "text": "Use the runtime",
+      "level": 2
+    },
+    {
+      "id": "use-the-cli",
+      "text": "Use the CLI",
+      "level": 2
+    },
+    {
+      "id": "release-status-guidance",
+      "text": "Release-status guidance",
+      "level": 2
+    }
+  ],
+  "packages/codepotx/architecture": [
+    {
+      "id": "runtime-architecture",
+      "text": "Runtime architecture",
+      "level": 1
+    },
+    {
+      "id": "layers",
+      "text": "Layers",
+      "level": 2
+    },
+    {
+      "id": "dependency-direction",
+      "text": "Dependency direction",
+      "level": 2
+    },
+    {
+      "id": "contract-layer",
+      "text": "Contract layer",
+      "level": 2
+    },
+    {
+      "id": "authoring-layer",
+      "text": "Authoring layer",
+      "level": 2
+    },
+    {
+      "id": "templating-layer",
+      "text": "Templating layer",
+      "level": 2
+    },
+    {
+      "id": "generation-layer",
+      "text": "Generation layer",
+      "level": 2
+    },
+    {
+      "id": "platform-layer",
+      "text": "Platform layer",
+      "level": 2
+    },
+    {
+      "id": "runtime-layer",
+      "text": "Runtime layer",
+      "level": 2
+    },
+    {
+      "id": "frontend-rule",
+      "text": "Frontend rule",
+      "level": 2
+    },
+    {
+      "id": "why-this-matters",
+      "text": "Why this matters",
+      "level": 2
+    }
+  ],
+  "packages/codepotx/authoring": [
+    {
+      "id": "typed-authoring",
+      "text": "Typed authoring",
+      "level": 1
+    },
+    {
+      "id": "compiled-boundary",
+      "text": "Compiled boundary",
+      "level": 2
+    },
+    {
+      "id": "version-contracts",
+      "text": "Version contracts",
+      "level": 2
+    },
+    {
+      "id": "schemas",
+      "text": "Schemas",
+      "level": 2
+    },
+    {
+      "id": "resources-and-routes",
+      "text": "Resources and routes",
+      "level": 2
+    },
+    {
+      "id": "cache-metadata",
+      "text": "Cache metadata",
+      "level": 2
+    },
+    {
+      "id": "additional-domains",
+      "text": "Additional domains",
+      "level": 2
+    },
+    {
+      "id": "source-modes",
+      "text": "Source modes",
+      "level": 2
+    },
+    {
+      "id": "validation",
+      "text": "Validation",
+      "level": 2
+    },
+    {
+      "id": "guidance",
+      "text": "Guidance",
+      "level": 2
+    }
+  ],
+  "packages/codepotx/templating": [
+    {
+      "id": "template-packs-and-variables",
+      "text": "Template packs and variables",
+      "level": 1
+    },
+    {
+      "id": "pack-structure",
+      "text": "Pack structure",
+      "level": 2
+    },
+    {
+      "id": "compilation",
+      "text": "Compilation",
+      "level": 2
+    },
+    {
+      "id": "variable-catalog",
+      "text": "Variable catalog",
+      "level": 2
+    },
+    {
+      "id": "strict-rendering",
+      "text": "Strict rendering",
+      "level": 2
+    },
+    {
+      "id": "pathsyaml",
+      "text": "paths.yaml",
+      "level": 2
+    },
+    {
+      "id": "helpers-and-partials",
+      "text": "Helpers and partials",
+      "level": 2
+    },
+    {
+      "id": "source-modes",
+      "text": "Source modes",
+      "level": 2
+    },
+    {
+      "id": "requirements",
+      "text": "Requirements",
+      "level": 2
+    },
+    {
+      "id": "context-safety",
+      "text": "Context safety",
+      "level": 2
+    },
+    {
+      "id": "inspection",
+      "text": "Inspection",
+      "level": 2
+    },
+    {
+      "id": "design-guidance",
+      "text": "Design guidance",
+      "level": 2
+    }
+  ],
+  "packages/codepotx/generation": [
+    {
+      "id": "generation-with-codepotx",
+      "text": "Generation with codepotx",
+      "level": 1
+    },
+    {
+      "id": "generation-inputs",
+      "text": "Generation inputs",
+      "level": 2
+    },
+    {
+      "id": "planning-before-mutation",
+      "text": "Planning before mutation",
+      "level": 2
+    },
+    {
+      "id": "rendering-in-memory",
+      "text": "Rendering in memory",
+      "level": 2
+    },
+    {
+      "id": "managed-and-immutable-files",
+      "text": "Managed and immutable files",
+      "level": 2
+    },
+    {
+      "id": "managed-files",
+      "text": "Managed files",
+      "level": 3
+    },
+    {
+      "id": "immutable-files",
+      "text": "Immutable files",
+      "level": 3
+    },
+    {
+      "id": "protected-or-refused-writes",
+      "text": "Protected or refused writes",
+      "level": 3
+    },
+    {
+      "id": "manifests-and-stale-cleanup",
+      "text": "Manifests and stale cleanup",
+      "level": 2
+    },
+    {
+      "id": "atomic-application-and-rollback",
+      "text": "Atomic application and rollback",
+      "level": 2
+    },
+    {
+      "id": "commands",
+      "text": "Commands",
+      "level": 2
+    },
+    {
+      "id": "cancellation-and-events",
+      "text": "Cancellation and events",
+      "level": 2
+    },
+    {
+      "id": "recommended-workflow",
+      "text": "Recommended workflow",
+      "level": 2
+    },
+    {
+      "id": "related-pages",
+      "text": "Related pages",
+      "level": 2
+    }
+  ],
+  "packages/codepotx/artifacts": [
+    {
+      "id": "stable-artifacts",
+      "text": "Stable artifacts",
+      "level": 1
+    },
+    {
+      "id": "artifact-rules",
+      "text": "Artifact rules",
+      "level": 2
+    },
+    {
+      "id": "compiledauthoringartifact",
+      "text": "CompiledAuthoringArtifact",
+      "level": 2
+    },
+    {
+      "id": "compiledtemplatepack",
+      "text": "CompiledTemplatePack",
+      "level": 2
+    },
+    {
+      "id": "templatevariablecatalog",
+      "text": "TemplateVariableCatalog",
+      "level": 2
+    },
+    {
+      "id": "generationplan",
+      "text": "GenerationPlan",
+      "level": 2
+    },
+    {
+      "id": "renderedgeneration",
+      "text": "RenderedGeneration",
+      "level": 2
+    },
+    {
+      "id": "generationmanifest",
+      "text": "GenerationManifest",
+      "level": 2
+    },
+    {
+      "id": "generationresult",
+      "text": "GenerationResult",
+      "level": 2
+    },
+    {
+      "id": "artifact-versioning",
+      "text": "Artifact versioning",
+      "level": 2
+    },
+    {
+      "id": "why-this-matters-for-ai-and-tools",
+      "text": "Why this matters for AI and tools",
+      "level": 2
+    },
+    {
+      "id": "public-import-boundary",
+      "text": "Public import boundary",
+      "level": 2
+    },
+    {
+      "id": "related-pages",
+      "text": "Related pages",
+      "level": 2
+    }
+  ],
+  "packages/codepotx/runtime-platform": [
+    {
+      "id": "runtime-and-platform-services",
+      "text": "Runtime and platform services",
+      "level": 1
+    },
+    {
+      "id": "create-the-default-runtime",
+      "text": "Create the default runtime",
+      "level": 2
+    },
+    {
+      "id": "typed-runtime-operations",
+      "text": "Typed runtime operations",
+      "level": 2
+    },
+    {
+      "id": "runtime-lifecycle",
+      "text": "Runtime lifecycle",
+      "level": 2
+    },
+    {
+      "id": "events",
+      "text": "Events",
+      "level": 2
+    },
+    {
+      "id": "cancellation",
+      "text": "Cancellation",
+      "level": 2
+    },
+    {
+      "id": "platform-service-contract",
+      "text": "Platform service contract",
+      "level": 2
+    },
+    {
+      "id": "node-adapters",
+      "text": "Node adapters",
+      "level": 2
+    },
+    {
+      "id": "memory-adapters",
+      "text": "Memory adapters",
+      "level": 2
+    },
+    {
+      "id": "building-another-frontend",
+      "text": "Building another frontend",
+      "level": 2
+    },
+    {
+      "id": "browser-direction",
+      "text": "Browser direction",
+      "level": 2
+    },
+    {
+      "id": "related-pages",
+      "text": "Related pages",
+      "level": 2
+    }
+  ],
+  "packages/codepotx/best-practices": [
+    {
+      "id": "best-practices-and-troubleshooting",
+      "text": "Best practices and troubleshooting",
+      "level": 1
+    },
+    {
+      "id": "keep-the-public-layers-separate",
+      "text": "Keep the public layers separate",
+      "level": 2
+    },
+    {
+      "id": "keep-frontends-thin",
+      "text": "Keep frontends thin",
+      "level": 2
+    },
+    {
+      "id": "prefer-complete-plans",
+      "text": "Prefer complete plans",
+      "level": 2
+    },
+    {
+      "id": "keep-template-packs-explicit",
+      "text": "Keep template packs explicit",
+      "level": 2
+    },
+    {
+      "id": "keep-output-ownership-narrow",
+      "text": "Keep output ownership narrow",
+      "level": 2
+    },
+    {
+      "id": "keep-commands-optional-and-reviewable",
+      "text": "Keep commands optional and reviewable",
+      "level": 2
+    },
+    {
+      "id": "treat-artifacts-as-immutable-values",
+      "text": "Treat artifacts as immutable values",
+      "level": 2
+    },
+    {
+      "id": "use-platform-services-for-side-effects",
+      "text": "Use platform services for side effects",
+      "level": 2
+    },
+    {
+      "id": "troubleshooting",
+      "text": "Troubleshooting",
+      "level": 2
+    },
+    {
+      "id": "project-configuration-is-not-found",
+      "text": "Project configuration is not found",
+      "level": 3
+    },
+    {
+      "id": "generation-is-refused",
+      "text": "Generation is refused",
+      "level": 3
+    },
+    {
+      "id": "a-template-variable-is-missing",
+      "text": "A template variable is missing",
+      "level": 3
+    },
+    {
+      "id": "stale-files-remain",
+      "text": "Stale files remain",
+      "level": 3
+    },
+    {
+      "id": "a-command-failed-after-rendering",
+      "text": "A command failed after rendering",
+      "level": 3
+    },
+    {
+      "id": "runtime-and-cli-versions-differ",
+      "text": "Runtime and CLI versions differ",
+      "level": 3
+    },
+    {
+      "id": "validation-for-contributors",
+      "text": "Validation for contributors",
+      "level": 2
+    }
+  ],
+  "packages/codepotx-cli": [
+    {
+      "id": "codepotx-cli",
+      "text": "codepotx-cli",
+      "level": 1
+    },
+    {
+      "id": "why-the-cli-stays-thin",
+      "text": "Why the CLI stays thin",
+      "level": 2
+    },
+    {
+      "id": "main-commands",
+      "text": "Main commands",
+      "level": 2
+    },
+    {
+      "id": "learning-path",
+      "text": "Learning path",
+      "level": 2
+    },
+    {
+      "id": "package-boundaries",
+      "text": "Package boundaries",
       "level": 2
     },
     {
       "id": "development",
       "text": "Development",
+      "level": 2
+    }
+  ],
+  "packages/codepotx-cli/getting-started": [
+    {
+      "id": "getting-started-with-codepotx-cli",
+      "text": "Getting started with codepotx-cli",
+      "level": 1
+    },
+    {
+      "id": "build-the-workspace-packages",
+      "text": "Build the workspace packages",
+      "level": 2
+    },
+    {
+      "id": "prepare-a-project",
+      "text": "Prepare a project",
+      "level": 2
+    },
+    {
+      "id": "validate-before-generation",
+      "text": "Validate before generation",
+      "level": 2
+    },
+    {
+      "id": "inspect-the-project",
+      "text": "Inspect the project",
+      "level": 2
+    },
+    {
+      "id": "inspect-template-variables",
+      "text": "Inspect template variables",
+      "level": 2
+    },
+    {
+      "id": "plan-and-dry-run",
+      "text": "Plan and dry run",
+      "level": 2
+    },
+    {
+      "id": "generate",
+      "text": "Generate",
+      "level": 2
+    },
+    {
+      "id": "use-explicit-project-paths",
+      "text": "Use explicit project paths",
+      "level": 2
+    },
+    {
+      "id": "next-steps",
+      "text": "Next steps",
+      "level": 2
+    }
+  ],
+  "packages/codepotx-cli/commands": [
+    {
+      "id": "command-reference",
+      "text": "Command reference",
+      "level": 1
+    },
+    {
+      "id": "validate",
+      "text": "validate",
+      "level": 2
+    },
+    {
+      "id": "inspect",
+      "text": "inspect",
+      "level": 2
+    },
+    {
+      "id": "variables",
+      "text": "variables",
+      "level": 2
+    },
+    {
+      "id": "plan",
+      "text": "plan",
+      "level": 2
+    },
+    {
+      "id": "generate",
+      "text": "generate",
+      "level": 2
+    },
+    {
+      "id": "features",
+      "text": "features",
+      "level": 2
+    },
+    {
+      "id": "help",
+      "text": "help",
+      "level": 2
+    },
+    {
+      "id": "version",
+      "text": "version",
+      "level": 2
+    },
+    {
+      "id": "exit-behavior",
+      "text": "Exit behavior",
+      "level": 2
+    },
+    {
+      "id": "related-pages",
+      "text": "Related pages",
+      "level": 2
+    }
+  ],
+  "packages/codepotx-cli/options": [
+    {
+      "id": "options-reference",
+      "text": "Options reference",
+      "level": 1
+    },
+    {
+      "id": "project-location",
+      "text": "Project location",
+      "level": 2
+    },
+    {
+      "id": "task-selection",
+      "text": "Task selection",
+      "level": 2
+    },
+    {
+      "id": "safe-execution-controls",
+      "text": "Safe execution controls",
+      "level": 2
+    },
+    {
+      "id": "output-controls",
+      "text": "Output controls",
+      "level": 2
+    },
+    {
+      "id": "combining-options",
+      "text": "Combining options",
+      "level": 2
+    },
+    {
+      "id": "option-ownership",
+      "text": "Option ownership",
+      "level": 2
+    }
+  ],
+  "packages/codepotx-cli/runtime-resolution": [
+    {
+      "id": "project-local-runtime-resolution",
+      "text": "Project-local runtime resolution",
+      "level": 1
+    },
+    {
+      "id": "resolution-flow",
+      "text": "Resolution flow",
+      "level": 2
+    },
+    {
+      "id": "why-this-matters",
+      "text": "Why this matters",
+      "level": 2
+    },
+    {
+      "id": "supported-package-boundaries",
+      "text": "Supported package boundaries",
+      "level": 2
+    },
+    {
+      "id": "explicit-project-paths",
+      "text": "Explicit project paths",
+      "level": 2
+    },
+    {
+      "id": "version-and-compatibility-failures",
+      "text": "Version and compatibility failures",
+      "level": 2
+    },
+    {
+      "id": "embedded-use",
+      "text": "Embedded use",
+      "level": 2
+    }
+  ],
+  "packages/codepotx-cli/automation": [
+    {
+      "id": "json-output-and-automation",
+      "text": "JSON output and automation",
+      "level": 1
+    },
+    {
+      "id": "use-json-mode",
+      "text": "Use JSON mode",
+      "level": 2
+    },
+    {
+      "id": "recommended-validation-flow",
+      "text": "Recommended validation flow",
+      "level": 2
+    },
+    {
+      "id": "stable-information-to-consume",
+      "text": "Stable information to consume",
+      "level": 2
+    },
+    {
+      "id": "exit-codes",
+      "text": "Exit codes",
+      "level": 2
+    },
+    {
+      "id": "avoid-global-version-drift",
+      "text": "Avoid global-version drift",
+      "level": 2
+    },
+    {
+      "id": "do-not-hide-destructive-intent",
+      "text": "Do not hide destructive intent",
+      "level": 2
+    },
+    {
+      "id": "programmatic-cli-invocation",
+      "text": "Programmatic CLI invocation",
+      "level": 2
+    }
+  ],
+  "packages/codepotx-cli/troubleshooting": [
+    {
+      "id": "troubleshooting-codepotx-cli",
+      "text": "Troubleshooting codepotx-cli",
+      "level": 1
+    },
+    {
+      "id": "command-not-found",
+      "text": "Command not found",
+      "level": 2
+    },
+    {
+      "id": "project-configuration-cannot-be-found",
+      "text": "Project configuration cannot be found",
+      "level": 2
+    },
+    {
+      "id": "project-local-runtime-cannot-be-loaded",
+      "text": "Project-local runtime cannot be loaded",
+      "level": 2
+    },
+    {
+      "id": "cli-and-runtime-are-incompatible",
+      "text": "CLI and runtime are incompatible",
+      "level": 2
+    },
+    {
+      "id": "a-task-is-not-selected",
+      "text": "A task is not selected",
+      "level": 2
+    },
+    {
+      "id": "generation-is-refused",
+      "text": "Generation is refused",
+      "level": 2
+    },
+    {
+      "id": "before-or-after-command-fails",
+      "text": "Before or after command fails",
+      "level": 2
+    },
+    {
+      "id": "json-output-is-mixed-with-presentation-text",
+      "text": "JSON output is mixed with presentation text",
+      "level": 2
+    },
+    {
+      "id": "keyboard-interruption-or-cancellation",
+      "text": "Keyboard interruption or cancellation",
+      "level": 2
+    },
+    {
+      "id": "contributor-checks",
+      "text": "Contributor checks",
       "level": 2
     }
   ],
@@ -1330,8 +3798,18 @@
       "level": 2
     },
     {
-      "id": "navigation",
-      "text": "Navigation",
+      "id": "recursive-navigation",
+      "text": "Recursive navigation",
+      "level": 2
+    },
+    {
+      "id": "package-documentation-trees",
+      "text": "Package documentation trees",
+      "level": 2
+    },
+    {
+      "id": "compatibility-redirects",
+      "text": "Compatibility redirects",
       "level": 2
     },
     {
@@ -1340,8 +3818,13 @@
       "level": 2
     },
     {
-      "id": "package-pages",
-      "text": "Package pages",
+      "id": "package-frontmatter",
+      "text": "Package frontmatter",
+      "level": 2
+    },
+    {
+      "id": "generated-artifacts",
+      "text": "Generated artifacts",
       "level": 2
     },
     {
