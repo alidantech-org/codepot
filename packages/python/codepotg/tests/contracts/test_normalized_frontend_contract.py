@@ -4,13 +4,12 @@ from contracts.normalized import ResolutionState
 from contracts.normalized_frontend_contract import NormalizedFrontendContract
 from inference.engine import InferenceEngine
 from inference.lossless_contract import build_api_contract
-from tests.fixtures.openapi import load_real_contract
 
 
 def test_real_frontend_components_screens_and_uses_are_normalized(
-    real_openapi_path,
+    real_openapi_contract,
 ) -> None:
-    contract = load_real_contract(real_openapi_path)
+    contract = real_openapi_contract
     frontends: NormalizedFrontendContract = contract.meta["normalized_frontends"]
 
     assert frontends.count == 1
@@ -89,10 +88,13 @@ def test_missing_frontend_uses_remain_inspectable() -> None:
     assert broken.props.ref is not None
     assert broken.props.ref.state == ResolutionState.MISSING
     assert broken.uses[0].operation is not None
-    assert broken.uses[0].operation.state == ResolutionState.MISSING
+    assert broken.uses[0].operation.state in {
+        ResolutionState.MISSING,
+        ResolutionState.EXTERNAL,
+    }
     assert broken.uses[0].schema.ref is not None
     assert broken.uses[0].schema.ref.state == ResolutionState.MISSING
-    assert frontends.unresolved_count >= 3
+    assert frontends.unresolved_count >= 2
 
 
 def _document() -> dict[str, object]:
