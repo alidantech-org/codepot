@@ -1,6 +1,6 @@
 {
   "name": "codepot-openapi",
-  "version": "0.0.6",
+  "version": "0.0.4",
   "description": "Typed OpenAPI contract engine for TypeScript projects.",
   "type": "module",
   "homepage": "https://code.alidantech.org/",
@@ -54,6 +54,7 @@
     "@apidevtools/swagger-parser": "^10.1.1",
     "@redocly/cli": "^2.31.3",
     "chalk": "^5.4.1",
+    "codepot-openapi": "link:",
     "esbuild": "^0.25.12",
     "js-yaml": "^4.1.0",
     "ora": "^8.2.0",
@@ -66,7 +67,7 @@
     "tsup": "^8.0.0",
     "tsx": "^4.22.3",
     "typescript": "^5.0.0",
-    "zod": "^4.0.0"
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "zod": "^4.0.0"

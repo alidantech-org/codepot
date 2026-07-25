@@ -2,6 +2,7 @@ packages:
   - apps/*
   - packages/nodejs/codepotx
   - packages/nodejs/codepotx-cli
+  - packages/nodejs/codepot-openapi
 
 allowBuilds:
   esbuild: true
