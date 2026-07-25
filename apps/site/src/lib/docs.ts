@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import GithubSlugger from "github-slugger";
 import matter from "gray-matter";
 
@@ -99,10 +100,38 @@ export function generateStaticParams(): { slug: string }[] {
   return Object.keys(DOCS).map((slug) => ({ slug }));
 }
 
-export function generateDocMetadata(doc: Doc): { title: string; description: string } {
+export function generateDocMetadata(doc: Doc): Metadata {
+  const title = `${doc.title} - Codepot Documentation`;
+  const description = doc.description ?? `Documentation for ${doc.title}`;
+  const canonical = `/docs/${doc.slug}`;
+
   return {
-    title: `${doc.title} - Codepot Documentation`,
-    description: doc.description ?? `Documentation for ${doc.title}`,
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      type: "article",
+      title,
+      description,
+      url: canonical,
+      siteName: "Codepot",
+      images: [
+        {
+          url: "/opengraph-image",
+          width: 1200,
+          height: 630,
+          alt: `${doc.title} — Codepot Documentation`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/opengraph-image"],
+    },
   };
 }
 
