@@ -1,6 +1,11 @@
 "use client";
 
+import { javascript } from "@codemirror/lang-javascript";
+import { yaml } from "@codemirror/lang-yaml";
+import { oneDark } from "@codemirror/theme-one-dark";
+import CodeMirror from "@uiw/react-codemirror";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import { RotateCcw } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -40,7 +45,16 @@ const examples: Array<{
   },
 ];
 
+function languageExtension(language: string) {
+  if (language === "yaml" || language === "yml") return yaml();
+  return javascript({
+    typescript: language === "typescript" || language === "tsx",
+    jsx: language === "jsx" || language === "tsx",
+  });
+}
+
 export function Examples({ contractCode, taskCode, runtimeCode }: ExamplesProps) {
+  const { resolvedTheme } = useTheme();
   const initialCode = useMemo(
     () => ({ contract: contractCode, task: taskCode, runtime: runtimeCode }),
     [contractCode, taskCode, runtimeCode],
@@ -53,6 +67,10 @@ export function Examples({ contractCode, taskCode, runtimeCode }: ExamplesProps)
   });
 
   const activeExample = initialCode[activeKey];
+  const extensions = useMemo(
+    () => [languageExtension(activeExample.language)],
+    [activeExample.language],
+  );
 
   return (
     <section id="examples" className="border-y border-border bg-card/35">
@@ -62,11 +80,11 @@ export function Examples({ contractCode, taskCode, runtimeCode }: ExamplesProps)
           One editable workspace for the full Codepot flow
         </h2>
         <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground">
-          Select a workflow step to load its code into the shared editor. Your edits remain available while you move between steps.
+          Select a workflow step to load its syntax-highlighted code into the shared editor. Your edits remain available while you move between steps.
         </p>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.55fr)] lg:items-stretch">
-          <div className="order-2 min-w-0 overflow-hidden rounded-2xl border border-border bg-[#17100b] shadow-xl shadow-black/10 lg:order-1">
+        <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] xl:items-stretch">
+          <div className="order-2 min-w-0 overflow-hidden rounded-2xl border border-border bg-[#17100b] shadow-xl shadow-black/10 xl:order-1">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
@@ -91,18 +109,32 @@ export function Examples({ contractCode, taskCode, runtimeCode }: ExamplesProps)
               </div>
             </div>
 
-            <textarea
+            <CodeMirror
               value={drafts[activeKey]}
-              onChange={(event) =>
-                setDrafts((current) => ({ ...current, [activeKey]: event.target.value }))
+              onChange={(value) =>
+                setDrafts((current) => ({ ...current, [activeKey]: value }))
               }
+              extensions={extensions}
+              theme={resolvedTheme === "dark" ? oneDark : "light"}
+              height="clamp(25rem, 52vw, 36rem)"
+              width="100%"
+              basicSetup={{
+                lineNumbers: true,
+                foldGutter: true,
+                highlightActiveLine: true,
+                highlightActiveLineGutter: true,
+                bracketMatching: true,
+                closeBrackets: true,
+                autocompletion: true,
+                indentOnInput: true,
+                syntaxHighlighting: true,
+              }}
               aria-label={`Editable ${activeExample.filename} example`}
-              spellCheck={false}
-              className="block min-h-[24rem] w-full resize-y bg-transparent px-4 py-5 font-mono text-[13px] leading-6 text-[#f8eadb] outline-none selection:bg-primary/35 sm:min-h-[28rem] sm:px-5 lg:min-h-[32rem]"
+              className="w-full min-w-0 overflow-hidden text-[13px] [&_.cm-content]:min-w-max [&_.cm-content]:py-4 [&_.cm-editor]:w-full [&_.cm-editor]:bg-transparent [&_.cm-gutters]:border-r [&_.cm-gutters]:border-border/50 [&_.cm-scroller]:overflow-auto [&_.cm-scroller]:font-mono [&_.cm-scroller]:leading-6"
             />
           </div>
 
-          <div className="order-1 grid gap-2 sm:grid-cols-3 lg:order-2 lg:grid-cols-1 lg:content-start">
+          <div className="order-1 grid gap-2 sm:grid-cols-3 xl:order-2 xl:grid-cols-1 xl:content-start">
             {examples.map((example) => {
               const isActive = activeKey === example.key;
               return (
@@ -111,7 +143,7 @@ export function Examples({ contractCode, taskCode, runtimeCode }: ExamplesProps)
                   type="button"
                   onClick={() => setActiveKey(example.key)}
                   aria-pressed={isActive}
-                  className={`group min-w-0 border-l-2 px-4 py-4 text-left transition-colors sm:border-l-0 sm:border-t-2 lg:border-l-2 lg:border-t-0 ${
+                  className={`group min-w-0 border-l-2 px-4 py-4 text-left transition-colors sm:border-l-0 sm:border-t-2 xl:border-l-2 xl:border-t-0 ${
                     isActive
                       ? "border-primary bg-primary/8"
                       : "border-border hover:border-primary/45 hover:bg-card-muted/45"
