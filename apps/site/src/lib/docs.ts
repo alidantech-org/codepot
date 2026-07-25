@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import matter from "gray-matter";
 
-import { DOCS, DOC_TOCS, NAVIGATION, type DocSlug } from "@/generated/docs";
+import tocData from "@/generated/docs-toc.json";
+import { DOCS, NAVIGATION, type DocSlug } from "@/generated/docs";
 
 export interface DocFrontmatter {
   title?: string;
@@ -37,6 +38,8 @@ export interface DocItem extends DocSummary {
   children?: DocItem[];
 }
 
+const DOC_TOCS = tocData as Partial<Record<DocSlug, Heading[]>>;
+
 function loadDoc(slug: DocSlug): Doc {
   const parsed = matter(DOCS[slug]);
   const frontmatter = parsed.data as DocFrontmatter;
@@ -46,7 +49,7 @@ function loadDoc(slug: DocSlug): Doc {
     ...(typeof frontmatter.description === "string" ? { description: frontmatter.description } : {}),
     content: parsed.content.trim(),
     frontmatter,
-    headings: [...DOC_TOCS[slug]],
+    headings: DOC_TOCS[slug] ?? [],
   };
 }
 
