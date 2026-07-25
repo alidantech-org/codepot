@@ -34,7 +34,9 @@ paths:
 components:
   schemas:
     UserStatus:
+      title: User status
       type: string
+      minLength: 3
       enum: [active, inactive]
       x-codegen:
         kind: enum
@@ -93,7 +95,10 @@ barrels:
         encoding="utf-8",
     )
     (templates / "enum.meta.txt.j2").write_text(
-        "symbol={{ enum.lang.symbol_name }}\nselection={{ selection.name }}\n",
+        "symbol={{ enum.lang.symbol_name }}\n"
+        "selection={{ selection.name }}\n"
+        "schemaTitle={{ schema_contract.by_id[enum.api.id].title.value }}\n"
+        "minLength={{ schema_contract.by_id[enum.api.id].min_length.value }}\n",
         encoding="utf-8",
     )
     (templates / "resource.ts.j2").write_text(
@@ -132,6 +137,8 @@ barrels:
     assert "active,inactive" in enum_type
     metadata = (output / "metadata" / "user_status.txt").read_text(encoding="utf-8")
     assert "selection=enums" in metadata
+    assert "schemaTitle=User status" in metadata
+    assert "minLength=3" in metadata
     barrel = (output / "models" / "index.ts").read_text(encoding="utf-8")
     assert "models/user_status.ts" in barrel
 
