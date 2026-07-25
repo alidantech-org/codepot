@@ -350,10 +350,15 @@ export function Examples({ examples }: ExamplesProps) {
 
   return (
     <section id="examples" className="border-y border-border bg-card/35">
-      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
-        <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-accent">Workflows</p>
-        <h2 className="max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Real files from contract to generated code</h2>
-        <p className="mt-4 max-w-3xl text-[15px] leading-7 text-muted-foreground">Each tab is loaded from a real source file in the website project. Edit the contract, CodepotG task, paths configuration, or Jinja template in the shared syntax-highlighted editor.</p>
+      <div className="mx-auto max-w-7xl py-14 sm:py-16 lg:py-20">
+        <p className="mb-3 font-mono text-[11px] px-4 sm:px-6 uppercase tracking-widest text-accent">Workflows</p>
+        <h2 className="max-w-4xl text-3xl px-4 sm:px-6 font-semibold tracking-tight text-foreground sm:text-4xl">
+          Real files from contract to generated code
+        </h2>
+        <p className="mt-4 max-w-3xl px-4 sm:px-6 text-[15px] leading-7 text-muted-foreground">
+          Each tab is loaded from a real source file in the website project. Edit the contract, CodepotG task, paths
+          configuration, or Jinja template in the shared syntax-highlighted editor.
+        </p>
 
         <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] xl:items-stretch">
           <div className={`${styles.workspace} order-2 xl:order-1`}>{renderEditorPane(false)}</div>
@@ -361,8 +366,16 @@ export function Examples({ examples }: ExamplesProps) {
             {examples.map((example) => {
               const isActive = activeId === example.key && openIds.includes(example.key);
               return (
-                <button key={example.key} type="button" onClick={() => openFile(example.key)} aria-pressed={isActive} className={`group min-w-0 border-l-2 px-4 py-4 text-left transition-colors sm:border-l-0 sm:border-t-2 xl:border-l-2 xl:border-t-0 ${isActive ? 'border-primary bg-primary/8' : 'border-border hover:border-primary/45 hover:bg-card-muted/45'}`}>
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-primary">{example.eyebrow}</span>
+                <button
+                  key={example.key}
+                  type="button"
+                  onClick={() => openFile(example.key)}
+                  aria-pressed={isActive}
+                  className={`group min-w-0 border-l-2 px-4 py-4 text-left transition-colors sm:border-l-0 sm:border-t-2 xl:border-l-2 xl:border-t-0 ${isActive ? 'border-primary bg-primary/8' : 'border-border hover:border-primary/45 hover:bg-card-muted/45'}`}
+                >
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                    {example.eyebrow}
+                  </span>
                   <span className="mt-2 block text-sm font-semibold text-foreground">{example.title}</span>
                   <span className="mt-2 block text-sm leading-6 text-muted-foreground">{example.description}</span>
                 </button>
@@ -371,14 +384,20 @@ export function Examples({ examples }: ExamplesProps) {
           </div>
         </div>
 
-        <div className="mt-6 text-sm text-muted-foreground">
-          <Link href="/docs/prototype-workflow" className="font-medium text-primary hover:underline">Read the complete prototype workflow</Link>
+        <div className="mt-6 text-sm text-muted-foreground px-4 sm:px-6 flex flex-wrap gap-2">
+          <Link href="/docs/prototype-workflow" className="font-medium text-primary hover:underline">
+            Read the complete prototype workflow
+          </Link>
           <span className="mx-2">·</span>
-          <Link href="/docs/template-packs" className="font-medium text-foreground hover:underline">Learn about template packs</Link>
+          <Link href="/docs/template-packs" className="font-medium text-foreground hover:underline">
+            Learn about template packs
+          </Link>
         </div>
       </div>
 
-      {isFullscreen && typeof document !== 'undefined' ? createPortal(renderFullscreenWorkspace(), document.body) : null}
+      {isFullscreen && typeof document !== 'undefined'
+        ? createPortal(renderFullscreenWorkspace(), document.body)
+        : null}
     </section>
   );
 }

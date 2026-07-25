@@ -44,7 +44,7 @@ export function NavBar() {
         onClose={() => setSidebarOpen(false)}
       />
 
-      <nav className="sticky top-0 z-50 border-b border-border bg-background/82 shadow-[0_8px_32px_color-mix(in_srgb,var(--surface-cocoa)_6%,transparent)] backdrop-blur-xl">
+      <nav className="sticky top-0 z-50 border-b border-border bg-background/82 backdrop-blur-xl">
         <div className="mx-auto flex h-15 items-center justify-between gap-3 px-2 md:px-6">
           <div className="flex min-w-0 items-center gap-3 lg:gap-8">
             <button
