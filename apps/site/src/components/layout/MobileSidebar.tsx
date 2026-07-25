@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { BookOpen, Boxes, Languages, X } from 'lucide-react';
+import Link from "next/link";
+import { BookOpen, Boxes, Languages, X } from "lucide-react";
 
-import { GitHubIcon } from '@/components/icons/GitHubIcon';
-import { ThemeToggle } from '@/components/theme-toggle';
-import Logo from './Logo';
+import { GitHubIcon } from "@/components/icons/GitHubIcon";
+import { ThemeToggle } from "@/components/theme-toggle";
+
+import Logo from "./Logo";
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -14,18 +14,25 @@ interface MobileSidebarProps {
 }
 
 const links = [
-  { label: 'Docs', href: '/docs', icon: BookOpen },
-  { label: 'Packages', href: '/docs/codepot-openapi', icon: Boxes },
-  { label: 'Guides', href: '/docs/guides', icon: BookOpen },
-  { label: 'Codepot Lang', href: '/docs/codepot-lang', icon: Languages }
+  { label: "Docs", href: "/docs", icon: BookOpen },
+  { label: "Packages", href: "/docs/packages", icon: Boxes },
+  { label: "Guides", href: "/docs/guides", icon: BookOpen },
+  { label: "Codepot Lang", href: "/docs/codepot-lang", icon: Languages },
 ] as const;
 
 export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   return (
     <>
-      {isOpen && <div className="fixed inset-0 z-60 bg-black/50 backdrop-blur-sm lg:hidden" onClick={onClose} />}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-60 bg-black/50 backdrop-blur-sm lg:hidden"
+          onClick={onClose}
+        />
+      )}
       <div
-        className={`fixed inset-y-0 left-0 z-70 w-72 transform border-r border-border bg-card transition-transform duration-300 ease-in-out lg:hidden motion-reduce:transition-none ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed inset-y-0 left-0 z-70 w-72 transform border-r border-border bg-card transition-transform duration-300 ease-in-out lg:hidden motion-reduce:transition-none ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         <div className="flex h-full flex-col">
           <div className="flex h-15 items-center justify-between border-b border-border px-4">
@@ -65,7 +72,9 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
             </div>
 
             <div className="mt-8 rounded-2xl border border-border bg-background/75 p-4 shadow-sm">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-primary">Ecosystem</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                Ecosystem
+              </p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Supported prototypes feed the official JavaScript runtime and the final Rust language platform.
               </p>

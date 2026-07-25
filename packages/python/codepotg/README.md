@@ -12,9 +12,11 @@ CodepotG remains active and supported while the official `codepotx` runtime is d
 python -m pip install codepotg
 ```
 
+- documentation: https://code.alidantech.org/docs/packages/codepotg
 - PyPI: https://pypi.org/project/codepotg/
 - source: https://github.com/alidantech-org/codepot/tree/main/packages/python/codepotg
-- ecosystem documentation: https://github.com/alidantech-org/codepot/tree/main/docs/packages/codepotg.md
+
+The complete documentation covers configuration, tasks, CLI commands, template packs, `paths.yaml`, Jinja templates, every normalized variable domain, lifecycle safety, OpenAPI preservation, performance, and best practices.
 
 Requirements:
 

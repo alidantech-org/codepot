@@ -55,13 +55,22 @@ def run_jsonl(request: JsonlInput) -> JsonlOutput:
             return
 
         if stage == "index" and status == "written":
+            database = event.get("database")
+            if isinstance(database, str) and database:
+                message = (
+                    f"Wrote {event.get('category')} SQLite index: "
+                    f"{event.get('records', 0)} facts in {database}"
+                )
+            else:
+                message = (
+                    f"Wrote {event.get('category')} index: "
+                    f"{event.get('records', 0)} facts in "
+                    f"{event.get('shards', 0)} shards"
+                )
             _notify(
                 request,
                 stage="jsonl_index_written",
-                message=(
-                    f"Wrote {event.get('category')} index: "
-                    f"{event.get('records', 0)} facts in {event.get('shards', 0)} shards"
-                ),
+                message=message,
                 details=dict(event),
             )
             return
@@ -150,6 +159,9 @@ def _cache_files(cache_dir: Path, manifest: Mapping[str, Any]) -> list[Path]:
         for raw in indexes.values():
             if not isinstance(raw, Mapping):
                 continue
+            database = raw.get("database")
+            if isinstance(database, str) and database:
+                relative_files.add(database)
             directory = raw.get("directory")
             shards = raw.get("shards")
             if not isinstance(directory, str) or not isinstance(shards, list):

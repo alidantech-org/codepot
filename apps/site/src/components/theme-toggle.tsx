@@ -19,10 +19,10 @@ export function ThemeToggle() {
   }
 
   const icon = !mounted || theme === "light"
-    ? <Sun className="h-4 w-4" />
+    ? <Sun className="h-5 w-5" />
     : theme === "dark"
-      ? <Moon className="h-4 w-4" />
-      : <Monitor className="h-4 w-4" />;
+      ? <Moon className="h-5 w-5" />
+      : <Monitor className="h-5 w-5" />;
   const label = !mounted ? "Loading theme..." : theme === "light" ? "Light mode" : theme === "dark" ? "Dark mode" : "System theme";
 
   return (

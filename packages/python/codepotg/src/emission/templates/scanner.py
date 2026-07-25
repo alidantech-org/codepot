@@ -6,13 +6,20 @@ from pathlib import Path
 
 from emission.paths.config_loader import PATH_CONFIG_FILES
 from emission.templates.descriptor import TemplateDescriptor, describe_template
+from emission.templates.renderer import clear_environment_cache
 
 
 def scan_templates(template_root: Path) -> tuple[TemplateDescriptor, ...]:
-    """Scan a template root and return descriptors for all emitted files."""
+    """Scan a template root and return descriptors for all emitted files.
+
+    A scan marks the start of a new emission plan. Clear compiled Jinja state once
+    here so template edits made between separate emissions are observed, while all
+    files inside the current emission still share one compiled environment cache.
+    """
     if not template_root.exists():
         raise FileNotFoundError(f"Template root not found: {template_root}")
 
+    clear_environment_cache()
     descriptors: list[TemplateDescriptor] = []
 
     for path in sorted(template_root.rglob("*")):

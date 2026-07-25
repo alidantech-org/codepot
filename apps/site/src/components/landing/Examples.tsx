@@ -3,7 +3,7 @@
 import { javascript } from '@codemirror/lang-javascript';
 import { yaml } from '@codemirror/lang-yaml';
 import { oneDark } from '@codemirror/theme-one-dark';
-import CodeMirror from '@uiw/react-codemirror';
+import dynamic from 'next/dynamic';
 import {
   ChevronDown,
   Ellipsis,
@@ -25,6 +25,12 @@ import type { CSSProperties } from 'react';
 import type { WorkflowCodeExample } from '@/data/types';
 
 import styles from './Examples.module.css';
+import { cn } from '@/lib/utils';
+
+const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
+  ssr: false,
+  loading: () => <div className={styles.editorLoading} aria-hidden="true" />
+});
 
 interface ExamplesProps {
   examples: WorkflowCodeExample[];
@@ -38,7 +44,7 @@ interface EditorFile {
 }
 
 const EDITOR_SCALES = [0.86, 1, 1.14] as const;
-const DEFAULT_EDITOR_HEIGHT = 'clamp(25.5rem, 49.3vw, 37.4rem)';
+const DEFAULT_EDITOR_HEIGHT = 'clamp(25.5rem, 49.3vw, 41.55rem)';
 
 function languageExtension(language: string) {
   if (language === 'yaml' || language === 'yml') return yaml();
@@ -69,10 +75,8 @@ function initialFiles(examples: WorkflowCodeExample[]): EditorFile[] {
 
 export function Examples({ examples }: ExamplesProps) {
   const { resolvedTheme } = useTheme();
-  const originalExamples = useMemo(
-    () => new Map(examples.map((example) => [example.key, example])),
-    [examples]
-  );
+  const originalExamples = useMemo(() => new Map(examples.map((example) => [example.key, example])), [examples]);
+  const [mounted, setMounted] = useState(false);
   const [files, setFiles] = useState<EditorFile[]>(() => initialFiles(examples));
   const [activeId, setActiveId] = useState<string>(examples[0]?.key ?? 'contract');
   const [openIds, setOpenIds] = useState<string[]>(() => examples.map((example) => example.key));
@@ -92,7 +96,11 @@ export function Examples({ examples }: ExamplesProps) {
   const lineCount = activeFile ? activeFile.code.split('\n').length : 0;
 
   useEffect(() => {
-    if (!isFullscreen) return;
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !isFullscreen) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -106,7 +114,7 @@ export function Examples({ examples }: ExamplesProps) {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isFullscreen]);
+  }, [isFullscreen, mounted]);
 
   function ensureFile(id: string) {
     const existing = filesById.get(id);
@@ -153,7 +161,7 @@ export function Examples({ examples }: ExamplesProps) {
     const filename = newFileName.trim();
     if (!filename) return;
 
-    const id = `custom-${Date.now()}`;
+    const id = `custom-${crypto.randomUUID()}`;
     const file: EditorFile = {
       id,
       filename,
@@ -200,6 +208,7 @@ export function Examples({ examples }: ExamplesProps) {
       '--editor-font-size': `${fontSize}px`,
       '--editor-scale': editorScale
     } as CSSProperties;
+    const editorHeight = fullscreen ? 'calc(100dvh - 3.3rem)' : DEFAULT_EDITOR_HEIGHT;
 
     return (
       <div className={styles.editorPane} style={workspaceStyle}>
@@ -210,11 +219,26 @@ export function Examples({ examples }: ExamplesProps) {
               if (!file) return null;
               const isActive = id === activeId;
               return (
-                <div key={id} className={`${styles.tab} ${isActive ? styles.activeTab : ''}`} role="tab" aria-selected={isActive}>
-                  <button type="button" onClick={() => setActiveId(id)} className={styles.tabLabel} title={file.filename}>
+                <div
+                  key={id}
+                  className={`${styles.tab} ${isActive ? styles.activeTab : ''}`}
+                  role="tab"
+                  aria-selected={isActive}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setActiveId(id)}
+                    className={styles.tabLabel}
+                    title={file.filename}
+                  >
                     {file.filename}
                   </button>
-                  <button type="button" onClick={() => closeFile(id)} className={styles.closeButton} aria-label={`Close ${file.filename}`}>
+                  <button
+                    type="button"
+                    onClick={() => closeFile(id)}
+                    className={styles.closeButton}
+                    aria-label={`Close ${file.filename}`}
+                  >
                     <X aria-hidden="true" />
                   </button>
                 </div>
@@ -224,11 +248,22 @@ export function Examples({ examples }: ExamplesProps) {
 
           <div className={styles.editorActions}>
             {fullscreen && (
-              <button type="button" className={styles.actionButton} onClick={() => setIsFullscreen(false)} aria-label="Exit full screen">
+              <button
+                type="button"
+                className={styles.actionButton}
+                onClick={() => setIsFullscreen(false)}
+                aria-label="Exit full screen"
+              >
                 <X aria-hidden="true" />
               </button>
             )}
-            <button type="button" className={styles.moreButton} onClick={() => setMenuOpen((current) => !current)} aria-label="More editor options" aria-expanded={menuOpen}>
+            <button
+              type="button"
+              className={styles.moreButton}
+              onClick={() => setMenuOpen((current) => !current)}
+              aria-label="More editor options"
+              aria-expanded={menuOpen}
+            >
               <Ellipsis aria-hidden="true" />
             </button>
           </div>
@@ -238,27 +273,55 @@ export function Examples({ examples }: ExamplesProps) {
               <div className={styles.menuGroup}>
                 <span className={styles.menuLabel}>Font size</span>
                 <div className={styles.stepper}>
-                  <button type="button" onClick={() => changeFontSize(-1)} aria-label="Decrease font size"><Minus aria-hidden="true" /></button>
+                  <button type="button" onClick={() => changeFontSize(-1)} aria-label="Decrease font size">
+                    <Minus aria-hidden="true" />
+                  </button>
                   <span>{fontSize}px</span>
-                  <button type="button" onClick={() => changeFontSize(1)} aria-label="Increase font size"><Plus aria-hidden="true" /></button>
+                  <button type="button" onClick={() => changeFontSize(1)} aria-label="Increase font size">
+                    <Plus aria-hidden="true" />
+                  </button>
                 </div>
               </div>
               <div className={styles.menuGroup}>
                 <span className={styles.menuLabel}>Editor scale</span>
                 <div className={styles.stepper}>
-                  <button type="button" onClick={() => changeScale(-1)} aria-label="Decrease editor scale"><Minus aria-hidden="true" /></button>
+                  <button type="button" onClick={() => changeScale(-1)} aria-label="Decrease editor scale">
+                    <Minus aria-hidden="true" />
+                  </button>
                   <span>{Math.round(editorScale * 100)}%</span>
-                  <button type="button" onClick={() => changeScale(1)} aria-label="Increase editor scale"><Plus aria-hidden="true" /></button>
+                  <button type="button" onClick={() => changeScale(1)} aria-label="Increase editor scale">
+                    <Plus aria-hidden="true" />
+                  </button>
                 </div>
               </div>
-              <button type="button" className={styles.menuButton} onClick={() => setShowLineNumbers((current) => !current)} role="menuitemcheckbox" aria-checked={showLineNumbers}>
-                <span>Line numbers</span><span>{showLineNumbers ? 'On' : 'Off'}</span>
+              <button
+                type="button"
+                className={styles.menuButton}
+                onClick={() => setShowLineNumbers((current) => !current)}
+                role="menuitemcheckbox"
+                aria-checked={showLineNumbers}
+              >
+                <span>Line numbers</span>
+                <span>{showLineNumbers ? 'On' : 'Off'}</span>
               </button>
-              <button type="button" className={styles.menuButton} onClick={reopenAllFiles} role="menuitem">Open all files</button>
-              <button type="button" className={styles.menuButton} onClick={closeAllFiles} role="menuitem">Close all files</button>
+              <button type="button" className={styles.menuButton} onClick={reopenAllFiles} role="menuitem">
+                Open all files
+              </button>
+              <button type="button" className={styles.menuButton} onClick={closeAllFiles} role="menuitem">
+                Close all files
+              </button>
               {!fullscreen && (
-                <button type="button" className={styles.menuButton} onClick={() => { setIsFullscreen(true); setMenuOpen(false); }} role="menuitem">
-                  <span>Open full screen</span><Maximize2 aria-hidden="true" />
+                <button
+                  type="button"
+                  className={styles.menuButton}
+                  onClick={() => {
+                    setIsFullscreen(true);
+                    setMenuOpen(false);
+                  }}
+                  role="menuitem"
+                >
+                  <span>Open full screen</span>
+                  <Maximize2 aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -266,35 +329,45 @@ export function Examples({ examples }: ExamplesProps) {
         </div>
 
         {activeFile ? (
-          <CodeMirror
-            value={activeFile.code}
-            onChange={updateActiveFile}
-            extensions={extensions}
-            theme={resolvedTheme === 'dark' ? oneDark : 'light'}
-            height={fullscreen ? 'calc(100dvh - 4.2rem)' : DEFAULT_EDITOR_HEIGHT}
-            width="100%"
-            basicSetup={{
-              lineNumbers: showLineNumbers,
-              foldGutter: showLineNumbers,
-              highlightActiveLine: true,
-              highlightActiveLineGutter: showLineNumbers,
-              bracketMatching: true,
-              closeBrackets: true,
-              autocompletion: true,
-              indentOnInput: true,
-              syntaxHighlighting: true
-            }}
-            aria-label={`Editable ${activeFile.filename} example`}
-            className={styles.editor}
-          />
+          mounted ? (
+            <CodeMirror
+              key={`${fullscreen ? 'fullscreen' : 'inline'}-${activeFile.id}`}
+              value={activeFile.code}
+              onChange={updateActiveFile}
+              extensions={extensions}
+              theme={resolvedTheme === 'dark' ? oneDark : 'light'}
+              height={editorHeight}
+              width="100%"
+              basicSetup={{
+                lineNumbers: showLineNumbers,
+                foldGutter: showLineNumbers,
+                highlightActiveLine: true,
+                highlightActiveLineGutter: showLineNumbers,
+                bracketMatching: true,
+                closeBrackets: true,
+                autocompletion: true,
+                indentOnInput: true,
+                syntaxHighlighting: true
+              }}
+              aria-label={`Editable ${activeFile.filename} example`}
+              className={styles.editor}
+            />
+          ) : (
+            <div className={styles.editorLoading} style={{ minHeight: editorHeight }} aria-hidden="true" />
+          )
         ) : (
-          <div className={styles.emptyState} style={{ minHeight: fullscreen ? 'calc(100dvh - 4.2rem)' : DEFAULT_EDITOR_HEIGHT }}>
-            <button type="button" onClick={reopenAllFiles} className="text-primary hover:underline">Open a workflow file</button>
+          <div className={styles.emptyState} style={{ minHeight: editorHeight }}>
+            <button type="button" onClick={reopenAllFiles} className="text-primary hover:underline">
+              Open a workflow file
+            </button>
           </div>
         )}
 
         {fullscreen && (
-          <div className={styles.statusBar}>
+          <div
+            style={{ backgroundColor: 'transparent', borderColor: 'var(--border)' }}
+            className={cn(styles.statusBar, 'bg-background/75 backdrop-blur-sm')}
+          >
             <span>main*</span>
             <span>{activeFile?.language ?? 'Plain Text'}</span>
             <span>{lineCount} lines</span>
@@ -313,7 +386,9 @@ export function Examples({ examples }: ExamplesProps) {
           <aside className={styles.explorer} aria-label="File explorer">
             <div className={styles.explorerHeader}>
               <span>EXPLORER</span>
-              <button type="button" onClick={() => setIsCreatingFile(true)} aria-label="Create file"><FilePlus2 aria-hidden="true" /></button>
+              <button type="button" onClick={() => setIsCreatingFile(true)} aria-label="Create file">
+                <FilePlus2 aria-hidden="true" />
+              </button>
             </div>
             <button type="button" className={styles.folderRow} onClick={() => setExplorerOpen((current) => !current)}>
               <ChevronDown className={explorerOpen ? '' : styles.collapsedChevron} aria-hidden="true" />
@@ -323,20 +398,43 @@ export function Examples({ examples }: ExamplesProps) {
             {explorerOpen && (
               <div className={styles.fileTree}>
                 {files.map((file) => (
-                  <div key={file.id} className={`${styles.fileRow} ${file.id === activeId ? styles.activeFileRow : ''}`}>
+                  <div
+                    key={file.id}
+                    className={`${styles.fileRow} ${file.id === activeId ? styles.activeFileRow : ''}`}
+                  >
                     <button type="button" onClick={() => openFile(file.id)} title={file.filename}>
                       <FileCode2 aria-hidden="true" />
                       <span>{file.filename}</span>
                     </button>
-                    <button type="button" onClick={() => deleteFile(file.id)} aria-label={`Delete ${file.filename}`} className={styles.deleteFileButton}>
+                    <button
+                      type="button"
+                      onClick={() => deleteFile(file.id)}
+                      aria-label={`Delete ${file.filename}`}
+                      className={styles.deleteFileButton}
+                    >
                       <Trash2 aria-hidden="true" />
                     </button>
                   </div>
                 ))}
                 {isCreatingFile && (
-                  <form className={styles.newFileForm} onSubmit={(event) => { event.preventDefault(); createFile(); }}>
+                  <form
+                    className={styles.newFileForm}
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      createFile();
+                    }}
+                  >
                     <FileCode2 aria-hidden="true" />
-                    <input autoFocus value={newFileName} onChange={(event) => setNewFileName(event.target.value)} onBlur={() => { if (!newFileName.trim()) setIsCreatingFile(false); }} placeholder="filename.ts" aria-label="New file name" />
+                    <input
+                      autoFocus
+                      value={newFileName}
+                      onChange={(event) => setNewFileName(event.target.value)}
+                      onBlur={() => {
+                        if (!newFileName.trim()) setIsCreatingFile(false);
+                      }}
+                      placeholder="filename.ts"
+                      aria-label="New file name"
+                    />
                   </form>
                 )}
               </div>
@@ -351,17 +449,23 @@ export function Examples({ examples }: ExamplesProps) {
   return (
     <section id="examples" className="border-y border-border bg-card/35">
       <div className="mx-auto max-w-7xl py-14 sm:py-16 lg:py-20">
-        <p className="mb-3 font-mono text-[11px] px-4 sm:px-6 uppercase tracking-widest text-accent">Workflows</p>
-        <h2 className="max-w-4xl text-3xl px-4 sm:px-6 font-semibold tracking-tight text-foreground sm:text-4xl">
+        <p className="mb-3 px-4 font-mono text-[11px] uppercase tracking-widest text-accent sm:px-6">Workflows</p>
+        <h2 className="max-w-4xl px-4 text-3xl font-semibold tracking-tight text-foreground sm:px-6 sm:text-4xl">
           Real files from contract to generated code
         </h2>
-        <p className="mt-4 max-w-3xl px-4 sm:px-6 text-[15px] leading-7 text-muted-foreground">
+        <p className="mt-4 max-w-3xl px-4 text-[15px] leading-7 text-muted-foreground sm:px-6">
           Each tab is loaded from a real source file in the website project. Edit the contract, CodepotG task, paths
           configuration, or Jinja template in the shared syntax-highlighted editor.
         </p>
 
         <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] xl:items-stretch">
-          <div className={`${styles.workspace} order-2 xl:order-1`}>{renderEditorPane(false)}</div>
+          <div className={`${styles.workspace} order-2 xl:order-1`}>
+            {isFullscreen ? (
+              <div className={styles.editorLoading} style={{ minHeight: DEFAULT_EDITOR_HEIGHT }} aria-hidden="true" />
+            ) : (
+              renderEditorPane(false)
+            )}
+          </div>
           <div className="order-1 grid gap-2 sm:grid-cols-2 xl:order-2 xl:grid-cols-1 xl:content-start">
             {examples.map((example) => {
               const isActive = activeId === example.key && openIds.includes(example.key);
@@ -384,7 +488,7 @@ export function Examples({ examples }: ExamplesProps) {
           </div>
         </div>
 
-        <div className="mt-6 text-sm text-muted-foreground px-4 sm:px-6 flex flex-wrap gap-2">
+        <div className="mt-6 flex flex-wrap gap-2 px-4 text-sm text-muted-foreground sm:px-6">
           <Link href="/docs/prototype-workflow" className="font-medium text-primary hover:underline">
             Read the complete prototype workflow
           </Link>
@@ -395,9 +499,7 @@ export function Examples({ examples }: ExamplesProps) {
         </div>
       </div>
 
-      {isFullscreen && typeof document !== 'undefined'
-        ? createPortal(renderFullscreenWorkspace(), document.body)
-        : null}
+      {mounted && isFullscreen ? createPortal(renderFullscreenWorkspace(), document.body) : null}
     </section>
   );
 }

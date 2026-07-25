@@ -4,11 +4,16 @@
 
 It deliberately owns only argument parsing, project-runtime discovery, terminal presentation, and process exit codes. Authoring, template compilation, generation planning, filesystem safety, diagnostics, events, and execution remain in `codepotx`.
 
-This boundary allows the same runtime operations to be reused by future web interfaces, editor extensions, MCP servers, desktop tools, AI integrations, and embedded Node.js applications without copying CLI behavior.
+This boundary allows the same runtime operations to be reused by web interfaces, editor extensions, MCP servers, desktop tools, AI integrations, and embedded Node.js applications without copying CLI behavior.
 
-## Status
+## Status and documentation
 
-The package is under active development alongside `codepotx`. Its package version is currently `0.0.0`, so it should not yet be documented as a published stable npm release.
+The package is under active development alongside `codepotx`. Its package version is currently `0.0.0`, so it is not yet a published stable npm release.
+
+- documentation: https://code.alidantech.org/docs/packages/codepotx-cli
+- source: https://github.com/alidantech-org/codepot/tree/main/packages/nodejs/codepotx-cli
+
+The full documentation covers getting started, commands, options, project-local runtime resolution, JSON automation, and troubleshooting.
 
 ## Binary
 
@@ -66,6 +71,8 @@ const exitCode = await runCli([
   '--json',
 ]);
 ```
+
+Applications that need typed in-process responses should call `codepotx/runtime` directly.
 
 ## Development
 

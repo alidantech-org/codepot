@@ -1,5 +1,6 @@
 .workspace {
   min-width: 0;
+  overflow: hidden;
   border: 1px solid var(--border);
   background: var(--background);
 }
@@ -37,28 +38,24 @@
 }
 
 .tabBar::-webkit-scrollbar,
-.editor :global(.cm-scroller)::-webkit-scrollbar,
-.fileTree::-webkit-scrollbar {
+.editor :global(.cm-scroller)::-webkit-scrollbar {
   width: 4px;
   height: 4px;
 }
 
 .tabBar::-webkit-scrollbar-track,
-.editor :global(.cm-scroller)::-webkit-scrollbar-track,
-.fileTree::-webkit-scrollbar-track {
+.editor :global(.cm-scroller)::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .tabBar::-webkit-scrollbar-thumb,
-.editor :global(.cm-scroller)::-webkit-scrollbar-thumb,
-.fileTree::-webkit-scrollbar-thumb {
+.editor :global(.cm-scroller)::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: transparent;
 }
 
 .tabBar:hover::-webkit-scrollbar-thumb,
-.editor :global(.cm-scroller):hover::-webkit-scrollbar-thumb,
-.fileTree:hover::-webkit-scrollbar-thumb {
+.editor :global(.cm-scroller):hover::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
 }
 
@@ -122,9 +119,7 @@
 .moreButton svg,
 .actionButton svg,
 .menu svg,
-.stepper svg,
-.explorer svg,
-.statusBar svg {
+.stepper svg {
   width: calc(0.82rem * var(--editor-scale));
   height: calc(0.82rem * var(--editor-scale));
 }
@@ -156,7 +151,7 @@
   position: absolute;
   top: calc(100% + 0.3rem);
   right: 0;
-  z-index: 60;
+  z-index: 40;
   width: 13.5rem;
   border: 1px solid var(--border);
   background: var(--card);
@@ -224,10 +219,16 @@
   background: var(--card-muted);
 }
 
-.editor {
+.editor,
+.editorLoading {
   min-width: 0;
   background: var(--background);
-  font-size: var(--editor-font-size);
+}
+
+.editorLoading {
+  width: 100%;
+  min-height: clamp(25.5rem, 49.3vw, 37.4rem);
+  border: 0;
 }
 
 .editor :global(.cm-editor),
@@ -302,6 +303,11 @@
   min-height: 0;
   grid-template-rows: auto minmax(0, 1fr) auto;
   border-left: 1px solid var(--border);
+}
+
+.fullscreenWorkspace .editorLoading {
+  min-height: 0;
+  height: 100%;
 }
 
 .explorer {

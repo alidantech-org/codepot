@@ -1,0 +1,109 @@
+normalized roots: none
+outputs: planned=715, created=715, updated=0, unchanged=0
+write queues: files_peak=128, bytes_peak=463502, waits=17, batches=24, batch_files_peak=32, written=715
+Memory trace: stage=start, elapsed=0.5ms, rss=45.3MiB, rss_peak=45.3MiB, private=27.8MiB, available=4.0GiB, total=15.6GiB, stage_time=0.5ms
+Memory trace: stage=jsonl_ready, elapsed=468.5ms, rss=59.0MiB, rss_peak=59.0MiB, private=40.6MiB, available=3.8GiB, total=15.6GiB, stage_time=468.0ms
+Memory trace: stage=document_loaded, elapsed=480.0ms, rss=63.8MiB, rss_peak=63.8MiB, private=46.1MiB, available=3.8GiB, total=15.6GiB, stage_time=11.5ms
+Memory trace: stage=graph_inferred, elapsed=813.4ms, rss=52.7MiB, rss_peak=65.0MiB, private=34.7MiB, available=3.8GiB, total=15.6GiB, stage_time=333.4ms
+Memory trace: stage=contract_built, elapsed=1731.5ms, rss=74.9MiB, rss_peak=74.9MiB, private=57.2MiB, available=3.8GiB, total=15.6GiB, stage_time=918.1ms
+Memory trace: stage=template_contract_built, elapsed=1966.2ms, rss=85.0MiB, rss_peak=85.0MiB, private=66.5MiB, available=3.8GiB, total=15.6GiB, stage_time=234.7ms
+Memory trace: stage=emission_complete, elapsed=4946.6ms, rss=90.5MiB, rss_peak=94.0MiB, private=71.9MiB, available=3.8GiB, total=15.6GiB, stage_time=2980.4ms
+Memory trace: stage=released, elapsed=4976.5ms, rss=74.5MiB, rss_peak=94.0MiB, private=55.9MiB, available=3.8GiB, total=15.6GiB, stage_time=29.9ms
+[
+  {
+    "elapsed_ms": 0.525799987372011,
+    "peak_rss_bytes": 47521792,
+    "private_bytes": 29184000,
+    "python_bytes": null,
+    "python_peak_bytes": null,
+    "rss_bytes": 47521792,
+    "stage": "start",
+    "stage_elapsed_ms": 0.525799987372011,
+    "system_available_bytes": 4244983808,
+    "system_total_bytes": 16705122304
+  },
+  {
+    "elapsed_ms": 468.51839998271316,
+    "peak_rss_bytes": 61829120,
+    "private_bytes": 42524672,
+    "python_bytes": null,
+    "python_peak_bytes": null,
+    "rss_bytes": 61829120,
+    "stage": "jsonl_ready",
+    "stage_elapsed_ms": 467.99259999534115,
+    "system_available_bytes": 4109705216,
+    "system_total_bytes": 16705122304
+  },
+  {
+    "elapsed_ms": 479.97509996639565,
+    "peak_rss_bytes": 66949120,
+    "private_bytes": 48312320,
+    "python_bytes": null,
+    "python_peak_bytes": null,
+    "rss_bytes": 66949120,
+    "stage": "document_loaded",
+    "stage_elapsed_ms": 11.456699983682483,
+    "system_available_bytes": 4098392064,
+    "system_total_bytes": 16705122304
+  },
+  {
+    "elapsed_ms": 813.4164999937639,
+    "peak_rss_bytes": 68190208,
+    "private_bytes": 36356096,
+    "python_bytes": null,
+    "python_peak_bytes": null,
+    "rss_bytes": 55242752,
+    "stage": "graph_inferred",
+    "stage_elapsed_ms": 333.4414000273682,
+    "system_available_bytes": 4133109760,
+    "system_total_bytes": 16705122304
+  },
+  {
+    "elapsed_ms": 1731.4834999851882,
+    "peak_rss_bytes": 78553088,
+    "private_bytes": 60026880,
+    "python_bytes": null,
+    "python_peak_bytes": null,
+    "rss_bytes": 78553088,
+    "stage": "contract_built",
+    "stage_elapsed_ms": 918.0669999914244,
+    "system_available_bytes": 4084391936,
+    "system_total_bytes": 16705122304
+  },
+  {
+    "elapsed_ms": 1966.2288000108674,
+    "peak_rss_bytes": 89096192,
+    "private_bytes": 69689344,
+    "python_bytes": null,
+    "python_peak_bytes": null,
+    "rss_bytes": 89096192,
+    "stage": "template_contract_built",
+    "stage_elapsed_ms": 234.74530002567917,
+    "system_available_bytes": 4096462848,
+    "system_total_bytes": 16705122304
+  },
+  {
+    "elapsed_ms": 4946.583800017834,
+    "peak_rss_bytes": 98611200,
+    "private_bytes": 75419648,
+    "python_bytes": null,
+    "python_peak_bytes": null,
+    "rss_bytes": 94904320,
+    "stage": "emission_complete",
+    "stage_elapsed_ms": 2980.3550000069663,
+    "system_available_bytes": 4070019072,
+    "system_total_bytes": 16705122304
+  },
+  {
+    "elapsed_ms": 4976.506799983326,
+    "peak_rss_bytes": 98611200,
+    "private_bytes": 58626048,
+    "python_bytes": null,
+    "python_peak_bytes": null,
+    "rss_bytes": 78131200,
+    "stage": "released",
+    "stage_elapsed_ms": 29.922999965492636,
+    "system_available_bytes": 4087164928,
+    "system_total_bytes": 16705122304
+  }
+]
