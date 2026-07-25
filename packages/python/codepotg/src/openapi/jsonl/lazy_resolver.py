@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from core.system_resources import tune_runtime
 
 from .errors import JsonlLookupError
 from .hot_index import BoundedHotIndex
@@ -85,7 +88,7 @@ class LazyJsonlRecord(Mapping[str, Any]):
 
 
 class JsonlLazyResolver:
-    """Template-safe lazy resolver backed by JSONL indexes and bounded caches."""
+    """Template-safe lazy resolver backed by SQLite indexes and JSONL sections."""
 
     def __init__(
         self,
@@ -94,7 +97,13 @@ class JsonlLazyResolver:
         limits: LazyResolverLimits | None = None,
     ) -> None:
         self.cache_dir = Path(cache_dir)
-        self.limits = limits or LazyResolverLimits()
+        if limits is None:
+            tuning = tune_runtime(_manifest_source_size(self.cache_dir))
+            limits = LazyResolverLimits(
+                cache_entries=tuning.hot_index_entries,
+                cache_bytes=tuning.hot_index_bytes,
+            )
+        self.limits = limits
         _validate_limits(self.limits)
         self.index_store = JsonlIndexStore(self.cache_dir)
         hot_limits = HotIndexLimits(
@@ -113,32 +122,26 @@ class JsonlLazyResolver:
 
     def ref(self, ref: str) -> LazyJsonlRecord | None:
         """Return a lazy proxy for a canonical ref."""
-
         return self._proxy(self.index_store.get_by_ref(ref))
 
     def key(self, key: str) -> LazyJsonlRecord | None:
         """Return a lazy proxy for a stable source key."""
-
         return self._proxy(self.index_store.get_by_key(key))
 
     def operation(self, operation_id: str) -> LazyJsonlRecord | None:
         """Return a lazy operation proxy by operationId."""
-
         return self._proxy(self.index_store.get_by_operation_id(operation_id))
 
     def resource(self, resource: str) -> tuple[LazyJsonlRecord, ...]:
         """Return lazy records declaring or mentioning one resource."""
-
         return self._facts_to_proxies(self.index_store.find_mentions("resource", resource))
 
     def mentions(self, index: str, value: str) -> tuple[LazyJsonlRecord, ...]:
         """Return records found through one mention index."""
-
         return self._facts_to_proxies(self.index_store.find_mentions(index, value))
 
     def dependants(self, ref: str) -> tuple[LazyJsonlRecord, ...]:
         """Return lazy records that directly depend on a ref."""
-
         return self._facts_to_proxies(
             self.index_store.find_dependants(ref),
             item_field="from",
@@ -146,7 +149,6 @@ class JsonlLazyResolver:
 
     def chain(self, ref: str, *, depth: int = 1) -> tuple[LazyJsonlRecord, ...]:
         """Resolve a bounded breadth-first reverse-dependency chain lazily."""
-
         if depth < 0 or depth > self.limits.max_depth:
             raise JsonlLookupError(
                 f"Lazy resolver depth {depth} exceeds limit {self.limits.max_depth}"
@@ -180,11 +182,14 @@ class JsonlLazyResolver:
 
     def stats(self) -> dict[str, Any]:
         """Return bounded resolver and source-load diagnostics."""
-
         return {
             "loads": self._load_count,
             "proxyCache": self._proxies.stats(),
         }
+
+    def close(self) -> None:
+        """Release SQLite and section file handles after emission."""
+        self.index_store.close()
 
     def _proxy(self, location: RecordLocation | None) -> LazyJsonlRecord | None:
         if location is None:
@@ -204,7 +209,9 @@ class JsonlLazyResolver:
 
     def _load(self, location: RecordLocation) -> Any:
         self._load_count += 1
-        return self.index_store.read_location(location)
+        # Cache reuse validates the section tree once. Rehashing every selected record
+        # adds CPU cost without improving safety during one trusted generation run.
+        return self.index_store.read_location(location, verify=False)
 
     def _facts_to_proxies(
         self,
@@ -228,6 +235,16 @@ class JsonlLazyResolver:
                     f"{self.limits.max_related_items}"
                 )
         return tuple(proxies)
+
+
+def _manifest_source_size(cache_dir: Path) -> int:
+    try:
+        with (cache_dir / "manifest.json").open("r", encoding="utf-8") as stream:
+            manifest = json.load(stream)
+        source = manifest.get("source", {})
+        return int(source.get("size", source.get("originalSize", 0)))
+    except (OSError, ValueError, TypeError, json.JSONDecodeError, AttributeError):
+        return 0
 
 
 def _validate_limits(limits: LazyResolverLimits) -> None:
