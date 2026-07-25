@@ -1,0 +1,16 @@
+selection=schema
+language={{ lang.name }}
+name={{ schema.name.pascal.o }}
+ref={{ schema.api.ref }}
+kind={{ schema.api.kind }}
+nullable={{ schema.api.nullable }}
+description={{ schema.api.description }}
+field_count={{ schema.fields | length }}
+dependency_count={{ schema.api.dependencies | length }}
+composition_count={{ schema.api.composition_refs | length }}
+inherited_count={{ schema.api.inherited_refs | length }}
+enum_count={{ schema.api.enum_values | length }}
+raw_probe={{ schema.api.meta.get("x-schema-probe", "") }}
+emit_group={{ schema.emit.group }}
+emit_key={{ schema.emit.key }}
+resource_path={{ schema.emit.resource_path | join("/") }}
