@@ -37,16 +37,16 @@ export function NavBar() {
     <>
       <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-[1600px] items-center justify-between gap-3 px-2 md:px-6">
+      <nav className="sticky top-0 z-50 border-b border-border bg-background/82 shadow-[0_8px_32px_color-mix(in_srgb,var(--surface-cocoa)_6%,transparent)] backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-3 px-2 md:px-6">
           <div className="flex min-w-0 items-center gap-3 lg:gap-8">
             <button type="button" onClick={() => setSidebarOpen(true)} aria-label="Open navigation menu" className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground lg:hidden">
               <Menu className="h-5 w-5" />
             </button>
 
-            <Link href="/" className="flex min-w-0 items-center gap-0.5">
-              <Image src="/logo.svg" alt="Codepot logo" width={34} height={34} className="shrink-0" />
-              <span className="truncate bg-linear-to-r from-primary to-secondary bg-clip-text text-lg font-bold tracking-tight text-transparent">codepot</span>
+            <Link href="/" className="group flex min-w-0 items-center gap-1.5" aria-label="Codepot home">
+              <Image src="/logo.svg" alt="" width={42} height={42} priority className="h-10 w-10 shrink-0 transition-transform duration-300 group-hover:-rotate-3 motion-reduce:transition-none" />
+              <span className="landing-display truncate text-xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary">Codepot</span>
             </Link>
 
             <div className="hidden items-center gap-1 text-sm text-muted-foreground lg:flex">
@@ -64,7 +64,7 @@ export function NavBar() {
 
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <ThemeToggle />
-            <button type="button" onClick={() => setSearchOpen(true)} aria-label="Search documentation" className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground sm:w-auto md:border md:border-border md:bg-card md:px-3 lg:min-w-52 lg:justify-start">
+            <button type="button" onClick={() => setSearchOpen(true)} aria-label="Search documentation" className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground sm:w-auto md:border md:border-border md:bg-card/80 md:px-3 lg:min-w-52 lg:justify-start">
               <Search className="h-4 w-4 shrink-0" />
               <span className="ml-2 hidden text-sm sm:inline">Search docs</span>
             </button>
