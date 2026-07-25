@@ -17,7 +17,11 @@ interface DocPageProps {
   params: Promise<{ path?: string[] }>;
 }
 
-export const dynamicParams = false;
+// Known documentation paths are still prerendered at build time. Keep dynamic
+// params enabled so the bundled resolver can recover a valid page if Next.js'
+// production static-param manifest does not match an optional catch-all URL.
+// Unknown paths still call notFound() below.
+export const dynamicParams = true;
 
 export function generateStaticParams(): GeneratedDocParams[] {
   return generatePublicDocParams();
