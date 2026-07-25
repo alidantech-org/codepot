@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
-
 from archives.codepot.src.app import codepotx
 from archives.codepot.src.cli.presentation.console import print_error
 from archives.codepot.src.cli.presentation.template import print_template_validation_result

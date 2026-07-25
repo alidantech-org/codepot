@@ -7,7 +7,10 @@ from archives.codepot.src.languages.typescript.constants import (
     IMPORT_TYPE_KEYWORD,
     TS_NULL,
 )
-from archives.codepot.src.languages.typescript.utils import relative_module_path, remove_known_extension
+from archives.codepot.src.languages.typescript.utils import (
+    relative_module_path,
+    remove_known_extension,
+)
 
 
 def alias(left: str, right: str | None) -> str:

@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 from archives.codepot.src.spec.ir.shared.document import CodepotDefinition
 
 

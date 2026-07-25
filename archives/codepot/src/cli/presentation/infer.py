@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import json
 
-from rich.table import Table
-
 from archives.codepot.src.app import InferResult
 from archives.codepot.src.cli.presentation.console import console
 from archives.codepot.src.cli.presentation.tables import make_key_value_table
+from rich.table import Table
 
 
 def render_infer_result(result: InferResult) -> None:

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from archives.codepot.src.contracts.language.names import LanguageName
 from archives.codepot.src.contracts.spec.names import SpecName
-from archives.codepot.src.languages.dart.constants import RESERVED_WORD_ESCAPE_REASON, RESERVED_WORD_SUFFIX
+from archives.codepot.src.languages.dart.constants import (
+    RESERVED_WORD_ESCAPE_REASON,
+    RESERVED_WORD_SUFFIX,
+)
 from archives.codepot.src.languages.dart.keywords import is_dart_reserved
 
 

@@ -15,7 +15,10 @@ from archives.codepot.src.pipeline.contracts.events import PipelineEvent, Pipeli
 from archives.codepot.src.pipeline.contracts.options import PipelineOptions
 from archives.codepot.src.pipeline.contracts.results import PassReport, PassStatus, PipelineReport
 from archives.codepot.src.pipeline.contracts.state import PipelineState
-from archives.codepot.src.pipeline.debug.state_dump import PipelineStateDumpRequest, write_pipeline_state_dump
+from archives.codepot.src.pipeline.debug.state_dump import (
+    PipelineStateDumpRequest,
+    write_pipeline_state_dump,
+)
 from archives.codepot.src.pipeline.passes.base import PipelinePass
 from archives.codepot.src.pipeline.passes.registry import create_default_passes
 

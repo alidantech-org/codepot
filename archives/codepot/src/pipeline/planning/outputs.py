@@ -8,7 +8,10 @@ from archives.codepot.src.contracts.language.runtime import LanguageRuntime
 from archives.codepot.src.contracts.spec.context import SpecContext
 from archives.codepot.src.contracts.spec.records import SpecRecord
 from archives.codepot.src.contracts.templates.config.package import LoadedTemplatePackageConfig
-from archives.codepot.src.contracts.templates.config.selection import TemplateSelect, TemplateSelectMode
+from archives.codepot.src.contracts.templates.config.selection import (
+    TemplateSelect,
+    TemplateSelectMode,
+)
 from archives.codepot.src.contracts.templates.config.template import TemplateEntryConfig
 from archives.codepot.src.pipeline.planning.files import PlannedOutputFile, PlannedOutputSource
 from archives.codepot.src.pipeline.planning.output_paths import build_output_path

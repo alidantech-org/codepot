@@ -6,7 +6,10 @@ from dataclasses import replace
 
 from archives.codepot.src.contracts.language.interface import LanguageRuntimeRequest
 from archives.codepot.src.languages.registry import language_registry
-from archives.codepot.src.pipeline.contracts.diagnostics import PipelineDiagnostic, PipelineDiagnosticLevel
+from archives.codepot.src.pipeline.contracts.diagnostics import (
+    PipelineDiagnostic,
+    PipelineDiagnosticLevel,
+)
 from archives.codepot.src.pipeline.contracts.results import ReportCounter
 from archives.codepot.src.pipeline.contracts.state import PipelineState
 from archives.codepot.src.pipeline.passes.base import (

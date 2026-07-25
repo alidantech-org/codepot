@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import ConfigDict
-
 from archives.codepot.src.spec.ir.shared.base import DefinitionItem
 from archives.codepot.src.spec.kinds.primitive import PrimitiveFormat, PrimitiveType
+from pydantic import ConfigDict
 
 
 class PrimitiveValidationDefinition(DefinitionItem):

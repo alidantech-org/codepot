@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import typer
-
 from archives.codepot.src.cli.commands.emit import emit_command
 from archives.codepot.src.cli.commands.infer import plan_command
 from archives.codepot.src.cli.commands.inspect import inspect_command

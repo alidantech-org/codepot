@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from archives.codepot.src.pipeline.contracts.diagnostics import PipelineDiagnostic, PipelineDiagnosticLevel
+from archives.codepot.src.pipeline.contracts.diagnostics import (
+    PipelineDiagnostic,
+    PipelineDiagnosticLevel,
+)
 from archives.codepot.src.pipeline.contracts.results import ReportCounter
 from archives.codepot.src.pipeline.contracts.state import PipelineState
 from archives.codepot.src.pipeline.emission.writer import write_rendered_files

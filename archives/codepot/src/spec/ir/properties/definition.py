@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
-
 from archives.codepot.src.spec.ir.properties.composite.definition import CompositeDefinition
 from archives.codepot.src.spec.ir.properties.enum.definition import EnumDefinition
 from archives.codepot.src.spec.ir.properties.primitive.definition import PrimitiveDefinition
+from pydantic import BaseModel, ConfigDict
 
 RefProperty = PrimitiveDefinition | EnumDefinition | CompositeDefinition
 

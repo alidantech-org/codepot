@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from archives.codepot.src.pipeline.contracts.diagnostics import PipelineDiagnostic, PipelineDiagnosticLevel
+from archives.codepot.src.pipeline.contracts.diagnostics import (
+    PipelineDiagnostic,
+    PipelineDiagnosticLevel,
+)
 from archives.codepot.src.pipeline.contracts.results import PassStatus
 from archives.codepot.src.pipeline.contracts.state import PipelineState
 from archives.codepot.src.pipeline.passes.base import PassResult, make_report, utc_now

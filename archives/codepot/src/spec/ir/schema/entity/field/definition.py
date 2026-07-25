@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import ConfigDict, Field
-
 from archives.codepot.src.spec.ir.shared.base import DefinitionItem
 from archives.codepot.src.spec.ir.shared.ref import Ref
 from archives.codepot.src.spec.kinds.fields import (
@@ -14,6 +12,7 @@ from archives.codepot.src.spec.kinds.fields import (
     FieldVisibilityLevel,
     QueryOperator,
 )
+from pydantic import ConfigDict, Field
 
 
 class FieldCapabilityConfig(DefinitionItem):

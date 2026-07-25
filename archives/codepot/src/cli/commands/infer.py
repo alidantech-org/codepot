@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import typer
-
 from archives.codepot.src.app import codepotx
 from archives.codepot.src.cli.options import (
     DEFAULT_OUTPUT_OPTION,
@@ -18,7 +17,10 @@ from archives.codepot.src.cli.options import (
     VerboseOption,
 )
 from archives.codepot.src.cli.presentation.console import print_error
-from archives.codepot.src.cli.presentation.pipeline import print_pipeline_event, print_pipeline_report
+from archives.codepot.src.cli.presentation.pipeline import (
+    print_pipeline_event,
+    print_pipeline_report,
+)
 from archives.codepot.src.pipeline.contracts.options import PipelineOptions
 from archives.codepot.src.pipeline.contracts.results import PassStatus
 

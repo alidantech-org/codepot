@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-
 from archives.codepot.src.cli.constants import options as opt
 from archives.codepot.src.cli.constants.defaults import (
     DEFAULT_LANGUAGE,

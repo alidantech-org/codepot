@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from archives.codepot.src.contracts.language.names import LanguageName
 from archives.codepot.src.contracts.spec.names import SpecName, SpecNameCase, resolve_name_case
-from archives.codepot.src.languages.python.constants import RESERVED_WORD_ESCAPE_REASON, RESERVED_WORD_SUFFIX
+from archives.codepot.src.languages.python.constants import (
+    RESERVED_WORD_ESCAPE_REASON,
+    RESERVED_WORD_SUFFIX,
+)
 from archives.codepot.src.languages.python.keywords import is_python_reserved
 
 

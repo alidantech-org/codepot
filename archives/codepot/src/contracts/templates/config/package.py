@@ -5,8 +5,6 @@ from __future__ import annotations
 from enum import StrEnum
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from archives.codepot.src.contracts.templates.config.commands import (
     TemplateCommandsConfig,
     TemplateMessagesConfig,
@@ -15,6 +13,7 @@ from archives.codepot.src.contracts.templates.config.defaults import TemplateDef
 from archives.codepot.src.contracts.templates.config.language import TemplateLanguageConfig
 from archives.codepot.src.contracts.templates.config.settings import TemplateSettingsConfig
 from archives.codepot.src.contracts.templates.config.template import TemplateEntryConfig
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TemplatePackageFormat(StrEnum):

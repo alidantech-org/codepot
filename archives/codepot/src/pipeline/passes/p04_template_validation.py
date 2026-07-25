@@ -4,10 +4,18 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from archives.codepot.src.pipeline.contracts.diagnostics import PipelineDiagnostic, PipelineDiagnosticLevel
+from archives.codepot.src.pipeline.contracts.diagnostics import (
+    PipelineDiagnostic,
+    PipelineDiagnosticLevel,
+)
 from archives.codepot.src.pipeline.contracts.results import PassStatus, ReportCounter
 from archives.codepot.src.pipeline.contracts.state import PipelineState
-from archives.codepot.src.pipeline.passes.base import PassResult, failed_result, make_report, utc_now
+from archives.codepot.src.pipeline.passes.base import (
+    PassResult,
+    failed_result,
+    make_report,
+    utc_now,
+)
 from archives.codepot.src.pipeline.templates.validator import validate_template_package
 
 
