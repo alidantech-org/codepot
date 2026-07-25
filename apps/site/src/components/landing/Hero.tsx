@@ -5,7 +5,7 @@ import { HeroDecoration } from "@/components/decorative/HeroDecoration";
 export function Hero() {
   return (
     <section className="relative flex min-h-[620px] flex-col items-center justify-center py-24 text-center sm:items-start sm:text-left lg:min-h-[680px] lg:py-28 lg:pr-72 xl:pr-80">
-      <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 font-mono text-[11px] tracking-wider text-primary">
+      <span className="mb-6 inline-flex items-center gap-2 border-t border-border/70 border-b py-1 font-mono text-[11px] tracking-wider text-primary">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
         supported prototypes · official runtime · Rust language platform
       </span>

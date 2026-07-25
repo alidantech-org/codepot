@@ -23,19 +23,21 @@ export const metadata: Metadata = {
 
 const Home: NextPage = () => {
   return (
-    <div className="landing-shell mx-auto w-full max-w-7xl px-3 md:px-6">
-      <div aria-hidden="true" className="landing-free-curves">
-        <span />
-        <span />
-        <span />
+    <div className="landing-page w-full overflow-x-clip">
+      <div className="landing-shell relative mx-auto w-full max-w-7xl px-3 md:px-6">
+        <div aria-hidden="true" className="landing-free-curves">
+          <span />
+          <span />
+          <span />
+        </div>
+        <Hero />
+        <Ecosystem />
+        <Features features={FEATURES} />
+        <Pipeline steps={PIPELINE_STEPS} />
+        <Examples contractCode={CONTRACT_CODE} taskCode={TASK_CODE} runtimeCode={RUNTIME_CODE} />
+        <UseCases useCases={USE_CASES} />
+        <CTABanner />
       </div>
-      <Hero />
-      <Ecosystem />
-      <Features features={FEATURES} />
-      <Pipeline steps={PIPELINE_STEPS} />
-      <Examples contractCode={CONTRACT_CODE} taskCode={TASK_CODE} runtimeCode={RUNTIME_CODE} />
-      <UseCases useCases={USE_CASES} />
-      <CTABanner />
     </div>
   );
 };
