@@ -36,7 +36,7 @@ export default function AppleIcon() {
             width: "116px",
             height: "112px",
             marginTop: "34px",
-            borderRadius: "45% 45% 42% 42% / 28% 28% 58% 58%",
+            borderRadius: "46%",
             background: "linear-gradient(145deg, #e2a663, #a85e2e 52%, #673b24)",
             border: "5px solid #5c321d",
             display: "flex",
