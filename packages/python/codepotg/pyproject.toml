@@ -112,6 +112,10 @@ ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 "cli/commands/*.py" = ["B008"]
+"src/contracts/normalized_codegen_contract/__init__.py" = ["F821"]
+"src/contracts/normalized_domains/__init__.py" = ["F821"]
+"src/contracts/normalized_entity_contract/__init__.py" = ["F821"]
+"src/contracts/normalized_frontend_contract/__init__.py" = ["F821"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
