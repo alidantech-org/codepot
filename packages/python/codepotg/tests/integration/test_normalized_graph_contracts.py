@@ -4,10 +4,12 @@ import shutil
 from pathlib import Path
 
 from app import GeneratorApp
+from tests.fixtures.openapi import load_real_contract
 
 
-def test_graph_templates_render_normalized_entity_and_frontend_roots(
+def test_graph_templates_render_real_normalized_entity_and_frontend_roots(
     tmp_path: Path,
+    real_openapi_yaml_path: Path,
 ) -> None:
     project = tmp_path / "normalized-graph"
     shutil.copytree(
@@ -15,58 +17,24 @@ def test_graph_templates_render_normalized_entity_and_frontend_roots(
         project,
         ignore=shutil.ignore_patterns(".generated", ".codepotg"),
     )
-    (project / "openapi.yaml").write_text(
-        """
-openapi: 3.1.0
-info:
-  title: Normalized Graph API
-  version: 1.0.0
-paths:
-  /users:
-    get:
-      operationId: listUsers
-      responses:
-        "200":
-          description: OK
-components:
-  schemas:
-    UserModel:
-      type: object
-x-codegen:
-  entities:
-    UserEntity:
-      store: users
-      visibility: [backend, storage, api]
-      fields:
-        id:
-          type: string
-          readonly: true
-        name:
-          type: string
-          editable: true
-      backendFields:
-        internalNote:
-          type: string
-  frontends:
-    admin:
-      title: Admin Console
-      routePrefix: /admin
-      components:
-        user-table:
-          props: '#/components/schemas/UserModel'
-          uses:
-            - alias: loadUsers
-              operation: listUsers
-      screens:
-        users:
-          route: /users
-          components: [user-table]
-          uses:
-            - alias: loadUsers
-              operation: listUsers
-""".strip(),
-        encoding="utf-8",
-    )
+    shutil.copy2(real_openapi_yaml_path, project / "openapi.yaml")
+
+    contract = load_real_contract(real_openapi_yaml_path)
+    entity_contract = contract.meta["normalized_entities"]
+    frontend_contract = contract.meta["normalized_frontends"]
+    app_entity = entity_contract.entities.by_id["App"]
+    admin_frontend = frontend_contract.by_id["admin"]
+
+    assert app_entity.store == "apps"
+    assert app_entity.resource is not None
+    assert app_entity.resource.is_resolved
+    assert app_entity.declared_fields.by_id["slug"].unique.value is True
+    assert app_entity.declared_fields.by_id["status"].is_queryable
+    assert admin_frontend.route_prefix == "/admin"
+    assert "AppsTable" in admin_frontend.components.by_id
+    assert "AppsListScreen" in admin_frontend.screens.by_id
+    assert "findApps" in admin_frontend.operations.by_id
+
     templates = project / "templates"
     shutil.rmtree(templates)
     templates.mkdir()
@@ -115,18 +83,22 @@ emissions:
     )
 
     output = project / ".generated"
-    entity_file = output / "entities" / "user_entity.ts"
+    entity_file = output / "entities" / "app.ts"
     frontend_file = output / "frontends" / "admin.ts"
-    assert set(result.tasks[0].written) == {entity_file, frontend_file}
+    written = set(result.tasks[0].written)
+
+    assert entity_file in written
+    assert frontend_file in written
+    assert len(written) == len(contract.entities) + frontend_contract.count
     assert entity_file.read_text(encoding="utf-8") == (
-        'export const userEntityStore = "users";\n'
-        "export const userEntityPublicFields = 2;\n"
-        "export const userEntityStorageFields = 3;\n"
+        'export const appStore = "apps";\n'
+        f"export const appPublicFields = {app_entity.public_fields.count};\n"
+        f"export const appStorageFields = {app_entity.storage_fields.count};\n"
     )
     assert frontend_file.read_text(encoding="utf-8") == (
         'export const adminRoute = "/admin";\n'
-        "export const adminScreens = 1;\n"
-        "export const adminOperations = 1;\n"
+        f"export const adminScreens = {admin_frontend.screens.count};\n"
+        f"export const adminOperations = {admin_frontend.operations.count};\n"
     )
 
 

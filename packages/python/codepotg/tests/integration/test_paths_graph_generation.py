@@ -4,10 +4,12 @@ import shutil
 from pathlib import Path
 
 from app import GeneratorApp
+from tests.fixtures.openapi import load_real_contract
 
 
 def test_real_typescript_project_generates_explicit_graph_incrementally(
     tmp_path: Path,
+    real_openapi_yaml_path: Path,
 ) -> None:
     project = tmp_path / "typescript-graph"
     shutil.copytree(
@@ -15,39 +17,9 @@ def test_real_typescript_project_generates_explicit_graph_incrementally(
         project,
         ignore=shutil.ignore_patterns(".generated", ".codepotg"),
     )
-    (project / "openapi.yaml").write_text(
-        """
-openapi: 3.1.0
-info:
-  title: Graph API
-  version: 1.0.0
-paths:
-  /users:
-    get:
-      operationId: listUsers
-      x-codegen:
-        resource:
-          name: users
-      responses:
-        "200":
-          description: OK
-components:
-  schemas:
-    UserStatus:
-      title: User status
-      type: string
-      minLength: 3
-      enum: [active, inactive]
-      x-codegen:
-        kind: enum
-x-codegen:
-  resources:
-    users:
-      name: users
-      route: /users
-""".strip(),
-        encoding="utf-8",
-    )
+    shutil.copy2(real_openapi_yaml_path, project / "openapi.yaml")
+    contract = load_real_contract(real_openapi_yaml_path)
+
     templates = project / "templates"
     shutil.rmtree(templates)
     templates.mkdir()
@@ -102,8 +74,7 @@ barrels:
     (templates / "enum.meta.txt.j2").write_text(
         "symbol={{ enum.lang.symbol_name }}\n"
         "selection={{ selection.name }}\n"
-        "schemaTitle={{ schema_contract.by_id[enum.api.id].title.value }}\n"
-        "minLength={{ schema_contract.by_id[enum.api.id].min_length.value }}\n",
+        "schema={{ schema_contract.by_id[enum.api.id].id }}\n",
         encoding="utf-8",
     )
     (templates / "resource.ts.j2").write_text(
@@ -126,30 +97,35 @@ barrels:
 
     task = result.tasks[0]
     output = project / ".generated"
-    expected = {
-        output / "models" / "user_status.ts",
-        output / "metadata" / "user_status.txt",
-        output / "resources" / "users.ts",
-        output / "models" / "index.ts",
-    }
-    assert set(task.written) == expected
+    enum_count = len(contract.schemas.emit_enums)
+    resource_count = len(contract.resources)
+    expected_count = (enum_count * 2) + resource_count + 1
+
+    assert len(task.written) == expected_count
     assert task.updated == []
     assert task.unchanged == []
-    assert all(path.is_file() for path in expected)
+    assert all(path.is_file() for path in task.written)
     assert (project / ".codepotg" / "cache" / "openapi" / "manifest.json").is_file()
 
-    enum_type = (output / "models" / "user_status.ts").read_text(encoding="utf-8")
-    assert "userStatusEnum" in enum_type
-    assert 'userStatusEnum = "enum"' in enum_type
-    assert "active,inactive" in enum_type
-    metadata = (output / "metadata" / "user_status.txt").read_text(encoding="utf-8")
+    enum_type = (output / "models" / "app_status.ts").read_text(
+        encoding="utf-8"
+    )
+    assert "appStatusEnum" in enum_type
+    assert 'appStatusEnum = "enum"' in enum_type
+    assert "active,suspended,disabled" in enum_type
+
+    metadata = (output / "metadata" / "app_status.txt").read_text(
+        encoding="utf-8"
+    )
     assert "selection=enums" in metadata
-    assert "schemaTitle=User status" in metadata
-    assert "minLength=3" in metadata
-    resource = (output / "resources" / "users.ts").read_text(encoding="utf-8")
-    assert 'usersRoute = "/users"' in resource
+    assert "schema=AppStatus" in metadata
+
+    resource = (output / "resources" / "apps.ts").read_text(encoding="utf-8")
+    assert 'appsRoute = "/platform/apps"' in resource
+
     barrel = (output / "models" / "index.ts").read_text(encoding="utf-8")
-    assert "models/user_status.ts" in barrel
+    assert "models/app_status.ts" in barrel
+    assert "models/shared_sort.ts" in barrel
 
     written_messages = [
         event.message.replace("\\", "/")
@@ -157,17 +133,23 @@ barrels:
         if event.stage in {"file_written", "file_unchanged"}
     ]
     member_index = next(
-        index for index, message in enumerate(written_messages) if "user_status.ts" in message
+        index
+        for index, message in enumerate(written_messages)
+        if "app_status.ts" in message
     )
     barrel_index = next(
-        index for index, message in enumerate(written_messages) if "models/index.ts" in message
+        index
+        for index, message in enumerate(written_messages)
+        if "models/index.ts" in message
     )
     assert member_index < barrel_index
     assert any(event.stage == "file_planned" for event in events)
     assert any(event.stage == "file_rendered" for event in events)
     assert any(event.stage == "emission_complete" for event in events)
-    resolver_event = next(event for event in events if event.stage == "resolver_complete")
-    assert "loaded 1 record(s)" in resolver_event.message
+    resolver_event = next(
+        event for event in events if event.stage == "resolver_complete"
+    )
+    assert f"loaded {enum_count} record(s)" in resolver_event.message
 
 
 def _fixtures_root() -> Path:
