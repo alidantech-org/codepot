@@ -136,7 +136,9 @@ barrels:
     assert "models/user_status.ts" in barrel
 
     written_messages = [
-        event.message for event in events if event.stage in {"file_written", "file_unchanged"}
+        event.message.replace("\\", "/")
+        for event in events
+        if event.stage in {"file_written", "file_unchanged"}
     ]
     member_index = next(
         index for index, message in enumerate(written_messages) if "user_status.ts" in message
