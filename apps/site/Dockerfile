@@ -21,8 +21,38 @@ RUN pnpm --filter @codepot/site validate:docs
 RUN pnpm --filter @codepot/site build
 
 # In a pnpm monorepo, Next.js standalone output preserves the workspace path.
-# Fail the image build immediately if the expected production entrypoint is absent.
-RUN test -f /workspace/apps/site/.next/standalone/apps/site/server.js
+# Fail the image build if the server, generated nested docs, or production docs
+# routes are missing. This catches static-param and standalone regressions before
+# a broken image can reach the reverse proxy.
+RUN set -eux; \
+    test -f /workspace/apps/site/.next/standalone/apps/site/server.js; \
+    grep -q '"packages/codepotg"' /workspace/apps/site/src/generated/docs.ts; \
+    mkdir -p /workspace/apps/site/.next/standalone/apps/site/.next; \
+    cp -R /workspace/apps/site/.next/static /workspace/apps/site/.next/standalone/apps/site/.next/static; \
+    cp -R /workspace/apps/site/public /workspace/apps/site/.next/standalone/apps/site/public; \
+    cd /workspace/apps/site/.next/standalone/apps/site; \
+    HOSTNAME=127.0.0.1 PORT=3000 node server.js >/tmp/codepot-site.log 2>&1 & \
+    server_pid=$!; \
+    trap 'kill "$server_pid" 2>/dev/null || true' EXIT; \
+    ready=0; \
+    for attempt in $(seq 1 30); do \
+      if wget -qO- http://127.0.0.1:3000/health >/dev/null; then \
+        ready=1; \
+        break; \
+      fi; \
+      sleep 1; \
+    done; \
+    if [ "$ready" -ne 1 ]; then \
+      cat /tmp/codepot-site.log; \
+      exit 1; \
+    fi; \
+    wget -qO /tmp/docs-root.html http://127.0.0.1:3000/docs; \
+    grep -q 'Codepot documentation' /tmp/docs-root.html; \
+    wget -qO /tmp/docs-package.html http://127.0.0.1:3000/docs/packages/codepotg; \
+    grep -qi 'codepotg' /tmp/docs-package.html; \
+    kill "$server_pid"; \
+    wait "$server_pid" || true; \
+    trap - EXIT
 
 FROM node:24-alpine AS runner
 
