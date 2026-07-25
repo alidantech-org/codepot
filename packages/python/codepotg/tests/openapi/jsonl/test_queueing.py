@@ -30,6 +30,7 @@ def test_record_pipeline_blocks_on_pending_byte_limit(tmp_path: Path) -> None:
             max_pending_bytes=10,
             max_events=2,
             wait_timeout_seconds=0.01,
+            emit_record_events=True,
         ),
         event_writer_factory=create_event_writer_factory(tmp_path),
     )
