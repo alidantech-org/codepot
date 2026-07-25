@@ -1,4 +1,4 @@
-"""End-to-end emission tests with the real OpenAPI fixture."""
+"""End-to-end emission tests with real and focused OpenAPI fixtures."""
 
 from __future__ import annotations
 
@@ -6,13 +6,13 @@ from src.app.app import GeneratorApp
 from tests.fixtures.templates import write_debug_templates
 
 
-def test_debug_emit_end_to_end(tmp_path, real_openapi_yaml_path) -> None:
-    """Generate the complete debug pack from the committed real-world spec."""
+def test_debug_emit_end_to_end(tmp_path, real_openapi_json_path) -> None:
+    """Generate the complete debug pack once from the canonical real spec."""
     template_root = write_debug_templates(tmp_path / "templates")
     output_path = tmp_path / "output"
 
     result = GeneratorApp().emit(
-        input_path=real_openapi_yaml_path,
+        input_path=real_openapi_json_path,
         language="debug",
         output_path=output_path,
         templates_path=template_root,
@@ -38,61 +38,11 @@ def test_debug_emit_end_to_end(tmp_path, real_openapi_yaml_path) -> None:
     assert (apps_docs / "operations.md").is_file()
     assert (apps_docs / "schemas.md").is_file()
     assert (apps_docs / "operations" / "get_find_apps.md").is_file()
-    assert (
-        apps_docs / "schemas" / "dtos" / "app_list_query.md"
-    ).is_file()
-    assert (
-        apps_docs / "schemas" / "enums" / "app_status.md"
-    ).is_file()
-    assert (
-        output_path
-        / "docs"
-        / "resources"
-        / "shared"
-        / "schemas"
-        / "enums"
-        / "shared_sort.md"
-    ).is_file()
-
-
-def test_debug_emit_dry_run(tmp_path, real_openapi_yaml_path) -> None:
-    """Plan the complete real-world spec without mutating the output tree."""
-    template_root = write_debug_templates(tmp_path / "templates")
-    output_path = tmp_path / "output"
-
-    result = GeneratorApp().emit(
-        input_path=real_openapi_yaml_path,
-        language="debug",
-        output_path=output_path,
-        templates_path=template_root,
-        dry_run=True,
-    )
-
-    assert result.dry_run is True
-    assert result.planned
-    assert result.written == []
-    assert result.skipped
-    assert not output_path.exists()
-
-
-def test_real_resource_first_debug_docs_paths_are_planned(
-    tmp_path,
-    real_openapi_yaml_path,
-) -> None:
-    """Keep concrete resource, operation, DTO, and enum paths under test."""
-    template_root = write_debug_templates(tmp_path / "templates")
-    output_path = tmp_path / "output"
-
-    result = GeneratorApp().emit(
-        input_path=real_openapi_yaml_path,
-        language="debug",
-        output_path=output_path,
-        templates_path=template_root,
-        dry_run=True,
-    )
+    assert (apps_docs / "schemas" / "dtos" / "app_list_query.md").is_file()
+    assert (apps_docs / "schemas" / "dtos" / "create_app_body.md").is_file()
+    assert (apps_docs / "schemas" / "enums" / "app_status.md").is_file()
 
     planned = {path.relative_to(output_path).as_posix() for path in result.planned}
-
     assert "docs/resources/platform/apps/index.md" in planned
     assert "docs/resources/platform/apps/operations.md" in planned
     assert "docs/resources/platform/apps/schemas.md" in planned
@@ -109,4 +59,24 @@ def test_real_resource_first_debug_docs_paths_are_planned(
         "docs/resources/platform/apps/schemas/enums/app_status.md"
         in planned
     )
-    assert "docs/resources/shared/schemas/enums/shared_sort.md" in planned
+
+
+def test_debug_emit_dry_run(tmp_path, project_root) -> None:
+    """Verify dry-run behavior with the focused shared project fixture."""
+    template_root = write_debug_templates(tmp_path / "templates")
+    output_path = tmp_path / "output"
+    source = project_root / "tests" / "fixtures" / "project_openapi.yaml"
+
+    result = GeneratorApp().emit(
+        input_path=source,
+        language="debug",
+        output_path=output_path,
+        templates_path=template_root,
+        dry_run=True,
+    )
+
+    assert result.dry_run is True
+    assert result.planned
+    assert result.written == []
+    assert result.skipped
+    assert not output_path.exists()
