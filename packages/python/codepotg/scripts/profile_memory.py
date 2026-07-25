@@ -1,9 +1,12 @@
 """Profile CodepotG stages against a real OpenAPI document.
 
-Run from packages/python/codepotg:
+Run speed and process-memory tracing without ``--full``:
 
-    python scripts/profile_memory.py tests/fixtures/openapi.json
-    python scripts/profile_memory.py tests/fixtures/openapi.yaml --full --emit
+    python scripts/profile_memory.py tests/fixtures/openapi.json --emit
+    python scripts/profile_memory.py tests/fixtures/openapi.yaml --emit
+
+Use ``--full`` only for allocation diagnostics. Ten-frame ``tracemalloc`` tracking
+intentionally adds substantial CPU overhead and is not a production speed benchmark.
 """
 
 from __future__ import annotations
@@ -37,7 +40,7 @@ from openapi.loader import load_openapi_document  # noqa: E402
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Trace CodepotG time and memory by generation stage."
+        description="Trace CodepotG speed and memory by generation stage."
     )
     parser.add_argument("input", type=Path)
     parser.add_argument("--language", default="debug")
@@ -50,7 +53,10 @@ def main() -> int:
     parser.add_argument(
         "--full",
         action="store_true",
-        help="Enable tracemalloc in addition to process RSS/private memory.",
+        help=(
+            "Enable ten-frame tracemalloc diagnostics. This is intentionally slow "
+            "and must not be used as a speed benchmark."
+        ),
     )
     parser.add_argument(
         "--json",
@@ -62,6 +68,12 @@ def main() -> int:
     source = args.input.expanduser().resolve()
     if not source.is_file():
         parser.error(f"OpenAPI input does not exist: {source}")
+    if args.full:
+        print(
+            "warning: --full enables expensive allocation tracing; "
+            "rerun without --full for speed measurements",
+            file=sys.stderr,
+        )
 
     with tempfile.TemporaryDirectory(prefix="codepotg-memory-") as directory:
         root = Path(directory)
@@ -109,6 +121,10 @@ def main() -> int:
                 frontend=request.frontend,
                 progress=None,
             )
+            source_meta = jsonl.manifest.source
+            source_size = int(
+                source_meta.get("originalSize", source_meta.get("size", source.stat().st_size))
+            )
             template_contract = replace(
                 template_contract,
                 emit=replace(
@@ -117,6 +133,8 @@ def main() -> int:
                         **template_contract.emit.meta,
                         "jsonl_cache": str(jsonl.cache_dir),
                         "jsonl_reused": jsonl.reused,
+                        "jsonl_source_size": source_size,
+                        "jsonl_index_backend": "sqlite",
                     },
                 ),
             )
@@ -136,6 +154,17 @@ def main() -> int:
                     f"updated={len(emission.write_result.updated)}, "
                     f"unchanged={len(emission.write_result.unchanged)}"
                 )
+                if emission.queue_stats is not None:
+                    stats = emission.queue_stats
+                    print(
+                        "write queues: "
+                        f"files_peak={stats.pending_files_high_water}, "
+                        f"bytes_peak={stats.pending_bytes_high_water}, "
+                        f"waits={stats.queue_waits}, "
+                        f"batches={stats.batches_written}, "
+                        f"batch_files_peak={stats.batch_files_high_water}, "
+                        f"written={stats.files_written}"
+                    )
                 del emission
 
             del template_contract
@@ -144,16 +173,20 @@ def main() -> int:
             gc.collect()
             trace.snapshot("released")
 
+            previous_elapsed = 0.0
             for snapshot in trace.snapshots:
-                print(snapshot.summary())
+                stage_ms = snapshot.elapsed_ms - previous_elapsed
+                previous_elapsed = snapshot.elapsed_ms
+                print(f"{snapshot.summary()}, stage_time={stage_ms:.1f}ms")
             if args.json:
-                print(
-                    json.dumps(
-                        [snapshot.to_json() for snapshot in trace.snapshots],
-                        indent=2,
-                        sort_keys=True,
-                    )
-                )
+                rows = []
+                previous_elapsed = 0.0
+                for snapshot in trace.snapshots:
+                    row = snapshot.to_json()
+                    row["stage_elapsed_ms"] = snapshot.elapsed_ms - previous_elapsed
+                    previous_elapsed = snapshot.elapsed_ms
+                    rows.append(row)
+                print(json.dumps(rows, indent=2, sort_keys=True))
         finally:
             trace.close()
     return 0
