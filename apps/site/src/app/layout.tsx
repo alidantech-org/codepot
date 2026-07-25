@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { NavBar } from "@/components/layout/NavBar";
 
 import "./globals.css";
+import "./landing-recovery.css";
 
 const fontSans = Inter({ variable: "--font-sans", subsets: ["latin"], display: "swap" });
 const fontHeading = Sora({ variable: "--font-heading", subsets: ["latin"], display: "swap" });
