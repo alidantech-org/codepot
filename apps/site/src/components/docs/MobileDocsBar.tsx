@@ -22,7 +22,7 @@ export function MobileDocsBar({ docs }: { docs: DocItem[] }) {
 
   return (
     <>
-      <div className="sticky top-14 z-[100] border-b border-border bg-background/90 backdrop-blur-xl lg:hidden">
+      <div className="sticky top-16 z-[100] border-b border-border bg-background/90 backdrop-blur-xl lg:hidden">
         <div className="flex h-12 items-center justify-between px-3">
           <button type="button" onClick={() => setOpen(true)} className="flex items-center gap-2 px-2 py-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
             <List className="h-4 w-4" />
@@ -47,7 +47,7 @@ export function MobileDocsBar({ docs }: { docs: DocItem[] }) {
         <div className="fixed inset-0 z-[200] lg:hidden">
           <button type="button" aria-label="Close documentation menu" className="fixed inset-0 bg-black/50" onClick={() => setOpen(false)} />
           <aside className="fixed left-0 top-0 z-[210] flex h-dvh w-80 max-w-[85vw] flex-col border-r border-border bg-background shadow-xl">
-            <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
+            <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4">
               <h2 className="text-lg font-semibold">Documentation</h2>
               <button type="button" onClick={() => setOpen(false)} aria-label="Close documentation menu" className="p-1 text-muted-foreground transition-colors hover:text-foreground"><X className="h-4 w-4" /></button>
             </div>
