@@ -1,0 +1,45 @@
+template_extension: ".j2"
+strip_template_extension: true
+allow_raw_files: false
+
+write_policy:
+  default_mode: managed
+  managed_roots:
+    - contract
+    - schemas
+    - operations
+    - resources
+  protected_roots:
+    - contract
+    - schemas
+    - operations
+    - resources
+  clean_roots:
+    - contract
+    - schemas
+    - operations
+    - resources
+
+folders:
+  root:
+    mode: once
+    parts:
+      - contract
+
+  schema:
+    select: schemas.all
+    as: schema
+    parts:
+      - schemas
+
+  operation:
+    select: operations
+    as: operation
+    parts:
+      - operations
+
+  resource:
+    select: resources
+    as: resource
+    parts:
+      - resources
