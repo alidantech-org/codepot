@@ -54,12 +54,12 @@ DEFAULT_TEMPLATE_EXTENSION = ".j2"
 IMPORT_STRATEGY_RELATIVE = "relative"
 IMPORT_STRATEGY_PACKAGE = "package"
 IMPORT_STRATEGY_NONE = "none"
-
 ALLOWED_IMPORT_STRATEGIES = {
     IMPORT_STRATEGY_RELATIVE,
     IMPORT_STRATEGY_PACKAGE,
     IMPORT_STRATEGY_NONE,
 }
+
 _ALLOWED_ROOT_KEYS = {
     KEY_FOLDERS,
     KEY_SELECTIONS,
@@ -125,19 +125,12 @@ def path_config_from_yaml(
     *,
     strict: bool = False,
 ) -> PathConfig:
-    """Build a validated PathConfig from parsed paths.yaml data.
-
-    Existing folder-only packs remain valid. The named selection/emission graph is
-    additive, but its references are always validated because unresolved graph
-    nodes cannot be generated safely.
-    """
+    """Build a validated path configuration from parsed YAML."""
 
     if data is None:
         data = {}
-
     if not isinstance(data, dict):
         raise PathYamlError("paths.yaml root must be an object.")
-
     if strict:
         _reject_unknown_keys(data, _ALLOWED_ROOT_KEYS, owner="paths.yaml")
 
@@ -147,7 +140,7 @@ def path_config_from_yaml(
     _validate_graph(selections=selections, emissions=emissions, barrels=barrels)
 
     return PathConfig(
-        folders=_parse_folders(data.get(KEY_FOLDERS, {}), strict=strict),
+        folders=_parse_folders(data.get(KEY_FOLDERS), strict=strict),
         selections=selections,
         emissions=emissions,
         barrels=barrels,
@@ -187,22 +180,32 @@ def _parse_write_policy(raw: Any, *, strict: bool) -> PathWritePolicy:
             default=PathLifecycleMode.MANAGED,
             field_name=KEY_DEFAULT_MODE,
         ),
-        managed_roots=_string_list(raw.get(KEY_MANAGED_ROOTS), field_name=KEY_MANAGED_ROOTS),
-        immutable_roots=_string_list(raw.get(KEY_IMMUTABLE_ROOTS), field_name=KEY_IMMUTABLE_ROOTS),
-        protected_roots=_string_list(raw.get(KEY_PROTECTED_ROOTS), field_name=KEY_PROTECTED_ROOTS),
-        clean_roots=_string_list(raw.get(KEY_CLEAN_ROOTS), field_name=KEY_CLEAN_ROOTS),
+        managed_roots=_string_list(
+            raw.get(KEY_MANAGED_ROOTS),
+            field_name=KEY_MANAGED_ROOTS,
+        ),
+        immutable_roots=_string_list(
+            raw.get(KEY_IMMUTABLE_ROOTS),
+            field_name=KEY_IMMUTABLE_ROOTS,
+        ),
+        protected_roots=_string_list(
+            raw.get(KEY_PROTECTED_ROOTS),
+            field_name=KEY_PROTECTED_ROOTS,
+        ),
+        clean_roots=_string_list(
+            raw.get(KEY_CLEAN_ROOTS),
+            field_name=KEY_CLEAN_ROOTS,
+        ),
     )
 
 
 def _parse_imports(raw: Any, *, strict: bool) -> PathImportConfig:
     if raw is None:
         return PathImportConfig()
-
     if not isinstance(raw, dict):
         raise PathYamlError("'imports' must be an object.")
     if strict:
         _reject_unknown_keys(raw, _ALLOWED_IMPORT_KEYS, owner=KEY_IMPORTS)
-
     strategy = _string(
         raw.get(KEY_STRATEGY),
         default=IMPORT_STRATEGY_RELATIVE,
@@ -210,8 +213,9 @@ def _parse_imports(raw: Any, *, strict: bool) -> PathImportConfig:
     )
     if strategy not in ALLOWED_IMPORT_STRATEGIES:
         allowed = ", ".join(sorted(ALLOWED_IMPORT_STRATEGIES))
-        raise PathYamlError(f"Invalid imports.strategy: {strategy}. Allowed: {allowed}.")
-
+        raise PathYamlError(
+            f"Invalid imports.strategy: {strategy}. Allowed: {allowed}."
+        )
     return PathImportConfig(strategy=strategy)
 
 
@@ -232,19 +236,20 @@ def _parse_folder(name: str, raw: dict[str, Any]) -> PathFolder:
     lifecycle = _legacy_lifecycle_mode(mode_value)
     mode = (
         PathSelectionMode.ONCE
-        if str(mode_value) == "once" or (lifecycle is not None and raw.get(KEY_SELECT) is None)
+        if str(mode_value) == "once"
+        or (lifecycle is not None and raw.get(KEY_SELECT) is None)
         else _mode(None, folder=name)
     )
     if lifecycle is None:
         mode = _mode(mode_value, folder=name)
-    select = _optional_select(raw, name=name, mode=mode)
-    alias = _alias(raw, name=name, default=name)
-
     return PathFolder(
         name=name,
-        select=select,
-        alias=alias,
-        parts=_parse_parts(raw.get(KEY_PARTS), owner=f"{KEY_FOLDERS}.{name}.{KEY_PARTS}"),
+        select=_optional_select(raw, name=name, mode=mode),
+        alias=_alias(raw, name=name, default=name),
+        parts=_parse_parts(
+            raw.get(KEY_PARTS),
+            owner=f"{KEY_FOLDERS}.{name}.{KEY_PARTS}",
+        ),
         mode=mode,
         lifecycle=lifecycle,
         description=_string(
@@ -310,13 +315,19 @@ def _parse_emissions(raw: Any, *, strict: bool) -> tuple[PathEmission, ...]:
             default="",
             field_name=f"{owner}.{KEY_SELECTION}",
         )
-        provides = _string_list(value.get(KEY_PROVIDES), field_name=f"{owner}.{KEY_PROVIDES}")
+        provides = _string_list(
+            value.get(KEY_PROVIDES),
+            field_name=f"{owner}.{KEY_PROVIDES}",
+        )
         emissions.append(
             PathEmission(
                 name=name,
                 selection=selection,
                 template=_template_path(value.get(KEY_TEMPLATE), owner=owner),
-                output=_parse_parts(value.get(KEY_OUTPUT), owner=f"{owner}.{KEY_OUTPUT}"),
+                output=_parse_parts(
+                    value.get(KEY_OUTPUT),
+                    owner=f"{owner}.{KEY_OUTPUT}",
+                ),
                 providers=_parse_providers(value.get(KEY_IMPORTS), owner=owner),
                 provides=provides or (selection,),
                 lifecycle=_optional_lifecycle(
@@ -356,12 +367,17 @@ def _parse_barrels(raw: Any, *, strict: bool) -> tuple[PathBarrel, ...]:
             field_name=f"{owner}.{KEY_EXPORTS}",
         )
         if not exports:
-            raise PathYamlError(f"'{owner}.{KEY_EXPORTS}' must contain at least one output node.")
+            raise PathYamlError(
+                f"'{owner}.{KEY_EXPORTS}' must contain at least one output node."
+            )
         barrels.append(
             PathBarrel(
                 name=name,
                 template=_template_path(value.get(KEY_TEMPLATE), owner=owner),
-                output=_parse_parts(value.get(KEY_OUTPUT), owner=f"{owner}.{KEY_OUTPUT}"),
+                output=_parse_parts(
+                    value.get(KEY_OUTPUT),
+                    owner=f"{owner}.{KEY_OUTPUT}",
+                ),
                 exports=exports,
                 scope=scope,
                 alias=_alias(value, name=name, default="barrel"),
@@ -384,24 +400,21 @@ def _parse_providers(raw: Any, *, owner: str) -> tuple[PathDependencyProvider, .
         return ()
     if not isinstance(raw, dict):
         raise PathYamlError(f"'{owner}.{KEY_IMPORTS}' must be an object of purpose: provider.")
-    providers: list[PathDependencyProvider] = []
-    for purpose, source in raw.items():
-        purpose_name = _non_empty_string(
-            purpose,
-            default="",
-            field_name=f"{owner}.{KEY_IMPORTS} purpose",
+    return tuple(
+        PathDependencyProvider(
+            purpose=_non_empty_string(
+                purpose,
+                default="",
+                field_name=f"{owner}.{KEY_IMPORTS} purpose",
+            ),
+            source=_non_empty_string(
+                source,
+                default="",
+                field_name=f"{owner}.{KEY_IMPORTS}.{purpose}",
+            ),
         )
-        providers.append(
-            PathDependencyProvider(
-                purpose=purpose_name,
-                source=_non_empty_string(
-                    source,
-                    default="",
-                    field_name=f"{owner}.{KEY_IMPORTS}.{purpose_name}",
-                ),
-            )
-        )
-    return tuple(providers)
+        for purpose, source in raw.items()
+    )
 
 
 def _validate_graph(
@@ -422,25 +435,23 @@ def _validate_graph(
 
     node_names = emission_names | barrel_names
     dependencies: dict[str, tuple[str, ...]] = {}
-
     for emission in emissions:
         if emission.selection not in selection_names:
             raise PathYamlError(
                 f"Emission '{emission.name}' references unknown selection "
                 f"'{emission.selection}'."
             )
-        sources = tuple(provider.source for provider in emission.providers)
         for provider in emission.providers:
             if provider.source not in node_names:
                 raise PathYamlError(
                     f"Emission '{emission.name}' imports '{provider.purpose}' from unknown "
                     f"provider '{provider.source}'."
                 )
-            if provider.source == emission.name:
-                raise PathYamlError(
-                    f"Emission '{emission.name}' cannot provide its own '{provider.purpose}' import."
-                )
-        dependencies[emission.name] = sources
+        dependencies[emission.name] = tuple(
+            provider.source
+            for provider in emission.providers
+            if provider.source != emission.name
+        )
 
     for barrel in barrels:
         for exported in barrel.exports:
@@ -451,7 +462,6 @@ def _validate_graph(
             if exported == barrel.name:
                 raise PathYamlError(f"Barrel '{barrel.name}' cannot export itself.")
         dependencies[barrel.name] = barrel.exports
-
     _reject_dependency_cycles(dependencies)
 
 
@@ -521,7 +531,9 @@ def _parse_part(value: Any, *, owner: str) -> Any:
         and value[0]
     ):
         return f"[{value[0]}]"
-    raise PathYamlError(f"'{owner}' entries must be strings or single-expression lists.")
+    raise PathYamlError(
+        f"'{owner}' entries must be strings or single-expression lists."
+    )
 
 
 def _template_path(value: Any, *, owner: str) -> str:
@@ -532,9 +544,13 @@ def _template_path(value: Any, *, owner: str) -> str:
     ).replace("\\", "/")
     path = PurePosixPath(result)
     if path.is_absolute() or ".." in path.parts:
-        raise PathYamlError(f"'{owner}.{KEY_TEMPLATE}' must be a safe relative POSIX path.")
+        raise PathYamlError(
+            f"'{owner}.{KEY_TEMPLATE}' must be a safe relative POSIX path."
+        )
     if path.name in {"paths.yaml", "paths.yml"}:
-        raise PathYamlError(f"'{owner}.{KEY_TEMPLATE}' cannot reference the path config file.")
+        raise PathYamlError(
+            f"'{owner}.{KEY_TEMPLATE}' cannot reference the path config file."
+        )
     return path.as_posix()
 
 
@@ -550,24 +566,34 @@ def _mode(value: Any, *, folder: str) -> PathSelectionMode:
         ) from exc
 
 
-def _scope(value: Any, *, default: PathSelectionScope, field_name: str) -> PathSelectionScope:
+def _scope(
+    value: Any,
+    *,
+    default: PathSelectionScope,
+    field_name: str,
+) -> PathSelectionScope:
     if value is None:
         return default
     try:
         return PathSelectionScope(str(value))
     except ValueError as exc:
         allowed = ", ".join(item.value for item in PathSelectionScope)
-        raise PathYamlError(f"Invalid '{field_name}': {value}. Allowed: {allowed}.") from exc
+        raise PathYamlError(
+            f"Invalid '{field_name}': {value}. Allowed: {allowed}."
+        ) from exc
 
 
 def _legacy_lifecycle_mode(value: Any) -> PathLifecycleMode | None:
     if value is None:
         return None
-    value = str(value)
-    if value == "once":
+    normalized = str(value)
+    if normalized == "once":
         return PathLifecycleMode.IMMUTABLE
-    if value in {PathLifecycleMode.MANAGED.value, PathLifecycleMode.IMMUTABLE.value}:
-        return PathLifecycleMode(value)
+    if normalized in {
+        PathLifecycleMode.MANAGED.value,
+        PathLifecycleMode.IMMUTABLE.value,
+    }:
+        return PathLifecycleMode(normalized)
     return None
 
 
@@ -578,7 +604,9 @@ def _optional_lifecycle(value: Any, *, field_name: str) -> PathLifecycleMode | N
         return PathLifecycleMode(str(value))
     except ValueError as exc:
         allowed = ", ".join(item.value for item in PathLifecycleMode)
-        raise PathYamlError(f"Invalid '{field_name}': {value}. Allowed: {allowed}.") from exc
+        raise PathYamlError(
+            f"Invalid '{field_name}': {value}. Allowed: {allowed}."
+        ) from exc
 
 
 def _required_lifecycle(
@@ -602,18 +630,27 @@ def _string_list(value: Any, *, field_name: str) -> tuple[str, ...]:
             raise PathYamlError(f"'{field_name}' entries must be non-empty strings.")
         normalized = item.strip().replace("\\", "/").strip("/")
         if normalized in seen:
-            raise PathYamlError(f"'{field_name}' contains duplicate entry '{normalized}'.")
+            raise PathYamlError(
+                f"'{field_name}' contains duplicate entry '{normalized}'."
+            )
         seen.add(normalized)
         items.append(normalized)
     return tuple(items)
 
 
-def _optional_select(raw: dict[str, Any], *, name: str, mode: PathSelectionMode) -> str:
+def _optional_select(
+    raw: dict[str, Any],
+    *,
+    name: str,
+    mode: PathSelectionMode,
+) -> str:
     value = raw.get(KEY_SELECT)
     if value is None and mode == PathSelectionMode.ONCE:
         return ""
     if not isinstance(value, str) or not value:
-        raise PathYamlError(f"'{name}.{KEY_SELECT}' is required and must be a non-empty string.")
+        raise PathYamlError(
+            f"'{name}.{KEY_SELECT}' is required and must be a non-empty string."
+        )
     return value
 
 
@@ -648,12 +685,15 @@ def _dict(value: Any, *, field_name: str) -> dict[str, Any]:
     return dict(value)
 
 
-def _reject_unknown_keys(raw: dict[str, Any], allowed: set[str], *, owner: str) -> None:
-    unknown = sorted(str(key) for key in raw if key not in allowed)
-    if not unknown:
-        return
-    allowed_text = ", ".join(sorted(allowed))
-    unknown_text = ", ".join(unknown)
-    raise PathYamlError(
-        f"Unknown key(s) in '{owner}': {unknown_text}. Allowed keys: {allowed_text}."
-    )
+def _reject_unknown_keys(
+    raw: dict[str, Any],
+    allowed: set[str],
+    *,
+    owner: str,
+) -> None:
+    unknown = sorted(set(raw) - allowed)
+    if unknown:
+        label = "key" if len(unknown) == 1 else "keys"
+        raise PathYamlError(
+            f"Unknown {label} in '{owner}': {', '.join(unknown)}."
+        )
