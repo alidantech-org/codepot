@@ -38,39 +38,38 @@ export default async function DocPage({ params }: DocPageProps) {
   const tocHeadings = page.headings.filter((heading) => heading.level >= 2 && heading.level <= 3);
 
   return (
-    <>
-      <div className="mx-auto flex-1 grid w-full max-w-6xl w-full py-6 relative px-3 md:px-6">
-        <article className="min-w-0">
-          {productId && <ProductBar productId={productId} />}
+    <div className="mx-auto grid w-full max-w-[1180px] min-w-0 grid-cols-1 gap-10 px-3 py-6 md:px-6 xl:grid-cols-[minmax(0,1fr)_240px] xl:items-start xl:gap-8">
+      <article className="min-w-0">
+        {productId && <ProductBar productId={productId} />}
 
-          {tocHeadings.length > 0 && (
-            <details className="mb-8 border-y border-border bg-card/35 px-4 py-3 xl:hidden">
-              <summary className="cursor-pointer text-sm font-semibold text-foreground">On this page</summary>
-              <nav aria-label="Mobile table of contents" className="mt-3 grid gap-1 pb-1">
-                {tocHeadings.map((heading) => (
-                  <a
-                    key={heading.id}
-                    href={`#${heading.id}`}
-                    className={`border-l-2 border-border py-1.5 pr-2 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground ${
-                      heading.level === 3 ? 'pl-6' : 'pl-3 font-medium'
-                    }`}
-                  >
-                    {heading.text}
-                  </a>
-                ))}
-              </nav>
-            </details>
-          )}
+        {tocHeadings.length > 0 && (
+          <details className="mb-8 border-y border-border bg-card/35 px-4 py-3 xl:hidden">
+            <summary className="cursor-pointer text-sm font-semibold text-foreground">On this page</summary>
+            <nav aria-label="Mobile table of contents" className="mt-3 grid gap-1 pb-1">
+              {tocHeadings.map((heading) => (
+                <a
+                  key={heading.id}
+                  href={`#${heading.id}`}
+                  className={`border-l-2 border-border py-1.5 pr-2 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-foreground ${
+                    heading.level === 3 ? 'pl-6' : 'pl-3 font-medium'
+                  }`}
+                >
+                  {heading.text}
+                </a>
+              ))}
+            </nav>
+          </details>
+        )}
 
-          <MarkdownRenderer content={page.content} />
-          <DocsPager doc={page} />
-        </article>
-      </div>
+        <MarkdownRenderer content={page.content} />
+        <DocsPager doc={page} />
+      </article>
+
       {tocHeadings.length > 0 && (
-        <aside className="hidden top-15 sticky min-w-0 border-l border-border/50 pl-5 xl:block">
+        <aside className="sticky top-20 hidden max-h-[calc(100dvh-6rem)] self-start overflow-y-auto border-l border-border/50 pl-5 xl:block scrollbar-thin">
           <DocsToc headings={page.headings} />
         </aside>
       )}
-    </>
+    </div>
   );
 }
