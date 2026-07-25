@@ -3,20 +3,7 @@ import "server-only";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import type { CodeExample } from "@/data/types";
-
-export type WorkflowExampleKey =
-  | "contract"
-  | "task"
-  | "paths"
-  | "template";
-
-export interface WorkflowCodeExample extends CodeExample {
-  key: WorkflowExampleKey;
-  eyebrow: string;
-  title: string;
-  description: string;
-}
+import type { WorkflowCodeExample } from "@/data/types";
 
 const EXAMPLE_ROOT = join(process.cwd(), "src", "examples", "workflow");
 
