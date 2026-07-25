@@ -19,6 +19,7 @@ from .models import (
     RecordLocation,
     SectionManifest,
 )
+from .selected_document import SelectedDocumentResult, build_selected_openapi_document
 from .selections import (
     DEFAULT_SELECTION_CATALOG,
     JsonlSelectionStore,
@@ -57,6 +58,7 @@ __all__ = [
     "LazyResolverLimits",
     "RecordLocation",
     "SectionManifest",
+    "SelectedDocumentResult",
     "SelectionCatalog",
     "SelectionClass",
     "SelectionDefinition",
@@ -64,6 +66,7 @@ __all__ = [
     "SelectionHandle",
     "SelectionRecord",
     "SelectionScope",
+    "build_selected_openapi_document",
     "compile_openapi_jsonl",
     "compile_openapi_source_jsonl",
     "yaml_compatibility_warning",
