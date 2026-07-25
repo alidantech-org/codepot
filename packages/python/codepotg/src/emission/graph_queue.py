@@ -251,6 +251,8 @@ class GraphWriteQueue:
                         for item in batch:
                             self._release_bytes(max(1, item.estimated_bytes))
                             self._queue.task_done()
+                        if saw_sentinel:
+                            self._queue.put(_SENTINEL)
                         raise
 
                     self._stats.batches_written += 1
@@ -279,6 +281,8 @@ class GraphWriteQueue:
                             self._release_bytes(max(1, item.estimated_bytes))
                             self._queue.task_done()
                     if first_error is not None:
+                        if saw_sentinel:
+                            self._queue.put(_SENTINEL)
                         raise first_error
                     if saw_sentinel:
                         return
