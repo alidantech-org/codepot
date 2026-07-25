@@ -23,12 +23,7 @@ export const metadata: Metadata = {
 
 const Home: NextPage = () => {
   return (
-    <div className="landing-shell relative landing-page mx-auto w-full">
-      <div aria-hidden="true" className="landing-free-curves">
-        <span />
-        <span />
-        <span />
-      </div>
+    <div className="landing-page landing-shell relative w-full overflow-x-clip">
       <div aria-hidden="true" className="landing-free-curves">
         <span />
         <span />
