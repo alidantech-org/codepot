@@ -60,9 +60,9 @@ def real_openapi_format_path(
     )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def real_openapi_contract(real_openapi_json_path: Path):
-    """Build one canonical normalized contract for positive contract tests."""
+    """Share one real contract inside a module, then release it."""
     return load_real_contract(real_openapi_json_path)
 
 
