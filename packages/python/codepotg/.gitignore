@@ -13,3 +13,4 @@ build/
 .dart-output
 .tmp-next-out
 *.tmp*
+.codepotg/
