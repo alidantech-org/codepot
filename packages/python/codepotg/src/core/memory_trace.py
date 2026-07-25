@@ -11,6 +11,8 @@ import tracemalloc
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from core.system_resources import detect_system_resources
+
 
 @dataclass(frozen=True, slots=True)
 class MemorySnapshot:
@@ -19,6 +21,8 @@ class MemorySnapshot:
     rss_bytes: int | None
     peak_rss_bytes: int | None
     private_bytes: int | None
+    system_total_bytes: int | None
+    system_available_bytes: int | None
     python_bytes: int | None
     python_peak_bytes: int | None
 
@@ -34,6 +38,10 @@ class MemorySnapshot:
         ]
         if self.private_bytes is not None:
             values.append(f"private={_format_bytes(self.private_bytes)}")
+        if self.system_available_bytes is not None:
+            values.append(f"available={_format_bytes(self.system_available_bytes)}")
+        if self.system_total_bytes is not None:
+            values.append(f"total={_format_bytes(self.system_total_bytes)}")
         if self.python_bytes is not None:
             values.append(f"python={_format_bytes(self.python_bytes)}")
             values.append(f"python_peak={_format_bytes(self.python_peak_bytes)}")
@@ -76,6 +84,7 @@ class MemoryTrace:
         if not self.enabled:
             return None
         rss, peak_rss, private = _process_memory()
+        resources = detect_system_resources()
         python_current: int | None = None
         python_peak: int | None = None
         if tracemalloc.is_tracing():
@@ -86,6 +95,8 @@ class MemoryTrace:
             rss_bytes=rss,
             peak_rss_bytes=peak_rss,
             private_bytes=private,
+            system_total_bytes=resources.total_memory,
+            system_available_bytes=resources.available_memory,
             python_bytes=python_current,
             python_peak_bytes=python_peak,
         )
@@ -137,20 +148,27 @@ def _windows_memory() -> tuple[int | None, int | None, int | None]:
 
         counters = ProcessMemoryCountersEx()
         counters.cb = ctypes.sizeof(counters)
-        process = ctypes.windll.kernel32.GetCurrentProcess()
-        success = ctypes.windll.psapi.GetProcessMemoryInfo(
-            process,
-            ctypes.byref(counters),
-            counters.cb,
-        )
-        if not success:
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        psapi = ctypes.WinDLL("psapi", use_last_error=True)
+        get_process = kernel32.GetCurrentProcess
+        get_process.argtypes = []
+        get_process.restype = ctypes.c_void_p
+        get_memory = psapi.GetProcessMemoryInfo
+        get_memory.argtypes = [
+            ctypes.c_void_p,
+            ctypes.POINTER(ProcessMemoryCountersEx),
+            ctypes.c_ulong,
+        ]
+        get_memory.restype = ctypes.c_int
+        process = get_process()
+        if not get_memory(process, ctypes.byref(counters), counters.cb):
             return None, None, None
         return (
             int(counters.WorkingSetSize),
             int(counters.PeakWorkingSetSize),
             int(counters.PrivateUsage),
         )
-    except (AttributeError, OSError, ValueError):
+    except (AttributeError, OSError, TypeError, ValueError):
         return None, None, None
 
 
