@@ -7,6 +7,7 @@ from typing import Any
 from contracts.emission import EmissionFile, EmissionPlan, EmissionResult
 from contracts.events import ProgressSink, RuntimeEvent
 from core.errors import ConfigError
+from core.system_resources import tune_runtime
 from emission.contexts.bounded import bounded_graph_context
 from emission.engine import import_planner_for_language
 from emission.graph_engine import _emission_file
@@ -24,7 +25,6 @@ def emit_bounded_graph(
     limits: GraphQueueLimits | None = None,
 ) -> EmissionResult:
     """Plan with hidden selection roots and render only bounded globals."""
-
     if contract.emit.template_root is None:
         raise ValueError("template_root is required for emission")
     template_root = contract.emit.template_root
@@ -34,87 +34,108 @@ def emit_bounded_graph(
         raise ValueError("emit_bounded_graph requires a named paths graph")
 
     resolver = _resolver_from_contract(contract)
-    base_context = bounded_graph_context(contract)
-    _notify(progress, "selection_started", "Resolving named selections")
-    graph = plan_path_graph(
-        config=path_config,
-        base_context=base_context,
-        template_root=template_root,
-    )
-    _notify(
-        progress,
-        "selection_resolved",
-        f"Resolved {len(path_config.selections)} selection(s)",
-        total=len(path_config.selections),
-    )
-
-    planner = import_planner_for_language(contract.lang.name)
-    files: list[EmissionFile] = []
-    for graph_file in graph.files:
-        file = _emission_file(
-            graph_file,
-            registry=graph.registry,
+    try:
+        base_context = bounded_graph_context(contract)
+        _notify(progress, "selection_started", "Resolving named selections")
+        graph = plan_path_graph(
+            config=path_config,
+            base_context=base_context,
             template_root=template_root,
-            output_root=output_root,
-            path_config=path_config,
-            import_planner=planner,
-            package_name=contract.lang.package.name,
         )
-        if not file.is_template and not path_config.allow_raw_files:
-            raise ConfigError(
-                f"Raw template files are disabled but graph node '{file.node_key}' "
-                f"uses '{file.template_path}'."
-            )
-        exact_dependencies = tuple(
-            sorted(set(file.depends_on) | set(file.dependency_outputs.values()))
-        )
-        context = dict(file.context)
-        sources = _lazy_sources(
-            resolver,
-            output_root=output_root,
-            file=file,
-            registry=graph.registry,
-        )
-        context["source"] = sources[0] if len(sources) == 1 else None
-        context["sources"] = sources
-        context["resolve"] = resolver
-        context["resolver_stats"] = resolver.stats
-        files.append(
-            replace(
-                file,
-                context=context,
-                depends_on=exact_dependencies,
-            )
-        )
-
-    plan = EmissionPlan(
-        language=contract.lang.name,
-        template_root=template_root,
-        output_root=output_root,
-        files=tuple(files),
-    )
-    for index, file in enumerate(plan.files, start=1):
         _notify(
             progress,
-            "file_planned",
-            f"Planned: {file.output_path}",
-            current=index,
-            total=len(plan.files),
+            "selection_resolved",
+            f"Resolved {len(path_config.selections)} selection(s)",
+            total=len(path_config.selections),
         )
 
-    result = execute_queued_graph_emission(
-        plan,
-        registry=graph.registry,
-        dry_run=contract.emit.dry_run,
-        progress=progress,
-        limits=limits,
-    )
-    _notify(
-        progress,
-        "resolver_complete",
-        f"Lazy JSONL resolver loaded {resolver.load_count} record(s)",
-    )
-    return result
+        planner = import_planner_for_language(contract.lang.name)
+        files: list[EmissionFile] = []
+        for graph_file in graph.files:
+            file = _emission_file(
+                graph_file,
+                registry=graph.registry,
+                template_root=template_root,
+                output_root=output_root,
+                path_config=path_config,
+                import_planner=planner,
+                package_name=contract.lang.package.name,
+            )
+            if not file.is_template and not path_config.allow_raw_files:
+                raise ConfigError(
+                    f"Raw template files are disabled but graph node '{file.node_key}' "
+                    f"uses '{file.template_path}'."
+                )
+            exact_dependencies = tuple(
+                sorted(set(file.depends_on) | set(file.dependency_outputs.values()))
+            )
+            context = dict(file.context)
+            sources = _lazy_sources(
+                resolver,
+                output_root=output_root,
+                file=file,
+                registry=graph.registry,
+            )
+            context["source"] = sources[0] if len(sources) == 1 else None
+            context["sources"] = sources
+            context["resolve"] = resolver
+            context["resolver_stats"] = resolver.stats
+            files.append(
+                replace(
+                    file,
+                    context=context,
+                    depends_on=exact_dependencies,
+                )
+            )
+
+        plan = EmissionPlan(
+            language=contract.lang.name,
+            template_root=template_root,
+            output_root=output_root,
+            files=tuple(files),
+        )
+        for index, file in enumerate(plan.files, start=1):
+            _notify(
+                progress,
+                "file_planned",
+                f"Planned: {file.output_path}",
+                current=index,
+                total=len(plan.files),
+            )
+
+        tuning = tune_runtime(
+            _source_size_from_contract(contract),
+            planned_files=len(plan.files),
+        )
+        effective_limits = limits or GraphQueueLimits(
+            max_render_workers=tuning.render_workers,
+            max_write_workers=tuning.write_workers,
+            max_pending_files=tuning.pending_files,
+            max_pending_bytes=tuning.pending_render_bytes,
+            write_batch_files=tuning.write_batch_files,
+            write_batch_bytes=tuning.write_batch_bytes,
+        )
+        _notify(
+            progress,
+            "runtime_tuned",
+            tuning.summary(),
+            total=len(plan.files),
+        )
+        result = execute_queued_graph_emission(
+            plan,
+            registry=graph.registry,
+            dry_run=contract.emit.dry_run,
+            progress=progress,
+            limits=effective_limits,
+        )
+        _notify(
+            progress,
+            "resolver_complete",
+            f"Lazy JSONL resolver loaded {resolver.load_count} record(s)",
+        )
+        return result
+    finally:
+        resolver.close()
 
 
 def _resolver_from_contract(contract: Any) -> JsonlLazyResolver:
@@ -145,6 +166,16 @@ def _lazy_sources(
         if source is not None:
             values.append(source)
     return tuple(values)
+
+
+def _source_size_from_contract(contract: Any) -> int:
+    raw = getattr(contract, "raw", None)
+    if raw is not None:
+        try:
+            return len(str(raw))
+        except (TypeError, ValueError):
+            pass
+    return 0
 
 
 def _notify(
