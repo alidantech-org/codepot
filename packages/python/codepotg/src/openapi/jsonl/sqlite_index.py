@@ -13,6 +13,7 @@ from .hot_index import HotIndexRegistry
 from .models import RecordLocation
 
 _DATABASE_NAME = "index.sqlite"
+_FETCH_BATCH = 1_024
 
 
 class SqliteIndexWriter:
@@ -34,6 +35,7 @@ class SqliteIndexWriter:
         self._mentions: list[tuple[str, str, str, str, str]] = []
         self._dependencies: list[tuple[str, str, str, str]] = []
         self._connection = sqlite3.connect(self.path)
+        self._closed = False
         _configure_writer(self._connection, cache_bytes=cache_bytes)
         self._create_schema()
 
@@ -77,6 +79,8 @@ class SqliteIndexWriter:
         self._flush_if_needed()
 
     def close(self) -> None:
+        if self._closed:
+            return
         self._flush()
         self._connection.executescript(
             """
@@ -95,6 +99,7 @@ class SqliteIndexWriter:
         )
         self._connection.commit()
         self._connection.close()
+        self._closed = True
 
     def manifest(self) -> dict[str, Any]:
         return {
@@ -154,7 +159,9 @@ class SqliteIndexWriter:
             self._flush()
 
     def _flush(self) -> None:
-        if not (self._locations or self._definitions or self._mentions or self._dependencies):
+        if self._closed or not (
+            self._locations or self._definitions or self._mentions or self._dependencies
+        ):
             return
         with self._connection:
             if self._locations:
@@ -202,7 +209,7 @@ class SqliteIndexReader:
 
     def __init__(self, cache_dir: Path, *, cache_bytes: int = 64 * 1024 * 1024) -> None:
         self.path = cache_dir / _DATABASE_NAME
-        uri = f"file:{self.path.as_posix()}?mode=ro"
+        uri = f"{self.path.resolve().as_uri()}?mode=ro"
         self._connection = sqlite3.connect(uri, uri=True, check_same_thread=False)
         self._connection.row_factory = sqlite3.Row
         self._lock = RLock()
@@ -230,6 +237,18 @@ class SqliteIndexReader:
         kinds: Sequence[str] = (),
         mention: tuple[str, str] | None = None,
     ) -> tuple[RecordLocation, ...]:
+        """Compatibility materialization over the chunked location iterator."""
+        return tuple(
+            self.iter_locations(section, kinds=kinds, mention=mention)
+        )
+
+    def iter_locations(
+        self,
+        section: str,
+        *,
+        kinds: Sequence[str] = (),
+        mention: tuple[str, str] | None = None,
+    ) -> Iterator[RecordLocation]:
         clauses = ["l.section = ?"]
         parameters: list[Any] = [section]
         join = ""
@@ -246,8 +265,10 @@ class SqliteIndexReader:
             f"{join} WHERE {' AND '.join(clauses)} ORDER BY l.key"
         )
         with self._lock:
-            rows = self._connection.execute(query, parameters).fetchall()
-        return tuple(_location_from_row(row) for row in rows)
+            cursor = self._connection.execute(query, parameters)
+            while rows := cursor.fetchmany(_FETCH_BATCH):
+                for row in rows:
+                    yield _location_from_row(row)
 
     def mentions(self, index: str, value: str) -> tuple[Mapping[str, Any], ...]:
         with self._lock:
@@ -260,20 +281,11 @@ class SqliteIndexReader:
                 """,
                 (index, value),
             ).fetchall()
-        return tuple(
-            {
-                "index": str(row["index_name"]),
-                "value": str(row["value"]),
-                "item": str(row["item"]),
-                "purpose": str(row["purpose"]),
-                "file": str(row["file"]),
-            }
-            for row in rows
-        )
+        return tuple(_mention_from_row(row) for row in rows)
 
     def iter_mentions(self, index: str) -> Iterator[Mapping[str, Any]]:
         with self._lock:
-            rows = self._connection.execute(
+            cursor = self._connection.execute(
                 """
                 SELECT index_name, value, item, purpose, file
                 FROM mentions
@@ -281,15 +293,10 @@ class SqliteIndexReader:
                 ORDER BY value, item, purpose, file
                 """,
                 (index,),
-            ).fetchall()
-        for row in rows:
-            yield {
-                "index": str(row["index_name"]),
-                "value": str(row["value"]),
-                "item": str(row["item"]),
-                "purpose": str(row["purpose"]),
-                "file": str(row["file"]),
-            }
+            )
+            while rows := cursor.fetchmany(_FETCH_BATCH):
+                for row in rows:
+                    yield _mention_from_row(row)
 
     def dependants(self, ref: str) -> tuple[Mapping[str, Any], ...]:
         with self._lock:
@@ -378,3 +385,13 @@ def _location_from_row(row: sqlite3.Row) -> RecordLocation:
         resources=tuple(str(item) for item in raw_resources),
         pointer=str(row["pointer"]) if row["pointer"] is not None else None,
     )
+
+
+def _mention_from_row(row: sqlite3.Row) -> Mapping[str, Any]:
+    return {
+        "index": str(row["index_name"]),
+        "value": str(row["value"]),
+        "item": str(row["item"]),
+        "purpose": str(row["purpose"]),
+        "file": str(row["file"]),
+    }
