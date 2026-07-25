@@ -190,11 +190,7 @@ def _add_codegen(objects: dict[str, SourceObject], document: Mapping[str, Any]) 
         for name, value in _mapping(codegen.get(collection)).items():
             raw = _mapping(value)
             key = f"x-codegen:{collection}:{name}"
-            known = (
-                _FRONTEND_KEYS
-                if collection == "frontends"
-                else raw.keys()
-            )
+            known = _FRONTEND_KEYS if collection == "frontends" else raw.keys()
             objects[key] = source_object(
                 raw,
                 source_path=f"x-codegen.{collection}.{name}",
@@ -246,7 +242,7 @@ def _add_named_nested(
             tuple(_mapping(nested).items())
             if isinstance(nested, Mapping)
             else tuple(
-                (str(_mapping(item).get("name", index)), item)
+                (str(index), item)
                 for index, item in enumerate(_sequence(nested))
             )
         )
