@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from copy import deepcopy
+from pathlib import Path
+from typing import Any
 
 from constants.codegen import ATTR_RESOURCE, X_CODEGEN
 from inference.graph import collect_dependencies
@@ -23,7 +26,15 @@ def _clean_optional_text(value: object) -> str:
 
 
 class InferenceEngine:
-    def infer(self, document: OpenApiDocument) -> InferenceGraph:
+    def infer(self, document: OpenApiDocument | Mapping[str, Any]) -> InferenceGraph:
+        """Infer from a parsed document or an in-memory OpenAPI mapping."""
+
+        if isinstance(document, Mapping):
+            document = OpenApiDocument(
+                path=Path("<memory>"),
+                raw=deepcopy(dict(document)),
+            )
+
         schemas = infer_schemas(document)
         operations = infer_operations(document)
         resources = _collect_resources(schemas, operations)
@@ -114,7 +125,6 @@ def _propagate_resources_to_schemas(
         if schema.resource is None:
             resource = schema_to_resource.get(schema.ref)
             if resource:
-                # Create a new schema with the resource assigned
                 from dataclasses import replace
 
                 schema_list[i] = replace(schema, resource=resource)
