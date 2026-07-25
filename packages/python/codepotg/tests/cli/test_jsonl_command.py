@@ -46,14 +46,17 @@ def test_jsonl_command_writes_visible_cache_and_progress(tmp_path: Path) -> None
 
     assert result.exit_code == 0, result.output
     assert "Compiling OpenAPI into indexed JSONL" in result.output
-    assert "Writing JSONL:" in result.output
+    assert "Writing JSONL:" not in result.output
     assert "Wrote JSONL:" in result.output
+    assert "SQLite index:" in result.output
     assert "JSONL cache ready" in result.output
     assert "paths.jsonl" in result.output
     assert "components/schemas.jsonl" in result.output
+    assert "index.sqlite" in result.output
     assert (tmp_path / ".cache/openapi/manifest.json").is_file()
     assert (tmp_path / ".cache/openapi/paths.jsonl").is_file()
     assert (tmp_path / ".cache/openapi/components/schemas.jsonl").is_file()
+    assert (tmp_path / ".cache/openapi/index.sqlite").is_file()
     assert (tmp_path / ".cache/openapi/events.jsonl").is_file()
 
 
