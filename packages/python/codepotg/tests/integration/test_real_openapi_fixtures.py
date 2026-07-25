@@ -1,22 +1,27 @@
 from __future__ import annotations
 
+import gc
+
 from tests.fixtures.openapi import load_real_contract
 
 
 def test_real_json_and_yaml_fixtures_produce_the_same_contract(
-    real_openapi_json_path,
+    real_openapi_contract,
     real_openapi_yaml_path,
 ) -> None:
-    json_contract = load_real_contract(real_openapi_json_path)
+    json_signature = _contract_signature(real_openapi_contract)
     yaml_contract = load_real_contract(real_openapi_yaml_path)
+    yaml_signature = _contract_signature(yaml_contract)
+    del yaml_contract
+    gc.collect()
 
-    assert _contract_signature(json_contract) == _contract_signature(yaml_contract)
+    assert json_signature == yaml_signature
 
 
 def test_real_fixture_exercises_the_full_codegen_contract(
-    real_openapi_yaml_path,
+    real_openapi_contract,
 ) -> None:
-    contract = load_real_contract(real_openapi_yaml_path)
+    contract = real_openapi_contract
     normalized_entities = contract.meta["normalized_entities"]
     normalized_frontends = contract.meta["normalized_frontends"]
     normalized_codegen = contract.meta["normalized_codegen"]
