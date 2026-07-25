@@ -1,0 +1,192 @@
+.workspace {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+.tabBar {
+  display: flex;
+  min-width: 0;
+  height: 2.25rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 82%, var(--background));
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.tabBar:hover {
+  scrollbar-color: color-mix(in srgb, var(--muted-foreground) 30%, transparent) transparent;
+}
+
+.tabBar::-webkit-scrollbar,
+.editor :global(.cm-scroller)::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.tabBar::-webkit-scrollbar-track,
+.editor :global(.cm-scroller)::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tabBar::-webkit-scrollbar-thumb,
+.editor :global(.cm-scroller)::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: transparent;
+}
+
+.tabBar:hover::-webkit-scrollbar-thumb,
+.editor :global(.cm-scroller):hover::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted-foreground) 34%, transparent);
+}
+
+.tab {
+  display: inline-flex;
+  height: 100%;
+  min-width: 9.5rem;
+  max-width: 13rem;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.5rem;
+  border-right: 1px solid var(--border);
+  padding: 0 0.65rem 0 0.8rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.tab:hover {
+  background: color-mix(in srgb, var(--card-muted) 75%, transparent);
+  color: var(--foreground);
+}
+
+.activeTab {
+  position: relative;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.activeTab::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--primary);
+  content: "";
+}
+
+.tabLabel {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.closeButton,
+.moreButton {
+  display: inline-flex;
+  height: 1.5rem;
+  width: 1.5rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+}
+
+.closeButton:hover,
+.moreButton:hover {
+  background: var(--card-muted);
+  color: var(--foreground);
+}
+
+.moreButton {
+  position: sticky;
+  right: 0;
+  margin-left: auto;
+  border-left: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 92%, var(--background));
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 20;
+  min-width: 11rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 0.3rem;
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+
+.menuButton {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  padding: 0.5rem 0.65rem;
+  color: var(--foreground);
+  font-size: 0.78rem;
+  text-align: left;
+}
+
+.menuButton:hover {
+  background: var(--card-muted);
+}
+
+.editor {
+  min-width: 0;
+  background: var(--background);
+}
+
+.editor :global(.cm-editor),
+.editor :global(.cm-scroller),
+.editor :global(.cm-content) {
+  background: var(--background) !important;
+}
+
+.editor :global(.cm-gutters) {
+  border-right: 1px solid var(--border) !important;
+  background: color-mix(in srgb, var(--card) 72%, var(--background)) !important;
+  color: var(--muted-foreground) !important;
+}
+
+.editor :global(.cm-scroller) {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.editor :global(.cm-scroller:hover) {
+  scrollbar-color: color-mix(in srgb, var(--muted-foreground) 34%, transparent) transparent;
+}
+
+.editor :global(.cm-content) {
+  min-width: max-content;
+  padding-block: 0.75rem !important;
+  font-family: var(--font-mono);
+  line-height: 1.5;
+}
+
+.editor :global(.cm-focused) {
+  outline: none;
+}
+
+.emptyState {
+  display: grid;
+  min-height: clamp(25.5rem, 49.3vw, 37.4rem);
+  place-items: center;
+  background: var(--background);
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .tab {
+    min-width: 8.25rem;
+  }
+}
