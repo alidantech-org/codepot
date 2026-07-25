@@ -227,23 +227,31 @@ class GraphWriteQueue:
                     batch = [first]
                     batch_bytes = max(1, first.estimated_bytes)
                     saw_sentinel = False
-                    while (
-                        len(batch) < self.limits.write_batch_files
-                        and batch_bytes < self.limits.write_batch_bytes
-                    ):
-                        try:
-                            item = self._queue.get_nowait()
-                        except Empty:
-                            break
-                        if item is _SENTINEL:
+                    try:
+                        while (
+                            len(batch) < self.limits.write_batch_files
+                            and batch_bytes < self.limits.write_batch_bytes
+                        ):
+                            try:
+                                item = self._queue.get_nowait()
+                            except Empty:
+                                break
+                            if item is _SENTINEL:
+                                self._queue.task_done()
+                                saw_sentinel = True
+                                break
+                            if not isinstance(item, RenderedGraphFile):
+                                self._queue.task_done()
+                                raise TypeError(
+                                    "Generated-file queue received an invalid item"
+                                )
+                            batch.append(item)
+                            batch_bytes += max(1, item.estimated_bytes)
+                    except BaseException:
+                        for item in batch:
+                            self._release_bytes(max(1, item.estimated_bytes))
                             self._queue.task_done()
-                            saw_sentinel = True
-                            break
-                        if not isinstance(item, RenderedGraphFile):
-                            self._queue.task_done()
-                            raise TypeError("Generated-file queue received an invalid item")
-                        batch.append(item)
-                        batch_bytes += max(1, item.estimated_bytes)
+                        raise
 
                     self._stats.batches_written += 1
                     self._stats.batch_files_high_water = max(
@@ -255,9 +263,14 @@ class GraphWriteQueue:
                         batch_bytes,
                     )
                     futures = tuple(pool.submit(_write, item) for item in batch)
+                    first_error: BaseException | None = None
                     for item, future in zip(batch, futures, strict=True):
                         try:
                             result = future.result()
+                        except BaseException as exc:
+                            if first_error is None:
+                                first_error = exc
+                        else:
                             self._stats.files_written += 1
                             self._completions.put(
                                 GraphWriteCompletion(item=item, result=result)
@@ -265,6 +278,8 @@ class GraphWriteQueue:
                         finally:
                             self._release_bytes(max(1, item.estimated_bytes))
                             self._queue.task_done()
+                    if first_error is not None:
+                        raise first_error
                     if saw_sentinel:
                         return
         except BaseException as exc:
