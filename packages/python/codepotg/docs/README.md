@@ -20,6 +20,7 @@ Existing template variables and folder packs remain supported while graph packs 
 ## Guides
 
 - [`paths.yaml` graph](paths-yaml.md) defines named selections, emissions, explicit dependency providers, barrels, bounded contexts, lazy source variables, graph scheduling, and legacy migration.
+- [Bounded normalized roots](bounded-normalized-roots.md) lists the public graph-template roots for complete schema keywords, HTTP/domain facts, resource and operation runtime metadata, inherited entities, and authored frontends.
 - [Template authoring](template-authoring.md) explains template-pack composition, scopes,
   collections, contextual variables, naming, imports, path selection, and safe authoring rules.
 - [Template variables](template-variables.md) is the fixed public variable reference for `project`,
