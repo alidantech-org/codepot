@@ -1,10 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, FileText, Hash, Menu, Search, X } from 'lucide-react';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 import { GitHubIcon } from '@/components/icons/GitHubIcon';
 import { MobileSidebar } from '@/components/layout/MobileSidebar';
@@ -107,6 +107,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
 export function NavBar() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -148,6 +149,11 @@ export function NavBar() {
     setSelectedIndex(0);
   }, [debouncedQuery]);
 
+  useEffect(() => {
+    const selected = resultsRef.current?.querySelector<HTMLElement>(`[data-search-index="${selectedIndex}"]`);
+    selected?.scrollIntoView({ block: 'nearest' });
+  }, [selectedIndex]);
+
   function closeSearch() {
     setSearchOpen(false);
     setQuery('');
@@ -160,7 +166,7 @@ export function NavBar() {
     router.push(href);
   }
 
-  function handleSearchKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+  function handleSearchKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
     if (event.key === 'Escape') {
       event.preventDefault();
       closeSearch();
@@ -226,7 +232,7 @@ export function NavBar() {
               <Search className="h-5 w-5 shrink-0" />
               <span className="ml-2 hidden text-sm sm:inline">Search docs</span>
               <kbd className="ml-auto hidden rounded-md border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground lg:inline-flex">
-                ⌘K
+                Ctrl K
               </kbd>
             </button>
             <button
@@ -286,7 +292,7 @@ export function NavBar() {
                 <span>{isSearching ? 'Searching…' : `${results.length} result${results.length === 1 ? '' : 's'}`}</span>
               </div>
 
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-2 scrollbar-thin">
+              <div ref={resultsRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-2 scrollbar-thin">
                 {results.length ? (
                   <div role="listbox" aria-label="Search results" className="px-2 sm:px-3">
                     {results.map((item, index) => {
@@ -297,6 +303,7 @@ export function NavBar() {
                           type="button"
                           role="option"
                           aria-selected={selected}
+                          data-search-index={index}
                           onMouseEnter={() => setSelectedIndex(index)}
                           onClick={() => navigateTo(item.href)}
                           className={`group flex w-full items-start gap-3 border-l-2 px-3 py-3 text-left transition-colors sm:px-4 ${
