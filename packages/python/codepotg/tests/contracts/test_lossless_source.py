@@ -69,10 +69,4 @@ def test_inference_serialization_preserves_existing_default_and_allows_raw_opt_i
 
 
 def _fixture_path() -> Path:
-    return (
-        Path(__file__).resolve().parents[1]
-        / "fixtures"
-        / "projects"
-        / "typescript"
-        / "openapi.yaml"
-    )
+    return Path(__file__).resolve().parents[1] / "fixtures" / "project_openapi.yaml"
