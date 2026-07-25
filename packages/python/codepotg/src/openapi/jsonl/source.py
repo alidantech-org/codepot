@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import tempfile
 from collections.abc import Callable, Mapping
 from dataclasses import replace
@@ -29,6 +30,7 @@ _YAML_WARNING = (
     "Use OpenAPI JSON for true streaming, lower peak memory, and predictable performance."
 )
 _CONVERTED_SOURCE_NAME = "source.json"
+_COPY_BUFFER_BYTES = 4 * 1024 * 1024
 
 
 def compile_openapi_source_jsonl(
@@ -82,16 +84,28 @@ def compile_openapi_source_jsonl(
         original_hash=original_hash,
         original_size=original_size,
     ):
-        result = compile_openapi_jsonl(
-            converted_source,
-            target,
-            limits=limits,
-            hot_limits=hot_limits,
-            queue_limits=queue_limits,
-            reuse_unchanged=True,
-            progress=progress,
-        )
-        return replace(result, compatibility_path=converted_source)
+        temporary = _copy_converted_source(converted_source, target.parent, target.name)
+        try:
+            result = compile_openapi_jsonl(
+                temporary,
+                target,
+                limits=limits,
+                hot_limits=hot_limits,
+                queue_limits=queue_limits,
+                reuse_unchanged=True,
+                progress=progress,
+            )
+            if result.reused:
+                return replace(result, compatibility_path=converted_source)
+            return _finalize_yaml_result(
+                result,
+                temporary=temporary,
+                source_path=source_path,
+                original_hash=original_hash,
+                original_size=original_size,
+            )
+        finally:
+            temporary.unlink(missing_ok=True)
 
     try:
         with source_path.open("r", encoding="utf-8") as stream:
@@ -132,11 +146,52 @@ def compile_openapi_source_jsonl(
             reuse_unchanged=False,
             progress=progress,
         )
-        converted_source = result.cache_dir / _CONVERTED_SOURCE_NAME
-        os.replace(temporary, converted_source)
+        return _finalize_yaml_result(
+            result,
+            temporary=temporary,
+            source_path=source_path,
+            original_hash=original_hash,
+            original_size=original_size,
+        )
     finally:
         temporary.unlink(missing_ok=True)
 
+
+def yaml_compatibility_warning() -> str:
+    """Return the stable author-facing YAML compatibility warning."""
+
+    return _YAML_WARNING
+
+
+def _copy_converted_source(source: Path, parent: Path, cache_name: str) -> Path:
+    parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{cache_name}-source-rebuild-",
+        suffix=".json",
+        dir=parent,
+    )
+    temporary = Path(temporary_name)
+    try:
+        with source.open("rb") as input_stream, os.fdopen(descriptor, "wb") as output_stream:
+            shutil.copyfileobj(input_stream, output_stream, length=_COPY_BUFFER_BYTES)
+            output_stream.flush()
+            os.fsync(output_stream.fileno())
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
+    return temporary
+
+
+def _finalize_yaml_result(
+    result: JsonlCompileResult,
+    *,
+    temporary: Path,
+    source_path: Path,
+    original_hash: str,
+    original_size: int,
+) -> JsonlCompileResult:
+    converted_source = result.cache_dir / _CONVERTED_SOURCE_NAME
+    os.replace(temporary, converted_source)
     source_meta = {
         **dict(result.manifest.source),
         "path": source_path.name,
@@ -154,12 +209,6 @@ def compile_openapi_source_jsonl(
         manifest=manifest,
         compatibility_path=converted_source,
     )
-
-
-def yaml_compatibility_warning() -> str:
-    """Return the stable author-facing YAML compatibility warning."""
-
-    return _YAML_WARNING
 
 
 def _can_reuse_yaml_conversion(

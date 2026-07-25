@@ -74,6 +74,51 @@ components:
     assert manifest["source"]["compatibilityPath"] == "source.json"
 
 
+def test_yaml_conversion_survives_jsonl_cache_version_rebuild(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = tmp_path / "openapi.yaml"
+    source.write_text(
+        """
+openapi: 3.1.0
+info:
+  title: Cache Upgrade API
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      responses:
+        "200":
+          description: OK
+""".strip(),
+        encoding="utf-8",
+    )
+    cache = tmp_path / "cache"
+    first = compile_openapi_source_jsonl(source, cache)
+    assert first.compatibility_path is not None
+    assert first.compatibility_path.is_file()
+
+    manifest_path = cache / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["version"] = -1
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    def reject_yaml_reload(*args: object, **kwargs: object) -> object:
+        raise AssertionError("cache upgrades must reuse the persisted JSON conversion")
+
+    monkeypatch.setattr(yaml, "safe_load", reject_yaml_reload)
+    rebuilt = compile_openapi_source_jsonl(source, cache)
+
+    assert not rebuilt.reused
+    assert rebuilt.compatibility_path == cache / "source.json"
+    assert rebuilt.compatibility_path.is_file()
+    rebuilt_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert rebuilt_manifest["version"] > 0
+    assert rebuilt_manifest["source"]["format"] == "yaml"
+    assert rebuilt_manifest["source"]["compatibilityPath"] == "source.json"
+
+
 def test_yaml_and_equivalent_json_have_matching_section_counts(tmp_path: Path) -> None:
     document = {
         "openapi": "3.1.0",

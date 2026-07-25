@@ -33,7 +33,7 @@ def test_selected_operation_loads_parent_path_and_reachable_schema_only(
     assert result.unresolved_refs == ()
 
     graph = InferenceEngine().infer(result.document)
-    assert {operation.id for operation in graph.operations} == {"listUsers"}
+    assert {operation.operation_id for operation in graph.operations} == {"listUsers"}
     assert {schema.name for schema in graph.schemas} == {"User"}
     assert {resource.name for resource in graph.resources} == {"users"}
 

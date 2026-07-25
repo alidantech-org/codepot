@@ -136,7 +136,7 @@ def test_graph_write_queue_propagates_writer_failure_without_hanging(
         queue.close()
 
     assert not (tmp_path / "failed.txt").exists()
-    assert (tmp_path / "completed.txt").read_text(encoding="utf-8") == "completed"
+    assert (tmp_path / "completed.txt").read_text(encoding="utf-8") == "completed\n"
 
 
 def _item(path: Path, content: str) -> RenderedGraphFile:
