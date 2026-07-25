@@ -138,6 +138,16 @@ def _compat_normalize_entity(
     if extends:
         normalized["extends"] = list(extends)
 
+    for key in ("fields", "backendFields", "backend"):
+        fields = normalized.get(key)
+        if isinstance(fields, _CompatMapping):
+            normalized[key] = {
+                str(name): _compat_normalize_field(item)
+                if isinstance(item, _CompatMapping)
+                else item
+                for name, item in fields.items()
+            }
+
     relations = normalized.get("relations")
     if isinstance(relations, _CompatMapping):
         normalized["relations"] = {
@@ -156,6 +166,20 @@ def _compat_normalize_entity(
     return normalized
 
 
+def _compat_normalize_field(
+    value: _CompatMapping[str, _CompatAny],
+) -> dict[str, _CompatAny]:
+    normalized = dict(value)
+    reference = normalized.get("$ref")
+    if isinstance(reference, str) and "schema" not in normalized:
+        normalized["schema"] = {"$ref": reference}
+    if "edit" in normalized and "editable" not in normalized:
+        normalized["editable"] = normalized["edit"]
+    if "select" in normalized and "selectable" not in normalized:
+        normalized["selectable"] = normalized["select"]
+    return normalized
+
+
 def _compat_normalize_relation(
     value: _CompatMapping[str, _CompatAny],
 ) -> dict[str, _CompatAny]:
@@ -164,6 +188,27 @@ def _compat_normalize_relation(
     target_name = _compat_reference_name(target)
     if target_name is not None:
         normalized["targetEntity"] = target_name
+
+    cardinality = normalized.get("cardinality", normalized.get("kind"))
+    if isinstance(cardinality, str):
+        normalized["cardinality"] = _CARDINALITY_ALIASES.get(
+            cardinality,
+            cardinality,
+        )
+
+    for key in ("onDelete", "onUpdate"):
+        action = normalized.get(key)
+        if isinstance(action, _CompatMapping):
+            selected = next(
+                (
+                    str(name)
+                    for name, enabled in action.items()
+                    if enabled is True
+                ),
+                None,
+            )
+            if selected is not None:
+                normalized[key] = selected
     return normalized
 
 
@@ -201,6 +246,12 @@ def _compat_is_entity_definition(value: _CompatMapping[str, _CompatAny]) -> bool
     return bool(_ENTITY_DEFINITION_KEYS.intersection(value))
 
 
+_CARDINALITY_ALIASES = {
+    "belongsTo": "many_to_one",
+    "hasMany": "one_to_many",
+    "hasOne": "one_to_one",
+    "manyToMany": "many_to_many",
+}
 _ENTITY_DEFINITION_KEYS = {
     "kind",
     "resource",
