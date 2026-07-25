@@ -38,7 +38,7 @@ def test_entity_inheritance_visibility_queries_relations_and_rules_are_normalize
     assert tenant.overrides == "tenantId"
     assert tenant.override_origin == "Timestamped"
     assert tenant.editable.value is True
-    assert tenant.query.operators == ("exact", "sortable", "tenant_scope")
+    assert tenant.query.operators == ("tenant_scope", "exact", "sortable")
     assert tenant.query.unknown_operators == ("tenant_scope",)
     assert tenant.query.diagnostics[0].category == DiagnosticCategory.UNSUPPORTED
 
