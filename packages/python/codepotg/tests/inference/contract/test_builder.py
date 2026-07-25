@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.contracts.api import ApiHttpMethod
+from contracts.api import ApiHttpMethod
 from src.inference.contract import build_api_contract
 from src.inference.models import (
     InferenceGraph,
