@@ -35,7 +35,9 @@ def test_generation_contract_skips_unused_normalized_views_without_source_loss()
 
     assert contract.info.title == "Fast API"
     assert contract.operations[0].id == "listUsers"
-    assert contract.schemas.by_id["User"].id == "User"
+    assert next(schema for schema in contract.schemas.all if schema.id == "User").id == (
+        "User"
+    )
     assert isinstance(contract.raw, FrozenMap)
     assert contract.raw["components"]["schemas"]["User"]["type"] == "object"
     assert contract.extensions["x-project"]["owner"] == "codepotg"
