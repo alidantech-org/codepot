@@ -1,6 +1,6 @@
 ---
 title: Codepot platform
-description: The final Rust-based Codepot platform: language, compiler, runtime, CLI, LSP, extension, web, MCP, and generators.
+description: "The final Rust-based Codepot platform: language, compiler, runtime, CLI, LSP, extension, web, MCP, and generators."
 product: codepot-runtime
 order: 20
 ---
