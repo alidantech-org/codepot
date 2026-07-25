@@ -2,14 +2,70 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections import OrderedDict
 from collections.abc import Iterator, Mapping
+from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import Any
+from threading import Lock, RLock
+from typing import Any, BinaryIO
+
+from core.system_resources import tune_runtime
 
 from .errors import JsonlLookupError
 from .hot_index import HotIndexRegistry
 from .indexing import index_shard
-from .models import RecordLocation
+from .models import HotIndexLimits, RecordLocation
+from .sqlite_index import SqliteIndexReader, sqlite_index_path
+
+
+@dataclass(slots=True)
+class _OpenSection:
+    stream: BinaryIO
+    lock: Lock
+
+
+class _SectionReaderPool:
+    """Reuse open section handles and serialize seek/read per file."""
+
+    def __init__(self, root: Path, *, max_open: int) -> None:
+        self.root = root
+        self.max_open = max(1, max_open)
+        self._states: OrderedDict[str, _OpenSection] = OrderedDict()
+        self._lock = RLock()
+
+    def read(self, relative: str, offset: int, length: int) -> bytes:
+        state = self._state(relative)
+        try:
+            with state.lock:
+                state.stream.seek(offset)
+                return state.stream.read(length)
+        except OSError as exc:
+            raise JsonlLookupError(
+                f"Unable to read indexed JSONL record: {relative}@{offset}"
+            ) from exc
+
+    def close(self) -> None:
+        with self._lock:
+            for state in self._states.values():
+                state.stream.close()
+            self._states.clear()
+
+    def _state(self, relative: str) -> _OpenSection:
+        with self._lock:
+            state = self._states.get(relative)
+            if state is not None:
+                self._states.move_to_end(relative)
+                return state
+            path = self.root / Path(*PurePosixPath(relative).parts)
+            try:
+                state = _OpenSection(stream=path.open("rb"), lock=Lock())
+            except OSError as exc:
+                raise JsonlLookupError(f"Unable to open JSONL section: {path}") from exc
+            self._states[relative] = state
+            if len(self._states) > self.max_open:
+                _, oldest = self._states.popitem(last=False)
+                oldest.stream.close()
+            return state
 
 
 class JsonlIndexStore:
@@ -20,7 +76,26 @@ class JsonlIndexStore:
         hot_index: HotIndexRegistry | None = None,
     ) -> None:
         self.cache_dir = Path(cache_dir)
-        self.hot_index = hot_index if hot_index is not None else HotIndexRegistry()
+        tuning = tune_runtime(_source_size(self.cache_dir))
+        effective_limits = HotIndexLimits(
+            max_entries=tuning.hot_index_entries,
+            max_bytes=tuning.hot_index_bytes,
+        )
+        self.hot_index = hot_index if hot_index is not None else HotIndexRegistry(
+            effective_limits
+        )
+        self._sqlite = (
+            SqliteIndexReader(
+                self.cache_dir,
+                cache_bytes=tuning.sqlite_cache_bytes,
+            )
+            if sqlite_index_path(self.cache_dir).is_file()
+            else None
+        )
+        self._sections = _SectionReaderPool(
+            self.cache_dir,
+            max_open=min(64, max(8, tuning.cpu_count * 2)),
+        )
 
     def get_by_ref(self, ref: str) -> RecordLocation | None:
         return self._lookup_definition("ref", ref)
@@ -35,12 +110,19 @@ class JsonlIndexStore:
         cached = self.hot_index.get_query(index, value)
         if isinstance(cached, tuple):
             return cached
-        facts = tuple(self._scan_index("mentions", index, value))
+        facts = (
+            self._sqlite.mentions(index, value)
+            if self._sqlite is not None
+            else tuple(self._scan_index("mentions", index, value))
+        )
         self.hot_index.put_query(index, value, facts)
         return facts
 
     def iter_mentions(self, index: str) -> Iterator[Mapping[str, Any]]:
-        """Stream every fact for one mention index across deterministic shards."""
+        """Stream every fact for one mention index."""
+        if self._sqlite is not None:
+            yield from self._sqlite.iter_mentions(index)
+            return
 
         directory = self._cache_file("indexes/mentions")
         if not directory.is_dir():
@@ -69,18 +151,16 @@ class JsonlIndexStore:
         cached = self.hot_index.get_query(cache_index, ref)
         if isinstance(cached, tuple):
             return cached
-        facts = tuple(self._scan_index("dependencies", "ref", ref, match_field="to"))
+        facts = (
+            self._sqlite.dependants(ref)
+            if self._sqlite is not None
+            else tuple(self._scan_index("dependencies", "ref", ref, match_field="to"))
+        )
         self.hot_index.put_query(cache_index, ref, facts)
         return facts
 
     def read_location(self, location: RecordLocation, *, verify: bool = True) -> Any:
-        path = self._cache_file(location.file)
-        try:
-            with path.open("rb") as stream:
-                stream.seek(location.offset)
-                line = stream.read(location.length)
-        except OSError as exc:
-            raise JsonlLookupError(f"Unable to read indexed JSONL record: {path}") from exc
+        line = self._sections.read(location.file, location.offset, location.length)
         if len(line) != location.length:
             raise JsonlLookupError(
                 f"Indexed JSONL record is truncated: {location.file}@{location.offset}"
@@ -108,10 +188,20 @@ class JsonlIndexStore:
             return None
         return self.read_location(location, verify=verify)
 
+    def close(self) -> None:
+        self._sections.close()
+        if self._sqlite is not None:
+            self._sqlite.close()
+
     def _lookup_definition(self, lookup: str, value: str) -> RecordLocation | None:
         cached = self.hot_index.get_definition(lookup, value)
         if isinstance(cached, RecordLocation):
             return cached
+        if self._sqlite is not None:
+            location = self._sqlite.definition(lookup, value)
+            if location is not None:
+                self.hot_index.put_definition(lookup, value, location)
+            return location
         for fact in self._scan_index("definitions", lookup, value):
             record = fact.get("record")
             if not isinstance(record, Mapping):
@@ -155,6 +245,16 @@ class JsonlIndexStore:
         if pure.is_absolute() or ".." in pure.parts:
             raise JsonlLookupError(f"Indexed cache path is unsafe: {relative}")
         return self.cache_dir / Path(*pure.parts)
+
+
+def _source_size(cache_dir: Path) -> int:
+    try:
+        with (cache_dir / "manifest.json").open("r", encoding="utf-8") as stream:
+            manifest = json.load(stream)
+        source = manifest.get("source", {})
+        return int(source.get("size", source.get("originalSize", 0)))
+    except (OSError, ValueError, TypeError, json.JSONDecodeError, AttributeError):
+        return 0
 
 
 def _resolve_pointer(value: Any, pointer: str) -> Any:
