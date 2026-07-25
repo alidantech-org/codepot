@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from queue import Empty, Full, Queue
 from threading import Condition, Lock, Thread
@@ -21,8 +22,11 @@ class GraphQueueLimits:
     """Bounded render/write scheduler limits."""
 
     max_render_workers: int = 2
+    max_write_workers: int = 2
     max_pending_files: int = 8
     max_pending_bytes: int = 16 * 1024 * 1024
+    write_batch_files: int = 16
+    write_batch_bytes: int = 8 * 1024 * 1024
     wait_timeout_seconds: float = 0.05
 
 
@@ -34,11 +38,14 @@ class GraphQueueStats:
     pending_bytes_high_water: int = 0
     queue_waits: int = 0
     files_written: int = 0
+    batches_written: int = 0
+    batch_files_high_water: int = 0
+    batch_bytes_high_water: int = 0
 
 
 @dataclass(frozen=True, slots=True)
 class RenderedGraphFile:
-    """One rendered or raw file ready for the single writer."""
+    """One rendered or raw file ready for the writer pool."""
 
     file: EmissionFile
     content: str | bytes | None
@@ -60,6 +67,9 @@ class _MutableStats:
     pending_bytes_high_water: int = 0
     queue_waits: int = 0
     files_written: int = 0
+    batches_written: int = 0
+    batch_files_high_water: int = 0
+    batch_bytes_high_water: int = 0
 
     def snapshot(self) -> GraphQueueStats:
         return GraphQueueStats(
@@ -67,6 +77,9 @@ class _MutableStats:
             pending_bytes_high_water=self.pending_bytes_high_water,
             queue_waits=self.queue_waits,
             files_written=self.files_written,
+            batches_written=self.batches_written,
+            batch_files_high_water=self.batch_files_high_water,
+            batch_bytes_high_water=self.batch_bytes_high_water,
         )
 
 
@@ -91,7 +104,7 @@ class _FailureState:
 
 
 class GraphWriteQueue:
-    """One byte-bounded ordered writer for generated files."""
+    """Byte-bounded batched writer for generated files."""
 
     def __init__(
         self,
@@ -198,20 +211,62 @@ class GraphWriteQueue:
 
     def _run(self) -> None:
         try:
-            while True:
-                item = self._queue.get()
-                try:
-                    if item is _SENTINEL:
+            with ThreadPoolExecutor(
+                max_workers=self.limits.max_write_workers,
+                thread_name_prefix="codepotg-write",
+            ) as pool:
+                while True:
+                    first = self._queue.get()
+                    if first is _SENTINEL:
+                        self._queue.task_done()
                         return
-                    if not isinstance(item, RenderedGraphFile):
+                    if not isinstance(first, RenderedGraphFile):
+                        self._queue.task_done()
                         raise TypeError("Generated-file queue received an invalid item")
-                    result = _write(item)
-                    self._stats.files_written += 1
-                    self._completions.put(GraphWriteCompletion(item=item, result=result))
-                finally:
-                    if isinstance(item, RenderedGraphFile):
-                        self._release_bytes(max(1, item.estimated_bytes))
-                    self._queue.task_done()
+
+                    batch = [first]
+                    batch_bytes = max(1, first.estimated_bytes)
+                    saw_sentinel = False
+                    while (
+                        len(batch) < self.limits.write_batch_files
+                        and batch_bytes < self.limits.write_batch_bytes
+                    ):
+                        try:
+                            item = self._queue.get_nowait()
+                        except Empty:
+                            break
+                        if item is _SENTINEL:
+                            self._queue.task_done()
+                            saw_sentinel = True
+                            break
+                        if not isinstance(item, RenderedGraphFile):
+                            self._queue.task_done()
+                            raise TypeError("Generated-file queue received an invalid item")
+                        batch.append(item)
+                        batch_bytes += max(1, item.estimated_bytes)
+
+                    self._stats.batches_written += 1
+                    self._stats.batch_files_high_water = max(
+                        self._stats.batch_files_high_water,
+                        len(batch),
+                    )
+                    self._stats.batch_bytes_high_water = max(
+                        self._stats.batch_bytes_high_water,
+                        batch_bytes,
+                    )
+                    futures = tuple(pool.submit(_write, item) for item in batch)
+                    for item, future in zip(batch, futures, strict=True):
+                        try:
+                            result = future.result()
+                            self._stats.files_written += 1
+                            self._completions.put(
+                                GraphWriteCompletion(item=item, result=result)
+                            )
+                        finally:
+                            self._release_bytes(max(1, item.estimated_bytes))
+                            self._queue.task_done()
+                    if saw_sentinel:
+                        return
         except BaseException as exc:
             self._failure.set(exc)
             self._drain_after_failure()
@@ -228,7 +283,6 @@ class GraphWriteQueue:
 
 def rendered_size(content: str | bytes | None) -> int:
     """Return the byte estimate used for write-queue backpressure."""
-
     if isinstance(content, str):
         return len(content.encode("utf-8"))
     if isinstance(content, bytes):
@@ -266,9 +320,15 @@ def _write(item: RenderedGraphFile) -> EmissionWriteResult:
 def _validate_limits(limits: GraphQueueLimits) -> None:
     if limits.max_render_workers < 1:
         raise ValueError("max_render_workers must be at least 1")
+    if limits.max_write_workers < 1:
+        raise ValueError("max_write_workers must be at least 1")
     if limits.max_pending_files < 1:
         raise ValueError("max_pending_files must be at least 1")
     if limits.max_pending_bytes < 1:
         raise ValueError("max_pending_bytes must be at least 1")
+    if limits.write_batch_files < 1:
+        raise ValueError("write_batch_files must be at least 1")
+    if limits.write_batch_bytes < 1:
+        raise ValueError("write_batch_bytes must be at least 1")
     if limits.wait_timeout_seconds <= 0:
         raise ValueError("wait_timeout_seconds must be greater than 0")
