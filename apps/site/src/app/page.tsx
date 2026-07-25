@@ -27,7 +27,7 @@ const Home: NextPage = () => {
   const workflowExamples = getLandingWorkflowExamples();
 
   return (
-    <div className={`landing-page landing-shell relative w-full ${styles.page}`}>
+    <div className={`landing-page relative w-full ${styles.page}`}>
       <div aria-hidden="true" className="landing-free-curves">
         <span />
         <span />
