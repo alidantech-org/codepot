@@ -1,0 +1,14 @@
+node={{ file.meta.node }}
+selection={{ selection.name }}
+scope={{ selection.scope }}
+model={{ model.name.pascal.o }}
+source_kind={{ source.kind if source else "" }}
+source_ref={{ source.ref if source else "" }}
+source_type={{ source.get("type", "") if source else "" }}
+provider={{ providers.enums }}
+provider_output_count={{ provider_outputs.enums | length }}
+import_count={{ file.imports | length }}
+dependency_count={{ file.dependencies | length }}
+normalized_schema_count={{ schema_contract.schemas.count }}
+document_openapi={{ document_contract.openapi.value }}
+resolver_loads={{ resolver_stats.loads }}
