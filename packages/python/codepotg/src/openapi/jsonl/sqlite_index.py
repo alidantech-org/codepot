@@ -236,11 +236,9 @@ class SqliteIndexReader:
         *,
         kinds: Sequence[str] = (),
         mention: tuple[str, str] | None = None,
-    ) -> tuple[RecordLocation, ...]:
-        """Compatibility materialization over the chunked location iterator."""
-        return tuple(
-            self.iter_locations(section, kinds=kinds, mention=mention)
-        )
+    ) -> Iterator[RecordLocation]:
+        """Stream locations in bounded fetch batches."""
+        yield from self.iter_locations(section, kinds=kinds, mention=mention)
 
     def iter_locations(
         self,
