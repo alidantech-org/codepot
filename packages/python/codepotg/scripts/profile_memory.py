@@ -32,6 +32,7 @@ from core.memory_trace import MemoryTrace  # noqa: E402
 from emission.bounded_graph_engine import emit_bounded_graph  # noqa: E402
 from emission.legacy_queued_engine import emit_legacy_queued as emit_legacy  # noqa: E402
 from emission.paths.config_loader import load_path_config  # noqa: E402
+from emission.templates.renderer import clear_environment_cache  # noqa: E402
 from inference.engine import InferenceEngine  # noqa: E402
 from inference.generation_contract import build_generation_contract  # noqa: E402
 from languages.discovery import resolve_language_adapter  # noqa: E402
@@ -180,6 +181,7 @@ def main() -> int:
             del template_contract
             del contract
             del jsonl
+            clear_environment_cache()
             gc.collect()
             trace.snapshot("released")
 
@@ -198,6 +200,7 @@ def main() -> int:
                     rows.append(row)
                 print(json.dumps(rows, indent=2, sort_keys=True))
         finally:
+            clear_environment_cache()
             trace.close()
     return 0
 
