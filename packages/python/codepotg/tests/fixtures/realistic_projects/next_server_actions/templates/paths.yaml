@@ -9,6 +9,8 @@ write_policy:
   default_mode: managed
   managed_roots:
     - _gen
+  immutable_roots:
+    - _gen
   protected_roots:
     - _gen
   clean_roots:
