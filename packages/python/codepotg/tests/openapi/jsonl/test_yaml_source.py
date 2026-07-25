@@ -4,11 +4,15 @@ import json
 from pathlib import Path
 
 import pytest
+import yaml
 
 from openapi.jsonl import JsonlInputError, compile_openapi_source_jsonl
 
 
-def test_yaml_source_compiles_with_warning_metadata_and_reuse(tmp_path: Path) -> None:
+def test_yaml_source_compiles_with_persisted_conversion_and_reuse(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     source = tmp_path / "openapi.yaml"
     source.write_text(
         """
@@ -37,15 +41,24 @@ components:
     cache = tmp_path / "cache"
 
     first = compile_openapi_source_jsonl(source, cache, progress=events.append)
+
+    def reject_yaml_reload(*args: object, **kwargs: object) -> object:
+        raise AssertionError("unchanged YAML must reuse the persisted JSON conversion")
+
+    monkeypatch.setattr(yaml, "safe_load", reject_yaml_reload)
     second = compile_openapi_source_jsonl(source, cache, progress=events.append)
 
     assert not first.reused
     assert second.reused
+    assert first.compatibility_path == cache / "source.json"
+    assert second.compatibility_path == cache / "source.json"
+    assert first.compatibility_path.is_file()
     assert first.manifest.sections["paths"].count == 1
     assert first.manifest.sections["components/schemas"].count == 1
     assert first.manifest.source["path"] == "openapi.yaml"
     assert first.manifest.source["format"] == "yaml"
     assert first.manifest.source["compiledFormat"] == "json"
+    assert first.manifest.source["compatibilityPath"] == "source.json"
     assert str(first.manifest.source["originalSha256"]).startswith("sha256:")
     assert "JSON" in str(first.manifest.source["compatibilityWarning"])
     assert any(
@@ -58,6 +71,7 @@ components:
     manifest = json.loads((cache / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["source"]["path"] == "openapi.yaml"
     assert manifest["source"]["format"] == "yaml"
+    assert manifest["source"]["compatibilityPath"] == "source.json"
 
 
 def test_yaml_and_equivalent_json_have_matching_section_counts(tmp_path: Path) -> None:
