@@ -14,7 +14,7 @@ export function UseCases({ useCases }: { useCases: UseCase[] }) {
         Codepot keeps domain meaning and implementation patterns explicit, whether you are maintaining today&apos;s OpenAPI workflow or building the next generation of developer tooling.
       </p>
 
-      <div className="mt-7 border-t border-b border-border grid grid-cols-1 gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-0 sm:overflow-hidden">
+      <div className="mt-7 md:border-t md:border-b border-border grid grid-cols-1 gap-4 sm:mt-8 sm:grid-cols-3 sm:gap-0 sm:overflow-hidden">
         {useCases.map(({ title, items }) => (
           <article
             key={title}

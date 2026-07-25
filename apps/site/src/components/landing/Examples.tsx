@@ -25,6 +25,7 @@ import type { CSSProperties } from 'react';
 import type { WorkflowCodeExample } from '@/data/types';
 
 import styles from './Examples.module.css';
+import { cn } from '@/lib/utils';
 
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
   ssr: false,
@@ -43,7 +44,7 @@ interface EditorFile {
 }
 
 const EDITOR_SCALES = [0.86, 1, 1.14] as const;
-const DEFAULT_EDITOR_HEIGHT = 'clamp(25.5rem, 49.3vw, 37.4rem)';
+const DEFAULT_EDITOR_HEIGHT = 'clamp(25.5rem, 49.3vw, 41.55rem)';
 
 function languageExtension(language: string) {
   if (language === 'yaml' || language === 'yml') return yaml();
@@ -74,10 +75,7 @@ function initialFiles(examples: WorkflowCodeExample[]): EditorFile[] {
 
 export function Examples({ examples }: ExamplesProps) {
   const { resolvedTheme } = useTheme();
-  const originalExamples = useMemo(
-    () => new Map(examples.map((example) => [example.key, example])),
-    [examples]
-  );
+  const originalExamples = useMemo(() => new Map(examples.map((example) => [example.key, example])), [examples]);
   const [mounted, setMounted] = useState(false);
   const [files, setFiles] = useState<EditorFile[]>(() => initialFiles(examples));
   const [activeId, setActiveId] = useState<string>(examples[0]?.key ?? 'contract');
@@ -210,7 +208,7 @@ export function Examples({ examples }: ExamplesProps) {
       '--editor-font-size': `${fontSize}px`,
       '--editor-scale': editorScale
     } as CSSProperties;
-    const editorHeight = fullscreen ? 'calc(100dvh - 4.2rem)' : DEFAULT_EDITOR_HEIGHT;
+    const editorHeight = fullscreen ? 'calc(100dvh - 3.3rem)' : DEFAULT_EDITOR_HEIGHT;
 
     return (
       <div className={styles.editorPane} style={workspaceStyle}>
@@ -221,11 +219,26 @@ export function Examples({ examples }: ExamplesProps) {
               if (!file) return null;
               const isActive = id === activeId;
               return (
-                <div key={id} className={`${styles.tab} ${isActive ? styles.activeTab : ''}`} role="tab" aria-selected={isActive}>
-                  <button type="button" onClick={() => setActiveId(id)} className={styles.tabLabel} title={file.filename}>
+                <div
+                  key={id}
+                  className={`${styles.tab} ${isActive ? styles.activeTab : ''}`}
+                  role="tab"
+                  aria-selected={isActive}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setActiveId(id)}
+                    className={styles.tabLabel}
+                    title={file.filename}
+                  >
                     {file.filename}
                   </button>
-                  <button type="button" onClick={() => closeFile(id)} className={styles.closeButton} aria-label={`Close ${file.filename}`}>
+                  <button
+                    type="button"
+                    onClick={() => closeFile(id)}
+                    className={styles.closeButton}
+                    aria-label={`Close ${file.filename}`}
+                  >
                     <X aria-hidden="true" />
                   </button>
                 </div>
@@ -235,11 +248,22 @@ export function Examples({ examples }: ExamplesProps) {
 
           <div className={styles.editorActions}>
             {fullscreen && (
-              <button type="button" className={styles.actionButton} onClick={() => setIsFullscreen(false)} aria-label="Exit full screen">
+              <button
+                type="button"
+                className={styles.actionButton}
+                onClick={() => setIsFullscreen(false)}
+                aria-label="Exit full screen"
+              >
                 <X aria-hidden="true" />
               </button>
             )}
-            <button type="button" className={styles.moreButton} onClick={() => setMenuOpen((current) => !current)} aria-label="More editor options" aria-expanded={menuOpen}>
+            <button
+              type="button"
+              className={styles.moreButton}
+              onClick={() => setMenuOpen((current) => !current)}
+              aria-label="More editor options"
+              aria-expanded={menuOpen}
+            >
               <Ellipsis aria-hidden="true" />
             </button>
           </div>
@@ -249,27 +273,55 @@ export function Examples({ examples }: ExamplesProps) {
               <div className={styles.menuGroup}>
                 <span className={styles.menuLabel}>Font size</span>
                 <div className={styles.stepper}>
-                  <button type="button" onClick={() => changeFontSize(-1)} aria-label="Decrease font size"><Minus aria-hidden="true" /></button>
+                  <button type="button" onClick={() => changeFontSize(-1)} aria-label="Decrease font size">
+                    <Minus aria-hidden="true" />
+                  </button>
                   <span>{fontSize}px</span>
-                  <button type="button" onClick={() => changeFontSize(1)} aria-label="Increase font size"><Plus aria-hidden="true" /></button>
+                  <button type="button" onClick={() => changeFontSize(1)} aria-label="Increase font size">
+                    <Plus aria-hidden="true" />
+                  </button>
                 </div>
               </div>
               <div className={styles.menuGroup}>
                 <span className={styles.menuLabel}>Editor scale</span>
                 <div className={styles.stepper}>
-                  <button type="button" onClick={() => changeScale(-1)} aria-label="Decrease editor scale"><Minus aria-hidden="true" /></button>
+                  <button type="button" onClick={() => changeScale(-1)} aria-label="Decrease editor scale">
+                    <Minus aria-hidden="true" />
+                  </button>
                   <span>{Math.round(editorScale * 100)}%</span>
-                  <button type="button" onClick={() => changeScale(1)} aria-label="Increase editor scale"><Plus aria-hidden="true" /></button>
+                  <button type="button" onClick={() => changeScale(1)} aria-label="Increase editor scale">
+                    <Plus aria-hidden="true" />
+                  </button>
                 </div>
               </div>
-              <button type="button" className={styles.menuButton} onClick={() => setShowLineNumbers((current) => !current)} role="menuitemcheckbox" aria-checked={showLineNumbers}>
-                <span>Line numbers</span><span>{showLineNumbers ? 'On' : 'Off'}</span>
+              <button
+                type="button"
+                className={styles.menuButton}
+                onClick={() => setShowLineNumbers((current) => !current)}
+                role="menuitemcheckbox"
+                aria-checked={showLineNumbers}
+              >
+                <span>Line numbers</span>
+                <span>{showLineNumbers ? 'On' : 'Off'}</span>
               </button>
-              <button type="button" className={styles.menuButton} onClick={reopenAllFiles} role="menuitem">Open all files</button>
-              <button type="button" className={styles.menuButton} onClick={closeAllFiles} role="menuitem">Close all files</button>
+              <button type="button" className={styles.menuButton} onClick={reopenAllFiles} role="menuitem">
+                Open all files
+              </button>
+              <button type="button" className={styles.menuButton} onClick={closeAllFiles} role="menuitem">
+                Close all files
+              </button>
               {!fullscreen && (
-                <button type="button" className={styles.menuButton} onClick={() => { setIsFullscreen(true); setMenuOpen(false); }} role="menuitem">
-                  <span>Open full screen</span><Maximize2 aria-hidden="true" />
+                <button
+                  type="button"
+                  className={styles.menuButton}
+                  onClick={() => {
+                    setIsFullscreen(true);
+                    setMenuOpen(false);
+                  }}
+                  role="menuitem"
+                >
+                  <span>Open full screen</span>
+                  <Maximize2 aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -305,12 +357,17 @@ export function Examples({ examples }: ExamplesProps) {
           )
         ) : (
           <div className={styles.emptyState} style={{ minHeight: editorHeight }}>
-            <button type="button" onClick={reopenAllFiles} className="text-primary hover:underline">Open a workflow file</button>
+            <button type="button" onClick={reopenAllFiles} className="text-primary hover:underline">
+              Open a workflow file
+            </button>
           </div>
         )}
 
         {fullscreen && (
-          <div className={styles.statusBar}>
+          <div
+            style={{ backgroundColor: 'transparent', borderColor: 'var(--border)' }}
+            className={cn(styles.statusBar, 'bg-background/75 backdrop-blur-sm')}
+          >
             <span>main*</span>
             <span>{activeFile?.language ?? 'Plain Text'}</span>
             <span>{lineCount} lines</span>
@@ -329,7 +386,9 @@ export function Examples({ examples }: ExamplesProps) {
           <aside className={styles.explorer} aria-label="File explorer">
             <div className={styles.explorerHeader}>
               <span>EXPLORER</span>
-              <button type="button" onClick={() => setIsCreatingFile(true)} aria-label="Create file"><FilePlus2 aria-hidden="true" /></button>
+              <button type="button" onClick={() => setIsCreatingFile(true)} aria-label="Create file">
+                <FilePlus2 aria-hidden="true" />
+              </button>
             </div>
             <button type="button" className={styles.folderRow} onClick={() => setExplorerOpen((current) => !current)}>
               <ChevronDown className={explorerOpen ? '' : styles.collapsedChevron} aria-hidden="true" />
@@ -339,20 +398,43 @@ export function Examples({ examples }: ExamplesProps) {
             {explorerOpen && (
               <div className={styles.fileTree}>
                 {files.map((file) => (
-                  <div key={file.id} className={`${styles.fileRow} ${file.id === activeId ? styles.activeFileRow : ''}`}>
+                  <div
+                    key={file.id}
+                    className={`${styles.fileRow} ${file.id === activeId ? styles.activeFileRow : ''}`}
+                  >
                     <button type="button" onClick={() => openFile(file.id)} title={file.filename}>
                       <FileCode2 aria-hidden="true" />
                       <span>{file.filename}</span>
                     </button>
-                    <button type="button" onClick={() => deleteFile(file.id)} aria-label={`Delete ${file.filename}`} className={styles.deleteFileButton}>
+                    <button
+                      type="button"
+                      onClick={() => deleteFile(file.id)}
+                      aria-label={`Delete ${file.filename}`}
+                      className={styles.deleteFileButton}
+                    >
                       <Trash2 aria-hidden="true" />
                     </button>
                   </div>
                 ))}
                 {isCreatingFile && (
-                  <form className={styles.newFileForm} onSubmit={(event) => { event.preventDefault(); createFile(); }}>
+                  <form
+                    className={styles.newFileForm}
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      createFile();
+                    }}
+                  >
                     <FileCode2 aria-hidden="true" />
-                    <input autoFocus value={newFileName} onChange={(event) => setNewFileName(event.target.value)} onBlur={() => { if (!newFileName.trim()) setIsCreatingFile(false); }} placeholder="filename.ts" aria-label="New file name" />
+                    <input
+                      autoFocus
+                      value={newFileName}
+                      onChange={(event) => setNewFileName(event.target.value)}
+                      onBlur={() => {
+                        if (!newFileName.trim()) setIsCreatingFile(false);
+                      }}
+                      placeholder="filename.ts"
+                      aria-label="New file name"
+                    />
                   </form>
                 )}
               </div>
@@ -395,7 +477,9 @@ export function Examples({ examples }: ExamplesProps) {
                   aria-pressed={isActive}
                   className={`group min-w-0 border-l-2 px-4 py-4 text-left transition-colors sm:border-l-0 sm:border-t-2 xl:border-l-2 xl:border-t-0 ${isActive ? 'border-primary bg-primary/8' : 'border-border hover:border-primary/45 hover:bg-card-muted/45'}`}
                 >
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-primary">{example.eyebrow}</span>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                    {example.eyebrow}
+                  </span>
                   <span className="mt-2 block text-sm font-semibold text-foreground">{example.title}</span>
                   <span className="mt-2 block text-sm leading-6 text-muted-foreground">{example.description}</span>
                 </button>
@@ -405,9 +489,13 @@ export function Examples({ examples }: ExamplesProps) {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-2 px-4 text-sm text-muted-foreground sm:px-6">
-          <Link href="/docs/prototype-workflow" className="font-medium text-primary hover:underline">Read the complete prototype workflow</Link>
+          <Link href="/docs/prototype-workflow" className="font-medium text-primary hover:underline">
+            Read the complete prototype workflow
+          </Link>
           <span className="mx-2">·</span>
-          <Link href="/docs/template-packs" className="font-medium text-foreground hover:underline">Learn about template packs</Link>
+          <Link href="/docs/template-packs" className="font-medium text-foreground hover:underline">
+            Learn about template packs
+          </Link>
         </div>
       </div>
 
