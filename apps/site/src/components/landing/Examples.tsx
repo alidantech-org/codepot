@@ -1,77 +1,64 @@
-"use client";
+'use client';
 
-import { javascript } from "@codemirror/lang-javascript";
-import { yaml } from "@codemirror/lang-yaml";
-import { oneDark } from "@codemirror/theme-one-dark";
-import CodeMirror from "@uiw/react-codemirror";
-import Link from "next/link";
-import { useTheme } from "next-themes";
-import { RotateCcw } from "lucide-react";
-import { useMemo, useState } from "react";
+import { javascript } from '@codemirror/lang-javascript';
+import { yaml } from '@codemirror/lang-yaml';
+import { oneDark } from '@codemirror/theme-one-dark';
+import CodeMirror from '@uiw/react-codemirror';
+import Link from 'next/link';
+import { useTheme } from 'next-themes';
+import { RotateCcw } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
-import type { WorkflowCodeExample, WorkflowExampleKey } from "@/data/types";
+import type { WorkflowCodeExample, WorkflowExampleKey } from '@/data/types';
 
 interface ExamplesProps {
   examples: WorkflowCodeExample[];
 }
 
 function languageExtension(language: string) {
-  if (language === "yaml" || language === "yml") return yaml();
+  if (language === 'yaml' || language === 'yml') return yaml();
 
   return javascript({
-    typescript:
-      language === "typescript" ||
-      language === "tsx" ||
-      language === "jinja",
-    jsx: language === "jsx" || language === "tsx",
+    typescript: language === 'typescript' || language === 'tsx' || language === 'jinja',
+    jsx: language === 'jsx' || language === 'tsx'
   });
 }
 
-function createDrafts(
-  examples: WorkflowCodeExample[],
-): Record<WorkflowExampleKey, string> {
-  return Object.fromEntries(
-    examples.map((example) => [example.key, example.code]),
-  ) as Record<WorkflowExampleKey, string>;
+function createDrafts(examples: WorkflowCodeExample[]): Record<WorkflowExampleKey, string> {
+  return Object.fromEntries(examples.map((example) => [example.key, example.code])) as Record<
+    WorkflowExampleKey,
+    string
+  >;
 }
 
 export function Examples({ examples }: ExamplesProps) {
   const { resolvedTheme } = useTheme();
   const examplesByKey = useMemo(
     () =>
-      Object.fromEntries(
-        examples.map((example) => [example.key, example]),
-      ) as Record<WorkflowExampleKey, WorkflowCodeExample>,
-    [examples],
+      Object.fromEntries(examples.map((example) => [example.key, example])) as Record<
+        WorkflowExampleKey,
+        WorkflowCodeExample
+      >,
+    [examples]
   );
-  const [activeKey, setActiveKey] = useState<WorkflowExampleKey>(
-    examples[0]?.key ?? "contract",
-  );
-  const [drafts, setDrafts] = useState<Record<WorkflowExampleKey, string>>(
-    () => createDrafts(examples),
-  );
+  const [activeKey, setActiveKey] = useState<WorkflowExampleKey>(examples[0]?.key ?? 'contract');
+  const [drafts, setDrafts] = useState<Record<WorkflowExampleKey, string>>(() => createDrafts(examples));
 
   const activeExample = examplesByKey[activeKey] ?? examples[0];
-  const extensions = useMemo(
-    () => (activeExample ? [languageExtension(activeExample.language)] : []),
-    [activeExample],
-  );
+  const extensions = useMemo(() => (activeExample ? [languageExtension(activeExample.language)] : []), [activeExample]);
 
   if (!activeExample) return null;
 
   return (
     <section id="examples" className="border-y border-border bg-card/35">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
-        <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-accent">
-          Workflows
-        </p>
+        <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-accent">Workflows</p>
         <h2 className="max-w-4xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           Real files from contract to generated code
         </h2>
         <p className="mt-4 max-w-3xl text-[15px] leading-7 text-muted-foreground">
-          Each tab is loaded from a real source file in the website project. Edit
-          the contract, CodepotG task, paths configuration, or Jinja template in
-          the shared syntax-highlighted editor.
+          Each tab is loaded from a real source file in the website project. Edit the contract, CodepotG task, paths
+          configuration, or Jinja template in the shared syntax-highlighted editor.
         </p>
 
         <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] xl:items-stretch">
@@ -96,7 +83,7 @@ export function Examples({ examples }: ExamplesProps) {
                   onClick={() =>
                     setDrafts((current) => ({
                       ...current,
-                      [activeKey]: activeExample.code,
+                      [activeKey]: activeExample.code
                     }))
                   }
                   className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground shadow-sm transition-colors hover:border-primary/30 hover:bg-card-muted dark:border-white/10 dark:bg-white/[0.03] dark:text-[#d8c4b0] dark:shadow-none dark:hover:bg-white/5 dark:hover:text-white"
@@ -112,12 +99,12 @@ export function Examples({ examples }: ExamplesProps) {
               onChange={(value) =>
                 setDrafts((current) => ({
                   ...current,
-                  [activeKey]: value,
+                  [activeKey]: value
                 }))
               }
               extensions={extensions}
-              theme={resolvedTheme === "dark" ? oneDark : "light"}
-              height="clamp(30rem, 58vw, 44rem)"
+              theme={resolvedTheme === 'dark' ? oneDark : 'light'}
+              height="clamp(25.5rem, 49.3vw, 37.4rem)"
               width="100%"
               basicSetup={{
                 lineNumbers: true,
@@ -128,7 +115,7 @@ export function Examples({ examples }: ExamplesProps) {
                 closeBrackets: true,
                 autocompletion: true,
                 indentOnInput: true,
-                syntaxHighlighting: true,
+                syntaxHighlighting: true
               }}
               aria-label={`Editable ${activeExample.filename} example`}
               className="w-full min-w-0 overflow-hidden bg-background text-[13px] dark:bg-[#17100b] [&_.cm-content]:min-w-max [&_.cm-content]:py-4 [&_.cm-editor]:w-full [&_.cm-editor]:bg-background dark:[&_.cm-editor]:bg-[#17100b] [&_.cm-focused]:outline-none [&_.cm-gutters]:border-r [&_.cm-gutters]:border-border [&_.cm-gutters]:bg-card-muted/70 [&_.cm-gutters]:text-muted-foreground dark:[&_.cm-gutters]:border-white/10 dark:[&_.cm-gutters]:bg-[#211811] dark:[&_.cm-gutters]:text-[#9e8875] [&_.cm-scroller]:overflow-auto [&_.cm-scroller]:font-mono [&_.cm-scroller]:leading-6"
@@ -146,19 +133,15 @@ export function Examples({ examples }: ExamplesProps) {
                   aria-pressed={isActive}
                   className={`group min-w-0 border-l-2 px-4 py-4 text-left transition-colors sm:border-l-0 sm:border-t-2 xl:border-l-2 xl:border-t-0 ${
                     isActive
-                      ? "border-primary bg-primary/8"
-                      : "border-border hover:border-primary/45 hover:bg-card-muted/45"
+                      ? 'border-primary bg-primary/8'
+                      : 'border-border hover:border-primary/45 hover:bg-card-muted/45'
                   }`}
                 >
                   <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
                     {example.eyebrow}
                   </span>
-                  <span className="mt-2 block text-sm font-semibold text-foreground">
-                    {example.title}
-                  </span>
-                  <span className="mt-2 block text-sm leading-6 text-muted-foreground">
-                    {example.description}
-                  </span>
+                  <span className="mt-2 block text-sm font-semibold text-foreground">{example.title}</span>
+                  <span className="mt-2 block text-sm leading-6 text-muted-foreground">{example.description}</span>
                 </button>
               );
             })}

@@ -39,7 +39,7 @@ export default function DocsLayout({ children }: Readonly<{ children: ReactNode 
           <DocsSidebar docs={docs} />
         </aside>
         <main className="min-w-0 flex-1 py-8">
-          <div className="mx-auto max-w-5xl">{children}</div>
+          <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
         <aside className="sticky top-15 z-20 hidden h-[calc(100dvh-4rem)] w-[240px] shrink-0 overflow-y-auto overflow-x-hidden border-l border-border bg-background pl-4 xl:block scrollbar-thin">
           <div id="toc-placeholder" />
