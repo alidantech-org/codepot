@@ -73,6 +73,7 @@ def test_real_project_fixture_generates_custom_template_pack(
     manifest = json.loads((cache / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["source"]["format"] == "yaml"
     assert manifest["source"]["compiledFormat"] == "json"
+    assert (cache / manifest["source"]["compatibilityPath"]).is_file()
     assert any("JSONL cache" in diagnostic.message for diagnostic in task.diagnostics)
 
     output = project / ".generated"
@@ -195,18 +196,23 @@ def test_fixture_output_directories_are_ignored() -> None:
 
 def _copy_project_fixture(tmp_path: Path, case: ProjectCase) -> Path:
     source = _fixtures_root() / case.folder
-    target = tmp_path / case.folder
-    return Path(
+    target = Path(
         shutil.copytree(
             source,
-            target,
+            tmp_path / case.folder,
             ignore=shutil.ignore_patterns(".generated", ".codepotg"),
         )
     )
+    shutil.copy2(_shared_project_openapi(), target / "openapi.yaml")
+    return target
 
 
 def _fixtures_root() -> Path:
     return Path(__file__).resolve().parents[1] / "fixtures" / "projects"
+
+
+def _shared_project_openapi() -> Path:
+    return Path(__file__).resolve().parents[1] / "fixtures" / "project_openapi.yaml"
 
 
 def _expected_output_files(output: Path, extension: str) -> tuple[Path, ...]:
