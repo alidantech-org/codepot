@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import hashlib
-import json
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from typing import Any
 
-from .errors import JsonlLookupError, JsonlSelectionError
+from .errors import JsonlSelectionError
 from .hot_index import BoundedHotIndex, HotIndexStats
 from .models import HotIndexLimits, RecordLocation
 from .store import JsonlIndexStore
@@ -186,7 +184,15 @@ DEFAULT_SELECTION_CATALOG = SelectionCatalog(
             id="schemas.primitives",
             selection_class=SelectionClass.PRIMITIVES,
             section="components/schemas",
-            kinds=("primitive", "string", "integer", "number", "boolean", "array", "null"),
+            kinds=(
+                "primitive",
+                "string",
+                "integer",
+                "number",
+                "boolean",
+                "array",
+                "null",
+            ),
             aliases=("primitives",),
         ),
         SelectionDefinition(
@@ -256,7 +262,7 @@ DEFAULT_SELECTION_CATALOG = SelectionCatalog(
 
 
 class JsonlSelectionStore:
-    """JSONL-backed selectors with bounded raw-context reuse."""
+    """SQLite-planned selectors with exact lazy JSONL raw loads."""
 
     def __init__(
         self,
@@ -269,7 +275,6 @@ class JsonlSelectionStore:
         self.cache_dir = Path(cache_dir)
         self.catalog = catalog
         self.index_store = index_store or JsonlIndexStore(self.cache_dir)
-        self._sections = _load_sections(self.cache_dir)
         limits = raw_cache_limits or HotIndexLimits(
             max_entries=256,
             max_bytes=32 * 1024 * 1024,
@@ -279,6 +284,7 @@ class JsonlSelectionStore:
             estimate=lambda key, value: len(key) + value.handle.location.length + 256,
         )
         self._loads = 0
+        self._closed = False
 
     @property
     def load_count(self) -> int:
@@ -295,16 +301,16 @@ class JsonlSelectionStore:
     ) -> Iterator[SelectionHandle]:
         definition = self.catalog.resolve(selection)
         canonical = definition.id
-
-        if resource is not None:
-            yield from self._iter_resource_handles(definition, canonical, resource)
-            return
-
-        if definition.kinds:
-            yield from self._iter_kind_handles(definition, canonical)
-            return
-
-        yield from self._iter_section_handles(definition, canonical)
+        mention = ("resource", resource) if resource is not None else None
+        for location in self.index_store.iter_locations(
+            definition.section,
+            kinds=definition.kinds,
+            mention=mention,
+        ):
+            resources = location.resources
+            if resource is not None and resource not in resources:
+                resources = tuple(sorted({*resources, resource}))
+            yield _handle(canonical, location, resources=resources)
 
     def groups(
         self,
@@ -374,7 +380,7 @@ class JsonlSelectionStore:
         if cached is not None:
             return cached
 
-        raw = self.index_store.read_location(handle.location)
+        raw = self.index_store.read_location(handle.location, verify=False)
         record = SelectionRecord(handle=handle, raw=raw)
         self._loads += 1
         self._raw_cache.put(handle.cache_key, record)
@@ -384,77 +390,11 @@ class JsonlSelectionStore:
         for handle in group.handles:
             yield self.load(handle)
 
-    def _iter_kind_handles(
-        self,
-        definition: SelectionDefinition,
-        canonical: str,
-    ) -> Iterator[SelectionHandle]:
-        locations: dict[str, RecordLocation] = {}
-        for kind in definition.kinds:
-            for fact in self.index_store.find_mentions("kind", kind):
-                item = fact.get("item")
-                if not isinstance(item, str) or item in locations:
-                    continue
-                location = self.index_store.get_by_key(item)
-                if location is None or not _matches_definition(location, definition):
-                    continue
-                locations[item] = location
-
-        for key in sorted(locations):
-            yield _handle(canonical, locations[key])
-
-    def _iter_resource_handles(
-        self,
-        definition: SelectionDefinition,
-        canonical: str,
-        resource: str,
-    ) -> Iterator[SelectionHandle]:
-        locations: dict[str, RecordLocation] = {}
-        for fact in self.index_store.find_mentions("resource", resource):
-            item = fact.get("item")
-            if not isinstance(item, str) or item in locations:
-                continue
-            location = self.index_store.get_by_key(item)
-            if location is None or not _matches_definition(location, definition):
-                continue
-            locations[item] = location
-
-        for key in sorted(locations):
-            location = locations[key]
-            resources = tuple(sorted(set((*location.resources, resource))))
-            yield _handle(canonical, location, resources=resources)
-
-    def _iter_section_handles(
-        self,
-        definition: SelectionDefinition,
-        canonical: str,
-    ) -> Iterator[SelectionHandle]:
-        relative = self._sections.get(definition.section)
-        if relative is None:
+    def close(self) -> None:
+        if self._closed:
             return
-        path = _cache_file(self.cache_dir, relative)
-        try:
-            with path.open("rb") as stream:
-                while raw_line := stream.readline():
-                    offset = stream.tell() - len(raw_line)
-                    line = raw_line[:-1] if raw_line.endswith(b"\n") else raw_line
-                    try:
-                        envelope = json.loads(line)
-                    except json.JSONDecodeError as exc:
-                        raise JsonlLookupError(f"Invalid section JSONL line in {path}") from exc
-                    if not isinstance(envelope, Mapping):
-                        raise JsonlLookupError(f"Invalid section JSONL envelope in {path}")
-                    location = _location_from_envelope(
-                        definition.section,
-                        relative,
-                        offset,
-                        line,
-                        envelope,
-                    )
-                    if _matches_definition(location, definition):
-                        yield _handle(canonical, location)
-        except OSError as exc:
-            raise JsonlLookupError(f"Unable to stream JSONL section: {path}") from exc
+        self.index_store.close()
+        self._closed = True
 
 
 def _handle(
@@ -471,72 +411,3 @@ def _handle(
         resources=location.resources if resources is None else resources,
         location=location,
     )
-
-
-def _matches_definition(
-    location: RecordLocation,
-    definition: SelectionDefinition,
-) -> bool:
-    if location.section != definition.section:
-        return False
-    return not definition.kinds or location.kind in definition.kinds
-
-
-def _location_from_envelope(
-    section: str,
-    relative: str,
-    offset: int,
-    line: bytes,
-    envelope: Mapping[str, Any],
-) -> RecordLocation:
-    key = envelope.get("key")
-    if not isinstance(key, str) or not key:
-        raise JsonlLookupError(f"Section record is missing a stable key: {relative}@{offset}")
-    ref = envelope.get("ref")
-    kind = envelope.get("kind")
-    raw_resources = envelope.get("resources", ())
-    if not isinstance(raw_resources, list | tuple):
-        raise JsonlLookupError(f"Section record has invalid resources: {relative}@{offset}")
-    return RecordLocation(
-        section=section,
-        file=relative,
-        offset=offset,
-        length=len(line),
-        sha256=f"sha256:{hashlib.sha256(line).hexdigest()}",
-        key=key,
-        ref=str(ref) if ref is not None else None,
-        kind=str(kind) if kind is not None else None,
-        resources=tuple(str(item) for item in raw_resources),
-    )
-
-
-def _load_sections(cache_dir: Path) -> dict[str, str]:
-    path = cache_dir / "manifest.json"
-    try:
-        manifest = json.loads(path.read_bytes())
-    except (OSError, json.JSONDecodeError) as exc:
-        raise JsonlLookupError(f"Unable to load JSONL manifest: {path}") from exc
-    if not isinstance(manifest, Mapping):
-        raise JsonlLookupError(f"Invalid JSONL manifest: {path}")
-    sections = manifest.get("sections")
-    if not isinstance(sections, Mapping):
-        raise JsonlLookupError(f"JSONL manifest has no sections: {path}")
-
-    result: dict[str, str] = {}
-    for name, raw in sections.items():
-        if not isinstance(name, str) or not isinstance(raw, Mapping):
-            continue
-        relative = raw.get("file")
-        if isinstance(relative, str):
-            _cache_file(cache_dir, relative)
-            result[name] = relative
-    return result
-
-
-def _cache_file(root: Path, relative: str) -> Path:
-    if "\\" in relative:
-        raise JsonlLookupError(f"Indexed cache path is not normalized: {relative}")
-    pure = PurePosixPath(relative)
-    if pure.is_absolute() or ".." in pure.parts:
-        raise JsonlLookupError(f"Indexed cache path is unsafe: {relative}")
-    return root / Path(*pure.parts)
