@@ -14,7 +14,7 @@ from contracts.emission import TemplateContext
 
 
 def create_environment(template_root: Path) -> Environment:
-    """Create a strict Jinja environment for an existing template pack."""
+    """Create a strict Jinja environment for one generation run."""
     resolved_root = resolve_renderer_template_root(template_root)
     environment = Environment(
         loader=FileSystemLoader(str(resolved_root)),
@@ -24,7 +24,9 @@ def create_environment(template_root: Path) -> Environment:
         trim_blocks=True,
         lstrip_blocks=True,
         cache_size=2_048,
-        auto_reload=True,
+        # Environments are cleared after every generation. Avoid one source mtime
+        # stat per rendered output while still picking up edits on the next run.
+        auto_reload=False,
     )
 
     environment.filters["dash"] = dash
