@@ -1,0 +1,19 @@
+{% set normalized_schema = schema_contract.by_id[dto.api.id] %}
+{% for import in file.imports %}
+{{ import.statement }}
+{% endfor %}
+
+/**
+* ---------------------------------------------------------------------------
+* {{ dto.name.pascal.o }}
+* Normalized schema: {{ normalized_schema.id }}
+* ---------------------------------------------------------------------------
+* @description Represents the {{ dto.name.pascal.o }} data transfer object{%- if dto.meta.has_extends %}, extending {{ dto.meta.extends_type }}{%- endif %}.
+* {%- if dto.meta.has_extends %}@extends {{ dto.meta.extends_type }}{%- endif %}
+*
+*/
+export interface {{ dto.name.pascal.o }}{%- if dto.meta.has_extends %} extends {{ dto.meta.extends_type }}{%- endif %} {
+{% for field in dto.fields %}
+  {{ field.lang.display_name }}{{ "?" if not field.api.required else "" }}: {{ field.lang.type }};
+{% endfor %}
+}

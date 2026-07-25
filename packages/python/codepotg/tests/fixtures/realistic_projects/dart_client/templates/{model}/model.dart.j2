@@ -1,0 +1,38 @@
+{% set normalized_schema = schema_contract.by_id[model.api.id] %}
+import 'package:json_annotation/json_annotation.dart';
+{%- for import in file.imports %}
+{{ import.statement }}
+{%- endfor %}
+
+part 'model.g.dart';
+
+@JsonSerializable()
+class {{ model.name.pascal.o }}{%- if model.meta.has_extends %} extends {{ model.meta.extends_type }}{%- endif %} {
+{%- if model.fields or model.meta.super_fields %}
+  const {{ model.name.pascal.o }}({
+{%- for field in model.meta.super_fields %}
+    {%- if field.lang.required %}required {%- endif %} super.{{ field.lang.display_name }},
+{%- endfor %}
+{%- for field in model.fields %}
+    {%- if field.lang.required %}required {%- endif %} this.{{ field.lang.display_name }}{%- if not loop.last %},{%- endif %}
+{%- endfor %}
+  });
+{%- else %}
+  const {{ model.name.pascal.o }}();
+{%- endif %}
+
+{%- for field in model.fields %}
+{%- if field.lang.json_key %}
+  @JsonKey(name: '{{ field.lang.json_key }}')
+{%- endif %}
+  final {{ field.lang.type }} {{ field.lang.display_name }};
+{%- endfor %}
+
+  factory {{ model.name.pascal.o }}.fromJson(Map<String, dynamic> json) =>
+      _${{ model.name.pascal.o }}FromJson(json);
+
+{%- if model.meta.has_extends %}
+  @override
+{%- endif %}
+  Map<String, dynamic> toJson() => _${{ model.name.pascal.o }}ToJson(this);
+}

@@ -1,0 +1,11 @@
+/**
+ * ---------------------------------------------------------------------------
+ * Server Action Barrel
+ * ---------------------------------------------------------------------------
+ *
+ * Import this only from server/action boundaries. Do not re-export it from
+ * client-safe public barrels.
+ */
+{% for resource in resources if resource.operations %}
+export * from './{{ resource.name.kebab.o }}.actions';
+{% endfor %}

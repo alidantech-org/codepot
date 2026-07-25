@@ -8,10 +8,11 @@ writes bounded batches atomically.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from contracts.emission import EmissionFile, EmissionPlan, EmissionResult
+from contracts.emission import EmissionFile, EmissionPlan, EmissionResult, TemplateContext
 from contracts.events import ProgressSink, RuntimeEvent
 from core.system_resources import tune_runtime
 from emission import engine as legacy
@@ -82,7 +83,7 @@ def build_legacy_queued_plan(
     _notify(progress, "scanning_templates", f"Scanning templates in {template_root}")
     descriptors = scan_templates(template_root)
 
-    base_context = legacy.EmissionContextBuilder(contract).global_context()
+    base_context = _legacy_template_context(contract)
     files: list[EmissionFile] = []
 
     for descriptor in descriptors:
@@ -150,6 +151,24 @@ def build_legacy_queued_plan(
         output_root=output_root,
         files=tuple(files),
     )
+
+
+def _legacy_template_context(contract: Any) -> TemplateContext:
+    """Expose normalized public roots to legacy packs during graph migration."""
+    context = legacy.EmissionContextBuilder(contract).global_context()
+    api_meta = getattr(getattr(contract, "api", None), "meta", {})
+    meta: Mapping[str, Any] = api_meta if isinstance(api_meta, Mapping) else {}
+    context.update(
+        {
+            "normalized": meta.get("normalized"),
+            "domains": meta.get("normalized_domains"),
+            "schema_contract": meta.get("normalized_schemas"),
+            "codegen_contract": meta.get("normalized_codegen"),
+            "entity_contract": meta.get("normalized_entities"),
+            "frontend_contract": meta.get("normalized_frontends"),
+        }
+    )
+    return context
 
 
 def _source_size_from_contract(contract: Any) -> int:

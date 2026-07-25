@@ -1,0 +1,25 @@
+import type * as ApiTypes from '@gen/types';
+
+/**
+ * ---------------------------------------------------------------------------
+ * {{ operation.meta.use_case_interface }}
+ * ---------------------------------------------------------------------------
+ *
+ * Managed use-case contract generated from the operation metadata.
+ */
+export interface {{ operation.meta.payload_type }} {
+  params: {% if operation.meta.has_path_params %}{
+{% for param in operation.meta.path_params %}
+    {{ param }}: string;
+{% endfor %}
+  }{% else %}never{% endif %};
+  query: {% if operation.meta.query_type %}ApiTypes.{{ operation.meta.query_type }}{% else %}never{% endif %};
+  body: {% if operation.meta.body_type %}ApiTypes.{{ operation.meta.body_type }}{% else %}never{% endif %};
+}
+
+export interface {{ operation.meta.use_case_interface }} {
+  execute(
+    context: {% if operation.meta.access_context_type == "unknown" %}unknown{% else %}ApiTypes.{{ operation.meta.access_context_type }}{% endif %},
+    payload: {{ operation.meta.payload_type }},
+  ): Promise<{% if operation.meta.response_type %}ApiTypes.{{ operation.meta.response_type }}{% else %}unknown{% endif %}>;
+}

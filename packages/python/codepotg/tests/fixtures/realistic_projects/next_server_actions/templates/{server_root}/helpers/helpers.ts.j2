@@ -1,0 +1,174 @@
+import type { RequestOptions } from 'next-api-bridge';
+import { getCleanFormData, validateRedirectPath } from 'next-api-bridge/form';
+
+/**
+ * ---------------------------------------------------------------------------
+ * Server Action Helpers
+ * ---------------------------------------------------------------------------
+ *
+ * Shared helpers used by generated Next.js server actions. Reserved FormData
+ * controls start with "__" so they do not collide with API payload fields.
+ */
+
+export type ActionBody<T> = T | FormData;
+
+export type FormActionResult<TBody, TResponse> = {
+  response?: TResponse;
+  formdata?: TBody;
+};
+
+export type CleanActionFormDataOptions = {
+  delete?: string[];
+  jsonParse?: string[];
+  boolean?: string[];
+  number?: string[];
+  date?: string[];
+};
+
+const ACTION_CONTROL_PREFIX = '__';
+const ACTION_REDIRECT_PATH_FIELD = '__redirect_path';
+const ACTION_CONTROL_FIELDS = [ACTION_REDIRECT_PATH_FIELD, '__delete', '__json_parse', '__boolean', '__number', '__date'] as const;
+
+/**
+ * Accepts either a typed body or FormData and returns a typed payload.
+ */
+export function cleanActionBody<T>(body: ActionBody<T>): T {
+  if (body instanceof FormData) {
+    return getCleanFormData<T>(body);
+  }
+
+  return body;
+}
+
+/**
+ * Merges bridge request options with query and multipart metadata.
+ */
+export function requestOptions(options?: RequestOptions, query?: unknown, isMultipart = false): RequestOptions {
+  return {
+    ...options,
+    ...(query ? { query } : {}) as Record<string, unknown>,
+    ...(isMultipart ? { isMultipart: true } : {}),
+  };
+}
+
+/**
+ * Reads generated FormData metadata controls and delegates payload coercion to
+ * next-api-bridge's getCleanFormData helper.
+ */
+export function cleanActionFormData<T>(data: FormData, options: CleanActionFormDataOptions = {}): T {
+  const metadata = actionFormDataMetadata(data);
+
+  return getCleanFormData<T>(dataWithoutActionControls(data), {
+    delete: [...metadata.delete, ...(options.delete ?? [])],
+    jsonParse: [...metadata.jsonParse, ...(options.jsonParse ?? [])],
+    boolean: [...metadata.boolean, ...(options.boolean ?? [])],
+    number: [...metadata.number, ...(options.number ?? [])],
+    date: [...metadata.date, ...(options.date ?? [])],
+  });
+}
+
+/**
+ * Returns a validated redirect path from __redirect_path when one was posted.
+ */
+export function formActionRedirectPath(data: FormData): string | undefined {
+  const value = data.get(ACTION_REDIRECT_PATH_FIELD);
+
+  if (typeof value !== 'string' || !value) {
+    return undefined;
+  }
+
+  return validateRedirectPath(value);
+}
+
+/**
+ * Reads a required generated FormData value such as a path parameter.
+ */
+export function actionFormDataValue(data: FormData, name: string): string {
+  return String(data.get(name) ?? '');
+}
+
+/**
+ * Collects all generated coercion metadata from hidden form controls.
+ */
+function actionFormDataMetadata(data: FormData): Required<CleanActionFormDataOptions> {
+  return {
+    delete: actionFormDataControlValues(data, '__delete'),
+    jsonParse: actionFormDataControlValues(data, '__json_parse'),
+    boolean: actionFormDataControlValues(data, '__boolean'),
+    number: actionFormDataControlValues(data, '__number'),
+    date: actionFormDataControlValues(data, '__date'),
+  };
+}
+
+/**
+ * Supports both repeated controls like __json_parse=name and compact controls
+ * like __json_parse:name for generated forms.
+ */
+function actionFormDataControlValues(data: FormData, key: string): string[] {
+  const values = new Set<string>();
+
+  for (const value of data.getAll(key)) {
+    if (typeof value === 'string' && value) {
+      values.add(value);
+    }
+  }
+
+  const prefix = `${key}:`;
+  for (const [entryKey] of data.entries()) {
+    if (entryKey.startsWith(prefix)) {
+      const value = entryKey.slice(prefix.length);
+      if (value) {
+        values.add(value);
+      }
+    }
+  }
+
+  return [...values];
+}
+
+/**
+ * Strips generated control fields before the payload reaches API validation.
+ */
+function dataWithoutActionControls(data: FormData): FormData {
+  const next = new FormData();
+
+  for (const [key, value] of data.entries()) {
+    if (ACTION_CONTROL_FIELDS.includes(key as (typeof ACTION_CONTROL_FIELDS)[number]) || key.startsWith(ACTION_CONTROL_PREFIX)) {
+      continue;
+    }
+
+    next.append(key, value);
+  }
+
+  return next;
+}
+
+/**
+ * IsNever<T>
+ *
+ * Wrapping T in a tuple `[T]` prevents distributive evaluation,
+ * so `IsNever<never>` correctly returns `true` instead of `never`.
+ */
+type IsNever<T> = [T] extends [never] ? true : false;
+
+/**
+ * ActionInput<Params, Query, Body>
+ *
+ * Universal input shape for all generated server actions.
+ *
+ * Pass `never` (the default) for any slot the operation does not use —
+ * that key is omitted entirely from the resolved type, so callers cannot
+ * accidentally pass it and TypeScript will require it when it is needed.
+ *
+ * Unlike optional properties with `never` values, this approach makes
+ * `params` required (not optional) when Params is a real type.
+ *
+ * @example
+ *   type ListUsersInput  = ActionInput<never, UserListQuery, never>;
+ *   type UpdateUserInput = ActionInput<{ id: string }, never, UpdateUserBody>;
+ */
+export type ActionInput<Params = never, Query = never, Body = never> = { options?: RequestOptions } & (IsNever<Params> extends true
+  ? object
+  : { params: Params }) &
+  (IsNever<Query> extends true ? object : { query?: Query }) &
+  (IsNever<Body> extends true ? object : { body: Body });

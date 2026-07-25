@@ -1,0 +1,62 @@
+{% set normalized_resource = codegen_contract.resources.by_id[resource.api.id] %}
+{% macro method_decorator(operation) -%}
+{%- if operation.lang.method == "get" -%}Get
+{%- elif operation.lang.method == "post" -%}Post
+{%- elif operation.lang.method == "put" -%}Put
+{%- elif operation.lang.method == "patch" -%}Patch
+{%- elif operation.lang.method == "delete" -%}Delete
+{%- else -%}Get
+{%- endif -%}
+{%- endmacro %}
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
+import type * as ApiTypes from '@gen/types';
+
+import { {{ resource.name.pascal.o }}GeneratedService } from './{{ resource.name.kebab.o }}.generated-service';
+
+/**
+ * ---------------------------------------------------------------------------
+ * {{ resource.name.pascal.o }}GeneratedController
+ * ---------------------------------------------------------------------------
+ *
+ * Managed controller generated from OpenAPI operation metadata.
+ */
+@Controller()
+export class {{ resource.name.pascal.o }}GeneratedController {
+  constructor(private readonly service: {{ resource.name.pascal.o }}GeneratedService) {}
+{% for operation in resource.operations %}
+
+  @{{ method_decorator(operation) }}('{{ operation.meta.nest_path }}')
+  {{ operation.lang.function_name }}(
+{% for param in operation.meta.path_params %}
+    @Param('{{ param }}') {{ param }}: string,
+{% endfor %}
+{% if operation.meta.query_type %}
+    @Query() query: ApiTypes.{{ operation.meta.query_type }},
+{% endif %}
+{% if operation.meta.body_type %}
+    @Body() body: ApiTypes.{{ operation.meta.body_type }},
+{% endif %}
+  ) {
+    const context = undefined as unknown as {% if operation.meta.access_context_type == "unknown" %}unknown{% else %}ApiTypes.{{ operation.meta.access_context_type }}{% endif %};
+    return this.service.{{ operation.lang.function_name }}(context, {
+      params: {% if operation.meta.has_path_params %}{
+{% for param in operation.meta.path_params %}
+        {{ param }},
+{% endfor %}
+      }{% else %}undefined as never{% endif %},
+      query: {% if operation.meta.query_type %}query{% else %}undefined as never{% endif %},
+      body: {% if operation.meta.body_type %}body{% else %}undefined as never{% endif %},
+    });
+  }
+{% endfor %}
+}
