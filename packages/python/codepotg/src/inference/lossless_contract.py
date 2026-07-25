@@ -7,6 +7,7 @@ from dataclasses import replace
 from contracts.api import ApiContract
 from contracts.normalized_api import build_normalized_api_view
 from contracts.normalized_domains import build_normalized_domain_view
+from contracts.normalized_schema_contract import build_normalized_schema_contract
 from contracts.normalized_sources import extend_normalized_source_registry
 from contracts.source import freeze_source_map
 from inference.contract import build_api_contract as build_compatibility_api_contract
@@ -28,6 +29,7 @@ def build_api_contract(graph: InferenceGraph) -> ApiContract:
         raw,
     )
     domains = build_normalized_domain_view(contract, raw)
+    schema_contract = build_normalized_schema_contract(contract, raw)
 
     return replace(
         contract,
@@ -37,8 +39,13 @@ def build_api_contract(graph: InferenceGraph) -> ApiContract:
             **contract.meta,
             "normalized": normalized,
             "normalized_domains": domains,
-            "loss_count": normalized.loss_count,
-            "unresolved_count": normalized.unresolved_count + domains.unresolved_count,
+            "normalized_schemas": schema_contract,
+            "loss_count": normalized.loss_count + schema_contract.loss_count,
+            "unresolved_count": (
+                normalized.unresolved_count
+                + domains.unresolved_count
+                + schema_contract.unresolved_count
+            ),
             "raw_only_count": normalized.raw_only_count,
         },
     )
