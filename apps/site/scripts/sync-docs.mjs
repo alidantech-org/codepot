@@ -1,17 +1,21 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import GithubSlugger from "github-slugger";
 import matter from "gray-matter";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const appRoot = resolve(scriptDirectory, "..");
 const workspaceRoot = resolve(appRoot, "../..");
 const docsRoot = resolve(workspaceRoot, "docs");
-const output = resolve(appRoot, "src/generated/docs.ts");
+const generatedRoot = resolve(appRoot, "src/generated");
+const docsOutput = resolve(generatedRoot, "docs.ts");
+const tocOutput = resolve(generatedRoot, "docs-toc.json");
 
 const navigation = JSON.parse(await readFile(resolve(docsRoot, "navigation.json"), "utf8"));
 const ecosystem = JSON.parse(await readFile(resolve(docsRoot, "ecosystem.json"), "utf8"));
 const documents = {};
+const tablesOfContents = {};
 const index = [];
 const seen = new Set();
 
@@ -29,6 +33,51 @@ function resolveDocumentSource(item) {
   return { source, sourceFile };
 }
 
+function cleanHeadingText(value) {
+  return value
+    .replace(/\s+#+\s*$/, "")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/_([^_]+)_/g, "$1")
+    .replace(/\\([#*_`])/g, "$1")
+    .trim();
+}
+
+function extractTableOfContents(content) {
+  const headings = [];
+  const slugger = new GithubSlugger();
+  let fence = null;
+
+  for (const line of content.split(/\r?\n/)) {
+    const fenceMatch = line.match(/^\s*(```+|~~~+)/);
+    if (fenceMatch) {
+      const marker = fenceMatch[1][0];
+      fence = fence === marker ? null : fence ?? marker;
+      continue;
+    }
+    if (fence) continue;
+
+    const match = line.match(/^\s{0,3}(#{1,6})\s+(.+?)\s*$/);
+    if (!match) continue;
+
+    const text = cleanHeadingText(match[2]);
+    if (!text) continue;
+
+    headings.push({
+      id: slugger.slug(text),
+      text,
+      level: match[1].length,
+    });
+  }
+
+  return headings;
+}
+
 for (const section of navigation.sections ?? []) {
   for (const item of section.items ?? []) {
     const slug = item.slug;
@@ -44,6 +93,7 @@ for (const section of navigation.sections ?? []) {
     const markdown = await readFile(sourceFile, "utf8");
     const parsed = matter(markdown);
     documents[slug] = markdown;
+    tablesOfContents[slug] = extractTableOfContents(parsed.content);
     index.push({
       slug,
       source,
@@ -70,6 +120,11 @@ const source = [
   "",
 ].join("\n");
 
-await mkdir(dirname(output), { recursive: true });
-await writeFile(output, source, "utf8");
-console.log(`Synced ${Object.keys(documents).length} public documentation files and ecosystem metadata.`);
+await mkdir(generatedRoot, { recursive: true });
+await Promise.all([
+  writeFile(docsOutput, source, "utf8"),
+  writeFile(tocOutput, `${JSON.stringify(tablesOfContents, null, 2)}\n`, "utf8"),
+]);
+console.log(
+  `Synced ${Object.keys(documents).length} public documentation files, JSON tables of contents, and ecosystem metadata.`,
+);
