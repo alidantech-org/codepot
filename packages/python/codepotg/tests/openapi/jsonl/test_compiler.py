@@ -14,7 +14,7 @@ from openapi.jsonl import (
 )
 
 
-def test_large_real_fixture_streams_to_indexed_jsonl(
+def test_large_real_fixture_streams_to_sqlite_indexed_jsonl(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -44,6 +44,13 @@ def test_large_real_fixture_streams_to_indexed_jsonl(
     assert result.manifest.sections["components/schemas"].file == (
         "components/schemas.jsonl"
     )
+    assert (result.cache_dir / "index.sqlite").is_file()
+    assert {
+        value["backend"] for value in result.manifest.indexes.values()
+    } == {"sqlite"}
+    assert {
+        value["database"] for value in result.manifest.indexes.values()
+    } == {"index.sqlite"}
 
     hot_stats = result.hot_index.stats()
     assert hot_stats.entries <= 8
@@ -58,55 +65,48 @@ def test_large_real_fixture_streams_to_indexed_jsonl(
     events_manifest = result.manifest.events
     assert events_manifest is not None
     assert events_manifest.file == "events.jsonl"
-    assert events_manifest.count == result.records_written * 2 + 2
+    assert events_manifest.count == 2
     events = [
         json.loads(line)
         for line in (result.cache_dir / events_manifest.file).read_text().splitlines()
     ]
-    assert [event["sequence"] for event in events] == list(
-        range(1, len(events) + 1)
-    )
-    assert events[0] == {
-        "sequence": 1,
-        "stage": "compiler",
-        "status": "started",
-    }
-    assert events[-1] == {
-        "sequence": len(events),
-        "stage": "compiler",
-        "status": "completed",
-    }
-
-    store = JsonlIndexStore(result.cache_dir, hot_index=result.hot_index)
-
-    schema_ref = "#/components/schemas/AppStatus"
-    schema_location = store.get_by_ref(schema_ref)
-    assert schema_location is not None
-    assert schema_location.file == "components/schemas.jsonl"
-    assert store.read_location(schema_location)["enum"] == [
-        "active",
-        "suspended",
-        "disabled",
+    assert events == [
+        {"sequence": 1, "stage": "compiler", "status": "started"},
+        {"sequence": 2, "stage": "compiler", "status": "completed"},
     ]
 
-    operation_key = "operation:get:/platform/apps"
-    operation_location = store.get_by_operation_id("findApps")
-    assert operation_location is not None
-    assert operation_location.key == operation_key
-    operation = store.read_location(operation_location)
-    assert operation["operationId"] == "findApps"
+    store = JsonlIndexStore(result.cache_dir, hot_index=result.hot_index)
+    try:
+        schema_ref = "#/components/schemas/AppStatus"
+        schema_location = store.get_by_ref(schema_ref)
+        assert schema_location is not None
+        assert schema_location.file == "components/schemas.jsonl"
+        assert store.read_location(schema_location)["enum"] == [
+            "active",
+            "suspended",
+            "disabled",
+        ]
 
-    resource_mentions = store.find_mentions("resource", "apps")
-    assert resource_mentions
-    assert any(fact["item"] == operation_key for fact in resource_mentions)
+        operation_key = "operation:get:/platform/apps"
+        operation_location = store.get_by_operation_id("findApps")
+        assert operation_location is not None
+        assert operation_location.key == operation_key
+        operation = store.read_location(operation_location)
+        assert operation["operationId"] == "findApps"
 
-    operation_kind_mentions = store.find_mentions("kind", "operation")
-    assert any(fact["item"] == operation_key for fact in operation_kind_mentions)
+        resource_mentions = store.find_mentions("resource", "apps")
+        assert resource_mentions
+        assert any(fact["item"] == operation_key for fact in resource_mentions)
 
-    dependency_ref = "#/components/schemas/AppListQuery"
-    dependants = store.find_dependants(dependency_ref)
-    assert any(fact["from"] == operation_key for fact in dependants)
-    assert all(fact["to"] == dependency_ref for fact in dependants)
+        operation_kind_mentions = store.find_mentions("kind", "operation")
+        assert any(fact["item"] == operation_key for fact in operation_kind_mentions)
+
+        dependency_ref = "#/components/schemas/AppListQuery"
+        dependants = store.find_dependants(dependency_ref)
+        assert any(fact["from"] == operation_key for fact in dependants)
+        assert all(fact["to"] == dependency_ref for fact in dependants)
+    finally:
+        store.close()
 
 
 def test_jsonl_output_is_deterministic_and_reuses_unchanged_source(
