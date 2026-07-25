@@ -84,12 +84,13 @@ def run_emit(request: EmitInput) -> EmitOutput:
         )
     )
 
+    compatibility_input = jsonl_result.compatibility_path or request.input_path
     _notify(
         request,
         stage="loading_openapi",
-        message=f"Loading compatibility OpenAPI contract: {request.input_path}",
+        message=f"Loading compatibility OpenAPI contract: {compatibility_input}",
     )
-    document = load_openapi_document(request.input_path)
+    document = load_openapi_document(compatibility_input)
 
     _notify(
         request,
@@ -101,7 +102,8 @@ def run_emit(request: EmitInput) -> EmitOutput:
         stage="inferring_operations",
         message="Inferring operations",
     )
-    graph = InferenceEngine().infer(document)
+    graph = InferenceEngine().infer(document, copy_raw=False)
+    del document
 
     _notify(
         request,
@@ -109,6 +111,7 @@ def run_emit(request: EmitInput) -> EmitOutput:
         message="Building compatibility API contract",
     )
     api_contract = build_api_contract(graph)
+    del graph
 
     _notify(
         request,
