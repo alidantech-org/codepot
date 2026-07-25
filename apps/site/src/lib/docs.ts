@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import GithubSlugger from "github-slugger";
 import matter from "gray-matter";
 
-import { DOCS, NAVIGATION, type DocSlug } from "@/generated/docs";
+import { DOCS, DOC_TOCS, NAVIGATION, type DocSlug } from "@/generated/docs";
 
 export interface DocFrontmatter {
   title?: string;
@@ -38,24 +37,6 @@ export interface DocItem extends DocSummary {
   children?: DocItem[];
 }
 
-function extractHeadings(content: string): Heading[] {
-  const headings: Heading[] = [];
-  const slugger = new GithubSlugger();
-  for (const line of content.split("\n")) {
-    const match = line.match(/^(#{1,6})\s+(.+)$/);
-    if (!match) continue;
-    const rawText = match[2].replace(/#+$/, "").trim();
-    const text = rawText
-      .replace(/`([^`]+)`/g, "$1")
-      .replace(/\*\*([^*]+)\*\*/g, "$1")
-      .replace(/\*([^*]+)\*/g, "$1")
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-      .trim();
-    if (text) headings.push({ id: slugger.slug(text), text, level: match[1].length });
-  }
-  return headings;
-}
-
 function loadDoc(slug: DocSlug): Doc {
   const parsed = matter(DOCS[slug]);
   const frontmatter = parsed.data as DocFrontmatter;
@@ -65,7 +46,7 @@ function loadDoc(slug: DocSlug): Doc {
     ...(typeof frontmatter.description === "string" ? { description: frontmatter.description } : {}),
     content: parsed.content.trim(),
     frontmatter,
-    headings: extractHeadings(parsed.content),
+    headings: [...DOC_TOCS[slug]],
   };
 }
 
