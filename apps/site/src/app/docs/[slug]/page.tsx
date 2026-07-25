@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { DocsPager } from "@/components/docs/DocsPager";
+import { DocsToc } from "@/components/docs/DocsToc";
 import { MarkdownRenderer } from "@/components/docs/MarkdownRenderer";
 import { ProductBar } from "@/components/docs/ProductBar";
-import { TocRenderer } from "@/components/docs/TocRenderer";
 import {
   generateDocMetadata,
   generateStaticParams as generatePublicDocParams,
@@ -41,13 +41,18 @@ export default async function DocPage({ params }: DocPageProps) {
   const productId = typeof page.frontmatter.product === "string" ? page.frontmatter.product : null;
 
   return (
-    <>
-      <TocRenderer headings={page.headings} />
-      <article className="mx-auto w-full max-w-6xl px-2 md:px-4">
+    <div className="mx-auto grid w-full max-w-[1180px] grid-cols-1 gap-10 px-4 sm:px-6 xl:grid-cols-[minmax(0,1fr)_240px] xl:gap-12">
+      <article className="min-w-0">
         {productId && <ProductBar productId={productId} />}
         <MarkdownRenderer content={page.content} />
         <DocsPager doc={page} />
       </article>
-    </>
+
+      {page.headings.some((heading) => heading.level >= 2 && heading.level <= 3) && (
+        <aside className="hidden min-w-0 border-l border-border pl-5 xl:block">
+          <DocsToc headings={page.headings} />
+        </aside>
+      )}
+    </div>
   );
 }
