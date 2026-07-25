@@ -13,7 +13,6 @@ from contracts.normalized import (
     DiagnosticCategory,
     PresenceValue,
     ReferenceKind,
-    ResolutionState,
     SchemaUse,
     contract_collection,
     presence_from_mapping,
@@ -179,10 +178,10 @@ class NormalizedOperation:
 
     @property
     def primary_response(self) -> NormalizedResponse | None:
-        for response in self.responses.all:
-            if response.is_success:
-                return response
-        return self.responses.all[0] if self.responses.all else None
+        return next(
+            (response for response in self.responses.all if response.is_success),
+            self.responses.all[0] if self.responses.all else None,
+        )
 
 
 @dataclass(frozen=True)
@@ -221,7 +220,10 @@ class NormalizedEntityRelation:
     id: str
     cardinality: str = "-"
     target: ContractReference[Any] = field(
-        default_factory=lambda: ContractReference(ref="", kind=ReferenceKind.ENTITY)
+        default_factory=lambda: ContractReference(
+            ref="",
+            kind=ReferenceKind.ENTITY,
+        )
     )
     local_fields: tuple[str, ...] = ()
     foreign_fields: tuple[str, ...] = ()
@@ -234,8 +236,8 @@ class NormalizedEntityRelation:
 
     @property
     def is_to_one(self) -> bool:
-        normalized = self.cardinality.lower().replace("-", "_")
-        return normalized.endswith("_to_one") or normalized in {
+        value = self.cardinality.lower().replace("-", "_")
+        return value.endswith("_to_one") or value in {
             "one",
             "one_to_one",
             "many_to_one",
@@ -334,12 +336,16 @@ class NormalizedFrontend:
 
 @dataclass(frozen=True)
 class NormalizedDomainView:
-    servers: ContractCollection[NormalizedServer] = field(default_factory=ContractCollection)
+    servers: ContractCollection[NormalizedServer] = field(
+        default_factory=ContractCollection
+    )
     security_schemes: ContractCollection[NormalizedSecurityScheme] = field(
         default_factory=ContractCollection
     )
     root_security: tuple[NormalizedSecurityRequirement, ...] = ()
-    paths: ContractCollection[NormalizedPathItem] = field(default_factory=ContractCollection)
+    paths: ContractCollection[NormalizedPathItem] = field(
+        default_factory=ContractCollection
+    )
     operations: ContractCollection[NormalizedOperation] = field(
         default_factory=ContractCollection
     )
@@ -349,70 +355,51 @@ class NormalizedDomainView:
     base_entities: ContractCollection[NormalizedEntity] = field(
         default_factory=ContractCollection
     )
-    entities: ContractCollection[NormalizedEntity] = field(default_factory=ContractCollection)
+    entities: ContractCollection[NormalizedEntity] = field(
+        default_factory=ContractCollection
+    )
     frontends: ContractCollection[NormalizedFrontend] = field(
         default_factory=ContractCollection
     )
 
     @property
     def all_diagnostics(self) -> tuple[ContractDiagnostic, ...]:
-        diagnostics: list[ContractDiagnostic] = []
-
-        def add_reference(reference: ContractReference[Any] | None) -> None:
-            if reference is not None:
-                diagnostics.extend(reference.diagnostics)
-
-        def add_schema_use(schema_use: SchemaUse[Any]) -> None:
-            diagnostics.extend(schema_use.diagnostics)
-            for reference in schema_use.refs:
-                add_reference(reference)
-            if schema_use.ref is not None and schema_use.ref not in schema_use.refs:
-                add_reference(schema_use.ref)
-
+        values: list[ContractDiagnostic] = []
         for requirement in self.root_security:
-            for use in requirement.uses:
-                add_reference(use.scheme)
+            values.extend(_security_diagnostics(requirement))
         for operation in self.operations.all:
             for requirement in operation.security:
-                for use in requirement.uses:
-                    add_reference(use.scheme)
+                values.extend(_security_diagnostics(requirement))
             for parameter in operation.effective_parameters.all:
-                add_schema_use(parameter.schema_use)
+                values.extend(parameter.schema_use.diagnostics)
             if operation.request_body is not None:
                 for media in operation.request_body.content.all:
-                    add_schema_use(media.schema_use)
+                    values.extend(media.schema_use.diagnostics)
             for response in operation.responses.all:
                 for media in response.content.all:
-                    add_schema_use(media.schema_use)
+                    values.extend(media.schema_use.diagnostics)
         for entity in (*self.base_entities.all, *self.entities.all):
-            add_schema_use(entity.schema_use)
+            values.extend(entity.schema_use.diagnostics)
             for reference in entity.extends:
-                add_reference(reference)
+                values.extend(reference.diagnostics)
             for relation in entity.relations.all:
-                add_reference(relation.target)
-            for item in (*entity.declared_fields.all, *entity.backend_fields.all):
-                add_schema_use(item.schema_use)
+                values.extend(relation.target.diagnostics)
         for frontend in self.frontends.all:
             for component in frontend.components.all:
-                add_schema_use(component.props)
-                for use in component.uses:
-                    add_reference(use.operation)
-                    add_schema_use(use.schema)
+                values.extend(component.props.diagnostics)
+                values.extend(_use_diagnostics(component.uses))
             for screen in frontend.screens.all:
-                add_schema_use(screen.params)
-                add_schema_use(screen.body)
-                add_schema_use(screen.response)
-                for use in screen.uses:
-                    add_reference(use.operation)
-                    add_schema_use(use.schema)
-        return tuple(dict.fromkeys(diagnostics))
+                values.extend(screen.params.diagnostics)
+                values.extend(screen.body.diagnostics)
+                values.extend(screen.response.diagnostics)
+                values.extend(_use_diagnostics(screen.uses))
+        return tuple(values)
 
     @property
     def unresolved_count(self) -> int:
         return sum(
-            1
+            diagnostic.category == DiagnosticCategory.UNRESOLVED
             for diagnostic in self.all_diagnostics
-            if diagnostic.category == DiagnosticCategory.UNRESOLVED
         )
 
 
@@ -438,104 +425,21 @@ def build_normalized_domain_view(
         targets=security_targets,
     )
 
-    servers = tuple(
-        _server(index, _mapping(value))
-        for index, value in enumerate(_sequence(document.get("servers")))
+    paths, operations = _http_domains(
+        document,
+        root_security=root_security,
+        security_targets=security_targets,
+        schema_targets=schema_targets,
     )
-
-    paths: list[NormalizedPathItem] = []
-    operations: list[NormalizedOperation] = []
-    for path, raw_path in _mapping(document.get("paths")).items():
-        path_value = _mapping(raw_path)
-        path_parameters = _parameters(
-            path_value.get("parameters"),
-            owner=str(path),
-            source_path=f"paths.{path}.parameters",
-            schema_targets=schema_targets,
-        )
-        paths.append(
-            NormalizedPathItem(
-                id=str(path),
-                summary=_text(path_value.get("summary")),
-                description=_text(path_value.get("description")),
-                parameters=contract_collection(path_parameters),
-            )
-        )
-        for method in _HTTP_METHODS:
-            raw_operation = _mapping(path_value.get(method))
-            if not raw_operation:
-                continue
-            operations.append(
-                _operation(
-                    path=str(path),
-                    method=method,
-                    raw=raw_operation,
-                    path_parameters=path_parameters,
-                    root_security=root_security,
-                    security_targets=security_targets,
-                    schema_targets=schema_targets,
-                )
-            )
-
     codegen = _mapping(document.get("x-codegen"))
     access = tuple(
         _access(str(name), _mapping(value))
         for name, value in _mapping(codegen.get("access")).items()
     )
-
-    base_raw = _mapping(codegen.get("baseEntities"))
-    entity_raw = _flatten_entities(_mapping(codegen.get("entities")))
-    entity_targets: dict[str, Any] = {}
-    base_entities = tuple(
-        NormalizedEntity(id=str(name)) for name in base_raw
+    base_entities, entities = _entities(
+        codegen,
+        schema_targets=schema_targets,
     )
-    entities = tuple(NormalizedEntity(id=str(name)) for name in entity_raw)
-    entity_targets.update({item.id: item for item in base_entities})
-    entity_targets.update({item.id: item for item in entities})
-    base_entities = tuple(
-        _entity(
-            str(name),
-            _mapping(value),
-            schema_targets=schema_targets,
-            entity_targets=entity_targets,
-            is_base=True,
-        )
-        for name, value in base_raw.items()
-    )
-    entities = tuple(
-        _entity(
-            str(name),
-            _mapping(value),
-            schema_targets=schema_targets,
-            entity_targets=entity_targets,
-            is_base=False,
-        )
-        for name, value in entity_raw.items()
-    )
-    resolved_entity_targets = {
-        item.id: item for item in (*base_entities, *entities)
-    }
-    base_entities = tuple(
-        _entity(
-            str(name),
-            _mapping(value),
-            schema_targets=schema_targets,
-            entity_targets=resolved_entity_targets,
-            is_base=True,
-        )
-        for name, value in base_raw.items()
-    )
-    entities = tuple(
-        _entity(
-            str(name),
-            _mapping(value),
-            schema_targets=schema_targets,
-            entity_targets=resolved_entity_targets,
-            is_base=False,
-        )
-        for name, value in entity_raw.items()
-    )
-
     frontends = tuple(
         _frontend(
             str(name),
@@ -545,9 +449,11 @@ def build_normalized_domain_view(
         )
         for name, value in _mapping(codegen.get("frontends")).items()
     )
-
     return NormalizedDomainView(
-        servers=contract_collection(servers),
+        servers=contract_collection(
+            _server(index, _mapping(value))
+            for index, value in enumerate(_sequence(document.get("servers")))
+        ),
         security_schemes=contract_collection(security_schemes),
         root_security=root_security,
         paths=contract_collection(paths),
@@ -559,7 +465,46 @@ def build_normalized_domain_view(
     )
 
 
-_HTTP_METHODS = ("get", "put", "post", "delete", "patch", "options", "head", "trace")
+def _http_domains(
+    document: Mapping[str, Any],
+    *,
+    root_security: tuple[NormalizedSecurityRequirement, ...],
+    security_targets: Mapping[str, NormalizedSecurityScheme],
+    schema_targets: Mapping[str, ApiSchema],
+) -> tuple[tuple[NormalizedPathItem, ...], tuple[NormalizedOperation, ...]]:
+    paths: list[NormalizedPathItem] = []
+    operations: list[NormalizedOperation] = []
+    for path, value in _mapping(document.get("paths")).items():
+        raw_path = _mapping(value)
+        path_parameters = _parameters(
+            raw_path.get("parameters"),
+            owner=str(path),
+            source_path=f"paths.{path}.parameters",
+            schema_targets=schema_targets,
+        )
+        paths.append(
+            NormalizedPathItem(
+                id=str(path),
+                summary=_text(raw_path.get("summary")),
+                description=_text(raw_path.get("description")),
+                parameters=contract_collection(path_parameters),
+            )
+        )
+        for method in _HTTP_METHODS:
+            raw_operation = _mapping(raw_path.get(method))
+            if raw_operation:
+                operations.append(
+                    _operation(
+                        path=str(path),
+                        method=method,
+                        raw=raw_operation,
+                        path_parameters=path_parameters,
+                        root_security=root_security,
+                        security_targets=security_targets,
+                        schema_targets=schema_targets,
+                    )
+                )
+    return tuple(paths), tuple(operations)
 
 
 def _server(index: int, raw: Mapping[str, Any]) -> NormalizedServer:
@@ -584,7 +529,10 @@ def _server(index: int, raw: Mapping[str, Any]) -> NormalizedServer:
     )
 
 
-def _security_scheme(name: str, raw: Mapping[str, Any]) -> NormalizedSecurityScheme:
+def _security_scheme(
+    name: str,
+    raw: Mapping[str, Any],
+) -> NormalizedSecurityScheme:
     return NormalizedSecurityScheme(
         id=name,
         type=str(raw.get("type", "-")),
@@ -604,23 +552,24 @@ def _security_requirements(
     source_path: str,
     targets: Mapping[str, NormalizedSecurityScheme],
 ) -> tuple[NormalizedSecurityRequirement, ...]:
-    requirements: list[NormalizedSecurityRequirement] = []
-    for index, item in enumerate(_sequence(value)):
-        uses = tuple(
-            NormalizedSecurityUse(
-                scheme=build_reference(
-                    str(name),
-                    kind=ReferenceKind.COMPONENT,
-                    owner=owner,
-                    source_path=f"{source_path}.{index}.{name}",
-                    targets=targets,
-                ),
-                scopes=tuple(str(scope) for scope in _sequence(scopes)),
+    return tuple(
+        NormalizedSecurityRequirement(
+            uses=tuple(
+                NormalizedSecurityUse(
+                    scheme=build_reference(
+                        str(name),
+                        kind=ReferenceKind.COMPONENT,
+                        owner=owner,
+                        source_path=f"{source_path}.{index}.{name}",
+                        targets=targets,
+                    ),
+                    scopes=tuple(str(scope) for scope in _sequence(scopes)),
+                )
+                for name, scopes in _mapping(item).items()
             )
-            for name, scopes in _mapping(item).items()
         )
-        requirements.append(NormalizedSecurityRequirement(uses=uses))
-    return tuple(requirements)
+        for index, item in enumerate(_sequence(value))
+    )
 
 
 def _parameters(
@@ -630,28 +579,41 @@ def _parameters(
     source_path: str,
     schema_targets: Mapping[str, ApiSchema],
 ) -> tuple[NormalizedParameter, ...]:
-    parameters: list[NormalizedParameter] = []
-    for index, item in enumerate(_sequence(value)):
-        raw = _mapping(item)
-        name = str(raw.get("name", index))
-        parameters.append(
-            NormalizedParameter(
-                id=name,
-                location=str(raw.get("in", "-")),
-                description=_text(raw.get("description")),
-                required=presence_from_mapping(raw, "required", source_path=source_path),
-                deprecated=presence_from_mapping(raw, "deprecated", source_path=source_path),
-                style=presence_from_mapping(raw, "style", source_path=source_path),
-                explode=presence_from_mapping(raw, "explode", source_path=source_path),
-                schema_use=build_schema_use(
-                    raw.get("schema"),
-                    owner=owner,
-                    source_path=f"{source_path}.{index}.schema",
-                    schema_targets=schema_targets,
-                ),
-            )
+    return tuple(
+        _parameter(
+            index,
+            _mapping(item),
+            owner=owner,
+            source_path=source_path,
+            schema_targets=schema_targets,
         )
-    return tuple(parameters)
+        for index, item in enumerate(_sequence(value))
+    )
+
+
+def _parameter(
+    index: int,
+    raw: Mapping[str, Any],
+    *,
+    owner: str,
+    source_path: str,
+    schema_targets: Mapping[str, ApiSchema],
+) -> NormalizedParameter:
+    return NormalizedParameter(
+        id=str(raw.get("name", index)),
+        location=str(raw.get("in", "-")),
+        description=_text(raw.get("description")),
+        required=presence_from_mapping(raw, "required", source_path=source_path),
+        deprecated=presence_from_mapping(raw, "deprecated", source_path=source_path),
+        style=presence_from_mapping(raw, "style", source_path=source_path),
+        explode=presence_from_mapping(raw, "explode", source_path=source_path),
+        schema_use=build_schema_use(
+            raw.get("schema"),
+            owner=owner,
+            source_path=f"{source_path}.{index}.schema",
+            schema_targets=schema_targets,
+        ),
+    )
 
 
 def _operation(
@@ -671,11 +633,11 @@ def _operation(
         source_path=f"paths.{path}.{method}.parameters",
         schema_targets=schema_targets,
     )
-    effective_by_key: dict[tuple[str, str], NormalizedParameter] = {
-        (item.id, item.location): item for item in path_parameters
+    effective = {
+        (item.id, item.location): item
+        for item in path_parameters
     }
-    for item in declared:
-        effective_by_key[(item.id, item.location)] = item
+    effective.update({(item.id, item.location): item for item in declared})
     security_is_override = "security" in raw
     security = (
         _security_requirements(
@@ -721,7 +683,7 @@ def _operation(
         summary=_text(raw.get("summary")),
         description=_text(raw.get("description")),
         declared_parameters=contract_collection(declared),
-        effective_parameters=contract_collection(effective_by_key.values()),
+        effective_parameters=contract_collection(effective.values()),
         request_body=request_body,
         responses=contract_collection(responses),
         security=security,
@@ -804,18 +766,55 @@ def _media_types(
 
 
 def _access(name: str, raw: Mapping[str, Any]) -> NormalizedAccessPolicy:
+    source_path = f"x-codegen.access.{name}"
     return NormalizedAccessPolicy(
         id=name,
-        public=presence_from_mapping(raw, "public", source_path=f"x-codegen.access.{name}"),
+        public=presence_from_mapping(raw, "public", source_path=source_path),
         authenticated=presence_from_mapping(
             raw,
             "authenticated",
-            source_path=f"x-codegen.access.{name}",
+            source_path=source_path,
         ),
         roles=tuple(str(item) for item in _sequence(raw.get("roles"))),
-        permissions=tuple(str(item) for item in _sequence(raw.get("permissions"))),
+        permissions=tuple(
+            str(item) for item in _sequence(raw.get("permissions"))
+        ),
         expression=freeze_source_map(_mapping(raw.get("expression"))),
     )
+
+
+def _entities(
+    codegen: Mapping[str, Any],
+    *,
+    schema_targets: Mapping[str, ApiSchema],
+) -> tuple[tuple[NormalizedEntity, ...], tuple[NormalizedEntity, ...]]:
+    base_raw = _mapping(codegen.get("baseEntities"))
+    entity_raw = _flatten_entities(_mapping(codegen.get("entities")))
+    placeholders = {
+        str(name): NormalizedEntity(id=str(name))
+        for name in (*base_raw, *entity_raw)
+    }
+    base_entities = tuple(
+        _entity(
+            str(name),
+            _mapping(value),
+            schema_targets=schema_targets,
+            entity_targets=placeholders,
+            is_base=True,
+        )
+        for name, value in base_raw.items()
+    )
+    entities = tuple(
+        _entity(
+            str(name),
+            _mapping(value),
+            schema_targets=schema_targets,
+            entity_targets=placeholders,
+            is_base=False,
+        )
+        for name, value in entity_raw.items()
+    )
+    return base_entities, entities
 
 
 def _entity(
@@ -823,56 +822,10 @@ def _entity(
     raw: Mapping[str, Any],
     *,
     schema_targets: Mapping[str, ApiSchema],
-    entity_targets: Mapping[str, Any],
+    entity_targets: Mapping[str, NormalizedEntity],
     is_base: bool,
 ) -> NormalizedEntity:
     source_path = f"x-codegen.{'baseEntities' if is_base else 'entities'}.{name}"
-    declared_fields = tuple(
-        _entity_field(
-            str(field_name),
-            _mapping(value),
-            source_path=f"{source_path}.fields.{field_name}",
-            schema_targets=schema_targets,
-            backend_only=False,
-        )
-        for field_name, value in _named_items(raw.get("fields"))
-    )
-    backend_fields = tuple(
-        _entity_field(
-            str(field_name),
-            _mapping(value),
-            source_path=f"{source_path}.backendFields.{field_name}",
-            schema_targets=schema_targets,
-            backend_only=True,
-        )
-        for field_name, value in _named_items(
-            raw.get("backendFields", raw.get("backend"))
-        )
-    )
-    relations = tuple(
-        _entity_relation(
-            str(relation_name),
-            _mapping(value),
-            owner=name,
-            source_path=f"{source_path}.relations.{relation_name}",
-            entity_targets=entity_targets,
-        )
-        for relation_name, value in _named_items(raw.get("relations"))
-    )
-    constraints = tuple(
-        _entity_constraint(str(item_name), _mapping(value))
-        for item_name, value in _named_items(raw.get("constraints"))
-    )
-    extends = tuple(
-        build_reference(
-            str(value),
-            kind=ReferenceKind.ENTITY,
-            owner=name,
-            source_path=f"{source_path}.extends.{index}",
-            targets=entity_targets,
-        )
-        for index, value in enumerate(_string_sequence(raw.get("extends")))
-    )
     return NormalizedEntity(
         id=name,
         resource=_optional_text(raw.get("resource")),
@@ -884,11 +837,62 @@ def _entity(
             source_path=f"{source_path}.schema",
             schema_targets=schema_targets,
         ),
-        extends=extends,
-        declared_fields=contract_collection(declared_fields),
-        backend_fields=contract_collection(backend_fields),
-        relations=contract_collection(relations),
-        constraints=contract_collection(constraints),
+        extends=tuple(
+            build_reference(
+                value,
+                kind=ReferenceKind.ENTITY,
+                owner=name,
+                source_path=f"{source_path}.extends.{index}",
+                targets=entity_targets,
+            )
+            for index, value in enumerate(_string_sequence(raw.get("extends")))
+        ),
+        declared_fields=contract_collection(
+            _entity_field(
+                str(field_name),
+                _mapping(value),
+                source_path=f"{source_path}.fields.{field_name}",
+                schema_targets=schema_targets,
+                backend_only=False,
+            )
+            for field_name, value in _named_items(raw.get("fields"))
+        ),
+        backend_fields=contract_collection(
+            _entity_field(
+                str(field_name),
+                _mapping(value),
+                source_path=f"{source_path}.backendFields.{field_name}",
+                schema_targets=schema_targets,
+                backend_only=True,
+            )
+            for field_name, value in _named_items(
+                raw.get("backendFields", raw.get("backend"))
+            )
+        ),
+        relations=contract_collection(
+            _entity_relation(
+                str(relation_name),
+                _mapping(value),
+                owner=name,
+                source_path=f"{source_path}.relations.{relation_name}",
+                entity_targets=entity_targets,
+            )
+            for relation_name, value in _named_items(raw.get("relations"))
+        ),
+        constraints=contract_collection(
+            NormalizedEntityConstraint(
+                id=str(item_name),
+                kind=str(_mapping(value).get("kind", "-")),
+                fields=tuple(
+                    str(item)
+                    for item in _sequence(_mapping(value).get("fields"))
+                ),
+                expression=freeze_source_map(
+                    _mapping(_mapping(value).get("expression"))
+                ),
+            )
+            for item_name, value in _named_items(raw.get("constraints"))
+        ),
     )
 
 
@@ -906,6 +910,11 @@ def _entity_field(
         if not isinstance(query, Mapping)
         else tuple(str(item) for item in _sequence(query.get("operators")))
     )
+    backend_value = (
+        PresenceValue.effective(True, source_path=f"{source_path}.backendOnly")
+        if backend_only
+        else presence_from_mapping(raw, "backendOnly", source_path=source_path)
+    )
     return NormalizedEntityField(
         id=name,
         type=_optional_text(raw.get("type")),
@@ -913,11 +922,7 @@ def _entity_field(
         nullable=presence_from_mapping(raw, "nullable", source_path=source_path),
         unique=presence_from_mapping(raw, "unique", source_path=source_path),
         readonly=presence_from_mapping(raw, "readonly", source_path=source_path),
-        backend_only=(
-            PresenceValue.effective(True, source_path=f"{source_path}.backendOnly")
-            if backend_only
-            else presence_from_mapping(raw, "backendOnly", source_path=source_path)
-        ),
+        backend_only=backend_value,
         query_operators=operators,
         schema_use=build_schema_use(
             _schema_value(raw.get("schema")),
@@ -934,7 +939,7 @@ def _entity_relation(
     *,
     owner: str,
     source_path: str,
-    entity_targets: Mapping[str, Any],
+    entity_targets: Mapping[str, NormalizedEntity],
 ) -> NormalizedEntityRelation:
     target = str(raw.get("targetEntity", raw.get("target", "")))
     return NormalizedEntityRelation(
@@ -960,15 +965,6 @@ def _entity_relation(
     )
 
 
-def _entity_constraint(name: str, raw: Mapping[str, Any]) -> NormalizedEntityConstraint:
-    return NormalizedEntityConstraint(
-        id=name,
-        kind=str(raw.get("kind", "-")),
-        fields=tuple(str(item) for item in _sequence(raw.get("fields"))),
-        expression=freeze_source_map(_mapping(raw.get("expression"))),
-    )
-
-
 def _frontend(
     name: str,
     raw: Mapping[str, Any],
@@ -977,7 +973,7 @@ def _frontend(
     operation_targets: Mapping[str, ApiOperation],
 ) -> NormalizedFrontend:
     route_prefix = str(raw.get("routePrefix", raw.get("route", "")))
-    components = tuple(
+    components = contract_collection(
         _frontend_component(
             str(component_name),
             _mapping(value),
@@ -988,7 +984,7 @@ def _frontend(
         )
         for component_name, value in _named_items(raw.get("components"))
     )
-    screens = tuple(
+    screens = contract_collection(
         _frontend_screen(
             str(screen_name),
             _mapping(value),
@@ -1004,8 +1000,8 @@ def _frontend(
         id=name,
         title=_text(raw.get("title", raw.get("name"))),
         route_prefix=route_prefix,
-        components=contract_collection(components),
-        screens=contract_collection(screens),
+        components=components,
+        screens=screens,
     )
 
 
@@ -1088,7 +1084,7 @@ def _frontend_uses(
     schema_targets: Mapping[str, ApiSchema],
     operation_targets: Mapping[str, ApiOperation],
 ) -> tuple[NormalizedFrontendUse, ...]:
-    uses: list[NormalizedFrontendUse] = []
+    result: list[NormalizedFrontendUse] = []
     for index, item in enumerate(_sequence(value)):
         raw = _mapping(item)
         operation_name = raw.get("operation", raw.get("operationId"))
@@ -1103,7 +1099,7 @@ def _frontend_uses(
             if operation_name is not None
             else None
         )
-        uses.append(
+        result.append(
             NormalizedFrontendUse(
                 alias=str(raw.get("alias", raw.get("name", index))),
                 operation=operation,
@@ -1116,7 +1112,28 @@ def _frontend_uses(
                 purpose=_optional_text(raw.get("purpose")),
             )
         )
-    return tuple(uses)
+    return tuple(result)
+
+
+def _security_diagnostics(
+    requirement: NormalizedSecurityRequirement,
+) -> tuple[ContractDiagnostic, ...]:
+    return tuple(
+        diagnostic
+        for use in requirement.uses
+        for diagnostic in use.scheme.diagnostics
+    )
+
+
+def _use_diagnostics(
+    uses: tuple[NormalizedFrontendUse, ...],
+) -> tuple[ContractDiagnostic, ...]:
+    values: list[ContractDiagnostic] = []
+    for use in uses:
+        if use.operation is not None:
+            values.extend(use.operation.diagnostics)
+        values.extend(use.schema.diagnostics)
+    return tuple(values)
 
 
 def _flatten_entities(raw: Mapping[str, Any]) -> dict[str, Any]:
@@ -1139,9 +1156,10 @@ def _flatten_entities(raw: Mapping[str, Any]) -> dict[str, Any]:
         item = _mapping(value)
         if entity_keys & set(item):
             flattened[str(name)] = value
-            continue
-        for nested_name, nested_value in item.items():
-            flattened[str(nested_name)] = nested_value
+        else:
+            flattened.update(
+                {str(nested_name): nested for nested_name, nested in item.items()}
+            )
     return flattened
 
 
@@ -1155,9 +1173,7 @@ def _named_items(value: Any) -> tuple[tuple[str, Any], ...]:
 
 
 def _schema_value(value: Any) -> Any:
-    if isinstance(value, str):
-        return {"$ref": value}
-    return value
+    return {"$ref": value} if isinstance(value, str) else value
 
 
 def _string_sequence(value: Any) -> tuple[str, ...]:
@@ -1188,3 +1204,6 @@ def _text(value: Any) -> str:
 
 def _optional_text(value: Any) -> str | None:
     return str(value) if value is not None else None
+
+
+_HTTP_METHODS = ("get", "put", "post", "delete", "patch", "options", "head", "trace")
