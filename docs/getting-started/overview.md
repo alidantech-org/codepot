@@ -25,7 +25,7 @@ Codepot Lang + compiler/runtime + codepot CLI
 
 ### Mature working prototypes
 
-[`codepot-openapi`](/docs/codepot-openapi) and [`codepotg`](/docs/codepotg) are supported, production-used packages.
+[`codepot-openapi`](/docs/packages/codepot-openapi) and [`codepotg`](/docs/packages/codepotg) are supported, production-used packages.
 
 - `codepot-openapi` authors typed TypeScript contracts and emits OpenAPI JSON or YAML with optional `x-codegen` metadata.
 - `codepotg` consumes that OpenAPI, builds a normalized generation model, and renders Jinja template packs into project code.
@@ -34,11 +34,11 @@ These packages are where ideas can be tested against real applications before th
 
 ### Official JavaScript ecosystem
 
-[`codepotx`](/docs/codepotx) is the official stable rewrite and long-term JavaScript release line.
+[`codepotx`](/docs/packages/codepotx) is the official stable rewrite and long-term JavaScript release line.
 
 It is designed as a runtime rather than a terminal-only program. Typed authoring, template compilation, planning, rendering, safe writes, diagnostics, and runtime operations live in `codepotx`.
 
-[`codepotx-cli`](/docs/codepotx-cli) is one thin frontend for that runtime. The same runtime can later support a web interface, editor integration, MCP server, desktop tool, or embedded Node.js application.
+[`codepotx-cli`](/docs/packages/codepotx-cli) is one thin frontend for that runtime. The same runtime can later support a web interface, editor integration, MCP server, desktop tool, or embedded Node.js application.
 
 ### Final Codepot platform
 
@@ -66,6 +66,7 @@ Although the implementations differ, the project keeps the same core principles:
 
 ## Where to begin
 
+- Browse [all package documentation](/docs/packages).
 - Use [Choose a workflow](/docs/choose-workflow) to select the right package for your project.
 - Follow [Getting started](/docs/getting-started) for the shortest practical path.
 - Read [The ecosystem](/docs/ecosystem) for package relationships and status.
