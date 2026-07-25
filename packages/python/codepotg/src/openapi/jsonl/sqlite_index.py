@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from pathlib import Path
 from threading import RLock
 from typing import Any
@@ -80,6 +80,8 @@ class SqliteIndexWriter:
         self._flush()
         self._connection.executescript(
             """
+            CREATE INDEX IF NOT EXISTS locations_section_kind
+              ON locations(section, kind, key);
             CREATE INDEX IF NOT EXISTS mentions_lookup
               ON mentions(index_name, value);
             CREATE INDEX IF NOT EXISTS mentions_item
@@ -204,6 +206,7 @@ class SqliteIndexReader:
         self._connection = sqlite3.connect(uri, uri=True, check_same_thread=False)
         self._connection.row_factory = sqlite3.Row
         self._lock = RLock()
+        self._closed = False
         _configure_reader(self._connection, cache_bytes=cache_bytes)
 
     def definition(self, lookup: str, value: str) -> RecordLocation | None:
@@ -219,6 +222,32 @@ class SqliteIndexReader:
                 (lookup, value),
             ).fetchone()
         return _location_from_row(row) if row is not None else None
+
+    def locations(
+        self,
+        section: str,
+        *,
+        kinds: Sequence[str] = (),
+        mention: tuple[str, str] | None = None,
+    ) -> tuple[RecordLocation, ...]:
+        clauses = ["l.section = ?"]
+        parameters: list[Any] = [section]
+        join = ""
+        if kinds:
+            placeholders = ",".join("?" for _ in kinds)
+            clauses.append(f"l.kind IN ({placeholders})")
+            parameters.extend(kinds)
+        if mention is not None:
+            join = "JOIN mentions AS m ON m.item = l.key"
+            clauses.extend(("m.index_name = ?", "m.value = ?"))
+            parameters.extend(mention)
+        query = (
+            "SELECT DISTINCT l.* FROM locations AS l "
+            f"{join} WHERE {' AND '.join(clauses)} ORDER BY l.key"
+        )
+        with self._lock:
+            rows = self._connection.execute(query, parameters).fetchall()
+        return tuple(_location_from_row(row) for row in rows)
 
     def mentions(self, index: str, value: str) -> tuple[Mapping[str, Any], ...]:
         with self._lock:
@@ -285,7 +314,10 @@ class SqliteIndexReader:
 
     def close(self) -> None:
         with self._lock:
+            if self._closed:
+                return
             self._connection.close()
+            self._closed = True
 
 
 def sqlite_index_path(cache_dir: str | Path) -> Path:
