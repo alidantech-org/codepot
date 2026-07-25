@@ -1,0 +1,16 @@
+import { Module } from '@nestjs/common';
+
+import { {{ resource.name.pascal.o }}GeneratedModule } from '@gen/backend/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.kebab.o }}';
+
+/**
+ * ---------------------------------------------------------------------------
+ * {{ resource.name.pascal.o }} Module
+ * ---------------------------------------------------------------------------
+ *
+ * Immutable handwritten module wrapper. Add local providers/imports here.
+ */
+@Module({
+  imports: [{{ resource.name.pascal.o }}GeneratedModule],
+  exports: [{{ resource.name.pascal.o }}GeneratedModule],
+})
+export class {{ resource.name.pascal.o }}Module {}

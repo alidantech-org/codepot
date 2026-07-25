@@ -47,8 +47,23 @@ Observed outcome:
 - milestone-only JSONL progress avoids per-record callback overhead;
 - full-suite execution is substantially faster than the earlier approximately 55–100 second runs.
 
+### Scope correction
+
+The approximately five-second JSON and six-second YAML profiles reported after this checkpoint
+used the bundled debug template pack. They proved the compiler, contract, rendering, batching,
+and release behavior for that synthetic pack, but they did **not** prove Nest, Next, or Dart
+production-template performance. Their generated files were written to a temporary profiler
+directory and deleted at process exit.
+
+The release-performance gate is therefore expanded to require the realistic Nest, Next, and
+Dart fixture projects under `tests/fixtures/realistic_projects`, visible generated review
+output, and profiles that pass both `--templates` and `--workspace`.
+
 Next verification steps:
 
-1. Run non-`--full` JSON and YAML speed profiles.
-2. Record RSS, private bytes, adaptive queue limits, batch high-water marks, and per-stage durations.
-3. Reconcile `CODEPOTG_READINESS_TASKS.md`, `NORMALIZED_CONTRACT_VERIFICATION_TASKS.md`, and Task 24 from the measured profile evidence.
+1. Run `tests/integration/test_realistic_template_packs.py`.
+2. Run the complete suite and Ruff.
+3. Generate visible review output for all three packs.
+4. Profile each realistic pack and record exact output counts, RSS, private bytes, queue
+   high-water marks, and durations.
+5. Treat the debug profile only as synthetic engine evidence.

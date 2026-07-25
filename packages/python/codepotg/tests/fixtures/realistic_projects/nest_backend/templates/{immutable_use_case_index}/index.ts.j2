@@ -1,0 +1,8 @@
+/**
+ * ---------------------------------------------------------------------------
+ * {{ resource.name.pascal.o }} Use-Case Implementation Barrel
+ * ---------------------------------------------------------------------------
+ */
+{% for item in resource.operations %}
+export * from './{{ item.meta.use_case_file_name }}';
+{% endfor %}

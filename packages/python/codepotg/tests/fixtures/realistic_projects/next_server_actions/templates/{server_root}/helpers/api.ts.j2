@@ -1,0 +1,17 @@
+import 'server-only';
+import { createNextApiBridge } from 'next-api-bridge';
+
+/**
+* ---------------------------------------------------------------------------
+* Server API Client
+* ---------------------------------------------------------------------------
+*
+* Generated next-api-bridge client for server-only actions and loaders.
+*/
+export const api = createNextApiBridge({
+baseUrl: process.env.SERVER_URL ?? process.env.NEXT_PUBLIC_API_URL ?? '{{ project.meta.default_base_url or "" }}',
+cookiePrefix: process.env.API_COOKIE_PREFIX ?? 'rra_',
+apiKey: process.env.SERVER_APP_API_KEY,
+apiKeyHeader: process.env.SERVER_APP_API_KEY_HEADER_KEY,
+verbose: process.env.ENABLE_VERBOSE_LOGGING,
+});

@@ -1,0 +1,25 @@
+import { Injectable } from '@nestjs/common';
+import type * as ApiTypes from '@gen/types';
+import type {
+  {{ operation.meta.payload_type }},
+  {{ operation.meta.use_case_interface }},
+} from '@gen/backend/{% for part in operation.resource.path %}{{ part }}/{% endfor %}{{ operation.resource.name.kebab.o }}/use-cases/{{ operation.meta.use_case_types_file_name }}';
+
+/**
+ * ---------------------------------------------------------------------------
+ * {{ operation.meta.use_case_impl_class }}
+ * ---------------------------------------------------------------------------
+ *
+ * Immutable implementation stub. Fill this class with application logic.
+ */
+@Injectable()
+export class {{ operation.meta.use_case_impl_class }} implements {{ operation.meta.use_case_interface }} {
+  async execute(
+    context: {% if operation.meta.access_context_type == "unknown" %}unknown{% else %}ApiTypes.{{ operation.meta.access_context_type }}{% endif %},
+    payload: {{ operation.meta.payload_type }},
+  ): Promise<{% if operation.meta.response_type %}ApiTypes.{{ operation.meta.response_type }}{% else %}unknown{% endif %}> {
+    void context;
+    void payload;
+    throw new Error('{{ operation.meta.use_case_impl_class }}.execute is not implemented.');
+  }
+}

@@ -1,0 +1,39 @@
+import { Injectable } from '@nestjs/common';
+import type * as ApiTypes from '@gen/types';
+{% for operation in resource.operations %}
+import type {
+  {{ operation.meta.payload_type }},
+  {{ operation.meta.use_case_interface }},
+} from './use-cases/{{ operation.meta.use_case_types_file_name }}';
+{% endfor %}
+import {
+{% for operation in resource.operations %}
+  {{ operation.meta.use_case_impl_class }},
+{% endfor %}
+} from '@/modules/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.kebab.o }}/use-cases';
+
+/**
+ * ---------------------------------------------------------------------------
+ * {{ resource.name.pascal.o }}GeneratedService
+ * ---------------------------------------------------------------------------
+ *
+ * Managed service that delegates each operation to its use-case implementation.
+ */
+@Injectable()
+export class {{ resource.name.pascal.o }}GeneratedService {
+  constructor(
+{% for operation in resource.operations %}
+    private readonly {{ operation.lang.function_name }}UseCase: {{ operation.meta.use_case_impl_class }},
+{% endfor %}
+  ) {}
+{% for operation in resource.operations %}
+
+  {{ operation.lang.function_name }}(
+    context: {% if operation.meta.access_context_type == "unknown" %}unknown{% else %}ApiTypes.{{ operation.meta.access_context_type }}{% endif %},
+    payload: {{ operation.meta.payload_type }},
+  ) {
+    const useCase: {{ operation.meta.use_case_interface }} = this.{{ operation.lang.function_name }}UseCase;
+    return useCase.execute(context, payload);
+  }
+{% endfor %}
+}
