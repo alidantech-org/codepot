@@ -115,6 +115,7 @@ def compile_openapi_jsonl(
     counters = {"records": 0, "definitions": 0, "mentions": 0, "dependencies": 0}
     queue_stats = JsonlQueueStats()
     pipeline: JsonlRecordPipeline | None = None
+    record_progress = progress is not None and _record_progress_enabled()
 
     def process_record(record: ExtractedRecord) -> None:
         classification = classify_record(record)
@@ -136,15 +137,16 @@ def compile_openapi_jsonl(
         counters["definitions"] += definitions
         counters["mentions"] += mentions + extra_mentions
         counters["dependencies"] += dependencies + extra_dependencies
-        _notify(
-            progress,
-            stage="record",
-            status="written",
-            section=record.section,
-            name=record.name,
-            file=location.file,
-            records=counters["records"],
-        )
+        if record_progress:
+            _notify(
+                progress,
+                stage="record",
+                status="written",
+                section=record.section,
+                name=record.name,
+                file=location.file,
+                records=counters["records"],
+            )
 
     try:
         pipeline = JsonlRecordPipeline(
@@ -388,7 +390,15 @@ def _replace_directory(staging: Path, target: Path, backup: Path) -> None:
 
 
 def _record_events_enabled() -> bool:
-    return os.getenv("CODEPOTG_JSONL_RECORD_EVENTS", "").strip().lower() in {
+    return _env_enabled("CODEPOTG_JSONL_RECORD_EVENTS")
+
+
+def _record_progress_enabled() -> bool:
+    return _env_enabled("CODEPOTG_JSONL_RECORD_PROGRESS")
+
+
+def _env_enabled(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in {
         "1",
         "true",
         "yes",
