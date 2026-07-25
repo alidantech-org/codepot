@@ -30,6 +30,10 @@ imports:
   strategy: relative
 
 selections:
+  schemas:
+    select: schemas.all
+    as: schema
+    scope: each
   enums:
     select: schemas.emit_enums
     as: enum
@@ -40,6 +44,13 @@ selections:
     scope: each
 
 emissions:
+  schema-types:
+    selection: schemas
+    template: schema.ts.j2
+    output: [types, "[schema.name.path.o].ts"]
+    provides: [schemas]
+    imports:
+      schemas: schema-types
   enum-types:
     selection: enums
     template: enum.ts.j2
@@ -55,6 +66,8 @@ emissions:
     template: resource.ts.j2
     output: [resources, "[resource.name.path.o].ts"]
     provides: [resources]
+    imports:
+      schemas: schema-types
 
 barrels:
   enum-barrel:
@@ -63,6 +76,10 @@ barrels:
     exports: [enum-types]
     scope: all
 """.strip(),
+        encoding="utf-8",
+    )
+    (templates / "schema.ts.j2").write_text(
+        "export type {{ schema.name.pascal.o }}Contract = unknown;\n",
         encoding="utf-8",
     )
     (templates / "enum.ts.j2").write_text(
@@ -97,15 +114,19 @@ barrels:
 
     task = result.tasks[0]
     output = project / ".generated"
+    schema_count = len(contract.schemas.all)
     enum_count = len(contract.schemas.emit_enums)
     resource_count = len(contract.resources)
-    expected_count = (enum_count * 2) + resource_count + 1
+    expected_count = schema_count + (enum_count * 2) + resource_count + 1
 
     assert len(task.written) == expected_count
     assert task.updated == []
     assert task.unchanged == []
     assert all(path.is_file() for path in task.written)
     assert (project / ".codepotg" / "cache" / "openapi" / "manifest.json").is_file()
+
+    assert (output / "types" / "app.ts").is_file()
+    assert (output / "types" / "app_list_query.ts").is_file()
 
     enum_type = (output / "models" / "app_status.ts").read_text(
         encoding="utf-8"
@@ -132,16 +153,27 @@ barrels:
         for event in events
         if event.stage in {"file_written", "file_unchanged"}
     ]
+    schema_index = next(
+        index
+        for index, message in enumerate(written_messages)
+        if "types/app_list_query.ts" in message
+    )
+    resource_index = next(
+        index
+        for index, message in enumerate(written_messages)
+        if "resources/apps.ts" in message
+    )
     member_index = next(
         index
         for index, message in enumerate(written_messages)
-        if "app_status.ts" in message
+        if "models/app_status.ts" in message
     )
     barrel_index = next(
         index
         for index, message in enumerate(written_messages)
         if "models/index.ts" in message
     )
+    assert schema_index < resource_index
     assert member_index < barrel_index
     assert any(event.stage == "file_planned" for event in events)
     assert any(event.stage == "file_rendered" for event in events)
