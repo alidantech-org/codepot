@@ -12,8 +12,6 @@ import { FEATURES } from "@/data/features";
 import { PIPELINE_STEPS } from "@/data/pipeline";
 import { USE_CASES } from "@/data/use-cases";
 
-import "./landing-recovery.css";
-
 export const metadata: Metadata = {
   title: "Codepot — typed software intent and reusable code generation",
   description:
