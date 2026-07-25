@@ -68,6 +68,7 @@ def bounded_graph_context(contract: TemplateContract) -> BoundedGraphContext:
         domains = api_meta.get("normalized_domains")
         schema_contract = api_meta.get("normalized_schemas")
         codegen_contract = api_meta.get("normalized_codegen")
+        entity_contract = api_meta.get("normalized_entities")
         if normalized is not None:
             public["normalized"] = normalized
         if domains is not None:
@@ -76,6 +77,8 @@ def bounded_graph_context(contract: TemplateContract) -> BoundedGraphContext:
             public["schema_contract"] = schema_contract
         if codegen_contract is not None:
             public["codegen_contract"] = codegen_contract
+        if entity_contract is not None:
+            public["entity_contract"] = entity_contract
 
     selection_roots = {
         "api": contract.api,
