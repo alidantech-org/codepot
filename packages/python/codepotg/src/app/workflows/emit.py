@@ -15,7 +15,7 @@ from app.models import EmitInput, EmitOutput, RuntimeDiagnostic, RuntimeEvent
 from app.workflows.template_paths import resolve_template_root
 from core.memory_trace import MemoryTrace
 from emission.bounded_graph_engine import emit_bounded_graph
-from emission.engine import emit as run_legacy_emission
+from emission.legacy_queued_engine import emit_legacy_queued as run_legacy_emission
 from emission.paths.config_loader import load_path_config
 from inference.engine import InferenceEngine
 from inference.lossless_contract import build_api_contract
@@ -180,7 +180,7 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
         _notify(
             request,
             stage="rendering_writing_files",
-            message="Rendering/writing files",
+            message="Rendering legacy pack with adaptive batches",
         )
         emission_result = run_legacy_emission(
             template_contract,
