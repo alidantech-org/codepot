@@ -1,0 +1,17 @@
+.page {
+  overflow-x: clip;
+}
+
+.page > section:not(:first-of-type):not(:last-of-type):not(.landing-card-section) {
+  padding-block: 0 !important;
+}
+
+.page > section.landing-card-section {
+  margin-block: clamp(3.5rem, 6vw, 5rem) !important;
+}
+
+@media (max-width: 640px) {
+  .page > section.landing-card-section {
+    margin-block: 3.5rem !important;
+  }
+}
