@@ -27,7 +27,7 @@ export function Pipeline({ steps }: { steps: PipelineStep[] }) {
         New ideas can be proven in mature packages, stabilized behind the frontend-neutral codepotx runtime, and finally expressed through the Rust language and toolchain.
       </p>
 
-      <div className="mt-7 overflow-hidden border-t border-b border-border bg-card/35 sm:mt-8">
+      <div className="mt-7 overflow-hidden md:border-t md:border-b border-border bg-card/35 sm:mt-8">
         {steps.map(({ step, description, details, icon }, index) => {
           const isExpanded = expandedSteps.has(step);
           const Icon = icon ? iconMap[icon as keyof typeof iconMap] : undefined;
