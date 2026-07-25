@@ -169,13 +169,11 @@ def _lazy_sources(
 
 
 def _source_size_from_contract(contract: Any) -> int:
-    raw = getattr(contract, "raw", None)
-    if raw is not None:
-        try:
-            return len(str(raw))
-        except (TypeError, ValueError):
-            pass
-    return 0
+    value = contract.emit.meta.get("jsonl_source_size", 0)
+    try:
+        return max(0, int(value))
+    except (TypeError, ValueError):
+        return 0
 
 
 def _notify(
