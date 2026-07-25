@@ -12,6 +12,8 @@ import { FEATURES } from "@/data/features";
 import { PIPELINE_STEPS } from "@/data/pipeline";
 import { USE_CASES } from "@/data/use-cases";
 
+import styles from "./landing.module.css";
+
 export const metadata: Metadata = {
   title: "Codepot — typed software intent and reusable code generation",
   description:
@@ -23,7 +25,7 @@ export const metadata: Metadata = {
 
 const Home: NextPage = () => {
   return (
-    <div className="landing-page landing-shell relative w-full overflow-x-clip">
+    <div className={`landing-page landing-shell relative w-full ${styles.page}`}>
       <div aria-hidden="true" className="landing-free-curves">
         <span />
         <span />
