@@ -3,7 +3,7 @@
 import { javascript } from '@codemirror/lang-javascript';
 import { yaml } from '@codemirror/lang-yaml';
 import { oneDark } from '@codemirror/theme-one-dark';
-import CodeMirror from '@uiw/react-codemirror';
+import dynamic from 'next/dynamic';
 import {
   ChevronDown,
   Ellipsis,
@@ -25,6 +25,11 @@ import type { CSSProperties } from 'react';
 import type { WorkflowCodeExample } from '@/data/types';
 
 import styles from './Examples.module.css';
+
+const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
+  ssr: false,
+  loading: () => <div className={styles.editorLoading} aria-hidden="true" />
+});
 
 interface ExamplesProps {
   examples: WorkflowCodeExample[];
@@ -73,6 +78,7 @@ export function Examples({ examples }: ExamplesProps) {
     () => new Map(examples.map((example) => [example.key, example])),
     [examples]
   );
+  const [mounted, setMounted] = useState(false);
   const [files, setFiles] = useState<EditorFile[]>(() => initialFiles(examples));
   const [activeId, setActiveId] = useState<string>(examples[0]?.key ?? 'contract');
   const [openIds, setOpenIds] = useState<string[]>(() => examples.map((example) => example.key));
@@ -92,7 +98,11 @@ export function Examples({ examples }: ExamplesProps) {
   const lineCount = activeFile ? activeFile.code.split('\n').length : 0;
 
   useEffect(() => {
-    if (!isFullscreen) return;
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !isFullscreen) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -106,7 +116,7 @@ export function Examples({ examples }: ExamplesProps) {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isFullscreen]);
+  }, [isFullscreen, mounted]);
 
   function ensureFile(id: string) {
     const existing = filesById.get(id);
@@ -153,7 +163,7 @@ export function Examples({ examples }: ExamplesProps) {
     const filename = newFileName.trim();
     if (!filename) return;
 
-    const id = `custom-${Date.now()}`;
+    const id = `custom-${crypto.randomUUID()}`;
     const file: EditorFile = {
       id,
       filename,
@@ -200,6 +210,7 @@ export function Examples({ examples }: ExamplesProps) {
       '--editor-font-size': `${fontSize}px`,
       '--editor-scale': editorScale
     } as CSSProperties;
+    const editorHeight = fullscreen ? 'calc(100dvh - 4.2rem)' : DEFAULT_EDITOR_HEIGHT;
 
     return (
       <div className={styles.editorPane} style={workspaceStyle}>
@@ -266,29 +277,34 @@ export function Examples({ examples }: ExamplesProps) {
         </div>
 
         {activeFile ? (
-          <CodeMirror
-            value={activeFile.code}
-            onChange={updateActiveFile}
-            extensions={extensions}
-            theme={resolvedTheme === 'dark' ? oneDark : 'light'}
-            height={fullscreen ? 'calc(100dvh - 4.2rem)' : DEFAULT_EDITOR_HEIGHT}
-            width="100%"
-            basicSetup={{
-              lineNumbers: showLineNumbers,
-              foldGutter: showLineNumbers,
-              highlightActiveLine: true,
-              highlightActiveLineGutter: showLineNumbers,
-              bracketMatching: true,
-              closeBrackets: true,
-              autocompletion: true,
-              indentOnInput: true,
-              syntaxHighlighting: true
-            }}
-            aria-label={`Editable ${activeFile.filename} example`}
-            className={styles.editor}
-          />
+          mounted ? (
+            <CodeMirror
+              key={`${fullscreen ? 'fullscreen' : 'inline'}-${activeFile.id}`}
+              value={activeFile.code}
+              onChange={updateActiveFile}
+              extensions={extensions}
+              theme={resolvedTheme === 'dark' ? oneDark : 'light'}
+              height={editorHeight}
+              width="100%"
+              basicSetup={{
+                lineNumbers: showLineNumbers,
+                foldGutter: showLineNumbers,
+                highlightActiveLine: true,
+                highlightActiveLineGutter: showLineNumbers,
+                bracketMatching: true,
+                closeBrackets: true,
+                autocompletion: true,
+                indentOnInput: true,
+                syntaxHighlighting: true
+              }}
+              aria-label={`Editable ${activeFile.filename} example`}
+              className={styles.editor}
+            />
+          ) : (
+            <div className={styles.editorLoading} style={{ minHeight: editorHeight }} aria-hidden="true" />
+          )
         ) : (
-          <div className={styles.emptyState} style={{ minHeight: fullscreen ? 'calc(100dvh - 4.2rem)' : DEFAULT_EDITOR_HEIGHT }}>
+          <div className={styles.emptyState} style={{ minHeight: editorHeight }}>
             <button type="button" onClick={reopenAllFiles} className="text-primary hover:underline">Open a workflow file</button>
           </div>
         )}
@@ -351,17 +367,23 @@ export function Examples({ examples }: ExamplesProps) {
   return (
     <section id="examples" className="border-y border-border bg-card/35">
       <div className="mx-auto max-w-7xl py-14 sm:py-16 lg:py-20">
-        <p className="mb-3 font-mono text-[11px] px-4 sm:px-6 uppercase tracking-widest text-accent">Workflows</p>
-        <h2 className="max-w-4xl text-3xl px-4 sm:px-6 font-semibold tracking-tight text-foreground sm:text-4xl">
+        <p className="mb-3 px-4 font-mono text-[11px] uppercase tracking-widest text-accent sm:px-6">Workflows</p>
+        <h2 className="max-w-4xl px-4 text-3xl font-semibold tracking-tight text-foreground sm:px-6 sm:text-4xl">
           Real files from contract to generated code
         </h2>
-        <p className="mt-4 max-w-3xl px-4 sm:px-6 text-[15px] leading-7 text-muted-foreground">
+        <p className="mt-4 max-w-3xl px-4 text-[15px] leading-7 text-muted-foreground sm:px-6">
           Each tab is loaded from a real source file in the website project. Edit the contract, CodepotG task, paths
           configuration, or Jinja template in the shared syntax-highlighted editor.
         </p>
 
         <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] xl:items-stretch">
-          <div className={`${styles.workspace} order-2 xl:order-1`}>{renderEditorPane(false)}</div>
+          <div className={`${styles.workspace} order-2 xl:order-1`}>
+            {isFullscreen ? (
+              <div className={styles.editorLoading} style={{ minHeight: DEFAULT_EDITOR_HEIGHT }} aria-hidden="true" />
+            ) : (
+              renderEditorPane(false)
+            )}
+          </div>
           <div className="order-1 grid gap-2 sm:grid-cols-2 xl:order-2 xl:grid-cols-1 xl:content-start">
             {examples.map((example) => {
               const isActive = activeId === example.key && openIds.includes(example.key);
@@ -373,9 +395,7 @@ export function Examples({ examples }: ExamplesProps) {
                   aria-pressed={isActive}
                   className={`group min-w-0 border-l-2 px-4 py-4 text-left transition-colors sm:border-l-0 sm:border-t-2 xl:border-l-2 xl:border-t-0 ${isActive ? 'border-primary bg-primary/8' : 'border-border hover:border-primary/45 hover:bg-card-muted/45'}`}
                 >
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
-                    {example.eyebrow}
-                  </span>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-primary">{example.eyebrow}</span>
                   <span className="mt-2 block text-sm font-semibold text-foreground">{example.title}</span>
                   <span className="mt-2 block text-sm leading-6 text-muted-foreground">{example.description}</span>
                 </button>
@@ -384,20 +404,14 @@ export function Examples({ examples }: ExamplesProps) {
           </div>
         </div>
 
-        <div className="mt-6 text-sm text-muted-foreground px-4 sm:px-6 flex flex-wrap gap-2">
-          <Link href="/docs/prototype-workflow" className="font-medium text-primary hover:underline">
-            Read the complete prototype workflow
-          </Link>
+        <div className="mt-6 flex flex-wrap gap-2 px-4 text-sm text-muted-foreground sm:px-6">
+          <Link href="/docs/prototype-workflow" className="font-medium text-primary hover:underline">Read the complete prototype workflow</Link>
           <span className="mx-2">·</span>
-          <Link href="/docs/template-packs" className="font-medium text-foreground hover:underline">
-            Learn about template packs
-          </Link>
+          <Link href="/docs/template-packs" className="font-medium text-foreground hover:underline">Learn about template packs</Link>
         </div>
       </div>
 
-      {isFullscreen && typeof document !== 'undefined'
-        ? createPortal(renderFullscreenWorkspace(), document.body)
-        : null}
+      {mounted && isFullscreen ? createPortal(renderFullscreenWorkspace(), document.body) : null}
     </section>
   );
 }
