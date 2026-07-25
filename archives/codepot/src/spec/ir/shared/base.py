@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
-
 from archives.codepot.src.spec.ir.shared.ref import Ref
+from pydantic import BaseModel, ConfigDict
 
 
 class DefinitionItem(BaseModel):

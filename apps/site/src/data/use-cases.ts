@@ -2,33 +2,33 @@ import type { UseCase } from "./types";
 
 export const USE_CASES: UseCase[] = [
   {
-    title: "AI-assisted development",
+    title: "API and platform teams",
     items: [
-      "Give agents typed project context",
-      "Reduce repeated architecture prompts",
-      "Prevent naming and structure drift",
-      "Regenerate routine code safely",
-      "Review intent instead of boilerplate",
+      "Author typed OpenAPI contracts",
+      "Share schemas and route intent",
+      "Preserve x-codegen metadata",
+      "Generate SDKs and application layers",
+      "Keep API decisions reviewable",
     ],
   },
   {
-    title: "Product teams",
+    title: "Template and product teams",
     items: [
-      "Shared contracts across applications",
-      "Reusable company template packs",
-      "Consistent APIs, SDKs, and models",
-      "Project-owned generation decisions",
-      "Predictable onboarding and changes",
+      "Reuse Jinja or Handlebars packs",
+      "Preserve real project conventions",
+      "Plan and preview generated files",
+      "Protect edited and immutable files",
+      "Control generation in each project",
     ],
   },
   {
-    title: "Any target stack",
+    title: "Tooling and AI builders",
     items: [
-      "Backend services and persistence",
-      "Web and mobile SDKs",
-      "Frontend forms and screens",
-      "Documentation and configuration",
-      "Future Codepot Lang workflows",
+      "Embed a frontend-neutral runtime",
+      "Build CLI, web, editor, or MCP clients",
+      "Use compiler-grade diagnostics",
+      "Read target-neutral semantic artifacts",
+      "Reduce repeated repository discovery",
     ],
   },
 ];

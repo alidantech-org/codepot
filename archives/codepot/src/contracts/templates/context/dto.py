@@ -7,7 +7,10 @@ from dataclasses import dataclass
 from archives.codepot.src.contracts.language.context import LanguageField
 from archives.codepot.src.contracts.spec.refs import SpecRef
 from archives.codepot.src.contracts.templates.context.base import TemplateBaseContext
-from archives.codepot.src.contracts.templates.shared.flags import TemplateFieldFlags, TemplateSchemaFlags
+from archives.codepot.src.contracts.templates.shared.flags import (
+    TemplateFieldFlags,
+    TemplateSchemaFlags,
+)
 from archives.codepot.src.contracts.templates.shared.items import (
     TemplateCollectionContext,
     TemplateFieldContext,

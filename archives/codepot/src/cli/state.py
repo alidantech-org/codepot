@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Protocol
 
 import typer
-
 from archives.codepot.src.app import (
     EmitRequest,
     EmitResult,

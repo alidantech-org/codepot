@@ -8,9 +8,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel
-
 from archives.codepot.src.spec.utils.constants import HASH_JSON_ENCODING, HASH_JSON_SEPARATORS
+from pydantic import BaseModel
 
 
 def to_jsonable(value: Any) -> Any:

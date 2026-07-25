@@ -10,7 +10,7 @@
 - Preserves inference, dependency/import planning, frontend metadata, `x-codegen` metadata, managed writes, immutable scaffolds, guarded cleanup, dry runs, commands, and diagnostics.
 - Adds an installed-wheel-safe `codepotg` console entry point.
 - Adds `codepotg --version` and `python -m codepotg`.
-- Establishes OpenAPI 3.0.3 and 3.1.0 as the initial CodepotX compatibility baseline.
+- Establishes OpenAPI 3.0.3 and 3.1.0 as the initial compatibility baseline for the wider Codepot ecosystem.
 - Adds guarded release tooling that validates metadata, wheel contents, source-distribution contents, clean installation, and CLI startup before upload.
 
-The Python package remains supported for OpenAPI-driven generation. New Codepot authoring can be compiled by CodepotX and projected to OpenAPI for continued use with CodepotG.
+The Python package remains supported for OpenAPI-driven generation. Today, `codepot-openapi` is the supported TypeScript producer for enriched Codepot OpenAPI documents. Future `codepotx` OpenAPI compatibility can be adopted after its output is implemented and validated against the stable package.

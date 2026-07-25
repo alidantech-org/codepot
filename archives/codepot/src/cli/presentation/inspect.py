@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from rich.table import Table
-
 from archives.codepot.src.cli.presentation.console import console
 from archives.codepot.src.contracts.spec.context import SpecContext
+from rich.table import Table
 
 
 def print_inspect_result(context: SpecContext, mode: str) -> None:

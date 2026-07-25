@@ -1,0 +1,497 @@
+.workspace {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+.editorPane {
+  --editor-scale: 1;
+  --editor-font-size: 11px;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  background: var(--background);
+}
+
+.editorBar {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  height: calc(2.1rem * var(--editor-scale));
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 82%, var(--background));
+}
+
+.tabBar {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.tabBar:hover {
+  scrollbar-color: color-mix(in srgb, var(--muted-foreground) 26%, transparent) transparent;
+}
+
+.tabBar::-webkit-scrollbar,
+.editor :global(.cm-scroller)::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.tabBar::-webkit-scrollbar-track,
+.editor :global(.cm-scroller)::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tabBar::-webkit-scrollbar-thumb,
+.editor :global(.cm-scroller)::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: transparent;
+}
+
+.tabBar:hover::-webkit-scrollbar-thumb,
+.editor :global(.cm-scroller):hover::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  height: 100%;
+  min-width: calc(7.4rem * var(--editor-scale));
+  max-width: calc(11.5rem * var(--editor-scale));
+  flex: 0 0 auto;
+  align-items: center;
+  gap: calc(0.35rem * var(--editor-scale));
+  border-right: 1px solid var(--border);
+  padding: 0 calc(0.45rem * var(--editor-scale)) 0 calc(0.62rem * var(--editor-scale));
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: calc(0.66rem * var(--editor-scale));
+  line-height: 1;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.tab:hover {
+  background: color-mix(in srgb, var(--card-muted) 72%, transparent);
+  color: var(--foreground);
+}
+
+.activeTab {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.activeTab::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--primary);
+  content: '';
+}
+
+.tabLabel {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.closeButton,
+.moreButton,
+.actionButton {
+  display: inline-flex;
+  height: calc(1.35rem * var(--editor-scale));
+  width: calc(1.35rem * var(--editor-scale));
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+}
+
+.closeButton svg,
+.moreButton svg,
+.actionButton svg,
+.menu svg,
+.stepper svg {
+  width: calc(0.82rem * var(--editor-scale));
+  height: calc(0.82rem * var(--editor-scale));
+}
+
+.closeButton:hover,
+.moreButton:hover,
+.actionButton:hover {
+  background: var(--card-muted);
+  color: var(--foreground);
+}
+
+.editorActions {
+  display: flex;
+  height: 100%;
+  flex: 0 0 auto;
+  align-items: center;
+  border-left: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 90%, var(--background));
+  padding-inline: 0.18rem;
+}
+
+.moreButton,
+.actionButton {
+  height: 100%;
+  width: calc(1.9rem * var(--editor-scale));
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  right: 0;
+  z-index: 40;
+  width: 13.5rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 0.32rem;
+  box-shadow: 0 14px 34px color-mix(in srgb, var(--foreground) 14%, transparent);
+}
+
+.menuGroup {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding: 0.48rem 0.52rem;
+}
+
+.menuLabel {
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+.stepper button {
+  display: inline-flex;
+  width: 1.45rem;
+  height: 1.45rem;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+}
+
+.stepper button:hover {
+  background: var(--card-muted);
+  color: var(--foreground);
+}
+
+.stepper span {
+  min-width: 2.8rem;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-align: center;
+}
+
+.menuButton {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.48rem 0.55rem;
+  color: var(--foreground);
+  font-size: 0.74rem;
+  text-align: left;
+}
+
+.menuButton:hover {
+  background: var(--card-muted);
+}
+
+.editor,
+.editorLoading {
+  min-width: 0;
+  background: var(--background);
+}
+
+.editorLoading {
+  width: 100%;
+  min-height: clamp(25.5rem, 49.3vw, 37.4rem);
+  border: 0;
+}
+
+.editor :global(.cm-editor),
+.editor :global(.cm-scroller),
+.editor :global(.cm-content) {
+  background: var(--background) !important;
+}
+
+.editor :global(.cm-editor) {
+  font-size: var(--editor-font-size) !important;
+}
+
+.editor :global(.cm-gutters) {
+  border-right: 1px solid var(--border) !important;
+  background: color-mix(in srgb, var(--card) 70%, var(--background)) !important;
+  color: var(--muted-foreground) !important;
+  font-size: calc(var(--editor-font-size) * 0.9) !important;
+}
+
+.editor :global(.cm-scroller) {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.editor :global(.cm-scroller:hover) {
+  scrollbar-color: color-mix(in srgb, var(--muted-foreground) 30%, transparent) transparent;
+}
+
+.editor :global(.cm-content) {
+  min-width: max-content;
+  padding-block: calc(0.52rem * var(--editor-scale)) !important;
+  font-family: var(--font-mono);
+  line-height: 1.45;
+}
+
+.editor :global(.cm-line) {
+  padding-inline: calc(0.22rem * var(--editor-scale)) !important;
+}
+
+.editor :global(.cm-focused) {
+  outline: none;
+}
+
+.emptyState {
+  display: grid;
+  place-items: center;
+  background: var(--background);
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.fullscreenOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  isolation: isolate;
+  background: var(--background);
+}
+
+.fullscreenWorkspace {
+  display: grid;
+  width: 100vw;
+  height: 100dvh;
+  grid-template-columns: minmax(12rem, 17rem) minmax(0, 1fr);
+  overflow: hidden;
+  background: var(--background);
+}
+
+.fullscreenWorkspace .editorPane {
+  display: grid;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border-left: 1px solid var(--border);
+}
+
+.fullscreenWorkspace .editorLoading {
+  min-height: 0;
+  height: 100%;
+}
+
+.explorer {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--card) 84%, var(--background));
+  color: var(--foreground);
+}
+
+.explorerHeader {
+  display: flex;
+  height: 2.1rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-inline: 0.7rem 0.35rem;
+  color: var(--muted-foreground);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+}
+
+.explorerHeader button {
+  display: inline-flex;
+  width: 1.65rem;
+  height: 1.65rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.explorerHeader button:hover {
+  background: var(--card-muted);
+  color: var(--foreground);
+}
+
+.folderRow {
+  display: flex;
+  height: 1.8rem;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.32rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  padding-inline: 0.45rem;
+  color: var(--foreground);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.collapsedChevron {
+  transform: rotate(-90deg);
+}
+
+.fileTree {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding-block: 0.2rem;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.fileRow {
+  display: flex;
+  min-width: 0;
+  height: 1.7rem;
+  align-items: center;
+  color: var(--muted-foreground);
+}
+
+.fileRow > button:first-child {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 0.38rem;
+  padding-inline: 1.15rem 0.3rem;
+  font-size: 0.72rem;
+  text-align: left;
+}
+
+.fileRow span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileRow:hover,
+.activeFileRow {
+  background: color-mix(in srgb, var(--card-muted) 72%, transparent);
+  color: var(--foreground);
+}
+
+.deleteFileButton {
+  display: inline-flex;
+  width: 1.55rem;
+  height: 1.55rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+
+.fileRow:hover .deleteFileButton,
+.deleteFileButton:focus-visible {
+  opacity: 1;
+}
+
+.deleteFileButton:hover {
+  color: var(--destructive, #b91c1c);
+}
+
+.newFileForm {
+  display: flex;
+  height: 1.8rem;
+  align-items: center;
+  gap: 0.38rem;
+  padding-inline: 1.15rem 0.35rem;
+}
+
+.newFileForm input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid var(--primary);
+  background: var(--background);
+  padding: 0.15rem 0.25rem;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  outline: none;
+}
+
+.statusBar {
+  display: flex;
+  height: 1.65rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.85rem;
+  border-top: 1px solid color-mix(in srgb, var(--primary) 65%, var(--border));
+  background: color-mix(in srgb, var(--primary) 86%, var(--background));
+  padding-inline: 0.65rem;
+  color: white;
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+}
+
+@media (max-width: 760px) {
+  .fullscreenWorkspace {
+    grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr);
+  }
+
+  .statusBar {
+    gap: 0.45rem;
+  }
+
+  .statusBar span:nth-child(3),
+  .statusBar span:nth-child(4) {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .fullscreenWorkspace {
+    grid-template-columns: 8.5rem minmax(0, 1fr);
+  }
+
+  .tab {
+    min-width: calc(6.8rem * var(--editor-scale));
+    max-width: calc(9.5rem * var(--editor-scale));
+  }
+
+  .menu {
+    right: 0.25rem;
+    width: min(13.5rem, calc(100vw - 2rem));
+  }
+
+  .explorerHeader {
+    padding-inline: 0.4rem 0.2rem;
+  }
+
+  .fileRow > button:first-child,
+  .newFileForm {
+    padding-left: 0.65rem;
+  }
+}

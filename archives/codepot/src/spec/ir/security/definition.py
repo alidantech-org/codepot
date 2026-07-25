@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
-
 from archives.codepot.src.spec.ir.shared.base import DefinitionItem
 from archives.codepot.src.spec.ir.shared.ref import Ref
 from archives.codepot.src.spec.kinds.security import (
@@ -13,6 +11,7 @@ from archives.codepot.src.spec.kinds.security import (
     SecurityCredentialSource,
     SecurityPolicyMode,
 )
+from pydantic import BaseModel, ConfigDict
 
 
 class SecurityCredentialDefinition(DefinitionItem):

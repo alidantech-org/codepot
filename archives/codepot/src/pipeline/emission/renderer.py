@@ -5,9 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from archives.codepot.src.pipeline.planning.contexts import (
+    PlannedTemplateContexts,
+    TemplateFileContext,
+)
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
-
-from archives.codepot.src.pipeline.planning.contexts import PlannedTemplateContexts, TemplateFileContext
 
 
 @dataclass(frozen=True)

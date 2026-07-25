@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
 from archives.codepot.src.contracts.templates.config.barrel import TemplateBarrelConfig
 from archives.codepot.src.contracts.templates.config.resolve import TemplateResolveMap
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class TemplateEntryConfig(BaseModel):

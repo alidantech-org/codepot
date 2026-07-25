@@ -1,0 +1,366 @@
+{
+  "project": {
+    "name": "Codepot",
+    "tagline": "Typed software intent, reusable generation, and one path from proven prototypes to a complete language platform.",
+    "description": "Codepot is a family of complementary tools for describing software intent, producing portable contracts, applying reusable template packs, and generating code safely for developers and AI agents.",
+    "github": "https://github.com/alidantech-org/codepot",
+    "license": "MIT"
+  },
+  "stages": [
+    {
+      "id": "prototypes",
+      "title": "Mature working prototypes",
+      "summary": "Production-used packages where new contract and generation ideas are proven against real projects.",
+      "products": ["codepot-openapi", "codepotg"]
+    },
+    {
+      "id": "javascript",
+      "title": "Official JavaScript ecosystem",
+      "summary": "The stable rewrite path: a frontend-neutral runtime with a thin CLI and room for web, editor, MCP, and embedded clients.",
+      "products": ["codepotx", "codepotx-cli"]
+    },
+    {
+      "id": "platform",
+      "title": "Final Codepot platform",
+      "summary": "The Rust language, compiler, runtime, CLI, LSP, extension, web tooling, and MCP integration that complete the long-term project.",
+      "products": [
+        "codepot-lang",
+        "codepot-runtime",
+        "codepot-cli",
+        "codepot-lsp",
+        "codepot-extension",
+        "codepot-web",
+        "codepot-mcp"
+      ]
+    }
+  ],
+  "products": [
+    {
+      "id": "codepot-openapi",
+      "name": "codepot-openapi",
+      "kind": "TypeScript package",
+      "stage": "prototypes",
+      "status": "Supported prototype",
+      "availability": "Available now",
+      "docsSlug": "codepot-openapi",
+      "description": "The original TypeScript-first contract builder. It produces OpenAPI 3.1 documents and compiler-resolved x-codegen metadata consumed by generators.",
+      "role": "Author typed API and software contracts, then emit portable OpenAPI JSON or YAML.",
+      "install": "npm install codepot-openapi zod",
+      "command": "codepot-openapi",
+      "links": [
+        {
+          "kind": "github",
+          "label": "GitHub",
+          "url": "https://github.com/alidantech-org/codepot/tree/main/packages/nodejs/codepot-openapi",
+          "status": "available"
+        },
+        {
+          "kind": "npm",
+          "label": "npm",
+          "url": "https://www.npmjs.com/package/codepot-openapi",
+          "status": "available"
+        },
+        {
+          "kind": "documentation",
+          "label": "Package docs",
+          "url": null,
+          "status": "tbd"
+        }
+      ]
+    },
+    {
+      "id": "codepotg",
+      "name": "codepotg",
+      "kind": "Python package",
+      "stage": "prototypes",
+      "status": "Supported stable generator",
+      "availability": "Available now",
+      "docsSlug": "codepotg",
+      "description": "The mature Python template-pack manager and generator. It consumes OpenAPI from codepot-openapi and renders project code through Jinja packs.",
+      "role": "Infer a normalized generation model from OpenAPI and apply bundled or project-owned Jinja template packs.",
+      "install": "python -m pip install codepotg",
+      "command": "codepotg",
+      "links": [
+        {
+          "kind": "github",
+          "label": "GitHub",
+          "url": "https://github.com/alidantech-org/codepot/tree/main/packages/python/codepotg",
+          "status": "available"
+        },
+        {
+          "kind": "pypi",
+          "label": "PyPI",
+          "url": "https://pypi.org/project/codepotg/",
+          "status": "available"
+        },
+        {
+          "kind": "documentation",
+          "label": "Package docs",
+          "url": null,
+          "status": "tbd"
+        }
+      ]
+    },
+    {
+      "id": "codepotx",
+      "name": "codepotx",
+      "kind": "JavaScript runtime",
+      "stage": "javascript",
+      "status": "Official stable rewrite",
+      "availability": "Active development",
+      "docsSlug": "codepotx",
+      "description": "The official release-line runtime. It stabilizes validated ideas into typed authoring, template compilation, generation planning, safe writes, and frontend-neutral runtime operations.",
+      "role": "Provide the reusable Codepot engine that can be embedded by any user interface or developer tool.",
+      "install": null,
+      "command": null,
+      "links": [
+        {
+          "kind": "github",
+          "label": "GitHub",
+          "url": "https://github.com/alidantech-org/codepot/tree/main/packages/nodejs/codepotx",
+          "status": "available"
+        },
+        {
+          "kind": "npm",
+          "label": "npm",
+          "url": null,
+          "status": "tbd"
+        },
+        {
+          "kind": "documentation",
+          "label": "Package docs",
+          "url": null,
+          "status": "tbd"
+        }
+      ]
+    },
+    {
+      "id": "codepotx-cli",
+      "name": "codepotx-cli",
+      "kind": "CLI frontend",
+      "stage": "javascript",
+      "status": "Official runtime frontend",
+      "availability": "Active development",
+      "docsSlug": "codepotx-cli",
+      "description": "A deliberately thin terminal frontend for codepotx. It parses commands and presents results while the project-local runtime owns all domain behavior.",
+      "role": "Expose codepotx runtime operations through the codepotx command without duplicating engine logic.",
+      "install": null,
+      "command": "codepotx",
+      "links": [
+        {
+          "kind": "github",
+          "label": "GitHub",
+          "url": "https://github.com/alidantech-org/codepot/tree/main/packages/nodejs/codepotx-cli",
+          "status": "available"
+        },
+        {
+          "kind": "npm",
+          "label": "npm",
+          "url": null,
+          "status": "tbd"
+        },
+        {
+          "kind": "documentation",
+          "label": "Package docs",
+          "url": null,
+          "status": "tbd"
+        }
+      ]
+    },
+    {
+      "id": "codepot-lang",
+      "name": "Codepot Lang",
+      "kind": "Rust language",
+      "stage": "platform",
+      "status": "Experimental language 0.3",
+      "availability": "Active development",
+      "docsSlug": "codepot-lang",
+      "description": "A strongly typed semantic application language for software intent, contracts, APIs, screens, workflows, security, and reusable project foundations.",
+      "role": "Make software meaning a first-class language understood by developers, compilers, tools, and AI agents.",
+      "install": null,
+      "command": null,
+      "links": [
+        {
+          "kind": "github",
+          "label": "GitHub",
+          "url": "https://github.com/alidantech-org/codepot_lang",
+          "status": "available"
+        },
+        {
+          "kind": "package",
+          "label": "Package registry",
+          "url": null,
+          "status": "tbd"
+        }
+      ]
+    },
+    {
+      "id": "codepot-runtime",
+      "name": "Codepot compiler and runtime",
+      "kind": "Rust platform core",
+      "stage": "platform",
+      "status": "In development",
+      "availability": "Repository builds",
+      "docsSlug": "codepot-platform",
+      "description": "The compiler, semantic analysis host, target-neutral IR, and future runtime/code-generation extension points behind the final platform.",
+      "role": "Own parsing, typing, semantic meaning, IR, project analysis, and reusable execution boundaries.",
+      "install": null,
+      "command": null,
+      "links": [
+        {
+          "kind": "github",
+          "label": "GitHub",
+          "url": "https://github.com/alidantech-org/codepot_lang/tree/main/crates",
+          "status": "available"
+        },
+        {
+          "kind": "package",
+          "label": "Package registry",
+          "url": null,
+          "status": "tbd"
+        }
+      ]
+    },
+    {
+      "id": "codepot-cli",
+      "name": "Codepot CLI",
+      "kind": "Final CLI",
+      "stage": "platform",
+      "status": "In development",
+      "availability": "Build from source",
+      "docsSlug": "codepot-cli",
+      "description": "The final command-line interface for checking, formatting, compiling, inspecting, diagnosing, and launching the language server.",
+      "role": "Expose the final platform under the codepot command.",
+      "install": null,
+      "command": "codepot",
+      "links": [
+        {
+          "kind": "github",
+          "label": "GitHub",
+          "url": "https://github.com/alidantech-org/codepot_lang/tree/main/crates/codepot-cli",
+          "status": "available"
+        },
+        {
+          "kind": "package",
+          "label": "Release download",
+          "url": null,
+          "status": "tbd"
+        }
+      ]
+    },
+    {
+      "id": "codepot-lsp",
+      "name": "Codepot LSP",
+      "kind": "Language server",
+      "stage": "platform",
+      "status": "In development",
+      "availability": "Build from source",
+      "docsSlug": "codepot-lsp",
+      "description": "The Rust Language Server Protocol adapter backed by the same persistent analysis host and diagnostics as the compiler and CLI.",
+      "role": "Provide editor-neutral diagnostics, completion, hover, navigation, rename, formatting, and project intelligence.",
+      "install": null,
+      "command": "codepot-lsp",
+      "links": [
+        {
+          "kind": "github",
+          "label": "GitHub",
+          "url": "https://github.com/alidantech-org/codepot_lang/tree/main/crates/codepot-lsp",
+          "status": "available"
+        },
+        {
+          "kind": "package",
+          "label": "Release download",
+          "url": null,
+          "status": "tbd"
+        }
+      ]
+    },
+    {
+      "id": "codepot-extension",
+      "name": "Codepot language extension",
+      "kind": "VS Code extension",
+      "stage": "platform",
+      "status": "In development",
+      "availability": "Package from source",
+      "docsSlug": "codepot-extension",
+      "description": "A thin VS Code client that registers Codepot files, provides offline grammar support, and connects the editor to the Rust language server.",
+      "role": "Deliver Codepot language intelligence in VS Code without reimplementing compiler behavior in TypeScript.",
+      "install": null,
+      "command": null,
+      "links": [
+        {
+          "kind": "github",
+          "label": "GitHub",
+          "url": "https://github.com/alidantech-org/codepot_lang/tree/main/vcode",
+          "status": "available"
+        },
+        {
+          "kind": "marketplace",
+          "label": "VS Code Marketplace",
+          "url": null,
+          "status": "tbd"
+        },
+        {
+          "kind": "marketplace",
+          "label": "Open VSX",
+          "url": null,
+          "status": "tbd"
+        }
+      ]
+    },
+    {
+      "id": "codepot-web",
+      "name": "Codepot Web",
+      "kind": "Web frontend",
+      "stage": "platform",
+      "status": "Planned",
+      "availability": "Not released",
+      "docsSlug": "codepot-web-mcp",
+      "description": "A future browser-based frontend for authoring, inspection, visualization, generation, and project workflows.",
+      "role": "Use the same runtime and semantic artifacts through a user-friendly web experience.",
+      "install": null,
+      "command": null,
+      "links": [
+        {
+          "kind": "github",
+          "label": "GitHub",
+          "url": null,
+          "status": "tbd"
+        },
+        {
+          "kind": "website",
+          "label": "Hosted app",
+          "url": null,
+          "status": "tbd"
+        }
+      ]
+    },
+    {
+      "id": "codepot-mcp",
+      "name": "Codepot MCP",
+      "kind": "AI integration",
+      "stage": "platform",
+      "status": "Planned",
+      "availability": "Not released",
+      "docsSlug": "codepot-web-mcp",
+      "description": "A future MCP surface for exposing contracts, semantic project context, diagnostics, plans, and generation operations to AI agents.",
+      "role": "Give AI tools structured access to Codepot instead of relying on repeated repository rediscovery.",
+      "install": null,
+      "command": null,
+      "links": [
+        {
+          "kind": "github",
+          "label": "GitHub",
+          "url": null,
+          "status": "tbd"
+        },
+        {
+          "kind": "package",
+          "label": "Package registry",
+          "url": null,
+          "status": "tbd"
+        }
+      ]
+    }
+  ]
+}

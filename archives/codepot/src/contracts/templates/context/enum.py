@@ -11,7 +11,10 @@ from archives.codepot.src.contracts.templates.shared.items import (
     TemplateItemContext,
     TemplateOwnerContext,
 )
-from archives.codepot.src.spec.ir.properties.enum.definition import EnumDefinition, EnumValueDefinition
+from archives.codepot.src.spec.ir.properties.enum.definition import (
+    EnumDefinition,
+    EnumValueDefinition,
+)
 
 
 @dataclass(frozen=True)

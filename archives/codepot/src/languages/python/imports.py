@@ -9,7 +9,10 @@ from archives.codepot.src.contracts.language.imports import (
     LanguageImportKind,
     LanguageImportSymbol,
 )
-from archives.codepot.src.contracts.language.interface import LanguageImportRequest, LanguageImportTarget
+from archives.codepot.src.contracts.language.interface import (
+    LanguageImportRequest,
+    LanguageImportTarget,
+)
 from archives.codepot.src.contracts.language.runtime import LanguageImportStrategy, LanguageRuntime
 from archives.codepot.src.languages.python.syntax import (
     alias,

@@ -4,12 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import ConfigDict
-
 from archives.codepot.src.spec.ir.resource.operation.definition import OperationDefinition
 from archives.codepot.src.spec.ir.resource.route.definition import RoutesDefinition
 from archives.codepot.src.spec.ir.shared.base import DefinitionItem
 from archives.codepot.src.spec.ir.shared.ref import Ref
+from pydantic import ConfigDict
 
 
 class ResourceDefaultsDefinition(DefinitionItem):

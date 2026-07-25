@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from pydantic import ConfigDict
-
 from archives.codepot.src.spec.ir.shared.base import DefinitionItem
+from pydantic import ConfigDict
 
 
 class ContactDefinition(DefinitionItem):

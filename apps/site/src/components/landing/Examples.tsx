@@ -1,54 +1,505 @@
-import { CodeHighlight } from "@/components/code-highlight";
-import type { CodeExample } from "@/data/types";
+'use client';
 
-function CodeBlock({ example }: { example: CodeExample }) {
-  return (
-    <div className="overflow-hidden rounded-xl border border-border bg-background">
-      <div className="flex items-center gap-2 border-b border-border bg-card-muted/60 px-4 py-3">
-        <span className="h-2.5 w-2.5 rounded-full bg-red-500/60" />
-        <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/60" />
-        <span className="h-2.5 w-2.5 rounded-full bg-green-500/60" />
-        <span className="ml-3 font-mono text-[11px] text-muted-foreground">{example.filename}</span>
-      </div>
-      <div className="p-0">
-        <CodeHighlight code={example.code} language={example.language} />
-      </div>
-    </div>
-  );
-}
+import { javascript } from '@codemirror/lang-javascript';
+import { yaml } from '@codemirror/lang-yaml';
+import { oneDark } from '@codemirror/theme-one-dark';
+import dynamic from 'next/dynamic';
+import {
+  ChevronDown,
+  Ellipsis,
+  FileCode2,
+  FilePlus2,
+  FolderOpen,
+  Maximize2,
+  Minus,
+  Plus,
+  Trash2,
+  X
+} from 'lucide-react';
+import Link from 'next/link';
+import { useTheme } from 'next-themes';
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import type { CSSProperties } from 'react';
+
+import type { WorkflowCodeExample } from '@/data/types';
+
+import styles from './Examples.module.css';
+import { cn } from '@/lib/utils';
+
+const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
+  ssr: false,
+  loading: () => <div className={styles.editorLoading} aria-hidden="true" />
+});
 
 interface ExamplesProps {
-  contractCode: CodeExample;
-  templateCode: CodeExample;
-  taskCode: CodeExample;
+  examples: WorkflowCodeExample[];
 }
 
-export function Examples({ contractCode, templateCode, taskCode }: ExamplesProps) {
-  return (
-    <section id="examples" className="pb-24">
-      <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-accent">Examples</p>
-      <h2 className="mb-3 text-3xl font-semibold tracking-tight text-foreground">The three layers stay simple</h2>
-      <p className="mb-12 max-w-xl text-[15px] leading-7 text-muted-foreground">
-        Your contract describes software intent, templates describe the code style, and each consuming project decides how generation runs.
-      </p>
+interface EditorFile {
+  id: string;
+  filename: string;
+  language: string;
+  code: string;
+}
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card p-6 px-3">
-          <h3 className="mb-3 font-semibold text-foreground">1. Typed contract</h3>
-          <p className="mb-4 text-sm text-muted-foreground">A shared TypeScript description of the software.</p>
-          <CodeBlock example={contractCode} />
+const EDITOR_SCALES = [0.86, 1, 1.14] as const;
+const DEFAULT_EDITOR_HEIGHT = 'clamp(25.5rem, 49.3vw, 41.55rem)';
+
+function languageExtension(language: string) {
+  if (language === 'yaml' || language === 'yml') return yaml();
+
+  return javascript({
+    typescript: language === 'typescript' || language === 'tsx' || language === 'jinja',
+    jsx: language === 'jsx' || language === 'tsx'
+  });
+}
+
+function inferLanguage(filename: string) {
+  const extension = filename.split('.').pop()?.toLowerCase();
+  if (extension === 'yaml' || extension === 'yml') return 'yaml';
+  if (extension === 'tsx') return 'tsx';
+  if (extension === 'jsx') return 'jsx';
+  if (extension === 'j2' || extension === 'jinja') return 'jinja';
+  return 'typescript';
+}
+
+function initialFiles(examples: WorkflowCodeExample[]): EditorFile[] {
+  return examples.map((example) => ({
+    id: example.key,
+    filename: example.filename,
+    language: example.language,
+    code: example.code
+  }));
+}
+
+export function Examples({ examples }: ExamplesProps) {
+  const { resolvedTheme } = useTheme();
+  const originalExamples = useMemo(() => new Map(examples.map((example) => [example.key, example])), [examples]);
+  const [mounted, setMounted] = useState(false);
+  const [files, setFiles] = useState<EditorFile[]>(() => initialFiles(examples));
+  const [activeId, setActiveId] = useState<string>(examples[0]?.key ?? 'contract');
+  const [openIds, setOpenIds] = useState<string[]>(() => examples.map((example) => example.key));
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [fontSize, setFontSize] = useState(11);
+  const [scaleIndex, setScaleIndex] = useState(0);
+  const [showLineNumbers, setShowLineNumbers] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [newFileName, setNewFileName] = useState('');
+  const [isCreatingFile, setIsCreatingFile] = useState(false);
+  const [explorerOpen, setExplorerOpen] = useState(true);
+
+  const filesById = useMemo(() => new Map(files.map((file) => [file.id, file])), [files]);
+  const activeFile = openIds.includes(activeId) ? filesById.get(activeId) : undefined;
+  const extensions = useMemo(() => (activeFile ? [languageExtension(activeFile.language)] : []), [activeFile]);
+  const editorScale = EDITOR_SCALES[scaleIndex];
+  const lineCount = activeFile ? activeFile.code.split('\n').length : 0;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !isFullscreen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setIsFullscreen(false);
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFullscreen, mounted]);
+
+  function ensureFile(id: string) {
+    const existing = filesById.get(id);
+    if (existing) return existing;
+
+    const original = originalExamples.get(id as WorkflowCodeExample['key']);
+    if (!original) return undefined;
+
+    const restored: EditorFile = {
+      id: original.key,
+      filename: original.filename,
+      language: original.language,
+      code: original.code
+    };
+    setFiles((current) => [...current, restored]);
+    return restored;
+  }
+
+  function openFile(id: string) {
+    const file = ensureFile(id);
+    if (!file) return;
+    setOpenIds((current) => (current.includes(id) ? current : [...current, id]));
+    setActiveId(id);
+  }
+
+  function closeFile(id: string) {
+    setOpenIds((current) => {
+      const index = current.indexOf(id);
+      const next = current.filter((candidate) => candidate !== id);
+      if (id === activeId) {
+        const nextActive = next[index] ?? next[index - 1] ?? next[0];
+        if (nextActive) setActiveId(nextActive);
+      }
+      return next;
+    });
+  }
+
+  function deleteFile(id: string) {
+    setFiles((current) => current.filter((file) => file.id !== id));
+    closeFile(id);
+  }
+
+  function createFile() {
+    const filename = newFileName.trim();
+    if (!filename) return;
+
+    const id = `custom-${crypto.randomUUID()}`;
+    const file: EditorFile = {
+      id,
+      filename,
+      language: inferLanguage(filename),
+      code: ''
+    };
+    setFiles((current) => [...current, file]);
+    setOpenIds((current) => [...current, id]);
+    setActiveId(id);
+    setNewFileName('');
+    setIsCreatingFile(false);
+  }
+
+  function reopenAllFiles() {
+    const restored = initialFiles(examples);
+    setFiles((current) => {
+      const existingIds = new Set(current.map((file) => file.id));
+      return [...current, ...restored.filter((file) => !existingIds.has(file.id))];
+    });
+    setOpenIds((current) => Array.from(new Set([...current, ...restored.map((file) => file.id)])));
+    setActiveId(restored[0]?.id ?? activeId);
+    setMenuOpen(false);
+  }
+
+  function closeAllFiles() {
+    setOpenIds([]);
+    setMenuOpen(false);
+  }
+
+  function changeFontSize(delta: number) {
+    setFontSize((current) => Math.min(18, Math.max(9, current + delta)));
+  }
+
+  function changeScale(delta: number) {
+    setScaleIndex((current) => Math.min(EDITOR_SCALES.length - 1, Math.max(0, current + delta)));
+  }
+
+  function updateActiveFile(code: string) {
+    setFiles((current) => current.map((file) => (file.id === activeId ? { ...file, code } : file)));
+  }
+
+  function renderEditorPane(fullscreen: boolean) {
+    const workspaceStyle = {
+      '--editor-font-size': `${fontSize}px`,
+      '--editor-scale': editorScale
+    } as CSSProperties;
+    const editorHeight = fullscreen ? 'calc(100dvh - 3.3rem)' : DEFAULT_EDITOR_HEIGHT;
+
+    return (
+      <div className={styles.editorPane} style={workspaceStyle}>
+        <div className={styles.editorBar}>
+          <div className={styles.tabBar} role="tablist" aria-label="Open workflow files">
+            {openIds.map((id) => {
+              const file = filesById.get(id);
+              if (!file) return null;
+              const isActive = id === activeId;
+              return (
+                <div
+                  key={id}
+                  className={`${styles.tab} ${isActive ? styles.activeTab : ''}`}
+                  role="tab"
+                  aria-selected={isActive}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setActiveId(id)}
+                    className={styles.tabLabel}
+                    title={file.filename}
+                  >
+                    {file.filename}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => closeFile(id)}
+                    className={styles.closeButton}
+                    aria-label={`Close ${file.filename}`}
+                  >
+                    <X aria-hidden="true" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className={styles.editorActions}>
+            {fullscreen && (
+              <button
+                type="button"
+                className={styles.actionButton}
+                onClick={() => setIsFullscreen(false)}
+                aria-label="Exit full screen"
+              >
+                <X aria-hidden="true" />
+              </button>
+            )}
+            <button
+              type="button"
+              className={styles.moreButton}
+              onClick={() => setMenuOpen((current) => !current)}
+              aria-label="More editor options"
+              aria-expanded={menuOpen}
+            >
+              <Ellipsis aria-hidden="true" />
+            </button>
+          </div>
+
+          {menuOpen && (
+            <div className={styles.menu} role="menu">
+              <div className={styles.menuGroup}>
+                <span className={styles.menuLabel}>Font size</span>
+                <div className={styles.stepper}>
+                  <button type="button" onClick={() => changeFontSize(-1)} aria-label="Decrease font size">
+                    <Minus aria-hidden="true" />
+                  </button>
+                  <span>{fontSize}px</span>
+                  <button type="button" onClick={() => changeFontSize(1)} aria-label="Increase font size">
+                    <Plus aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+              <div className={styles.menuGroup}>
+                <span className={styles.menuLabel}>Editor scale</span>
+                <div className={styles.stepper}>
+                  <button type="button" onClick={() => changeScale(-1)} aria-label="Decrease editor scale">
+                    <Minus aria-hidden="true" />
+                  </button>
+                  <span>{Math.round(editorScale * 100)}%</span>
+                  <button type="button" onClick={() => changeScale(1)} aria-label="Increase editor scale">
+                    <Plus aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+              <button
+                type="button"
+                className={styles.menuButton}
+                onClick={() => setShowLineNumbers((current) => !current)}
+                role="menuitemcheckbox"
+                aria-checked={showLineNumbers}
+              >
+                <span>Line numbers</span>
+                <span>{showLineNumbers ? 'On' : 'Off'}</span>
+              </button>
+              <button type="button" className={styles.menuButton} onClick={reopenAllFiles} role="menuitem">
+                Open all files
+              </button>
+              <button type="button" className={styles.menuButton} onClick={closeAllFiles} role="menuitem">
+                Close all files
+              </button>
+              {!fullscreen && (
+                <button
+                  type="button"
+                  className={styles.menuButton}
+                  onClick={() => {
+                    setIsFullscreen(true);
+                    setMenuOpen(false);
+                  }}
+                  role="menuitem"
+                >
+                  <span>Open full screen</span>
+                  <Maximize2 aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
-        <div className="rounded-xl border border-border bg-card p-6 px-3">
-          <h3 className="mb-3 font-semibold text-foreground">2. Template pack</h3>
-          <p className="mb-4 text-sm text-muted-foreground">Reusable Handlebars files encode team patterns.</p>
-          <CodeBlock example={templateCode} />
-        </div>
-        <div className="rounded-xl border border-border bg-card p-6 px-3">
-          <h3 className="mb-3 font-semibold text-foreground">3. Consumer task</h3>
-          <p className="mb-4 text-sm text-muted-foreground">The project owns output, cleanup, and commands.</p>
-          <CodeBlock example={taskCode} />
+
+        {activeFile ? (
+          mounted ? (
+            <CodeMirror
+              key={`${fullscreen ? 'fullscreen' : 'inline'}-${activeFile.id}`}
+              value={activeFile.code}
+              onChange={updateActiveFile}
+              extensions={extensions}
+              theme={resolvedTheme === 'dark' ? oneDark : 'light'}
+              height={editorHeight}
+              width="100%"
+              basicSetup={{
+                lineNumbers: showLineNumbers,
+                foldGutter: showLineNumbers,
+                highlightActiveLine: true,
+                highlightActiveLineGutter: showLineNumbers,
+                bracketMatching: true,
+                closeBrackets: true,
+                autocompletion: true,
+                indentOnInput: true,
+                syntaxHighlighting: true
+              }}
+              aria-label={`Editable ${activeFile.filename} example`}
+              className={styles.editor}
+            />
+          ) : (
+            <div className={styles.editorLoading} style={{ minHeight: editorHeight }} aria-hidden="true" />
+          )
+        ) : (
+          <div className={styles.emptyState} style={{ minHeight: editorHeight }}>
+            <button type="button" onClick={reopenAllFiles} className="text-primary hover:underline">
+              Open a workflow file
+            </button>
+          </div>
+        )}
+
+        {fullscreen && (
+          <div
+            style={{ backgroundColor: 'transparent', borderColor: 'var(--border)' }}
+            className={cn(styles.statusBar, 'bg-background/75 backdrop-blur-sm')}
+          >
+            <span>main*</span>
+            <span>{activeFile?.language ?? 'Plain Text'}</span>
+            <span>{lineCount} lines</span>
+            <span>Spaces: 2</span>
+            <span>UTF-8</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function renderFullscreenWorkspace() {
+    return (
+      <div className={styles.fullscreenOverlay} role="dialog" aria-modal="true" aria-label="Workflow code editor">
+        <div className={styles.fullscreenWorkspace}>
+          <aside className={styles.explorer} aria-label="File explorer">
+            <div className={styles.explorerHeader}>
+              <span>EXPLORER</span>
+              <button type="button" onClick={() => setIsCreatingFile(true)} aria-label="Create file">
+                <FilePlus2 aria-hidden="true" />
+              </button>
+            </div>
+            <button type="button" className={styles.folderRow} onClick={() => setExplorerOpen((current) => !current)}>
+              <ChevronDown className={explorerOpen ? '' : styles.collapsedChevron} aria-hidden="true" />
+              <FolderOpen aria-hidden="true" />
+              <span>workflow</span>
+            </button>
+            {explorerOpen && (
+              <div className={styles.fileTree}>
+                {files.map((file) => (
+                  <div
+                    key={file.id}
+                    className={`${styles.fileRow} ${file.id === activeId ? styles.activeFileRow : ''}`}
+                  >
+                    <button type="button" onClick={() => openFile(file.id)} title={file.filename}>
+                      <FileCode2 aria-hidden="true" />
+                      <span>{file.filename}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteFile(file.id)}
+                      aria-label={`Delete ${file.filename}`}
+                      className={styles.deleteFileButton}
+                    >
+                      <Trash2 aria-hidden="true" />
+                    </button>
+                  </div>
+                ))}
+                {isCreatingFile && (
+                  <form
+                    className={styles.newFileForm}
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      createFile();
+                    }}
+                  >
+                    <FileCode2 aria-hidden="true" />
+                    <input
+                      autoFocus
+                      value={newFileName}
+                      onChange={(event) => setNewFileName(event.target.value)}
+                      onBlur={() => {
+                        if (!newFileName.trim()) setIsCreatingFile(false);
+                      }}
+                      placeholder="filename.ts"
+                      aria-label="New file name"
+                    />
+                  </form>
+                )}
+              </div>
+            )}
+          </aside>
+          {renderEditorPane(true)}
         </div>
       </div>
+    );
+  }
+
+  return (
+    <section id="examples" className="border-y border-border bg-card/35">
+      <div className="mx-auto max-w-7xl py-14 sm:py-16 lg:py-20">
+        <p className="mb-3 px-4 font-mono text-[11px] uppercase tracking-widest text-accent sm:px-6">Workflows</p>
+        <h2 className="max-w-4xl px-4 text-3xl font-semibold tracking-tight text-foreground sm:px-6 sm:text-4xl">
+          Real files from contract to generated code
+        </h2>
+        <p className="mt-4 max-w-3xl px-4 text-[15px] leading-7 text-muted-foreground sm:px-6">
+          Each tab is loaded from a real source file in the website project. Edit the contract, CodepotG task, paths
+          configuration, or Jinja template in the shared syntax-highlighted editor.
+        </p>
+
+        <div className="mt-8 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] xl:items-stretch">
+          <div className={`${styles.workspace} order-2 xl:order-1`}>
+            {isFullscreen ? (
+              <div className={styles.editorLoading} style={{ minHeight: DEFAULT_EDITOR_HEIGHT }} aria-hidden="true" />
+            ) : (
+              renderEditorPane(false)
+            )}
+          </div>
+          <div className="order-1 grid gap-2 sm:grid-cols-2 xl:order-2 xl:grid-cols-1 xl:content-start">
+            {examples.map((example) => {
+              const isActive = activeId === example.key && openIds.includes(example.key);
+              return (
+                <button
+                  key={example.key}
+                  type="button"
+                  onClick={() => openFile(example.key)}
+                  aria-pressed={isActive}
+                  className={`group min-w-0 border-l-2 px-4 py-4 text-left transition-colors sm:border-l-0 sm:border-t-2 xl:border-l-2 xl:border-t-0 ${isActive ? 'border-primary bg-primary/8' : 'border-border hover:border-primary/45 hover:bg-card-muted/45'}`}
+                >
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                    {example.eyebrow}
+                  </span>
+                  <span className="mt-2 block text-sm font-semibold text-foreground">{example.title}</span>
+                  <span className="mt-2 block text-sm leading-6 text-muted-foreground">{example.description}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-2 px-4 text-sm text-muted-foreground sm:px-6">
+          <Link href="/docs/prototype-workflow" className="font-medium text-primary hover:underline">
+            Read the complete prototype workflow
+          </Link>
+          <span className="mx-2">·</span>
+          <Link href="/docs/template-packs" className="font-medium text-foreground hover:underline">
+            Learn about template packs
+          </Link>
+        </div>
+      </div>
+
+      {mounted && isFullscreen ? createPortal(renderFullscreenWorkspace(), document.body) : null}
     </section>
   );
 }

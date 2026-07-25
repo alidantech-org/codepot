@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import typer
-
 from archives.codepot.src.app import codepotx
 from archives.codepot.src.cli.options import InspectModeOption, SpecPathArg
 from archives.codepot.src.cli.presentation.console import print_error

@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
-
 from archives.codepot.src.spec.ir.schema.dto.definition import DtoDefinition
 from archives.codepot.src.spec.ir.schema.entity.definition import EntityDefinition
 from archives.codepot.src.spec.ir.schema.entity.field.definition import EntityFieldDefinition
 from archives.codepot.src.spec.ir.schema.field_set.definition import FieldSetDefinition
 from archives.codepot.src.spec.ir.schema.model.definition import ModelDefinition
 from archives.codepot.src.spec.ir.schema.params.definition import ParamsDefinition
+from pydantic import BaseModel, ConfigDict
 
 RefSchema = (
     EntityDefinition

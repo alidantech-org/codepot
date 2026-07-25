@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
-
 from archives.codepot.src.spec.ir.response.errors.definition import ErrorResponseDefinition
+from pydantic import BaseModel, ConfigDict
 
 
 class ResponsesDefinition(BaseModel):

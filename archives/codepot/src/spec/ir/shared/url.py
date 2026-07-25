@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from pydantic import ConfigDict
-
 from archives.codepot.src.spec.ir.shared.base import DefinitionItem
 from archives.codepot.src.spec.kinds.urls import UrlEnv, UrlKind, UrlProtocol
+from pydantic import ConfigDict
 
 
 class UrlDefinition(DefinitionItem):

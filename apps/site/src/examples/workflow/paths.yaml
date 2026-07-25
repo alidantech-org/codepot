@@ -1,0 +1,47 @@
+name: acme-project-sdk
+version: 1.0.0
+
+write_policy:
+  default_mode: managed
+  managed_roots:
+    - generated
+  clean_roots:
+    - generated
+
+selections:
+  project_models:
+    from: schemas.models
+    where:
+      resource: projects
+    as: model
+
+  project_operations:
+    from: operations
+    where:
+      resource: projects
+    as: operation
+
+emissions:
+  models:
+    selection: project_models
+    template: models/model.ts.j2
+    path:
+      - models
+      - "{{ model.name | kebab }}.ts"
+
+  services:
+    selection: project_operations
+    template: services/project-service.ts.j2
+    mode: grouped
+    group_by: resource.name
+    path:
+      - services
+      - "{{ resource.name | kebab }}-service.ts"
+
+barrels:
+  root:
+    path:
+      - index.ts
+    exports:
+      - models
+      - services

@@ -3,29 +3,46 @@ import type { ReactNode } from "react";
 
 import { DocsSidebar } from "@/components/docs/DocsSidebar";
 import { MobileDocsBar } from "@/components/docs/MobileDocsBar";
-import { getAllDocs } from "@/lib/docs";
+import { getDocsNavigation } from "@/lib/docs";
 
 export const metadata: Metadata = {
   title: "Documentation - Codepot",
-  description: "Learn the three-layer Codepot workflow for typed contracts, reusable templates, and safe project-owned generation.",
+  description:
+    "Documentation for codepot-openapi, codepotg, codepotx, codepotx-cli, Codepot Lang, and the final Codepot platform.",
+  alternates: {
+    canonical: "/docs",
+  },
+  openGraph: {
+    type: "website",
+    title: "Codepot Documentation",
+    description:
+      "Guides, concepts, package references, and platform documentation for the complete Codepot ecosystem.",
+    url: "/docs",
+    siteName: "Codepot",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Codepot Documentation",
+      },
+    ],
+  },
 };
 
-export default function DocsLayout({ children }: Readonly<{ children: ReactNode }>) {
-  const docs = getAllDocs();
+export default function DocsLayout({
+  children,
+}: Readonly<{ children: ReactNode }>) {
+  const sections = getDocsNavigation();
 
   return (
     <>
-      <MobileDocsBar docs={docs} />
-      <div className="relative flex w-full gap-6">
-        <aside className="sticky top-14 z-30 hidden h-[calc(100dvh-3.5rem)] w-[260px] shrink-0 overflow-y-auto overflow-x-hidden border-r border-border bg-background lg:block scrollbar-thin">
-          <DocsSidebar docs={docs} />
+      <MobileDocsBar sections={sections} />
+      <div className="relative flex min-h-[calc(100dvh-3.75rem)] w-full bg-background">
+        <aside className="sticky top-15 z-20 hidden h-[calc(100dvh-3.75rem)] w-[17.5rem] shrink-0 overflow-y-auto overflow-x-hidden border-r border-border bg-background lg:block scrollbar-thin">
+          <DocsSidebar sections={sections} />
         </aside>
-        <main className="min-w-0 flex-1 py-8">
-          <div className="mx-auto max-w-5xl">{children}</div>
-        </main>
-        <aside className="sticky top-14 z-20 hidden h-[calc(100dvh-3.5rem)] w-[240px] shrink-0 overflow-y-auto overflow-x-hidden border-l border-border bg-background pl-4 xl:block scrollbar-thin">
-          <div id="toc-placeholder" />
-        </aside>
+        <main className="flex min-w-0 flex-1">{children}</main>
       </div>
     </>
   );

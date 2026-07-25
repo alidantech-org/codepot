@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import questionary
-
 from archives.codepot.src.cli.constants.defaults import (
     DEFAULT_LANGUAGE,
     DEFAULT_OUTPUT_PATH,

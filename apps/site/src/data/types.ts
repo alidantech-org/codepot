@@ -20,3 +20,16 @@ export interface CodeExample {
   language: string;
   code: string;
 }
+
+export type WorkflowExampleKey =
+  | "contract"
+  | "task"
+  | "paths"
+  | "template";
+
+export interface WorkflowCodeExample extends CodeExample {
+  key: WorkflowExampleKey;
+  eyebrow: string;
+  title: string;
+  description: string;
+}

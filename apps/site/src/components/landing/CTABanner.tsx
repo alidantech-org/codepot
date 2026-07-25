@@ -2,22 +2,42 @@ import Link from "next/link";
 
 export function CTABanner() {
   return (
-    <section className="mb-24 overflow-hidden rounded-2xl border border-border bg-linear-to-br from-primary/95 via-card to-secondary/95 p-12 text-center">
-      <h2 className="mb-3 text-3xl font-bold tracking-tight text-foreground">
-        Make software intent{" "}
-        <span className="bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">reusable</span>
-      </h2>
-      <p className="mx-auto mb-8 max-w-lg text-[15px] leading-7 text-muted-foreground">
-        Start with the TypeScript package today. The larger Codepot vision continues with Codepot Lang, an in-progress typed language designed to express software systems clearly for people, tools, and AI.
-      </p>
-      <div className="mb-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-        <Link href="/docs/getting-started" className="flex h-11 items-center gap-2 rounded-full bg-linear-to-r from-primary to-secondary px-7 text-sm font-medium text-white transition-opacity hover:opacity-90">Get started</Link>
-        <a href="https://github.com/alidantech-org/codepot_lang" target="_blank" rel="noopener noreferrer" className="flex h-11 items-center gap-2 rounded-full border border-border px-7 text-sm text-foreground transition-colors hover:bg-card-muted/60">Explore Codepot Lang</a>
-      </div>
-      <div className="flex flex-col items-center gap-2 text-[13px] text-muted-foreground">
-        <p>Open source · MIT licensed</p>
-        <p>Framework and target-language neutral</p>
-        <p>Built for developer-owned and AI-assisted workflows</p>
+    <section className="landing-card-section relative mx-auto mb-24 max-w-7xl overflow-hidden rounded-[2.5rem_1.5rem_4.5rem_1.5rem] border border-primary/20 bg-card px-6 py-14 text-center shadow-xl shadow-primary/8 ring-1 ring-inset ring-white/40 sm:px-12 sm:py-16 dark:border-primary/20 dark:bg-[linear-gradient(135deg,#21130c_0%,#3b2114_52%,#24140c_100%)] dark:shadow-2xl dark:shadow-primary/10 dark:ring-white/5">
+      <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,color-mix(in_srgb,var(--primary)_7%,transparent)_45%,color-mix(in_srgb,var(--accent)_9%,transparent)_100%)] dark:hidden" />
+      <div aria-hidden="true" className="absolute -left-24 -top-28 h-64 w-64 rounded-full bg-primary/10 blur-3xl dark:bg-primary/20" />
+      <div aria-hidden="true" className="absolute -bottom-32 -right-20 h-72 w-72 rounded-full bg-accent/8 blur-3xl dark:bg-accent/15" />
+      <div aria-hidden="true" className="hero-orbit absolute -right-14 top-6 h-44 w-44 rounded-full border border-dashed border-primary/15 dark:border-accent/25" />
+
+      <div className="relative z-10">
+        <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em] text-primary dark:text-accent-light">
+          Craft the next layer
+        </p>
+        <h2 className="landing-display mx-auto mb-4 max-w-3xl text-4xl font-semibold leading-tight text-foreground sm:text-5xl dark:text-[#fff7ed]">
+          Choose the Codepot workflow that fits{" "}
+          <span className="text-primary dark:text-[#e4b775]">today</span>
+        </h2>
+        <p className="mx-auto mb-8 max-w-2xl text-[15px] leading-7 text-muted-foreground dark:text-[#d8c4b0]">
+          Build with the supported codepot-openapi and codepotg workflow, evaluate the official codepotx runtime, or follow Codepot Lang as the Rust compiler, codepot CLI, LSP, extension, web, and MCP platform come together.
+        </p>
+        <div className="mb-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Link
+            href="/docs/choose-workflow"
+            className="warm-shine flex h-12 items-center justify-center rounded-full bg-primary px-7 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition duration-300 hover:-translate-y-0.5 hover:brightness-105 motion-reduce:transform-none motion-reduce:transition-none dark:bg-[#d89a58] dark:text-[#21130c] dark:shadow-lg dark:shadow-black/20 dark:hover:bg-[#e5ad70]"
+          >
+            Choose a workflow
+          </Link>
+          <Link
+            href="/docs/codepot-lang"
+            className="flex h-12 items-center justify-center rounded-full border border-border bg-background px-7 text-sm font-medium text-foreground shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-card-muted motion-reduce:transform-none motion-reduce:transition-none dark:border-[#f0c58e]/25 dark:bg-white/5 dark:text-[#fff7ed] dark:shadow-none dark:hover:bg-white/10"
+          >
+            Explore Codepot Lang
+          </Link>
+        </div>
+        <div className="flex flex-col items-center gap-2 text-[13px] text-muted-foreground sm:flex-row sm:justify-center sm:gap-5 dark:text-[#bca894]">
+          <p>Open source · MIT licensed</p>
+          <p>Framework and target-language neutral</p>
+          <p>Built for developers, tools, and AI agents</p>
+        </div>
       </div>
     </section>
   );

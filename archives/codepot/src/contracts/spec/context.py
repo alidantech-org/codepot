@@ -11,7 +11,10 @@ from archives.codepot.src.spec.ir.properties.enum.definition import EnumDefiniti
 from archives.codepot.src.spec.ir.properties.primitive.definition import PrimitiveDefinition
 from archives.codepot.src.spec.ir.resource.definition import ResourceDefinition
 from archives.codepot.src.spec.ir.resource.operation.definition import OperationDefinition
-from archives.codepot.src.spec.ir.resource.route.definition import RouteMethodDefinition, RoutePathDefinition
+from archives.codepot.src.spec.ir.resource.route.definition import (
+    RouteMethodDefinition,
+    RoutePathDefinition,
+)
 from archives.codepot.src.spec.ir.response.errors.definition import ErrorResponseDefinition
 from archives.codepot.src.spec.ir.schema.dto.definition import DtoDefinition
 from archives.codepot.src.spec.ir.schema.entity.definition import EntityDefinition

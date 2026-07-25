@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from archives.codepot.src.contracts.spec.names import SpecNameCase
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TemplateLanguageNamingConfig(BaseModel):

@@ -13,7 +13,10 @@ from archives.codepot.src.spec.ir.properties.enum.definition import EnumDefiniti
 from archives.codepot.src.spec.ir.properties.primitive.definition import PrimitiveDefinition
 from archives.codepot.src.spec.ir.resource.definition import ResourceDefinition
 from archives.codepot.src.spec.ir.resource.operation.definition import OperationDefinition
-from archives.codepot.src.spec.ir.resource.route.definition import RouteMethodDefinition, RoutePathDefinition
+from archives.codepot.src.spec.ir.resource.route.definition import (
+    RouteMethodDefinition,
+    RoutePathDefinition,
+)
 from archives.codepot.src.spec.ir.response.errors.definition import ErrorResponseDefinition
 from archives.codepot.src.spec.ir.schema.dto.definition import DtoDefinition
 from archives.codepot.src.spec.ir.schema.entity.definition import EntityDefinition
@@ -30,7 +33,10 @@ from archives.codepot.src.spec.ir.shared.document import CodepotDefinition
 from archives.codepot.src.spec.ir.shared.url import UrlDefinition
 from archives.codepot.src.spec.repository.counts import build_counts
 from archives.codepot.src.spec.repository.metadata import build_metadata
-from archives.codepot.src.spec.repository.owner_index import OwnerFolderIndex, build_owner_folder_index
+from archives.codepot.src.spec.repository.owner_index import (
+    OwnerFolderIndex,
+    build_owner_folder_index,
+)
 from archives.codepot.src.spec.repository.ownership import create_owner_from_identity
 from archives.codepot.src.spec.repository.records import create_spec_record
 from archives.codepot.src.spec.repository.subjects import subject_to_record_kind

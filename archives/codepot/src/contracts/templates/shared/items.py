@@ -5,7 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
-from archives.codepot.src.contracts.language.context import LanguageField, LanguageItem, LanguageOperation, LanguageRoute
+from archives.codepot.src.contracts.language.context import (
+    LanguageField,
+    LanguageItem,
+    LanguageOperation,
+    LanguageRoute,
+)
 from archives.codepot.src.contracts.spec.records import SpecRecord
 from archives.codepot.src.contracts.spec.refs import SpecOwner, SpecRef
 from archives.codepot.src.contracts.templates.shared.dependencies import TemplateDependencies

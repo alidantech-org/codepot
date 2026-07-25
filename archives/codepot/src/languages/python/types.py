@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from archives.codepot.src.contracts.language.interface import LanguageTypeFacts, LanguageTypeSourceKind
+from archives.codepot.src.contracts.language.interface import (
+    LanguageTypeFacts,
+    LanguageTypeSourceKind,
+)
 from archives.codepot.src.contracts.language.types import LanguageType, LanguageTypeKind
 from archives.codepot.src.languages.python.constants import (
     PRIMITIVE_BOOLEAN,

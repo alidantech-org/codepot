@@ -5,103 +5,122 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0.85rem;
+
+  /* Motion tokens — one set of eases/durations reused everywhere so
+     interaction timing feels designed rather than ad-hoc per rule. */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-fast: 200ms;
+  --motion-base: 320ms;
+  --motion-slow: 620ms;
 
   --background: #ffffff;
-  --foreground: #18181b;
+  --foreground: #2b1a12;
 
-  --card: #f9fafb;
-  --card-foreground: #18181b;
-  --card-muted: #f3f4f6;
+  --card: #ffffff;
+  --card-foreground: #2b1a12;
+  --card-muted: #f3e9dc;
 
-  --popover: #ffffff;
-  --popover-foreground: #18181b;
+  --popover: #fffaf4;
+  --popover-foreground: #2b1a12;
 
-  --primary: #2563eb;
-  --primary-foreground: #ffffff;
-  --primary-light: #60a5fa;
+  --primary: #9a562d;
+  --primary-foreground: #fffaf4;
+  --primary-light: #d59b60;
 
-  --secondary: #9333ea;
-  --secondary-foreground: #ffffff;
-  --secondary-light: #c084fc;
+  --secondary: #6b3f27;
+  --secondary-foreground: #fffaf4;
+  --secondary-light: #b77a4f;
 
-  --accent: #0d9488;
-  --accent-foreground: #ffffff;
-  --accent-light: #14b8a6;
+  --accent: #c58a43;
+  --accent-foreground: #2b1a12;
+  --accent-light: #e4b775;
 
-  --muted: #f3f4f6;
-  --muted-foreground: #71717a;
+  --muted: #f1e6d8;
+  --muted-foreground: #756457;
 
-  --destructive: #dc2626;
+  --destructive: #b42318;
 
-  --border: rgba(24, 24, 27, 0.1);
-  --input: rgba(24, 24, 27, 0.12);
-  --ring: #60a5fa;
+  --border: rgba(73, 42, 24, 0.07);
+  --input: rgba(73, 42, 24, 0.18);
+  --ring: #b97845;
 
-  --chart-1: #2563eb;
-  --chart-2: #9333ea;
-  --chart-3: #0d9488;
-  --chart-4: #60a5fa;
-  --chart-5: #c084fc;
+  --chart-1: #9a562d;
+  --chart-2: #6b3f27;
+  --chart-3: #c58a43;
+  --chart-4: #d59b60;
+  --chart-5: #8c6f3d;
 
-  --sidebar: #ffffff;
-  --sidebar-foreground: #18181b;
-  --sidebar-primary: #2563eb;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f3f4f6;
-  --sidebar-accent-foreground: #18181b;
-  --sidebar-border: rgba(24, 24, 27, 0.1);
-  --sidebar-ring: #60a5fa;
+  --sidebar: #fffaf4;
+  --sidebar-foreground: #2b1a12;
+  --sidebar-primary: #9a562d;
+  --sidebar-primary-foreground: #fffaf4;
+  --sidebar-accent: #f3e9dc;
+  --sidebar-accent-foreground: #2b1a12;
+  --sidebar-border: rgba(73, 42, 24, 0.14);
+  --sidebar-ring: #b97845;
+
+  --surface-cocoa: #2b190f;
+  --surface-clay: #a85e2e;
+  --surface-sand: #ead8bf;
+  --surface-cream: #fffaf4;
 
   color-scheme: light;
 }
 
 .dark {
-  --background: #09090b;
-  --foreground: #fafaff;
+  --background: #130d09;
+  --foreground: #fbf3e8;
 
-  --card: #18181b;
-  --card-foreground: #f4f4f5;
-  --card-muted: #27272a;
+  --card: #21160f;
+  --card-foreground: #fbf3e8;
+  --card-muted: #2d1e15;
 
-  --popover: #18181b;
-  --popover-foreground: #f4f4f5;
+  --popover: #21160f;
+  --popover-foreground: #fbf3e8;
 
-  --primary: #2563eb;
-  --primary-foreground: #ffffff;
-  --primary-light: #60a5fa;
+  --primary: #d69a60;
+  --primary-foreground: #1a0f0a;
+  --primary-light: #efbf86;
 
-  --secondary: #9333ea;
-  --secondary-foreground: #ffffff;
-  --secondary-light: #c084fc;
+  --secondary: #b66e3f;
+  --secondary-foreground: #fff8ed;
+  --secondary-light: #d9925d;
 
-  --accent: #14b8a6;
-  --accent-foreground: #ffffff;
-  --accent-light: #2dd4bf;
+  --accent: #e0b36e;
+  --accent-foreground: #1a0f0a;
+  --accent-light: #f2cf95;
 
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
+  --muted: #2d1e15;
+  --muted-foreground: #c0ad9b;
 
-  --destructive: #ef4444;
+  --destructive: #f97066;
 
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.12);
-  --ring: #60a5fa;
+  --border: rgba(247, 225, 199, 0.11);
+  --input: rgba(247, 225, 199, 0.15);
+  --ring: #d69a60;
 
-  --chart-1: #60a5fa;
-  --chart-2: #c084fc;
-  --chart-3: #2dd4bf;
-  --chart-4: #2563eb;
-  --chart-5: #9333ea;
+  --chart-1: #d69a60;
+  --chart-2: #b66e3f;
+  --chart-3: #e0b36e;
+  --chart-4: #8e5b3a;
+  --chart-5: #f2cf95;
 
-  --sidebar: #18181b;
-  --sidebar-foreground: #f4f4f5;
-  --sidebar-primary: #2563eb;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #27272a;
-  --sidebar-accent-foreground: #f4f4f5;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: #60a5fa;
+  --sidebar: #21160f;
+  --sidebar-foreground: #fbf3e8;
+  --sidebar-primary: #d69a60;
+  --sidebar-primary-foreground: #1a0f0a;
+  --sidebar-accent: #2d1e15;
+  --sidebar-accent-foreground: #fbf3e8;
+  --sidebar-border: rgba(247, 225, 199, 0.11);
+  --sidebar-ring: #d69a60;
+
+  --surface-cocoa: #100a07;
+  --surface-clay: #9a562d;
+  --surface-sand: #4b3223;
+  --surface-cream: #21160f;
 
   color-scheme: dark;
 }
@@ -156,6 +175,7 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-heading: var(--font-heading);
+  --font-display: var(--font-display);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -179,6 +199,7 @@
   body {
     margin: 0;
     @apply bg-background text-foreground;
+    background-image: linear-gradient(180deg, color-mix(in srgb, var(--background) 92%, var(--primary) 8%), var(--background) 26rem);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -193,34 +214,381 @@
     font-family: var(--font-heading);
     letter-spacing: -0.02em;
   }
+
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 28%, transparent);
+    color: var(--foreground);
+  }
+
+  /* Visible, on-brand keyboard focus instead of the browser default —
+     cheap to add, and the kind of detail generic templates skip. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+  }
 }
 
 .bg-grid {
   background-image:
-    linear-gradient(color-mix(in srgb, var(--border) 25%, transparent) 1px,
-      transparent 1px),
-    linear-gradient(90deg,
-      color-mix(in srgb, var(--border) 25%, transparent) 1px,
-      transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--border) 28%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--border) 28%, transparent) 1px, transparent 1px);
   background-size: 64px 64px;
+  mask-image: linear-gradient(to bottom, black 0%, transparent 78%);
 }
 
+/* bg-glow-clay / bg-glow-blue, bg-glow-amber / bg-glow-purple and
+   bg-glow-sand / bg-glow-teal are intentional aliases: the palette
+   was renamed from a blue/purple/teal system to the clay/amber/sand
+   one below, and the old class names are kept working so existing
+   markup doesn't need a find-and-replace pass. Prefer the clay/amber/sand
+   names in new markup. */
+.bg-glow-clay,
 .bg-glow-blue {
-  background: radial-gradient(circle,
-      color-mix(in srgb, var(--primary-light) 40%, transparent) 0%,
-      transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--primary-light) 34%, transparent) 0%, transparent 70%);
 }
 
+.bg-glow-amber,
 .bg-glow-purple {
-  background: radial-gradient(circle,
-      color-mix(in srgb, var(--secondary-light) 40%, transparent) 0%,
-      transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-light) 28%, transparent) 0%, transparent 70%);
 }
 
+.bg-glow-sand,
 .bg-glow-teal {
-  background: radial-gradient(circle,
-      color-mix(in srgb, var(--accent-light) 40%, transparent) 0%,
-      transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--secondary-light) 24%, transparent) 0%, transparent 70%);
+}
+
+/* ────────────────────────────────────────────────────────────────────
+ * Landing page shell
+ *
+ * Direction (kept from the recovery pass): the page reads as one open,
+ * flowing document, not a stack of boxed cards. Sections are full-width
+ * by default. Card chrome (border, shadow, gradient fill, corner blob)
+ * is opt-in via `.landing-card-section` — today that's just "Why
+ * Codepot" and "Craft the next layer". #ecosystem and #examples get a
+ * calm full-bleed tone band instead of a card. Decorative curves live
+ * in their own layer, independent of section content.
+ *
+ * This used to be implemented as two rulesets fighting over the same
+ * selector (a "give every section a card" block, undone almost
+ * everywhere by a later `!important` override). That's collapsed into
+ * a single set of rules below — the card block only ever applies to
+ * `.landing-card-section`, so there's nothing left to override.
+ * ──────────────────────────────────────────────────────────────────── */
+
+.landing-page {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+}
+
+
+.landing-shell {
+  position: relative;
+  isolation: isolate;
+  padding-bottom: 1px;
+}
+
+.landing-shell::before {
+  content: "";
+  position: absolute;
+  inset: 7rem -8vw auto;
+  /* height: 34rem; */
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 78% 32%, color-mix(in srgb, var(--primary-light) 20%, transparent), transparent 32%),
+    radial-gradient(circle at 18% 54%, color-mix(in srgb, var(--accent-light) 14%, transparent), transparent 28%);
+  filter: blur(22px);
+}
+
+.landing-shell>section {
+  position: relative;
+}
+
+/* Default rhythm: open sections, no chrome. */
+.landing-shell>section:not(:first-child):not(:last-child) {
+  padding-block: clamp(5.25rem, 8vw, 7.75rem);
+}
+
+/* Opt-in card treatment. */
+.landing-shell>section.landing-card-section {
+  margin-block: clamp(5.5rem, 9vw, 8rem);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: clamp(2rem, 5vw, 4.5rem) clamp(1.25rem, 3vw, 2.5rem) clamp(3rem, 7vw, 6rem) clamp(1.25rem, 3vw, 2.5rem);
+  padding: clamp(3rem, 7vw, 5.5rem) clamp(1.25rem, 5vw, 4rem);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--card) 92%, var(--primary) 8%), color-mix(in srgb, var(--background) 94%, transparent)),
+    var(--card);
+  box-shadow:
+    0 24px 70px color-mix(in srgb, var(--surface-cocoa) 8%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 35%, transparent);
+}
+
+.landing-shell>section.landing-card-section::before {
+  content: "";
+  position: absolute;
+  width: clamp(12rem, 26vw, 24rem);
+  aspect-ratio: 1;
+  top: -35%;
+  right: -8%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--primary-light) 20%, transparent), transparent 68%);
+}
+
+.landing-shell>section.landing-card-section:nth-child(even)::before {
+  right: auto;
+  left: -10%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-light) 18%, transparent), transparent 68%);
+}
+
+
+/* Hover lift belongs to actual cards only — inside `.landing-card-section`,
+   or anything explicitly marked `.landing-interactive`. Articles in the
+   open sections stay flat; they only get a smooth color transition so a
+   `hover:text-foreground`-style utility in markup doesn't snap. */
+.landing-card-section article,
+.landing-interactive {
+  transition:
+    transform var(--motion-base) var(--ease-out-soft),
+    border-color var(--motion-base) ease,
+    box-shadow var(--motion-base) ease,
+    background-color var(--motion-base) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+
+  .landing-card-section article:hover,
+  .landing-interactive:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--primary) 38%, var(--border));
+    box-shadow: 0 18px 48px color-mix(in srgb, var(--surface-cocoa) 13%, transparent);
+  }
+}
+
+.landing-shell article {
+  transition: color var(--motion-base) ease;
+}
+
+.landing-display {
+  font-family: var(--font-display), var(--font-heading), serif;
+  letter-spacing: -0.035em;
+}
+
+/* Press feedback for primary CTAs — pairs well with .warm-shine. */
+.landing-cta {
+  transition:
+    transform var(--motion-fast) var(--ease-spring),
+    box-shadow var(--motion-base) var(--ease-out-soft);
+}
+
+.landing-cta:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .landing-cta:hover {
+    box-shadow: 0 14px 32px color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+}
+
+.landing-hero-panel {
+  position: relative;
+  overflow: hidden;
+  min-height: min(760px, calc(100svh - 5rem));
+  margin-top: clamp(1rem, 3vw, 2.5rem);
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  border-radius: clamp(2rem, 6vw, 5rem) clamp(2rem, 6vw, 5rem) clamp(5rem, 12vw, 11rem) clamp(2rem, 6vw, 5rem);
+  background:
+    radial-gradient(circle at 78% 34%, color-mix(in srgb, var(--primary-light) 24%, transparent), transparent 30%),
+    linear-gradient(135deg, color-mix(in srgb, var(--card) 86%, var(--surface-cocoa) 14%), color-mix(in srgb, var(--background) 94%, var(--accent) 6%));
+  box-shadow: 0 30px 90px color-mix(in srgb, var(--surface-cocoa) 12%, transparent);
+}
+
+.dark .landing-hero-panel {
+  background:
+    radial-gradient(circle at 78% 34%, color-mix(in srgb, var(--primary-light) 20%, transparent), transparent 31%),
+    linear-gradient(135deg, #17100b 4%, #24150d 56%, #130d09 100%);
+}
+
+.landing-hero-panel::after {
+  content: "";
+  position: absolute;
+  left: -8%;
+  right: -8%;
+  bottom: -5.5rem;
+  height: 9rem;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  background: var(--background);
+  opacity: 0.92;
+}
+
+.hero-pot {
+  transform-origin: 55% 70%;
+  animation: pot-float 7s ease-in-out infinite;
+}
+
+.hero-smoke-one {
+  animation: smoke-drift 6s ease-in-out infinite;
+}
+
+.hero-smoke-two {
+  animation: smoke-drift 7.5s ease-in-out -2.2s infinite;
+}
+
+.hero-orbit {
+  transform-origin: center;
+  animation: orbit-drift 16s linear infinite;
+}
+
+.hero-code-card {
+  animation: gentle-bob 5.4s ease-in-out infinite;
+}
+
+.hero-code-card-delayed {
+  animation: gentle-bob 6.6s ease-in-out -2s infinite;
+}
+
+.warm-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.warm-shine::after {
+  content: "";
+  position: absolute;
+  inset: -160% auto -160% -45%;
+  width: 34%;
+  transform: rotate(18deg);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, white 36%, transparent), transparent);
+  animation: warm-shimmer 7s ease-in-out infinite;
+}
+
+@keyframes pot-float {
+
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-1deg);
+  }
+
+  50% {
+    transform: translate3d(0, -10px, 0) rotate(1.5deg);
+  }
+}
+
+@keyframes smoke-drift {
+
+  0%,
+  100% {
+    transform: translate3d(0, 5px, 0) scale(0.97);
+    opacity: 0.42;
+  }
+
+  50% {
+    transform: translate3d(6px, -9px, 0) scale(1.04);
+    opacity: 0.82;
+  }
+}
+
+@keyframes orbit-drift {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gentle-bob {
+
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -7px, 0);
+  }
+}
+
+@keyframes warm-shimmer {
+
+  0%,
+  60% {
+    transform: translateX(-180%) rotate(18deg);
+    opacity: 0;
+  }
+
+  72% {
+    opacity: 0.55;
+  }
+
+  100% {
+    transform: translateX(520%) rotate(18deg);
+    opacity: 0;
+  }
+}
+
+@keyframes section-reveal {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .landing-shell>section:not(:first-child) {
+    animation: section-reveal 1ms both;
+    animation-timeline: view();
+    animation-range: entry 8% cover 28%;
+  }
+
+  /* Stagger a grid of cards as they enter — apply `.reveal-stagger` to
+     the grid wrapper (e.g. the feature-card grid inside
+     `.landing-card-section`). Each child gets a slightly later reveal
+     window so the group cascades in instead of popping as one block. */
+  .reveal-stagger>* {
+    animation: section-reveal 1ms both;
+    animation-timeline: view();
+    animation-range: entry 10% cover 34%;
+  }
+
+  .reveal-stagger>*:nth-child(2) {
+    animation-range: entry 14% cover 38%;
+  }
+
+  .reveal-stagger>*:nth-child(3) {
+    animation-range: entry 18% cover 42%;
+  }
+
+  .reveal-stagger>*:nth-child(4) {
+    animation-range: entry 22% cover 46%;
+  }
+
+  .reveal-stagger>*:nth-child(5) {
+    animation-range: entry 26% cover 50%;
+  }
+
+  .reveal-stagger>*:nth-child(6) {
+    animation-range: entry 30% cover 54%;
+  }
+}
+
+/* Smooth crossfade when the theme class toggles, instead of a hard
+   snap. Requires wrapping the class toggle in
+   `document.startViewTransition(() => ...)` on the JS side — this just
+   styles the transition once that's in place; harmless no-op otherwise. */
+@supports (view-transition-name: root) {
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--motion-slow);
+    animation-timing-function: var(--ease-out-expo);
+  }
 }
 
 [data-rehype-pretty-code-figure] {
@@ -230,7 +598,7 @@
 [data-rehype-pretty-code-figure] pre {
   overflow-x: auto;
   border-radius: 0.75rem;
-  border: 1px solid hsl(var(--border));
+  border: 1px solid var(--border);
   background: transparent;
   padding: 1rem;
   font-size: 0.875rem;
@@ -283,4 +651,125 @@ h2:hover .anchor,
 h3:hover .anchor,
 h4:hover .anchor {
   opacity: 0.55;
+}
+
+/* Decorative curves — an independent ambient layer behind the content,
+   not tied to any one section's box. Note: the vertical offsets below
+   (39rem, 108rem) are tuned to the current page length; if section
+   count or content length changes materially, re-check these against
+   the live page rather than assuming they still line up. */
+.landing-free-curves {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.landing-free-curves span {
+  position: absolute;
+  display: block;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+  border-radius: 50%;
+  opacity: 0.48;
+}
+
+.landing-free-curves span:first-child {
+  top: 39rem;
+  right: -10rem;
+  width: 34rem;
+  height: 20rem;
+  --curve-rotation: -18deg;
+  animation: free-curve-drift 18s ease-in-out infinite;
+}
+
+.landing-free-curves span:nth-child(2) {
+  top: 108rem;
+  left: -10rem;
+  width: 36rem;
+  height: 22rem;
+  --curve-rotation: 16deg;
+  border-color: color-mix(in srgb, var(--accent) 16%, transparent);
+  animation: free-curve-drift 22s ease-in-out -6s infinite reverse;
+}
+
+.landing-free-curves span:nth-child(3) {
+  right: 6%;
+  bottom: 24rem;
+  width: 22rem;
+  height: 12rem;
+  --curve-rotation: -10deg;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--secondary) 16%, transparent);
+  animation: free-curve-drift 20s ease-in-out -10s infinite;
+}
+
+@keyframes free-curve-drift {
+
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--curve-rotation));
+  }
+
+  50% {
+    transform: translate3d(0, -14px, 0) rotate(var(--curve-rotation));
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .landing-shell>section:not(:first-child):not(:last-child) {
+    padding-inline: 0;
+    padding-block: clamp(4.5rem, 18vw, 6rem);
+  }
+
+  .landing-shell>section.landing-card-section {
+    margin-block: clamp(4.5rem, 16vw, 6rem);
+    border-radius: 2rem 1.25rem 3rem 1.25rem;
+    padding-inline: 1rem;
+  }
+
+  .landing-hero-panel {
+    min-height: auto;
+    border-radius: 2rem 2rem 4.25rem 2rem;
+  }
+
+  .landing-free-curves span {
+    opacity: 0.3;
+  }
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .landing-shell>section,
+  .reveal-stagger>* {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .landing-free-curves span {
+    animation: none;
+    transform: rotate(var(--curve-rotation));
+  }
+
+  @supports (view-transition-name: root) {
+
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none;
+    }
+  }
 }

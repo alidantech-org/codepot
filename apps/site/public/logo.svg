@@ -1,19 +1,25 @@
-<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<svg width="160" height="252" viewBox="12 -2 40 63" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
+    <linearGradient id="clay" x1="12" y1="12" x2="52" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D49352"/>
+      <stop offset="0.5" stop-color="#A85E2E"/>
+      <stop offset="1" stop-color="#673B24"/>
+    </linearGradient>
+    <linearGradient id="smoke" x1="19" y1="0" x2="40" y2="24" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E8D3B5" stop-opacity="0"/>
+      <stop offset="0.55" stop-color="#D3A873"/>
+      <stop offset="1" stop-color="#8C5A38" stop-opacity="0.25"/>
     </linearGradient>
   </defs>
-  <circle cx="50" cy="50" r="48" fill="url(#gradient)" opacity="0.1"/>
-  <path d="M50 15 L75 30 L75 60 L50 75 L25 60 L25 30 Z" fill="none" stroke="url(#gradient)" stroke-width="2"/>
-  <circle cx="50" cy="30" r="4" fill="url(#gradient)"/>
-  <circle cx="35" cy="45" r="4" fill="url(#gradient)"/>
-  <circle cx="65" cy="45" r="4" fill="url(#gradient)"/>
-  <circle cx="50" cy="60" r="4" fill="url(#gradient)"/>
-  <line x1="50" y1="30" x2="35" y2="45" stroke="url(#gradient)" stroke-width="1" opacity="0.6"/>
-  <line x1="50" y1="30" x2="65" y2="45" stroke="url(#gradient)" stroke-width="1" opacity="0.6"/>
-  <line x1="35" y1="45" x2="50" y2="60" stroke="url(#gradient)" stroke-width="1" opacity="0.6"/>
-  <line x1="65" y1="45" x2="50" y2="60" stroke="url(#gradient)" stroke-width="1" opacity="0.6"/>
-  <text x="50" y="85" font-family="monospace" font-size="12" text-anchor="middle" fill="url(#gradient)">&lt;/&gt;</text>
+  <path d="M29 21C20 16 25 9 34 7C42 5 44 2 42 0" stroke="url(#smoke)" stroke-width="3.4" stroke-linecap="round"/>
+  <g transform="rotate(8 32 41)">
+    <!-- perfect circle body -->
+    <circle cx="32" cy="41" r="18" fill="url(#clay)" stroke="#5C321D" stroke-width="1.2"/>
+    <ellipse cx="32" cy="24" rx="13" ry="5" fill="#D49352" stroke="#5C321D" stroke-width="1.2"/>
+    <ellipse cx="32" cy="24" rx="8" ry="2.6" fill="#1A0F0A"/>
+    <!-- centered "</>" mark -->
+    <path d="M28 36L23 40L28 44" stroke="#2A1810" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M36 36L41 40L36 44" stroke="#2A1810" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M29 45L35 35" stroke="#2A1810" stroke-width="2.2" stroke-linecap="round"/>
+  </g>
 </svg>
