@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -62,7 +63,10 @@ def test_large_real_contract_generates_realistic_pack(
         real_openapi_json_path,
         project / "openapi.generated.json",
     )
-    assert input_path.stat().st_size > 1_000_000
+    document = json.loads(input_path.read_text(encoding="utf-8"))
+    assert input_path.stat().st_size > 500_000
+    assert len(document["paths"]) >= 100
+    assert len(document["components"]["schemas"]) >= 100
 
     result = GeneratorApp().generate(
         config_path=project / case.config_name,
