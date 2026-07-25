@@ -34,7 +34,7 @@ export default function DocsLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <>
       <MobileDocsBar docs={docs} />
-      <div className="relative flex w-full gap-6">
+      <div className="relative flex w-full gap-6 bg-background">
         <aside className="sticky top-16 z-30 hidden h-[calc(100dvh-4rem)] w-[260px] shrink-0 overflow-y-auto overflow-x-hidden border-r border-border bg-background lg:block scrollbar-thin">
           <DocsSidebar docs={docs} />
         </aside>
