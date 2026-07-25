@@ -15,6 +15,8 @@ write_policy:
     - .gitignore
     - .prettierrc
     - .vscode
+  immutable_roots:
+    - lib
   protected_roots:
     - lib
   clean_roots:

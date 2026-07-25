@@ -140,7 +140,14 @@ def test_realistic_next_pack_reuses_cache_and_outputs(
 
     assert len(first.tasks[0].written) >= case.minimum_outputs
     assert second.tasks[0].written == []
-    assert len(second.tasks[0].unchanged) == len(first.tasks[0].planned)
+    assert (
+        len(second.tasks[0].unchanged) + len(second.tasks[0].immutable_skipped)
+        == len(first.tasks[0].planned)
+    )
+    assert set(second.tasks[0].unchanged).isdisjoint(
+        second.tasks[0].immutable_skipped
+    )
+    assert all(path.is_file() for path in second.tasks[0].immutable_skipped)
     assert any(
         "JSONL cache reused" in diagnostic.message
         for diagnostic in second.tasks[0].diagnostics
