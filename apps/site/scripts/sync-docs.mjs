@@ -17,6 +17,7 @@ const ecosystem = JSON.parse(await readFile(resolve(docsRoot, "ecosystem.json"),
 const documents = {};
 const tablesOfContents = {};
 const index = [];
+const searchIndex = [];
 const seen = new Set();
 
 function resolveDocumentSource(item) {
@@ -48,10 +49,44 @@ function cleanHeadingText(value) {
     .trim();
 }
 
-function extractTableOfContents(content) {
+function cleanMarkdownText(value) {
+  return value
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/~~~[\s\S]*?~~~/g, " ")
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[`*_>#|]/g, " ")
+    .replace(/^[-+]\s+/gm, " ")
+    .replace(/^\d+\.\s+/gm, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeSearchText(value) {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9+#./_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function createSnippet(value, maximumLength = 190) {
+  const clean = cleanMarkdownText(value);
+  if (clean.length <= maximumLength) return clean;
+  const shortened = clean.slice(0, maximumLength + 1);
+  const boundary = shortened.lastIndexOf(" ");
+  return `${shortened.slice(0, boundary > 120 ? boundary : maximumLength).trim()}…`;
+}
+
+function extractDocumentData(content) {
   const headings = [];
+  const sections = [];
   const slugger = new GithubSlugger();
   let fence = null;
+  let current = null;
 
   for (const line of content.split(/\r?\n/)) {
     const fenceMatch = line.match(/^\s*(```+|~~~+)/);
@@ -63,19 +98,30 @@ function extractTableOfContents(content) {
     if (fence) continue;
 
     const match = line.match(/^\s{0,3}(#{1,6})\s+(.+?)\s*$/);
-    if (!match) continue;
+    if (match) {
+      const text = cleanHeadingText(match[2]);
+      if (!text) continue;
 
-    const text = cleanHeadingText(match[2]);
-    if (!text) continue;
+      const heading = {
+        id: slugger.slug(text),
+        text,
+        level: match[1].length,
+      };
+      headings.push(heading);
 
-    headings.push({
-      id: slugger.slug(text),
-      text,
-      level: match[1].length,
-    });
+      if (heading.level >= 2 && heading.level <= 3) {
+        current = { ...heading, lines: [] };
+        sections.push(current);
+      } else if (heading.level <= 2) {
+        current = null;
+      }
+      continue;
+    }
+
+    if (current && line.trim()) current.lines.push(line.trim());
   }
 
-  return headings;
+  return { headings, sections };
 }
 
 for (const section of navigation.sections ?? []) {
@@ -92,21 +138,54 @@ for (const section of navigation.sections ?? []) {
     const { source, sourceFile } = resolveDocumentSource(item);
     const markdown = await readFile(sourceFile, "utf8");
     const parsed = matter(markdown);
+    const title = String(parsed.data.title ?? item.title ?? slug);
+    const description = String(parsed.data.description ?? "");
+    const sectionTitle = String(section.title ?? "Documentation");
+    const { headings, sections } = extractDocumentData(parsed.content);
+    const pageSnippet = description || createSnippet(parsed.content);
+
     documents[slug] = markdown;
-    tablesOfContents[slug] = extractTableOfContents(parsed.content);
+    tablesOfContents[slug] = headings;
     index.push({
       slug,
       source,
-      title: String(parsed.data.title ?? item.title ?? slug),
-      description: String(parsed.data.description ?? ""),
-      section: String(section.title ?? "Documentation"),
+      title,
+      description,
+      section: sectionTitle,
       product: typeof parsed.data.product === "string" ? parsed.data.product : null,
-      searchText: `${parsed.data.title ?? item.title ?? slug} ${parsed.data.description ?? ""} ${parsed.content}`
-        .replace(/[`*_#[\]()>{}|]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim()
-        .toLowerCase(),
+      searchText: normalizeSearchText(`${title} ${description} ${parsed.content}`),
     });
+
+    searchIndex.push({
+      id: `page:${slug}`,
+      kind: "page",
+      slug,
+      href: `/docs/${slug}`,
+      title,
+      pageTitle: title,
+      section: sectionTitle,
+      description,
+      snippet: pageSnippet,
+      level: 1,
+      searchText: normalizeSearchText(`${title} ${description} ${sectionTitle} ${parsed.content}`),
+    });
+
+    for (const heading of sections) {
+      const body = heading.lines.join(" ");
+      searchIndex.push({
+        id: `heading:${slug}:${heading.id}`,
+        kind: "heading",
+        slug,
+        href: `/docs/${slug}#${heading.id}`,
+        title: heading.text,
+        pageTitle: title,
+        section: sectionTitle,
+        description,
+        snippet: createSnippet(body || description || parsed.content),
+        level: heading.level,
+        searchText: normalizeSearchText(`${heading.text} ${title} ${description} ${sectionTitle} ${body}`),
+      });
+    }
   }
 }
 
@@ -115,6 +194,7 @@ const source = [
   `export const DOCS = ${JSON.stringify(documents, null, 2)} as const;`,
   `export const NAVIGATION = ${JSON.stringify(navigation, null, 2)} as const;`,
   `export const DOC_INDEX = ${JSON.stringify(index, null, 2)} as const;`,
+  `export const DOC_SEARCH_INDEX = ${JSON.stringify(searchIndex, null, 2)} as const;`,
   `export const ECOSYSTEM = ${JSON.stringify(ecosystem, null, 2)} as const;`,
   "export type DocSlug = keyof typeof DOCS;",
   "",
@@ -126,5 +206,5 @@ await Promise.all([
   writeFile(tocOutput, `${JSON.stringify(tablesOfContents, null, 2)}\n`, "utf8"),
 ]);
 console.log(
-  `Synced ${Object.keys(documents).length} public documentation files, JSON tables of contents, and ecosystem metadata.`,
+  `Synced ${Object.keys(documents).length} public documentation files, ${searchIndex.length} search records, JSON tables of contents, and ecosystem metadata.`,
 );
