@@ -5,6 +5,12 @@ import pytest
 from app.workflows.normalization import ALL_NORMALIZED_ROOTS, required_normalized_roots
 
 
+def test_bundled_debug_pack_uses_compatibility_fast_path(
+    bundled_templates_root,
+) -> None:
+    assert required_normalized_roots(bundled_templates_root / "debug") == frozenset()
+
+
 def test_compatibility_template_requires_no_normalized_roots(tmp_path) -> None:
     (tmp_path / "report.md.j2").write_text(
         "{{ api.info.title }} {{ schemas.all | length }}",
