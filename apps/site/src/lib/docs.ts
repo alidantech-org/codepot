@@ -3,11 +3,9 @@ import matter from "gray-matter";
 
 import tocData from "@/generated/docs-toc.json";
 import {
-  DOC_INDEX,
-  DOC_REDIRECTS,
-  DOCS,
-  NAVIGATION,
-  type DocPath,
+  DOC_INDEX as GENERATED_DOC_INDEX,
+  DOCS as GENERATED_DOCS,
+  NAVIGATION as GENERATED_NAVIGATION,
 } from "@/generated/docs";
 
 export interface DocFrontmatter {
@@ -61,24 +59,49 @@ export interface DocSection {
 }
 
 interface RawNavigationItem {
-  readonly title: string;
-  readonly path: string;
-  readonly source: string;
-  readonly package?: string;
-  readonly children?: readonly RawNavigationItem[];
+  title: string;
+  path: string;
+  source: string;
+  package?: string;
+  children?: RawNavigationItem[];
+}
+
+interface NavigationConfig {
+  home: RawNavigationItem;
+  redirects?: Record<string, string>;
+  sections: Array<{
+    title: string;
+    description?: string;
+    items: RawNavigationItem[];
+  }>;
+}
+
+interface GeneratedIndexRecord {
+  path: string;
+  source: string;
+  title: string;
+  description: string;
+  section: string;
+  package: string | null;
+  breadcrumbs: BreadcrumbItem[];
+  searchText: string;
 }
 
 export interface GeneratedDocParams {
   path?: string[];
 }
 
-const DOC_TOCS = tocData as Partial<Record<DocPath, Heading[]>>;
+const DOCS = GENERATED_DOCS as unknown as Record<string, string>;
+const NAVIGATION = GENERATED_NAVIGATION as unknown as NavigationConfig;
+const DOC_INDEX = GENERATED_DOC_INDEX as unknown as GeneratedIndexRecord[];
+const DOC_TOCS = tocData as Record<string, Heading[]>;
+const DOC_REDIRECTS = NAVIGATION.redirects ?? {};
 
 export function hrefForDocPath(path: string): string {
   return path ? `/docs/${path}` : "/docs";
 }
 
-function indexRecord(path: string) {
+function indexRecord(path: string): GeneratedIndexRecord | undefined {
   return DOC_INDEX.find((entry) => entry.path === path);
 }
 
@@ -158,7 +181,7 @@ function getNavigationScope(path: string): DocItem[] {
   });
 }
 
-function loadDoc(path: DocPath): Doc {
+function loadDoc(path: string): Doc {
   const parsed = matter(DOCS[path]);
   const frontmatter = parsed.data as DocFrontmatter;
   const record = indexRecord(path);
@@ -193,7 +216,7 @@ function loadDoc(path: DocPath): Doc {
 
 export function getDocByPath(path: string): Doc | null {
   if (!(path in DOCS)) return null;
-  const doc = loadDoc(path as DocPath);
+  const doc = loadDoc(path);
   const scope = getNavigationScope(path);
   const currentIndex = scope.findIndex((item) => item.path === path);
 
@@ -207,9 +230,7 @@ export function getDocByPath(path: string): Doc | null {
 }
 
 export function getRedirectTarget(path: string): string | null {
-  return path in DOC_REDIRECTS
-    ? DOC_REDIRECTS[path as keyof typeof DOC_REDIRECTS]
-    : null;
+  return DOC_REDIRECTS[path] ?? null;
 }
 
 export function generateStaticParams(): GeneratedDocParams[] {
