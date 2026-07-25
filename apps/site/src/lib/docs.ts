@@ -161,7 +161,7 @@ function loadDoc(path: DocPath): Doc {
   const title =
     typeof frontmatter.title === "string"
       ? frontmatter.title
-      : record?.title ?? path || "Codepot documentation";
+      : record?.title ?? (path || "Codepot documentation");
   const description =
     typeof frontmatter.description === "string"
       ? frontmatter.description
