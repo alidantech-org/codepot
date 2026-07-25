@@ -13,6 +13,26 @@ apps/site/Dockerfile
 apps/site/src/app/health/route.ts
 ```
 
+## Published application mapping
+
+The production domain is:
+
+```text
+https://code.alidantech.org
+```
+
+The reverse proxy forwards that domain to:
+
+```text
+http://localhost:3020
+```
+
+Docker Compose publishes host port `3020` to the application's internal container port `3000`:
+
+```text
+127.0.0.1:3020 -> container:3000
+```
+
 ## Configure
 
 Create a local Compose environment file:
@@ -21,12 +41,12 @@ Create a local Compose environment file:
 cp .env.docker.example .env
 ```
 
-Set the real public URL before building:
+Production values:
 
 ```dotenv
-NEXT_PUBLIC_SITE_URL=https://codepot.dev
-SITE_PORT=3000
-SITE_BIND_ADDRESS=0.0.0.0
+NEXT_PUBLIC_SITE_URL=https://code.alidantech.org
+SITE_PORT=3020
+SITE_BIND_ADDRESS=127.0.0.1
 CODEPOT_SITE_IMAGE=codepot-site:latest
 ```
 
@@ -38,6 +58,12 @@ CODEPOT_SITE_IMAGE=codepot-site:latest
 docker compose config
 ```
 
+Confirm the rendered port mapping is:
+
+```text
+127.0.0.1:3020:3000
+```
+
 ## Build and start
 
 ```bash
@@ -47,9 +73,11 @@ docker compose up -d site
 
 ## Check health
 
+From the Docker host:
+
 ```bash
 docker compose ps
-curl --fail http://127.0.0.1:3000/health
+curl --fail http://127.0.0.1:3020/health
 ```
 
 Expected response:
@@ -80,19 +108,13 @@ docker compose down
 
 ## Reverse proxy
 
-For a public deployment, place Caddy, Nginx, an AWS load balancer, or another TLS-terminating reverse proxy in front of port `3000`.
-
-When the reverse proxy runs on the same machine, bind the service to localhost:
-
-```dotenv
-SITE_BIND_ADDRESS=127.0.0.1
-```
-
-The proxy should forward requests to:
+The TLS-terminating reverse proxy for `code.alidantech.org` should forward requests to:
 
 ```text
-http://127.0.0.1:3000
+http://127.0.0.1:3020
 ```
+
+The container itself still listens on port `3000`; only the host-published port is `3020`.
 
 ## Image contents
 
@@ -117,7 +139,8 @@ pnpm install --frozen-lockfile
 pnpm --filter @codepot/site validate:docs
 pnpm --filter @codepot/site typecheck
 pnpm --filter @codepot/site build
+docker compose config
 docker compose build site
 docker compose up -d site
-curl --fail http://127.0.0.1:3000/health
+curl --fail http://127.0.0.1:3020/health
 ```
