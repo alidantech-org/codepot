@@ -1,0 +1,5 @@
+node={{ file.meta.node }}
+selection={{ selection.name }}
+enum={{ enum.name.pascal.o }}
+source_ref={{ source.ref if source else "" }}
+values={% for value in enum.meta.enum_values %}{{ value }}{% if not loop.last %},{% endif %}{% endfor %}
