@@ -27,6 +27,7 @@ class JsonlQueueLimits:
     max_pending_bytes: int = 32 * 1024 * 1024
     max_events: int = 256
     wait_timeout_seconds: float = 0.05
+    emit_record_events: bool = False
 
 
 @dataclass(frozen=True, slots=True)
