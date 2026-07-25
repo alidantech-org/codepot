@@ -21,7 +21,7 @@ export default function DocsPage() {
   }, {});
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 md:px-6">
+    <div className="mx-auto w-full max-w-5xl px-4 md:px-6 py-6">
       <section className="border-b border-border pb-10">
         <p className="mb-3 font-mono text-xs uppercase tracking-widest text-primary">Documentation</p>
         <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
