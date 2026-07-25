@@ -92,8 +92,11 @@ async function validateItem(item, { parentPath = null, inheritedPackage = null }
     if (typeof parsed.data.title !== "string" || !parsed.data.title.trim()) {
       warn(`Documentation source ${resolved.source}.md has no frontmatter title.`);
     }
-    if (typeof parsed.data.description !== "string" || !parsed.data.description.trim()) {
-      warn(`Documentation source ${resolved.source}.md has no frontmatter description.`);
+    if (
+      parsed.data.description !== undefined &&
+      (typeof parsed.data.description !== "string" || !parsed.data.description.trim())
+    ) {
+      warn(`Documentation source ${resolved.source}.md has an invalid frontmatter description.`);
     }
 
     const packageId =
@@ -150,7 +153,7 @@ for (const [sourcePath, targetPath] of Object.entries(redirects)) {
 }
 
 const linkPattern = /\]\(\/docs(?:\/([a-z0-9][a-z0-9/_-]*))?(?:#[^)]+)?\)/g;
-for (const [path, document] of documents) {
+for (const [, document] of documents) {
   for (const match of document.content.matchAll(linkPattern)) {
     const target = match[1] ?? "";
     const redirectedTarget = redirects[target];
