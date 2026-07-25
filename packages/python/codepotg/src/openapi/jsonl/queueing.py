@@ -276,19 +276,21 @@ class JsonlRecordPipeline:
                         raise TypeError("JSONL record queue received an invalid item")
                     if self._cancelled or self._failure.get() is not None:
                         continue
-                    self._event_writer.submit(
-                        "record",
-                        "started",
-                        section=item.section,
-                        name=item.name,
-                    )
+                    if self._limits.emit_record_events:
+                        self._event_writer.submit(
+                            "record",
+                            "started",
+                            section=item.section,
+                            name=item.name,
+                        )
                     self._process(item)
-                    self._event_writer.submit(
-                        "record",
-                        "written",
-                        section=item.section,
-                        name=item.name,
-                    )
+                    if self._limits.emit_record_events:
+                        self._event_writer.submit(
+                            "record",
+                            "written",
+                            section=item.section,
+                            name=item.name,
+                        )
                 finally:
                     if isinstance(item, ExtractedRecord):
                         self._release_bytes(max(1, item.estimated_bytes))
