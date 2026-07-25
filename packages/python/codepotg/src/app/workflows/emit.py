@@ -12,13 +12,15 @@ from pathlib import Path
 from typing import Any
 
 from app.models import EmitInput, EmitOutput, RuntimeDiagnostic, RuntimeEvent
+from app.workflows.normalization import required_normalized_roots
 from app.workflows.template_paths import resolve_template_root
 from core.memory_trace import MemoryTrace
 from emission.bounded_graph_engine import emit_bounded_graph
-from emission.engine import emit as run_legacy_emission
+from emission.legacy_queued_engine import emit_legacy_queued as run_legacy_emission
 from emission.paths.config_loader import load_path_config
+from emission.templates.renderer import clear_environment_cache
 from inference.engine import InferenceEngine
-from inference.lossless_contract import build_api_contract
+from inference.generation_contract import build_generation_contract
 from languages.discovery import resolve_language_adapter
 from openapi.jsonl import compile_openapi_source_jsonl
 from openapi.loader import load_openapi_document
@@ -30,6 +32,7 @@ def run_emit(request: EmitInput) -> EmitOutput:
     try:
         return _run_emit(request, trace=trace)
     finally:
+        clear_environment_cache()
         trace.close()
 
 
@@ -121,15 +124,6 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
 
     _notify(
         request,
-        stage="building_contract",
-        message="Building compatibility API contract",
-    )
-    api_contract = build_api_contract(graph)
-    del graph
-    trace.snapshot("contract_built")
-
-    _notify(
-        request,
         stage="resolving_language",
         message=f"Resolving language adapter: {request.language}",
     )
@@ -138,6 +132,26 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
         adapter=adapter,
         templates_path=request.templates_path,
     )
+    normalized_roots = required_normalized_roots(template_root)
+    roots_message = (
+        "Normalized roots: " + ", ".join(sorted(normalized_roots))
+        if normalized_roots
+        else "Normalized roots: none (compatibility fast path)"
+    )
+    pre_diagnostics.append(RuntimeDiagnostic(level="info", message=roots_message))
+    _notify(request, stage="normalization_planned", message=roots_message)
+
+    _notify(
+        request,
+        stage="building_contract",
+        message="Building generation API contract",
+    )
+    api_contract = build_generation_contract(
+        graph,
+        normalized_roots=normalized_roots,
+    )
+    del graph
+    trace.snapshot("contract_built")
 
     _notify(request, stage="planning_output_files", message="Planning output files")
     template_contract = adapter.build_template_contract(
@@ -160,6 +174,7 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
                 "jsonl_reused": jsonl_result.reused,
                 "jsonl_source_size": source_size,
                 "jsonl_index_backend": "sqlite",
+                "normalized_roots": tuple(sorted(normalized_roots)),
             },
         ),
     )
@@ -180,7 +195,7 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
         _notify(
             request,
             stage="rendering_writing_files",
-            message="Rendering/writing files",
+            message="Rendering legacy pack with adaptive batches",
         )
         emission_result = run_legacy_emission(
             template_contract,

@@ -48,7 +48,7 @@ class _ValueBudget:
             raise JsonlLimitError(f"JSON value exceeds maximum item count {self.max_items}")
         if isinstance(value, str):
             self.bytes += len(value.encode("utf-8"))
-        elif isinstance(value, (bytes, bytearray)):
+        elif isinstance(value, bytes | bytearray):
             self.bytes += len(value)
         else:
             self.bytes += 16
@@ -65,9 +65,9 @@ def stream_openapi_json(
     """Stream one OpenAPI JSON document and emit direct section records.
 
     Only one direct path/component/x-codegen item is constructed at a time.
-    Unknown root sections and unsupported collections are skipped event-by-event.
+    Root metadata and root ``x-*`` extensions remain bounded in the manifest.
+    Unknown unsupported collections are skipped event-by-event.
     """
-
     source_path = Path(source)
     if source_path.suffix.lower() != ".json":
         raise JsonlInputError("JSONL compilation currently requires an OpenAPI .json input")
@@ -95,7 +95,9 @@ def stream_openapi_json(
             root_key = str(value)
             value_event, value_token = _next_event(events)
 
-            if root_key in _ROOT_METADATA_KEYS:
+            if root_key in _ROOT_METADATA_KEYS or (
+                root_key.startswith("x-") and root_key != "x-codegen"
+            ):
                 budget = _ValueBudget(
                     max_items=resolved_limits.max_root_items,
                     max_bytes=resolved_limits.max_root_bytes,

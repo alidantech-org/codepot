@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from enum import Enum
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +14,7 @@ from contracts.emission import TemplateContext
 
 
 def create_environment(template_root: Path) -> Environment:
-    """Create a strict Jinja environment for an existing template pack."""
+    """Create a strict Jinja environment for one generation run."""
     resolved_root = resolve_renderer_template_root(template_root)
     environment = Environment(
         loader=FileSystemLoader(str(resolved_root)),
@@ -22,6 +23,10 @@ def create_environment(template_root: Path) -> Environment:
         keep_trailing_newline=True,
         trim_blocks=True,
         lstrip_blocks=True,
+        cache_size=2_048,
+        # Environments are cleared after every generation. Avoid one source mtime
+        # stat per rendered output while still picking up edits on the next run.
+        auto_reload=False,
     )
 
     environment.filters["dash"] = dash
@@ -31,6 +36,22 @@ def create_environment(template_root: Path) -> Environment:
     environment.filters["info_comment"] = info_comment
 
     return environment
+
+
+def cached_environment(template_root: Path) -> Environment:
+    """Return one reusable environment per resolved template root."""
+    resolved_root = resolve_renderer_template_root(template_root)
+    return _cached_environment(str(resolved_root))
+
+
+@lru_cache(maxsize=32)
+def _cached_environment(resolved_root: str) -> Environment:
+    return create_environment(Path(resolved_root))
+
+
+def clear_environment_cache() -> None:
+    """Release cached environments, compiled templates, and loader state."""
+    _cached_environment.cache_clear()
 
 
 def resolve_renderer_template_root(template_root: Path) -> Path:
@@ -58,8 +79,8 @@ def render_template(
     relative_path: Path,
     context: TemplateContext,
 ) -> str:
-    """Render a template by relative path."""
-    environment = create_environment(template_root)
+    """Render a template by relative path using the shared compiled cache."""
+    environment = cached_environment(template_root)
     template = environment.get_template(relative_path.as_posix())
     return template.render(**context)
 

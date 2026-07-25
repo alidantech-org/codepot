@@ -22,11 +22,11 @@ class SystemResources:
 
     @property
     def usable_memory(self) -> int:
-        """Return a conservative available-memory estimate."""
+        """Return a conservative current-memory estimate."""
         if self.available_memory is not None:
-            return max(self.available_memory, 64 * _MIB)
+            return max(self.available_memory, _MIB)
         if self.total_memory is not None:
-            return max(self.total_memory // 2, 64 * _MIB)
+            return max(self.total_memory // 2, 32 * _MIB)
         return 512 * _MIB
 
 
@@ -76,8 +76,6 @@ def detect_system_resources() -> SystemResources:
         total, available = _windows_memory_status()
     elif sys.platform.startswith("linux"):
         total, available = _linux_memory_status()
-    elif sys.platform == "darwin":
-        total, available = _posix_memory_status()
     else:
         total, available = _posix_memory_status()
     return SystemResources(
@@ -101,26 +99,46 @@ def tune_runtime(
     resources = detect_system_resources()
     usable = resources.usable_memory
 
-    # Use RAM aggressively enough to avoid tiny queues, but never reserve more than
-    # a quarter of what is currently available for one CodepotG phase.
-    phase_budget = _clamp(usable // 4, 128 * _MIB, 2 * _GIB)
-    source_factor = _clamp(max(source_bytes * 4, 64 * _MIB), 64 * _MIB, phase_budget)
+    # One active phase may use at most one quarter of memory currently available.
+    # Floors shrink with the phase budget instead of overcommitting low-memory hosts.
+    phase_budget = _clamp(usable // 4, 16 * _MIB, 2 * _GIB)
+    phase_budget = min(phase_budget, usable)
+    hot_index_bytes = min(
+        phase_budget,
+        256 * _MIB,
+        max(min(8 * _MIB, phase_budget), phase_budget // 8),
+    )
+    sqlite_cache_bytes = min(
+        phase_budget,
+        512 * _MIB,
+        max(min(16 * _MIB, phase_budget), phase_budget // 6),
+    )
+    jsonl_pending_bytes = min(
+        phase_budget,
+        512 * _MIB,
+        max(min(64 * _MIB, phase_budget), source_bytes * 4),
+    )
+    pending_render_bytes = min(
+        phase_budget,
+        512 * _MIB,
+        max(min(32 * _MIB, phase_budget), phase_budget // 3),
+    )
+    write_batch_bytes = min(
+        phase_budget,
+        32 * _MIB,
+        max(min(2 * _MIB, phase_budget), phase_budget // 32),
+    )
 
-    hot_index_bytes = _clamp(phase_budget // 8, 32 * _MIB, 256 * _MIB)
-    sqlite_cache_bytes = _clamp(phase_budget // 6, 32 * _MIB, 512 * _MIB)
-    jsonl_pending_bytes = _clamp(source_factor, 64 * _MIB, min(phase_budget, 512 * _MIB))
-    pending_render_bytes = _clamp(phase_budget // 3, 64 * _MIB, 512 * _MIB)
-    write_batch_bytes = _clamp(phase_budget // 32, 4 * _MIB, 32 * _MIB)
-
+    memory_worker_cap = 4 if usable < 512 * _MIB else 12
     render_workers = _env_int(
         "CODEPOTG_RENDER_WORKERS",
-        _clamp(resources.cpu_count, 2, 12),
+        _clamp(resources.cpu_count, 2, memory_worker_cap),
         minimum=1,
         maximum=64,
     )
     write_workers = _env_int(
         "CODEPOTG_WRITE_WORKERS",
-        _clamp(max(2, resources.cpu_count // 2), 2, 8),
+        _clamp(max(2, resources.cpu_count // 2), 2, min(8, memory_worker_cap)),
         minimum=1,
         maximum=32,
     )
@@ -142,9 +160,13 @@ def tune_runtime(
         cpu_count=resources.cpu_count,
         total_memory=resources.total_memory,
         available_memory=resources.available_memory,
-        hot_index_entries=_clamp(hot_index_bytes // 1024, 16_384, 262_144),
+        hot_index_entries=_clamp(hot_index_bytes // 1024, 4_096, 262_144),
         hot_index_bytes=hot_index_bytes,
-        jsonl_pending_records=_clamp(jsonl_pending_bytes // (256 * 1024), 64, 2048),
+        jsonl_pending_records=_clamp(
+            jsonl_pending_bytes // (256 * 1024),
+            16,
+            2_048,
+        ),
         jsonl_pending_bytes=jsonl_pending_bytes,
         jsonl_event_queue=256,
         sqlite_cache_bytes=sqlite_cache_bytes,
