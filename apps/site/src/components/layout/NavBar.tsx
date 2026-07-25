@@ -15,7 +15,7 @@ import {
 import { GitHubIcon } from "@/components/icons/GitHubIcon";
 import { MobileSidebar } from "@/components/layout/MobileSidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { DOC_SEARCH_INDEX } from "@/generated/docs";
+import * as GeneratedDocs from "@/generated/docs";
 
 import Logo from "./Logo";
 
@@ -29,12 +29,31 @@ const primaryLinks = [
 const MAX_RESULTS = 12;
 const SEARCH_DEBOUNCE_MS = 150;
 
-type SearchRecord = (typeof DOC_SEARCH_INDEX)[number];
+interface SearchRecord {
+  id: string;
+  kind: "page" | "heading";
+  path: string;
+  href: string;
+  title: string;
+  pageTitle: string;
+  section: string;
+  package: string | null;
+  description: string;
+  snippet: string;
+  level: number;
+  breadcrumbs: Array<{ title: string; path: string }>;
+  searchText: string;
+}
 
 interface RankedResult {
   item: SearchRecord;
   score: number;
 }
+
+const generatedModule = GeneratedDocs as unknown as Record<string, unknown>;
+const DOC_SEARCH_INDEX = Array.isArray(generatedModule.DOC_SEARCH_INDEX)
+  ? (generatedModule.DOC_SEARCH_INDEX as SearchRecord[])
+  : [];
 
 function normalize(value: string): string {
   return value
@@ -140,15 +159,15 @@ function Highlight({ text, query }: { text: string; query: string }) {
 }
 
 function ResultContext({ item }: { item: SearchRecord }) {
-  const labels = item.breadcrumbs
+  const labels = (item.breadcrumbs ?? [])
     .filter((crumb) => crumb.path !== "")
     .map((crumb) => crumb.title);
 
   return (
     <span className="mt-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden font-mono text-[10px] uppercase tracking-wide text-muted-foreground/75">
       <span className="shrink-0">{item.section}</span>
-      {labels.map((label) => (
-        <Fragment key={label}>
+      {labels.map((label, index) => (
+        <Fragment key={`${label}-${index}`}>
           <span aria-hidden="true" className="text-border">
             /
           </span>
