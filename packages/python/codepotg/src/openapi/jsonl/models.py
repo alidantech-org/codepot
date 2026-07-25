@@ -151,6 +151,7 @@ class JsonlCompileResult:
     cache_dir: Path
     manifest: JsonlManifest
     hot_index: Any
+    compatibility_path: Path | None = None
     reused: bool = False
     records_written: int = 0
     definitions_written: int = 0
