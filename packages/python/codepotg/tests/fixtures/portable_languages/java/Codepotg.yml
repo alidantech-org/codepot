@@ -1,0 +1,8 @@
+allow: true
+
+tasks:
+  fixture:
+    input: ../_shared/openapi.json
+    language: java
+    templateDir: ../_shared/templates
+    output: ./.generated-review
