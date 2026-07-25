@@ -25,24 +25,28 @@ export function Pipeline({ steps }: { steps: PipelineStep[] }) {
         New ideas can be proven in mature packages, stabilized behind the frontend-neutral codepotx runtime, and finally expressed through the Rust language and toolchain.
       </p>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-card/50">
+      <div className="border-y border-border">
         {steps.map(({ step, description, details, icon }, index) => {
           const isExpanded = expandedSteps.has(step);
           const Icon = icon ? iconMap[icon as keyof typeof iconMap] : undefined;
           return (
             <div key={step} className={index !== steps.length - 1 ? "border-b border-border" : ""}>
-              <button type="button" onClick={() => toggleStep(step)} className="group flex w-full items-center gap-5 px-6 py-4 text-left transition-colors hover:bg-card-muted/50">
+              <button
+                type="button"
+                onClick={() => toggleStep(step)}
+                className="group flex w-full items-center gap-4 py-5 text-left transition-colors hover:text-primary sm:gap-6"
+              >
                 <span className="w-8 shrink-0 font-mono text-xs text-muted-foreground group-hover:text-primary">{step}</span>
-                <div className="flex flex-1 items-center gap-2">
-                  {Icon && <span className="text-primary"><Icon className="h-5 w-5" /></span>}
-                  <div className="h-px flex-1 border-t border-dashed border-border" />
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  {Icon && <Icon className="h-5 w-5 shrink-0 text-primary" />}
+                  <div className="hidden h-px flex-1 border-t border-dashed border-border sm:block" />
                 </div>
-                <span className="text-sm font-medium text-foreground">{description}</span>
-                <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-90" : ""} group-hover:text-secondary`} />
+                <span className="max-w-[55%] text-sm font-medium text-foreground sm:max-w-none">{description}</span>
+                <ChevronRight className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-90" : ""} group-hover:text-secondary`} />
               </button>
-              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
-                <div className="px-6 pb-4 pt-0">
-                  <div className="pl-13 text-sm leading-relaxed text-muted-foreground">{details}</div>
+              <div className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+                <div className="overflow-hidden">
+                  <p className="pb-5 pl-12 text-sm leading-relaxed text-muted-foreground sm:pl-14">{details}</p>
                 </div>
               </div>
             </div>

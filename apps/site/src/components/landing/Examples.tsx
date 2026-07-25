@@ -5,16 +5,14 @@ import type { CodeExample } from "@/data/types";
 
 function CodeBlock({ example }: { example: CodeExample }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-background">
-      <div className="flex items-center gap-2 border-b border-border bg-card-muted/60 px-4 py-3">
-        <span className="h-2.5 w-2.5 rounded-full bg-red-500/60" />
-        <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/60" />
-        <span className="h-2.5 w-2.5 rounded-full bg-green-500/60" />
-        <span className="ml-3 font-mono text-[11px] text-muted-foreground">{example.filename}</span>
+    <div className="border-y border-border bg-card/20">
+      <div className="flex items-center gap-2 border-b border-border px-1 py-3">
+        <span className="h-2 w-2 rounded-full bg-primary/60" />
+        <span className="h-2 w-2 rounded-full bg-secondary/60" />
+        <span className="h-2 w-2 rounded-full bg-accent/70" />
+        <span className="ml-2 font-mono text-[11px] text-muted-foreground">{example.filename}</span>
       </div>
-      <div className="p-0">
-        <CodeHighlight code={example.code} language={example.language} />
-      </div>
+      <CodeHighlight code={example.code} language={example.language} />
     </div>
   );
 }
@@ -25,7 +23,27 @@ interface ExamplesProps {
   runtimeCode: CodeExample;
 }
 
+const examples = [
+  {
+    title: "1. Author contracts",
+    description: "Use codepot-openapi to produce portable OpenAPI and x-codegen metadata.",
+    key: "contract" as const,
+  },
+  {
+    title: "2. Generate with Jinja",
+    description: "Use codepotg tasks and bundled or project-owned template packs.",
+    key: "task" as const,
+  },
+  {
+    title: "3. Embed the runtime",
+    description: "Drive codepotx through the CLI or any future frontend.",
+    key: "runtime" as const,
+  },
+];
+
 export function Examples({ contractCode, taskCode, runtimeCode }: ExamplesProps) {
+  const code = { contract: contractCode, task: taskCode, runtime: runtimeCode };
+
   return (
     <section id="examples" className="pb-24">
       <p className="mb-3 font-mono text-[11px] uppercase tracking-widest text-accent">Workflows</p>
@@ -34,22 +52,14 @@ export function Examples({ contractCode, taskCode, runtimeCode }: ExamplesProps)
         The prototype workflow already supports real projects. codepotx is the official runtime rewrite, designed so the CLI, editor tools, web clients, and MCP integrations can share the same behavior.
       </p>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card p-6 px-3">
-          <h3 className="mb-3 font-semibold text-foreground">1. Author contracts</h3>
-          <p className="mb-4 text-sm leading-6 text-muted-foreground">Use codepot-openapi to produce portable OpenAPI and x-codegen metadata.</p>
-          <CodeBlock example={contractCode} />
-        </div>
-        <div className="rounded-xl border border-border bg-card p-6 px-3">
-          <h3 className="mb-3 font-semibold text-foreground">2. Generate with Jinja</h3>
-          <p className="mb-4 text-sm leading-6 text-muted-foreground">Use codepotg tasks and bundled or project-owned template packs.</p>
-          <CodeBlock example={taskCode} />
-        </div>
-        <div className="rounded-xl border border-border bg-card p-6 px-3">
-          <h3 className="mb-3 font-semibold text-foreground">3. Embed the runtime</h3>
-          <p className="mb-4 text-sm leading-6 text-muted-foreground">Drive codepotx through the CLI or any future frontend.</p>
-          <CodeBlock example={runtimeCode} />
-        </div>
+      <div className="grid grid-cols-1 gap-10 border-y border-border py-8 md:grid-cols-3 md:gap-0">
+        {examples.map((example) => (
+          <div key={example.key} className="md:border-l md:border-border md:px-6 first:md:border-l-0 first:md:pl-0 last:md:pr-0">
+            <h3 className="mb-3 font-semibold text-foreground">{example.title}</h3>
+            <p className="mb-5 min-h-12 text-sm leading-6 text-muted-foreground">{example.description}</p>
+            <CodeBlock example={code[example.key]} />
+          </div>
+        ))}
       </div>
 
       <div className="mt-6 text-sm text-muted-foreground">

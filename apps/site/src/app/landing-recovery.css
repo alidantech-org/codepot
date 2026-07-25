@@ -1,0 +1,102 @@
+.landing-shell > section:not(:first-child):not(:last-child) {
+  margin-bottom: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.landing-shell > section:not(:first-child):not(:last-child)::before,
+.landing-shell > section:nth-child(even):not(:first-child):not(:last-child)::before {
+  display: none !important;
+}
+
+.landing-shell article {
+  transition: color 220ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .landing-shell article:hover {
+    transform: none !important;
+    border-color: var(--border);
+    box-shadow: none !important;
+  }
+}
+
+.landing-free-curves {
+  position: absolute;
+  inset: 0 -8vw;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.landing-free-curves span {
+  position: absolute;
+  display: block;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+  border-radius: 50%;
+  opacity: 0.55;
+}
+
+.landing-free-curves span:first-child {
+  top: 39rem;
+  right: -16rem;
+  width: 38rem;
+  height: 22rem;
+  transform: rotate(-18deg);
+  animation: free-curve-drift 18s ease-in-out infinite;
+}
+
+.landing-free-curves span:nth-child(2) {
+  top: 108rem;
+  left: -18rem;
+  width: 42rem;
+  height: 25rem;
+  border-color: color-mix(in srgb, var(--accent) 16%, transparent);
+  transform: rotate(16deg);
+  animation: free-curve-drift 22s ease-in-out -6s infinite reverse;
+}
+
+.landing-free-curves span:nth-child(3) {
+  right: 6%;
+  bottom: 24rem;
+  width: 22rem;
+  height: 12rem;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--secondary) 16%, transparent);
+  transform: rotate(-10deg);
+  animation: free-curve-drift 20s ease-in-out -10s infinite;
+}
+
+@keyframes free-curve-drift {
+  0%, 100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-shell > section:not(:first-child):not(:last-child) {
+    border-radius: 0 !important;
+    padding-inline: 0 !important;
+  }
+
+  .landing-free-curves {
+    inset-inline: -2rem;
+  }
+
+  .landing-free-curves span {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-free-curves span {
+    animation: none;
+  }
+}
