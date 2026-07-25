@@ -50,7 +50,7 @@ def test_document_contract_exposes_all_top_level_openapi_families() -> None:
                     "get": {
                         "operationId": "listWidgets",
                         "responses": {"200": {"description": "OK"}},
-                        "x-operation-extra": true,
+                        "x-operation-extra": True,
                     },
                 }
             },
@@ -89,8 +89,8 @@ def test_document_contract_exposes_all_top_level_openapi_families() -> None:
                 "description": "API docs",
                 "url": "https://example.test/docs",
             },
-            "x-project-extra": {"enabled": true},
-            "futureStandardField": {"preserved": true},
+            "x-project-extra": {"enabled": True},
+            "futureStandardField": {"preserved": True},
         }
     )
 
