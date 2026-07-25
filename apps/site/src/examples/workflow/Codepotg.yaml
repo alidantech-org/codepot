@@ -1,0 +1,31 @@
+allow: true
+
+write_policy:
+  default_mode: managed
+  managed_roots:
+    - generated
+  immutable_roots:
+    - src/manual
+  protected_roots:
+    - src/manual
+  clean_roots:
+    - generated
+
+tasks:
+  project-sdk:
+    description: Generate a typed project SDK from the Acme OpenAPI contract.
+    input: ./openapi/acme-projects.json
+    language: typescript
+    templateDir: ./templates/project-sdk
+    output: ./generated/project-sdk
+    clean:
+      - models
+      - services
+    env:
+      PACKAGE_NAME: "@acme/project-sdk"
+    before:
+      - command: pnpm prettier --write ./openapi/acme-projects.json
+        required: false
+    after:
+      - command: pnpm prettier --write ./generated/project-sdk
+        required: true
