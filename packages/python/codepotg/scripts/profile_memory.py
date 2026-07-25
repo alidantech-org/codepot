@@ -29,7 +29,7 @@ from app.models import EmitInput  # noqa: E402
 from app.workflows.template_paths import resolve_template_root  # noqa: E402
 from core.memory_trace import MemoryTrace  # noqa: E402
 from emission.bounded_graph_engine import emit_bounded_graph  # noqa: E402
-from emission.engine import emit as emit_legacy  # noqa: E402
+from emission.legacy_queued_engine import emit_legacy_queued as emit_legacy  # noqa: E402
 from emission.paths.config_loader import load_path_config  # noqa: E402
 from inference.engine import InferenceEngine  # noqa: E402
 from inference.lossless_contract import build_api_contract  # noqa: E402
