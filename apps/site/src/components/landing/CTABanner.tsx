@@ -2,13 +2,16 @@ import Link from "next/link";
 
 export function CTABanner() {
   return (
-    <section className="landing-card-section relative mx-auto mb-24 max-w-7xl overflow-hidden rounded-[2.5rem_1.5rem_4.5rem_1.5rem] border border-primary/20 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--card)_94%,var(--primary)_6%)_0%,color-mix(in_srgb,var(--card-muted)_88%,var(--accent)_12%)_52%,color-mix(in_srgb,var(--background)_92%,var(--primary)_8%)_100%)] px-6 py-14 text-center shadow-xl shadow-primary/8 sm:px-12 sm:py-16 dark:border-primary/20 dark:bg-[linear-gradient(135deg,#21130c_0%,#3b2114_52%,#24140c_100%)] dark:shadow-2xl dark:shadow-primary/10">
-      <div aria-hidden="true" className="absolute -left-24 -top-28 h-64 w-64 rounded-full bg-primary/12 blur-3xl dark:bg-primary/20" />
-      <div aria-hidden="true" className="absolute -bottom-32 -right-20 h-72 w-72 rounded-full bg-accent/10 blur-3xl dark:bg-accent/15" />
-      <div aria-hidden="true" className="hero-orbit absolute -right-14 top-6 h-44 w-44 rounded-full border border-dashed border-accent/20 dark:border-accent/25" />
+    <section className="landing-card-section relative mx-auto mb-24 max-w-7xl overflow-hidden rounded-[2.5rem_1.5rem_4.5rem_1.5rem] border border-primary/20 bg-card px-6 py-14 text-center shadow-xl shadow-primary/8 ring-1 ring-inset ring-white/40 sm:px-12 sm:py-16 dark:border-primary/20 dark:bg-[linear-gradient(135deg,#21130c_0%,#3b2114_52%,#24140c_100%)] dark:shadow-2xl dark:shadow-primary/10 dark:ring-white/5">
+      <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(135deg,transparent_0%,color-mix(in_srgb,var(--primary)_7%,transparent)_45%,color-mix(in_srgb,var(--accent)_9%,transparent)_100%)] dark:hidden" />
+      <div aria-hidden="true" className="absolute -left-24 -top-28 h-64 w-64 rounded-full bg-primary/10 blur-3xl dark:bg-primary/20" />
+      <div aria-hidden="true" className="absolute -bottom-32 -right-20 h-72 w-72 rounded-full bg-accent/8 blur-3xl dark:bg-accent/15" />
+      <div aria-hidden="true" className="hero-orbit absolute -right-14 top-6 h-44 w-44 rounded-full border border-dashed border-primary/15 dark:border-accent/25" />
 
       <div className="relative z-10">
-        <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em] text-primary dark:text-accent-light">Craft the next layer</p>
+        <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.22em] text-primary dark:text-accent-light">
+          Craft the next layer
+        </p>
         <h2 className="landing-display mx-auto mb-4 max-w-3xl text-4xl font-semibold leading-tight text-foreground sm:text-5xl dark:text-[#fff7ed]">
           Choose the Codepot workflow that fits{" "}
           <span className="text-primary dark:text-[#e4b775]">today</span>
@@ -25,7 +28,7 @@ export function CTABanner() {
           </Link>
           <Link
             href="/docs/codepot-lang"
-            className="flex h-12 items-center justify-center rounded-full border border-border bg-background/75 px-7 text-sm font-medium text-foreground backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-card-muted motion-reduce:transform-none motion-reduce:transition-none dark:border-[#f0c58e]/25 dark:bg-white/5 dark:text-[#fff7ed] dark:hover:bg-white/10"
+            className="flex h-12 items-center justify-center rounded-full border border-border bg-background px-7 text-sm font-medium text-foreground shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-card-muted motion-reduce:transform-none motion-reduce:transition-none dark:border-[#f0c58e]/25 dark:bg-white/5 dark:text-[#fff7ed] dark:shadow-none dark:hover:bg-white/10"
           >
             Explore Codepot Lang
           </Link>
