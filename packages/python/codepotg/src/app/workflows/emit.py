@@ -13,6 +13,7 @@ from typing import Any
 
 from app.models import EmitInput, EmitOutput, RuntimeDiagnostic, RuntimeEvent
 from app.workflows.template_paths import resolve_template_root
+from core.memory_trace import MemoryTrace
 from emission.bounded_graph_engine import emit_bounded_graph
 from emission.engine import emit as run_legacy_emission
 from emission.paths.config_loader import load_path_config
@@ -26,6 +27,15 @@ from openapi.loader import load_openapi_document
 def run_emit(request: EmitInput) -> EmitOutput:
     """Run the emit workflow and return structured output."""
 
+    trace = MemoryTrace.from_environment()
+    try:
+        return _run_emit(request, trace=trace)
+    finally:
+        trace.close()
+
+
+def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
+    trace.snapshot("start")
     cache_path = _generation_cache_path(request.input_path)
     pre_diagnostics: list[RuntimeDiagnostic] = []
     seen_jsonl_files: set[str] = set()
@@ -74,6 +84,7 @@ def run_emit(request: EmitInput) -> EmitOutput:
         cache_path,
         progress=jsonl_progress,
     )
+    trace.snapshot("jsonl_ready")
     pre_diagnostics.append(
         RuntimeDiagnostic(
             level="info",
@@ -91,6 +102,7 @@ def run_emit(request: EmitInput) -> EmitOutput:
         message=f"Loading compatibility OpenAPI contract: {compatibility_input}",
     )
     document = load_openapi_document(compatibility_input)
+    trace.snapshot("document_loaded")
 
     _notify(
         request,
@@ -104,6 +116,7 @@ def run_emit(request: EmitInput) -> EmitOutput:
     )
     graph = InferenceEngine().infer(document, copy_raw=False)
     del document
+    trace.snapshot("graph_inferred")
 
     _notify(
         request,
@@ -112,6 +125,7 @@ def run_emit(request: EmitInput) -> EmitOutput:
     )
     api_contract = build_api_contract(graph)
     del graph
+    trace.snapshot("contract_built")
 
     _notify(
         request,
@@ -148,6 +162,7 @@ def run_emit(request: EmitInput) -> EmitOutput:
             },
         ),
     )
+    trace.snapshot("template_contract_built")
 
     path_config = load_path_config(template_root)
     if path_config.uses_graph:
@@ -170,6 +185,7 @@ def run_emit(request: EmitInput) -> EmitOutput:
             template_contract,
             progress=request.progress,
         )
+    trace.snapshot("emission_complete")
 
     _notify(
         request,
@@ -233,6 +249,10 @@ def run_emit(request: EmitInput) -> EmitOutput:
     diagnostics.extend(
         RuntimeDiagnostic(level="info", message=message)
         for message in post_result.diagnostics
+    )
+    diagnostics.extend(
+        RuntimeDiagnostic(level="info", message=message)
+        for message in trace.summaries()
     )
 
     return EmitOutput(
