@@ -72,7 +72,7 @@ export function NavBar() {
               aria-label="Search documentation"
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground sm:w-auto md:border md:border-border md:bg-card/80 md:px-3 lg:min-w-52 lg:justify-start"
             >
-              <Search className="h-4 w-4 shrink-0" />
+              <Search className="h-5 w-5 shrink-0" />
               <span className="ml-2 hidden text-sm sm:inline">Search docs</span>
             </button>
             <button
@@ -81,7 +81,7 @@ export function NavBar() {
               aria-label="Open navigation menu"
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-card-muted hover:text-foreground lg:hidden"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-7 w-7 font-bold" />
             </button>
           </div>
         </div>
