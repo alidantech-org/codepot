@@ -66,7 +66,7 @@ export default async function DocPage({ params }: DocPageProps) {
       </article>
 
       {tocHeadings.length > 0 && (
-        <aside className="sticky top-20 hidden max-h-[calc(100dvh-6rem)] self-start overflow-y-auto border-l border-border/50 pl-5 xl:block scrollbar-thin">
+        <aside className="sticky top-15 hidden max-h-[calc(100dvh-6rem)] self-start overflow-y-auto pl-5 xl:block scrollbar-thin">
           <DocsToc headings={page.headings} />
         </aside>
       )}

@@ -55,7 +55,7 @@ export function DocsToc({ headings, className }: { headings: Heading[]; classNam
           aria-label="Table of contents"
           className="max-h-[calc(100dvh-8rem)] space-y-0.5 overflow-y-auto pr-2 scrollbar-thin"
         >
-          {filtered.map((heading) => {
+          {filtered.map((heading, index) => {
             const isActive = activeId === heading.id;
             const isChild = heading.level === 3;
             return (
@@ -74,7 +74,7 @@ export function DocsToc({ headings, className }: { headings: Heading[]; classNam
                       : "border-transparent text-muted-foreground",
                 )}
               >
-                {heading.text}
+               {index + 1}. {heading.text}
               </a>
             );
           })}
