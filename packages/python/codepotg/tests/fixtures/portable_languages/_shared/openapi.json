@@ -1,0 +1,86 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Portable Contract API",
+    "version": "v1",
+    "description": "Executable template-variable probe fixture"
+  },
+  "servers": [
+    {
+      "url": "https://portable.example.test/v1",
+      "description": "Fixture server",
+      "variables": {
+        "region": {
+          "default": "test"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/widgets": {
+      "get": {
+        "operationId": "listWidgets",
+        "tags": ["widgets"],
+        "description": "List fixture widgets",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Widget list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Widget"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-operation-probe": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "WidgetStatus": {
+        "type": "string",
+        "enum": ["active", "disabled"],
+        "x-schema-probe": "status"
+      },
+      "Widget": {
+        "type": "object",
+        "description": "Fixture widget",
+        "required": ["id", "status"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/WidgetStatus"
+          }
+        },
+        "x-schema-probe": "widget"
+      }
+    }
+  },
+  "x-portable-probe": {
+    "enabled": true,
+    "label": "lossless"
+  }
+}
