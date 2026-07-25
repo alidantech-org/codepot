@@ -68,6 +68,10 @@ interface RawNavigationItem {
   readonly children?: readonly RawNavigationItem[];
 }
 
+export interface GeneratedDocParams {
+  path?: string[];
+}
+
 const DOC_TOCS = tocData as Partial<Record<DocPath, Heading[]>>;
 
 export function hrefForDocPath(path: string): string {
@@ -208,10 +212,10 @@ export function getRedirectTarget(path: string): string | null {
     : null;
 }
 
-export function generateStaticParams(): { path: string[] }[] {
-  return Object.keys(DOCS).map((path) => ({
-    path: path ? path.split("/") : [],
-  }));
+export function generateStaticParams(): GeneratedDocParams[] {
+  return Object.keys(DOCS).map((path) =>
+    path ? { path: path.split("/") } : {},
+  );
 }
 
 export function generateDocMetadata(doc: Doc): Metadata {
