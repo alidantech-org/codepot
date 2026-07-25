@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -75,6 +76,9 @@ def test_large_real_fixture_streams_to_sqlite_indexed_jsonl(
         {"sequence": 2, "stage": "compiler", "status": "completed"},
     ]
 
+    # The monkeypatch proves the compiler itself never used json.load(). Restore it
+    # before constructing the ordinary cache reader, which may inspect the manifest.
+    monkeypatch.undo()
     store = JsonlIndexStore(result.cache_dir, hot_index=result.hot_index)
     try:
         schema_ref = "#/components/schemas/AppStatus"
@@ -121,6 +125,7 @@ def test_jsonl_output_is_deterministic_and_reuses_unchanged_source(
 
     assert first.manifest.to_json() == second.manifest.to_json()
     assert _tree_hashes(first_dir) == _tree_hashes(second_dir)
+    assert _sqlite_signature(first_dir) == _sqlite_signature(second_dir)
 
     reused = compile_openapi_jsonl(source, first_dir)
     assert reused.reused
@@ -136,5 +141,26 @@ def _tree_hashes(root: Path) -> dict[str, str]:
     return {
         path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
         for path in sorted(root.rglob("*"))
-        if path.is_file()
+        if path.is_file() and path.name != "index.sqlite"
     }
+
+
+def _sqlite_signature(root: Path) -> tuple[tuple[object, ...], ...]:
+    connection = sqlite3.connect(root / "index.sqlite")
+    try:
+        rows: list[tuple[object, ...]] = []
+        for table, order_by in (
+            ("locations", "key"),
+            ("definitions", "lookup, value"),
+            ("mentions", "index_name, value, item, purpose, file"),
+            ("dependencies", "source, target, purpose, file"),
+        ):
+            rows.extend(
+                (table, *row)
+                for row in connection.execute(
+                    f"SELECT * FROM {table} ORDER BY {order_by}"  # noqa: S608
+                )
+            )
+        return tuple(rows)
+    finally:
+        connection.close()
