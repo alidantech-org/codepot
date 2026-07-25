@@ -62,6 +62,15 @@ def bounded_graph_context(contract: TemplateContract) -> BoundedGraphContext:
         "selected_frontends": contract.selected_frontends,
         "frontend_count": contract.frontend_count,
     }
+    api_meta = getattr(contract.api, "meta", {})
+    if isinstance(api_meta, Mapping):
+        normalized = api_meta.get("normalized")
+        domains = api_meta.get("normalized_domains")
+        if normalized is not None:
+            public["normalized"] = normalized
+        if domains is not None:
+            public["domains"] = domains
+
     selection_roots = {
         "api": contract.api,
         "resources": contract.resources,
