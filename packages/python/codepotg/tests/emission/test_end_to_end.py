@@ -1,22 +1,18 @@
-"""End-to-end emission test with debug templates."""
+"""End-to-end emission tests with the real OpenAPI fixture."""
 
 from __future__ import annotations
-
-from pathlib import Path
 
 from src.app.app import GeneratorApp
 from tests.fixtures.templates import write_debug_templates
 
 
-def test_debug_emit_end_to_end(tmp_path) -> None:
-    """Test full emission pipeline with debug language and templates."""
+def test_debug_emit_end_to_end(tmp_path, real_openapi_yaml_path) -> None:
+    """Generate the complete debug pack from the committed real-world spec."""
     template_root = write_debug_templates(tmp_path / "templates")
-    input_path = _write_resource_path_openapi(tmp_path / "openapi.yaml")
     output_path = tmp_path / "output"
 
-    app = GeneratorApp()
-    result = app.emit(
-        input_path=input_path,
+    result = GeneratorApp().emit(
+        input_path=real_openapi_yaml_path,
         language="debug",
         output_path=output_path,
         templates_path=template_root,
@@ -25,34 +21,47 @@ def test_debug_emit_end_to_end(tmp_path) -> None:
 
     assert result.language == "debug"
     assert result.dry_run is False
-    assert len(result.planned) > 0
-    assert len(result.written) > 0
+    assert result.planned
+    assert result.written
 
     for written_path in result.written:
         assert written_path.exists()
         assert written_path.is_relative_to(output_path)
 
     summary_path = output_path / "summary.txt"
-    assert summary_path.exists()
-    summary_content = summary_path.read_text(encoding="utf-8")
-    assert "API:" in summary_content
-    assert "Language: debug" in summary_content
+    assert summary_path.read_text(encoding="utf-8") == (
+        "API: Alidantech API\nLanguage: debug\n"
+    )
 
-    resource_docs = output_path / "docs" / "resources" / "platform" / "auth" / "users"
-    assert (resource_docs / "index.md").exists()
-    assert (resource_docs / "operations.md").exists()
-    assert (resource_docs / "schemas.md").exists()
-    assert (output_path / "docs" / "resources" / "shared" / "index.md").exists()
+    apps_docs = output_path / "docs" / "resources" / "platform" / "apps"
+    assert (apps_docs / "index.md").is_file()
+    assert (apps_docs / "operations.md").is_file()
+    assert (apps_docs / "schemas.md").is_file()
+    assert (apps_docs / "operations" / "get_find_apps.md").is_file()
+    assert (
+        apps_docs / "schemas" / "dtos" / "app_list_query.md"
+    ).is_file()
+    assert (
+        apps_docs / "schemas" / "enums" / "app_status.md"
+    ).is_file()
+    assert (
+        output_path
+        / "docs"
+        / "resources"
+        / "shared"
+        / "schemas"
+        / "enums"
+        / "shared_sort.md"
+    ).is_file()
 
 
-def test_debug_emit_dry_run(tmp_path, sample_openapi_path) -> None:
-    """Test dry-run mode with debug templates."""
+def test_debug_emit_dry_run(tmp_path, real_openapi_yaml_path) -> None:
+    """Plan the complete real-world spec without mutating the output tree."""
     template_root = write_debug_templates(tmp_path / "templates")
     output_path = tmp_path / "output"
 
-    app = GeneratorApp()
-    result = app.emit(
-        input_path=sample_openapi_path,
+    result = GeneratorApp().emit(
+        input_path=real_openapi_yaml_path,
         language="debug",
         output_path=output_path,
         templates_path=template_root,
@@ -60,20 +69,22 @@ def test_debug_emit_dry_run(tmp_path, sample_openapi_path) -> None:
     )
 
     assert result.dry_run is True
-    assert len(result.planned) > 0
-    assert len(result.written) == 0
-    assert len(result.skipped) > 0
+    assert result.planned
+    assert result.written == []
+    assert result.skipped
     assert not output_path.exists()
 
 
-def test_resource_first_debug_docs_paths_are_planned(tmp_path, sample_openapi_path) -> None:
-    """Plan resource-first paths using the self-contained debug fixture pack."""
+def test_real_resource_first_debug_docs_paths_are_planned(
+    tmp_path,
+    real_openapi_yaml_path,
+) -> None:
+    """Keep concrete resource, operation, DTO, and enum paths under test."""
     template_root = write_debug_templates(tmp_path / "templates")
     output_path = tmp_path / "output"
 
-    app = GeneratorApp()
-    result = app.emit(
-        input_path=sample_openapi_path,
+    result = GeneratorApp().emit(
+        input_path=real_openapi_yaml_path,
         language="debug",
         output_path=output_path,
         templates_path=template_root,
@@ -82,45 +93,20 @@ def test_resource_first_debug_docs_paths_are_planned(tmp_path, sample_openapi_pa
 
     planned = {path.relative_to(output_path).as_posix() for path in result.planned}
 
-    assert "docs/resources/platform/auth/users/index.md" in planned
-    assert "docs/resources/platform/auth/users/operations.md" in planned
-    assert "docs/resources/platform/auth/users/schemas.md" in planned
-    assert "docs/resources/platform/auth/users/operations/get_list_users.md" in planned
-    assert "docs/resources/platform/auth/users/schemas/models/user_model.md" in planned
-    assert "docs/resources/platform/auth/users/schemas/dtos/create_user_body.md" in planned
-    assert "docs/resources/platform/auth/users/schemas/enums/user_status.md" in planned
-    assert "docs/resources/shared/schemas/models/base_public_model.md" in planned
-
-
-def _write_resource_path_openapi(path: Path) -> Path:
-    path.write_text(
-        """openapi: 3.1.0
-info:
-  title: Resource Path API
-  version: v1
-paths:
-  /users:
-    x-codegen:
-      resource:
-        name: users
-        path:
-          - platform
-          - auth
-    get:
-      operationId: listUsers
-      responses:
-        "200":
-          description: OK
-  /shared:
-    x-codegen:
-      resource:
-        name: shared
-    get:
-      operationId: getShared
-      responses:
-        "200":
-          description: OK
-""",
-        encoding="utf-8",
+    assert "docs/resources/platform/apps/index.md" in planned
+    assert "docs/resources/platform/apps/operations.md" in planned
+    assert "docs/resources/platform/apps/schemas.md" in planned
+    assert "docs/resources/platform/apps/operations/get_find_apps.md" in planned
+    assert (
+        "docs/resources/platform/apps/schemas/dtos/app_list_query.md"
+        in planned
     )
-    return path
+    assert (
+        "docs/resources/platform/apps/schemas/dtos/create_app_body.md"
+        in planned
+    )
+    assert (
+        "docs/resources/platform/apps/schemas/enums/app_status.md"
+        in planned
+    )
+    assert "docs/resources/shared/schemas/enums/shared_sort.md" in planned
