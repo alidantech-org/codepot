@@ -1,0 +1,14 @@
+selection=resource
+language={{ lang.name }}
+name={{ resource.name.pascal.o }}
+id={{ resource.api.id }}
+path={{ resource.path | join("/") }}
+operation_count={{ resource.operations | length }}
+model_count={{ resource.models | length }}
+dto_count={{ resource.dtos | length }}
+enum_count={{ resource.enums | length }}
+schema_count={{ resource.schemas | length }}
+entity_count={{ resource.entities | length }}
+emit_group={{ resource.emit.group }}
+emit_key={{ resource.emit.key }}
+resource_path={{ resource.emit.resource_path | join("/") }}
