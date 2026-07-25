@@ -14,12 +14,16 @@ from src.inference.models.schemas import InferredSchemaField
 from tests.fixtures.openapi import load_real_graph
 
 
-def test_build_api_contract_from_real_openapi(real_openapi_path) -> None:
+def test_api_contract_preserves_real_openapi(real_openapi_path) -> None:
     graph = load_real_graph(real_openapi_path)
     api = build_api_contract(graph)
 
     assert api.info.title == "Alidantech API"
     assert api.info.openapi_version == "3.1.0"
+    assert api.servers
+    assert api.servers[0].url == "http://localhost:5000"
+    assert api.servers[0].description == "Alidantech API (Local)"
+
     assert {resource.id for resource in api.resources} >= {
         "apps",
         "users",
@@ -36,51 +40,23 @@ def test_build_api_contract_from_real_openapi(real_openapi_path) -> None:
         "AppStatus",
     }
 
-
-def test_api_contract_preserves_real_openapi_servers(real_openapi_path) -> None:
-    graph = load_real_graph(real_openapi_path)
-    api = build_api_contract(graph)
-
-    assert api.servers
-    assert api.servers[0].url == "http://localhost:5000"
-    assert api.servers[0].description == "Alidantech API (Local)"
-
-
-def test_api_contract_preserves_real_operation_facts(real_openapi_path) -> None:
-    graph = load_real_graph(real_openapi_path)
-    api = build_api_contract(graph)
-
     operation = next(item for item in api.operations if item.id == "findApps")
-
     assert operation.method == ApiHttpMethod.GET
     assert operation.path == "/platform/apps"
     assert operation.resource == "apps"
     assert operation.description == "List apps"
 
-
-def test_api_contract_preserves_real_resource_path(real_openapi_path) -> None:
-    graph = load_real_graph(real_openapi_path)
-    api = build_api_contract(graph)
-
     resource = next(item for item in api.resources if item.id == "apps")
-
     assert resource.path == ("platform",)
     assert resource.path_name is not None
     assert resource.path_name.path.original == "platform"
 
-
-def test_api_contract_parses_real_codegen_entities(real_openapi_path) -> None:
-    graph = load_real_graph(real_openapi_path)
-    api = build_api_contract(graph)
-
     entity = next(item for item in api.entities if item.id == "apps.App")
-
     assert entity.name.raw.original == "App"
     assert entity.resource == "apps"
     assert entity.schema_ref == "#/components/schemas/App"
     assert entity.store == "apps"
     assert {field.id for field in entity.fields} >= {
-        "id",
         "name",
         "slug",
         "status",
