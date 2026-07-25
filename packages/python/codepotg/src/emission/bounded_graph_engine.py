@@ -79,7 +79,7 @@ def emit_bounded_graph(
             context["source"] = sources[0] if len(sources) == 1 else None
             context["sources"] = sources
             context["resolve"] = resolver
-            context["resolver_stats"] = resolver.stats
+            context["resolver_stats"] = resolver.stats()
             files.append(
                 replace(
                     file,
