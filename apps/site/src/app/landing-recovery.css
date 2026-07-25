@@ -1,10 +1,10 @@
 /*
  * Landing recovery rules:
  * - keep the page open and section-based;
- * - retain card treatment only inside Why Codepot and Craft the next layer;
+ * - retain card treatment only in Why Codepot and Craft the next layer;
  * - keep decorative curves independent from content containers.
  */
-.landing-shell > section:not(:first-child):not(:last-child) {
+.landing-shell > section:not(:first-child):not(:last-child):not(.landing-card-section) {
   margin-bottom: 0 !important;
   overflow: visible !important;
   border: 0 !important;
@@ -14,8 +14,8 @@
   box-shadow: none !important;
 }
 
-.landing-shell > section:not(:first-child):not(:last-child)::before,
-.landing-shell > section:nth-child(even):not(:first-child):not(:last-child)::before {
+.landing-shell > section:not(:first-child):not(:last-child):not(.landing-card-section)::before,
+.landing-shell > section:nth-child(even):not(:first-child):not(:last-child):not(.landing-card-section)::before {
   display: none !important;
 }
 
@@ -87,7 +87,7 @@
 }
 
 @media (max-width: 640px) {
-  .landing-shell > section:not(:first-child):not(:last-child) {
+  .landing-shell > section:not(:first-child):not(:last-child):not(.landing-card-section) {
     border-radius: 0 !important;
     padding-inline: 0 !important;
   }
