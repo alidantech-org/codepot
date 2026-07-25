@@ -12,6 +12,8 @@ import { FEATURES } from "@/data/features";
 import { PIPELINE_STEPS } from "@/data/pipeline";
 import { USE_CASES } from "@/data/use-cases";
 
+import "./landing-recovery.css";
+
 export const metadata: Metadata = {
   title: "Codepot — typed software intent and reusable code generation",
   description:
@@ -24,6 +26,11 @@ export const metadata: Metadata = {
 const Home: NextPage = () => {
   return (
     <div className="landing-shell mx-auto w-full max-w-7xl px-3 md:px-6">
+      <div aria-hidden="true" className="landing-free-curves">
+        <span />
+        <span />
+        <span />
+      </div>
       <Hero />
       <Ecosystem />
       <Features features={FEATURES} />
