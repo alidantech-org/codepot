@@ -62,14 +62,14 @@ export default function OpenGraphImage() {
             >
               {"</>"}
             </div>
-            <div style={{ fontSize: "34px", fontWeight: 700, letterSpacing: "-1px" }}>Codepot</div>
+            <div style={{ display: "flex", fontSize: "34px", fontWeight: 700, letterSpacing: "-1px" }}>Codepot</div>
           </div>
 
-          <div style={{ fontSize: "68px", lineHeight: 1.02, fontWeight: 700, letterSpacing: "-3px", maxWidth: "720px" }}>
-            Typed software intent,
-            <span style={{ color: "#e0b36e" }}> crafted to flow.</span>
+          <div style={{ display: "flex", flexDirection: "column", fontSize: "68px", lineHeight: 1.02, fontWeight: 700, letterSpacing: "-3px", maxWidth: "720px" }}>
+            <span>Typed software intent,</span>
+            <span style={{ color: "#e0b36e" }}>crafted to flow.</span>
           </div>
-          <div style={{ marginTop: "28px", fontSize: "25px", lineHeight: 1.45, color: "#d8c4b0", maxWidth: "700px" }}>
+          <div style={{ display: "flex", marginTop: "28px", fontSize: "25px", lineHeight: 1.45, color: "#d8c4b0", maxWidth: "700px" }}>
             Supported OpenAPI and Jinja tools, an official JavaScript runtime, and the final Rust language platform.
           </div>
           <div style={{ display: "flex", marginTop: "42px", gap: "14px", fontSize: "18px", color: "#f0c58e" }}>
@@ -104,7 +104,7 @@ export default function OpenGraphImage() {
                 height: "278px",
                 left: "36px",
                 bottom: "22px",
-                borderRadius: "45% 45% 42% 42% / 28% 28% 58% 58%",
+                borderRadius: "46%",
                 background: "linear-gradient(145deg, #e2a663, #ae6233 50%, #63341e)",
                 border: "8px solid #4f2918",
                 boxShadow: "0 34px 48px rgba(0,0,0,.36)",
