@@ -54,18 +54,18 @@ export default function DocsPage() {
           const Icon = groupIcons[group as keyof typeof groupIcons] ?? BookOpen;
           return (
             <section key={group}>
-              <div className="mb-5 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-primary">
+              <div className="mb-2 flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center text-primary">
                   <Icon className="h-5 w-5" />
                 </span>
                 <div>
                   <h2 className="text-xl font-semibold tracking-tight text-foreground">{group}</h2>
-                  <p className="text-sm text-muted-foreground">{groupDocs.length} documentation pages</p>
+                  {/* <p className="text-sm text-muted-foreground">{groupDocs.length} documentation pages</p> */}
                 </div>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid sm:grid-cols-2">
                 {groupDocs.map((doc) => (
-                  <Link key={doc.slug} href={`/docs/${doc.slug}`} className="group rounded-2xl border border-border bg-card/70 p-5 transition-colors hover:bg-card-muted">
+                  <Link key={doc.slug} href={`/docs/${doc.slug}`} className="group  border-t border-border p-5 transition-colors hover:bg-card-muted">
                     <h3 className="text-base font-semibold tracking-tight text-foreground">{doc.title}</h3>
                     {doc.description && <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{doc.description}</p>}
                     <div className="mt-4 flex items-center gap-2 text-xs font-medium text-primary">
