@@ -1,0 +1,24 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="clay" x1="12" y1="12" x2="52" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D49352"/>
+      <stop offset="0.5" stop-color="#A85E2E"/>
+      <stop offset="1" stop-color="#673B24"/>
+    </linearGradient>
+    <linearGradient id="smoke" x1="19" y1="0" x2="40" y2="24" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E8D3B5" stop-opacity="0"/>
+      <stop offset="0.55" stop-color="#D3A873"/>
+      <stop offset="1" stop-color="#8C5A38" stop-opacity="0.25"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="#2B190F"/>
+  <path d="M29 21C20 16 25 9 34 7C42 5 44 2 42 0" stroke="url(#smoke)" stroke-width="3.4" stroke-linecap="round"/>
+  <g transform="rotate(-12 33 40)">
+    <path d="M18 27C16 35 17 48 23 55C28 61 39 61 45 55C51 48 51 35 47 27H18Z" fill="url(#clay)" stroke="#F0C58E" stroke-width="1.2"/>
+    <ellipse cx="32.5" cy="27" rx="14.5" ry="5.5" fill="#D49352" stroke="#F0C58E" stroke-width="1.2"/>
+    <ellipse cx="32.5" cy="27" rx="9" ry="2.8" fill="#1A0F0A"/>
+    <path d="M28 36L23.5 40L28 44" stroke="#F7E7D2" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M35 35L31.5 45" stroke="#F7E7D2" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M38 36L42.5 40L38 44" stroke="#F7E7D2" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
