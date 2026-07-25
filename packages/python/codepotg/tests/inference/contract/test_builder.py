@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from src.contracts.api import ApiHttpMethod
 from src.inference.contract import build_api_contract
 from src.inference.models import (
     InferenceGraph,
@@ -10,51 +11,84 @@ from src.inference.models import (
     InferredSchemaKind,
 )
 from src.inference.models.schemas import InferredSchemaField
-from tests.fixtures.openapi import load_sample_graph
+from tests.fixtures.openapi import load_real_graph
 
 
-def test_build_api_contract_from_sample_openapi(sample_openapi_path) -> None:
-    graph = load_sample_graph(sample_openapi_path)
+def test_build_api_contract_from_real_openapi(real_openapi_path) -> None:
+    graph = load_real_graph(real_openapi_path)
     api = build_api_contract(graph)
 
-    assert api.info.title
-    assert api.info.openapi_version.startswith("3.")
-    assert len(api.schemas.all) > 0
-    assert len(api.operations) > 0
+    assert api.info.title == "Alidantech API"
+    assert api.info.openapi_version == "3.1.0"
+    assert {resource.id for resource in api.resources} >= {
+        "apps",
+        "users",
+        "analytics",
+    }
+    assert {operation.id for operation in api.operations} >= {
+        "findApps",
+        "getAppById",
+        "findUsers",
+    }
+    assert {schema.id for schema in api.schemas.all} >= {
+        "App",
+        "AppListQuery",
+        "AppStatus",
+    }
 
 
-def test_api_contract_preserves_openapi_servers(sample_openapi_path) -> None:
-    graph = load_sample_graph(sample_openapi_path)
+def test_api_contract_preserves_real_openapi_servers(real_openapi_path) -> None:
+    graph = load_real_graph(real_openapi_path)
     api = build_api_contract(graph)
 
     assert api.servers
-    assert api.servers[0].url == "https://api.riderescueautolink.com"
-    assert api.servers[0].description == "Riderescue API"
+    assert api.servers[0].url == "http://localhost:5000"
+    assert api.servers[0].description == "Alidantech API (Local)"
 
 
-def test_api_contract_preserves_operation_facts(sample_openapi_path) -> None:
-    graph = load_sample_graph(sample_openapi_path)
+def test_api_contract_preserves_real_operation_facts(real_openapi_path) -> None:
+    graph = load_real_graph(real_openapi_path)
     api = build_api_contract(graph)
 
-    operation = api.operations[0]
+    operation = next(item for item in api.operations if item.id == "findApps")
 
-    assert operation.id
-    assert operation.method
-    assert operation.path
+    assert operation.method == ApiHttpMethod.GET
+    assert operation.path == "/platform/apps"
+    assert operation.resource == "apps"
+    assert operation.description == "List apps"
 
 
-def test_api_contract_preserves_resource_path(sample_openapi_path) -> None:
-    graph = load_sample_graph(sample_openapi_path)
+def test_api_contract_preserves_real_resource_path(real_openapi_path) -> None:
+    graph = load_real_graph(real_openapi_path)
     api = build_api_contract(graph)
 
-    resource = next(resource for resource in api.resources if resource.id == "users")
+    resource = next(item for item in api.resources if item.id == "apps")
 
-    assert resource.path == ("platform", "auth")
+    assert resource.path == ("platform",)
     assert resource.path_name is not None
-    assert resource.path_name.path.original == "platform_auth"
+    assert resource.path_name.path.original == "platform"
 
 
-def test_api_contract_parses_root_codegen_entities() -> None:
+def test_api_contract_parses_real_codegen_entities(real_openapi_path) -> None:
+    graph = load_real_graph(real_openapi_path)
+    api = build_api_contract(graph)
+
+    entity = next(item for item in api.entities if item.id == "apps.App")
+
+    assert entity.name.raw.original == "App"
+    assert entity.resource == "apps"
+    assert entity.schema_ref == "#/components/schemas/App"
+    assert entity.store == "apps"
+    assert {field.id for field in entity.fields} >= {
+        "id",
+        "name",
+        "slug",
+        "status",
+    }
+    assert any(constraint.kind == "unique" for constraint in entity.constraints)
+
+
+def test_api_contract_parses_legacy_nested_codegen_entities() -> None:
     resource = InferredResource(name="apps", path=("platform",))
     graph = InferenceGraph(
         title="Entity API",
@@ -107,12 +141,17 @@ def test_api_contract_parses_root_codegen_entities() -> None:
                             "keyHash": {"type": "string"},
                         },
                         "constraints": {
-                            "app_slug_unique": {"kind": "unique", "fields": ["slug"]},
+                            "app_slug_unique": {
+                                "kind": "unique",
+                                "fields": ["slug"],
+                            },
                         },
                         "relations": {
                             "apiKeys": {
                                 "cardinality": "hasMany",
-                                "target": {"$ref": "#/x-codegen/entities/apps/AppApiKey"},
+                                "target": {
+                                    "$ref": "#/x-codegen/entities/apps/AppApiKey"
+                                },
                                 "local": "id",
                                 "foreign": "appId",
                             },
@@ -138,4 +177,6 @@ def test_api_contract_parses_root_codegen_entities() -> None:
     assert entity.constraints[0].kind == "unique"
     assert entity.constraints[0].fields == ("slug",)
     assert entity.relations[0].cardinality == "hasMany"
-    assert entity.relations[0].target_ref == "#/x-codegen/entities/apps/AppApiKey"
+    assert entity.relations[0].target_ref == (
+        "#/x-codegen/entities/apps/AppApiKey"
+    )
