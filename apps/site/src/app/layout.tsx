@@ -7,12 +7,29 @@ import { NavBar } from "@/components/layout/NavBar";
 
 import "./globals.css";
 
-const fontSans = Inter({ variable: "--font-sans", subsets: ["latin"], display: "swap" });
-const fontHeading = Sora({ variable: "--font-heading", subsets: ["latin"], display: "swap" });
-const fontDisplay = Playfair_Display({ variable: "--font-display", subsets: ["latin"], display: "swap" });
-const fontMono = JetBrains_Mono({ variable: "--font-mono", subsets: ["latin"], display: "swap" });
+const fontSans = Inter({
+  variable: "--font-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+const fontHeading = Sora({
+  variable: "--font-heading",
+  subsets: ["latin"],
+  display: "swap",
+});
+const fontDisplay = Playfair_Display({
+  variable: "--font-display",
+  subsets: ["latin"],
+  display: "swap",
+});
+const fontMono = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codepot.dev";
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://code.alidantech.org";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -120,7 +137,9 @@ const structuredData = {
   ],
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
       lang="en"
@@ -132,7 +151,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           <div className="flex min-h-screen flex-col">
             <div className="pointer-events-none fixed inset-0 z-0 bg-grid opacity-70" />
             <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
