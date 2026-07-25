@@ -1,16 +1,16 @@
 .landing-shell > section:not(:first-child):not(:last-child) {
-  margin-bottom: 0;
-  overflow: visible;
-  border: 0;
-  border-radius: 0;
-  padding: 0;
-  background: transparent;
-  box-shadow: none;
+  margin-bottom: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .landing-shell > section:not(:first-child):not(:last-child)::before,
 .landing-shell > section:nth-child(even):not(:first-child):not(:last-child)::before {
-  display: none;
+  display: none !important;
 }
 
 .landing-shell article {
@@ -19,9 +19,9 @@
 
 @media (hover: hover) and (pointer: fine) {
   .landing-shell article:hover {
-    transform: none;
+    transform: none !important;
     border-color: var(--border);
-    box-shadow: none;
+    box-shadow: none !important;
   }
 }
 
@@ -82,8 +82,8 @@
 
 @media (max-width: 640px) {
   .landing-shell > section:not(:first-child):not(:last-child) {
-    border-radius: 0;
-    padding-inline: 0;
+    border-radius: 0 !important;
+    padding-inline: 0 !important;
   }
 
   .landing-free-curves {
