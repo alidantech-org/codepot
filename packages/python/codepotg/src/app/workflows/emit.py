@@ -26,7 +26,6 @@ from openapi.loader import load_openapi_document
 
 def run_emit(request: EmitInput) -> EmitOutput:
     """Run the emit workflow and return structured output."""
-
     trace = MemoryTrace.from_environment()
     try:
         return _run_emit(request, trace=trace)
@@ -64,6 +63,11 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
                 message=f"Writing JSONL: {cache_path / Path(relative)}",
             )
             return
+        if stage == "runtime" and status == "tuned":
+            message = str(event.get("message", "Runtime limits resolved"))
+            pre_diagnostics.append(RuntimeDiagnostic(level="info", message=message))
+            _notify(request, stage="runtime_tuned", message=message)
+            return
         messages = {
             ("compiler", "started"): "Compiling OpenAPI into indexed JSONL",
             ("compiler", "reused"): f"Reused JSONL cache: {cache_path}",
@@ -94,6 +98,11 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
             ),
         )
     )
+    pre_diagnostics.extend(
+        RuntimeDiagnostic(level="info", message=message)
+        for message in jsonl_result.diagnostics
+        if not any(existing.message == message for existing in pre_diagnostics)
+    )
 
     compatibility_input = jsonl_result.compatibility_path or request.input_path
     _notify(
@@ -104,16 +113,8 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
     document = load_openapi_document(compatibility_input)
     trace.snapshot("document_loaded")
 
-    _notify(
-        request,
-        stage="inferring_schemas",
-        message="Inferring schemas",
-    )
-    _notify(
-        request,
-        stage="inferring_operations",
-        message="Inferring operations",
-    )
+    _notify(request, stage="inferring_schemas", message="Inferring schemas")
+    _notify(request, stage="inferring_operations", message="Inferring operations")
     graph = InferenceEngine().infer(document, copy_raw=False)
     del document
     trace.snapshot("graph_inferred")
@@ -138,11 +139,7 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
         templates_path=request.templates_path,
     )
 
-    _notify(
-        request,
-        stage="planning_output_files",
-        message="Planning output files",
-    )
+    _notify(request, stage="planning_output_files", message="Planning output files")
     template_contract = adapter.build_template_contract(
         api=api_contract,
         output_path=request.output_path,
@@ -151,6 +148,8 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
         frontend=request.frontend,
         progress=request.progress,
     )
+    source_meta = jsonl_result.manifest.source
+    source_size = int(source_meta.get("originalSize", source_meta.get("size", 0)))
     template_contract = replace(
         template_contract,
         emit=replace(
@@ -159,6 +158,8 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
                 **template_contract.emit.meta,
                 "jsonl_cache": str(jsonl_result.cache_dir),
                 "jsonl_reused": jsonl_result.reused,
+                "jsonl_source_size": source_size,
+                "jsonl_index_backend": "sqlite",
             },
         ),
     )
@@ -169,7 +170,7 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
         _notify(
             request,
             stage="rendering_writing_files",
-            message="Rendering dependency graph with bounded globals and queues",
+            message="Rendering dependency graph with adaptive batches",
         )
         emission_result = emit_bounded_graph(
             template_contract,
@@ -241,6 +242,9 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
                     f"files peak={queue_stats.pending_files_high_water}, "
                     f"bytes peak={queue_stats.pending_bytes_high_water}, "
                     f"waits={queue_stats.queue_waits}, "
+                    f"batches={queue_stats.batches_written}, "
+                    f"batch peak={queue_stats.batch_files_high_water} files/"
+                    f"{queue_stats.batch_bytes_high_water} bytes, "
                     f"written={queue_stats.files_written}."
                 ),
             )
@@ -255,7 +259,7 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
         for message in trace.summaries()
     )
 
-    return EmitOutput(
+    output = EmitOutput(
         input_path=request.input_path,
         language=request.language,
         output_path=request.output_path,
@@ -270,6 +274,11 @@ def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
         refused=list(write_result.refused),
         diagnostics=diagnostics,
     )
+    del api_contract
+    del template_contract
+    del emission_result
+    del jsonl_result
+    return output
 
 
 def _generation_cache_path(input_path: Path) -> Path:
@@ -287,10 +296,8 @@ def _notify(
     total: int | None = None,
 ) -> None:
     """Emit a runtime progress event when a sink is provided."""
-
     if request.progress is None:
         return
-
     request.progress(
         RuntimeEvent(
             stage=stage,
