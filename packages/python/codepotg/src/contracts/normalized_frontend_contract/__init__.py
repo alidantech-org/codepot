@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from contracts.normalized import DiagnosticCategory
+
 _SOURCE_PATH = Path(__file__).resolve().parent.parent / "normalized_frontend_contract.py"
 _SOURCE = _SOURCE_PATH.read_text(encoding="utf-8")
 exec(compile(_SOURCE, str(_SOURCE_PATH), "exec"), globals(), globals())  # noqa: S102
