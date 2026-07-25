@@ -1,6 +1,6 @@
 ---
 title: Stable artifacts
- description: Learn how codepotx layers exchange deterministic, readonly, JSON-safe authoring, template, planning, rendering, manifest, and result artifacts.
+description: Learn how codepotx layers exchange deterministic, readonly, JSON-safe authoring, template, planning, rendering, manifest, and result artifacts.
 product: codepotx
 ---
 
