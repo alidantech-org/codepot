@@ -95,7 +95,7 @@ emissions:
         encoding="utf-8",
     )
     (templates / "entity.ts.j2").write_text(
-        "{% set value = entity_contract.by_id[entity.api.id] %}"
+        "{% set value = entity_contract.by_id[entity.name.raw] %}"
         "export const {{ entity.name.camel.o }}Store = \"{{ value.store }}\";\n"
         "export const {{ entity.name.camel.o }}PublicFields = {{ value.public_fields.count }};\n"
         "export const {{ entity.name.camel.o }}StorageFields = {{ value.storage_fields.count }};\n",
