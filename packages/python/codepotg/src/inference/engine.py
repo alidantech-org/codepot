@@ -26,8 +26,13 @@ def _clean_optional_text(value: object) -> str:
 
 
 class InferenceEngine:
-    def infer(self, document: OpenApiDocument | Mapping[str, Any]) -> InferenceGraph:
-        """Infer from a parsed document or an in-memory OpenAPI mapping."""
+    def infer(
+        self,
+        document: OpenApiDocument | Mapping[str, Any],
+        *,
+        copy_raw: bool = True,
+    ) -> InferenceGraph:
+        """Infer a graph, copying source data unless the caller transfers ownership."""
 
         if isinstance(document, Mapping):
             document = OpenApiDocument(
@@ -39,11 +44,10 @@ class InferenceEngine:
         operations = infer_operations(document)
         resources = _collect_resources(schemas, operations)
         dependencies = collect_dependencies(schemas, operations)
-
-        # Propagate resource information from operations to schemas
         schemas = _propagate_resources_to_schemas(schemas, operations, resources)
 
-        x_codegen = document.raw.get(X_CODEGEN)
+        raw = deepcopy(document.raw) if copy_raw else document.raw
+        x_codegen = raw.get(X_CODEGEN)
 
         return InferenceGraph(
             title=document.title,
@@ -56,7 +60,7 @@ class InferenceEngine:
             operations=operations,
             dependencies=dependencies,
             x_codegen=x_codegen if isinstance(x_codegen, dict) else {},
-            raw=deepcopy(document.raw),
+            raw=raw,
         )
 
 
@@ -89,7 +93,7 @@ def _propagate_resources_to_schemas(
     resources: tuple[InferredResource, ...],
 ) -> tuple:
     """Assign resources to schemas based on which operations use them."""
-    # Build a map of schema ref to resource from operations
+
     schema_to_resource: dict[str, InferredResource] = {}
 
     for operation in operations:
@@ -97,36 +101,29 @@ def _propagate_resources_to_schemas(
         if op_resource is None:
             continue
 
-        # Collect all schema refs from the operation
         refs = set()
-
-        # From parameters
         for param in operation.parameters:
             if param.schema_ref:
                 refs.add(param.schema_ref)
             refs.update(param.schema_refs)
 
-        # From request body
         if operation.request_body:
             refs.update(operation.request_body.schema_refs)
 
-        # From responses
         for response in operation.responses:
             refs.update(response.schema_refs)
 
-        # Assign the operation's resource to all referenced schemas
         for ref in refs:
             if ref not in schema_to_resource:
                 schema_to_resource[ref] = op_resource
 
-    # Update schemas that don't have a resource but are used by operations
     schema_list = list(schemas)
-    for i, schema in enumerate(schema_list):
+    for index, schema in enumerate(schema_list):
         if schema.resource is None:
             resource = schema_to_resource.get(schema.ref)
             if resource:
                 from dataclasses import replace
 
-                schema_list[i] = replace(schema, resource=resource)
+                schema_list[index] = replace(schema, resource=resource)
 
     return tuple(schema_list)
