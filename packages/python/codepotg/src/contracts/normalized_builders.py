@@ -26,7 +26,12 @@ def build_reference(
     source_path: str,
     targets: Mapping[str, T],
 ) -> ContractReference[T]:
-    """Build a non-recursively-expanding resolved or preserved reference."""
+    """Build a non-recursively-expanding resolved or preserved reference.
+
+    Plain names are references into CodepotG's internal registries. A missing
+    plain name is therefore an unresolved internal reference, not an external
+    document. URI- and file-shaped values remain external escape hatches.
+    """
 
     target = targets.get(ref)
     if target is not None:
@@ -39,7 +44,7 @@ def build_reference(
             target=target,
             source_path=source_path,
         )
-    if not ref.startswith("#/"):
+    if _is_external_reference(ref):
         return ContractReference(
             ref=ref,
             kind=kind,
@@ -133,6 +138,19 @@ def direct_refs(value: Mapping[str, Any]) -> tuple[str, ...]:
                 if isinstance(ref, str):
                     refs.append(ref)
     return tuple(dict.fromkeys(refs))
+
+
+def _is_external_reference(ref: str) -> bool:
+    if ref.startswith("#/"):
+        return False
+    lowered = ref.lower()
+    if "://" in ref or lowered.startswith(("urn:", "file:", "mailto:")):
+        return True
+    if ref.startswith(("/", "./", "../")):
+        return True
+    if "#/" in ref:
+        return True
+    return lowered.endswith((".json", ".yaml", ".yml"))
 
 
 def _target_name(target: Any) -> str | None:
