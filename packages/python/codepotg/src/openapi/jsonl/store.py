@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import OrderedDict
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from threading import Lock, RLock
@@ -13,7 +13,7 @@ from core.system_resources import tune_runtime
 
 from .errors import JsonlLookupError
 from .hot_index import HotIndexRegistry
-from .indexing import index_shard
+from .indexing import index_shard, section_file
 from .models import HotIndexLimits, RecordLocation
 from .sqlite_index import SqliteIndexReader, sqlite_index_path
 
@@ -32,6 +32,7 @@ class _SectionReaderPool:
         self.max_open = max(1, max_open)
         self._states: OrderedDict[str, _OpenSection] = OrderedDict()
         self._lock = RLock()
+        self._closed = False
 
     def read(self, relative: str, offset: int, length: int) -> bytes:
         state = self._state(relative)
@@ -46,12 +47,17 @@ class _SectionReaderPool:
 
     def close(self) -> None:
         with self._lock:
+            if self._closed:
+                return
             for state in self._states.values():
                 state.stream.close()
             self._states.clear()
+            self._closed = True
 
     def _state(self, relative: str) -> _OpenSection:
         with self._lock:
+            if self._closed:
+                raise JsonlLookupError("JSONL section reader is closed")
             state = self._states.get(relative)
             if state is not None:
                 self._states.move_to_end(relative)
@@ -96,6 +102,7 @@ class JsonlIndexStore:
             self.cache_dir,
             max_open=min(64, max(8, tuning.cpu_count * 2)),
         )
+        self._closed = False
 
     def get_by_ref(self, ref: str) -> RecordLocation | None:
         return self._lookup_definition("ref", ref)
@@ -105,6 +112,45 @@ class JsonlIndexStore:
 
     def get_by_operation_id(self, operation_id: str) -> RecordLocation | None:
         return self._lookup_definition("operationId", operation_id)
+
+    def iter_locations(
+        self,
+        section: str,
+        *,
+        kinds: Sequence[str] = (),
+        mention: tuple[str, str] | None = None,
+    ) -> Iterator[RecordLocation]:
+        """Enumerate lightweight handles without parsing raw JSONL records."""
+        if self._sqlite is not None:
+            yield from self._sqlite.locations(
+                section,
+                kinds=kinds,
+                mention=mention,
+            )
+            return
+
+        relative = section_file(section)
+        path = self._cache_file(relative)
+        if not path.is_file():
+            return
+        with path.open("rb") as stream:
+            while raw_line := stream.readline():
+                offset = stream.tell() - len(raw_line)
+                line = raw_line[:-1] if raw_line.endswith(b"\n") else raw_line
+                try:
+                    envelope = json.loads(line)
+                except json.JSONDecodeError as exc:
+                    raise JsonlLookupError(f"Invalid section JSONL line in {path}") from exc
+                if not isinstance(envelope, Mapping):
+                    continue
+                location = _location_from_envelope(section, relative, offset, line, envelope)
+                if kinds and location.kind not in kinds:
+                    continue
+                if mention is not None:
+                    facts = self.find_mentions(*mention)
+                    if not any(fact.get("item") == location.key for fact in facts):
+                        continue
+                yield location
 
     def find_mentions(self, index: str, value: str) -> tuple[Mapping[str, Any], ...]:
         cached = self.hot_index.get_query(index, value)
@@ -119,11 +165,9 @@ class JsonlIndexStore:
         return facts
 
     def iter_mentions(self, index: str) -> Iterator[Mapping[str, Any]]:
-        """Stream every fact for one mention index."""
         if self._sqlite is not None:
             yield from self._sqlite.iter_mentions(index)
             return
-
         directory = self._cache_file("indexes/mentions")
         if not directory.is_dir():
             return
@@ -189,9 +233,12 @@ class JsonlIndexStore:
         return self.read_location(location, verify=verify)
 
     def close(self) -> None:
+        if self._closed:
+            return
         self._sections.close()
         if self._sqlite is not None:
             self._sqlite.close()
+        self._closed = True
 
     def _lookup_definition(self, lookup: str, value: str) -> RecordLocation | None:
         cached = self.hot_index.get_definition(lookup, value)
@@ -245,6 +292,30 @@ class JsonlIndexStore:
         if pure.is_absolute() or ".." in pure.parts:
             raise JsonlLookupError(f"Indexed cache path is unsafe: {relative}")
         return self.cache_dir / Path(*pure.parts)
+
+
+def _location_from_envelope(
+    section: str,
+    relative: str,
+    offset: int,
+    line: bytes,
+    envelope: Mapping[str, Any],
+) -> RecordLocation:
+    key = envelope.get("key")
+    if not isinstance(key, str) or not key:
+        raise JsonlLookupError(f"Section record is missing a stable key: {relative}@{offset}")
+    resources = envelope.get("resources", ())
+    return RecordLocation(
+        section=section,
+        file=relative,
+        offset=offset,
+        length=len(line),
+        sha256=f"sha256:{hashlib.sha256(line).hexdigest()}",
+        key=key,
+        ref=str(envelope["ref"]) if envelope.get("ref") is not None else None,
+        kind=str(envelope["kind"]) if envelope.get("kind") is not None else None,
+        resources=tuple(str(item) for item in resources),
+    )
 
 
 def _source_size(cache_dir: Path) -> int:
