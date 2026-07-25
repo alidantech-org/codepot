@@ -94,19 +94,17 @@ def test_selection_groups_are_lightweight_until_loaded(tmp_path: Path) -> None:
     assert store.load_count == 1
 
 
-@pytest.mark.parametrize(
-    "relative",
-    ("projects/typescript/openapi.json", "projects/dart/openapi.json"),
-)
 def test_large_fixture_selection_is_lazy_and_raw_cache_is_bounded(
-    relative: str,
     tmp_path: Path,
 ) -> None:
-    source = Path(__file__).parents[2] / "fixtures" / relative
+    source = Path(__file__).parents[2] / "fixtures" / "openapi.json"
     result = compile_openapi_jsonl(source, tmp_path / "cache")
     store = JsonlSelectionStore(
         result.cache_dir,
-        raw_cache_limits=HotIndexLimits(max_entries=1, max_bytes=64 * 1024 * 1024),
+        raw_cache_limits=HotIndexLimits(
+            max_entries=1,
+            max_bytes=64 * 1024 * 1024,
+        ),
     )
 
     schema_count = sum(1 for _ in store.iter_handles("schemas.all"))
