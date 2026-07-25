@@ -579,10 +579,10 @@ export const ECOSYSTEM = {
         "codepot-lang",
         "codepot-runtime",
         "codepot-cli",
-        // "codepot-lsp",
-        // "codepot-extension",
-        // "codepot-web",
-        // "codepot-mcp"
+        "codepot-lsp",
+        "codepot-extension",
+        "codepot-web",
+        "codepot-mcp"
       ]
     }
   ],
