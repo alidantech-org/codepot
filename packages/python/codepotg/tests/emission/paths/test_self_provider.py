@@ -5,7 +5,11 @@ from pathlib import Path
 from typing import Any
 
 from contracts.path_yaml import path_config_from_yaml
-from contracts.template import TemplateDependency
+from contracts.template import (
+    TemplateDependency,
+    TemplateGroup,
+    TemplateItemKey,
+)
 from emission.graph_engine import _emission_file
 from emission.paths.graph_planner import plan_path_graph
 
@@ -21,6 +25,8 @@ class FakeEmit:
     ref: str
     dependencies: tuple[TemplateDependency, ...] = ()
     resource_path: tuple[str, ...] = ()
+    group: TemplateGroup = TemplateGroup.MODELS
+    item_key: TemplateItemKey = TemplateItemKey.MODEL
 
 
 @dataclass(frozen=True)
@@ -83,7 +89,7 @@ def test_same_emission_can_provide_sibling_outputs_without_node_cycle(
         },
         template_root=tmp_path,
     )
-    by_source = {item.output.source_key: item for item in graph.files}
+    by_source = {item.source_key: item for item in graph.files}
 
     file_a = _emission_file(
         by_source["schema:ModelA"],
