@@ -40,6 +40,11 @@ components:
       enum: [active, inactive]
       x-codegen:
         kind: enum
+x-codegen:
+  resources:
+    users:
+      name: users
+      route: /users
 """.strip(),
         encoding="utf-8",
     )
@@ -102,7 +107,9 @@ barrels:
         encoding="utf-8",
     )
     (templates / "resource.ts.j2").write_text(
-        "export const {{ resource.name.camel.o }}Resource = \"{{ resource.api.id }}\";\n",
+        "export const {{ resource.name.camel.o }}Resource = \"{{ resource.api.id }}\";\n"
+        "export const {{ resource.name.camel.o }}Route = "
+        "\"{{ codegen_contract.resources.by_id[resource.api.id].route }}\";\n",
         encoding="utf-8",
     )
     (templates / "index.ts.j2").write_text(
@@ -139,6 +146,8 @@ barrels:
     assert "selection=enums" in metadata
     assert "schemaTitle=User status" in metadata
     assert "minLength=3" in metadata
+    resource = (output / "resources" / "users.ts").read_text(encoding="utf-8")
+    assert 'usersRoute = "/users"' in resource
     barrel = (output / "models" / "index.ts").read_text(encoding="utf-8")
     assert "models/user_status.ts" in barrel
 
