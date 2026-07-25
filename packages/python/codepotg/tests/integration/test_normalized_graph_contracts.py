@@ -95,14 +95,14 @@ emissions:
         encoding="utf-8",
     )
     (templates / "entity.ts.j2").write_text(
-        "{% set value = entity_contract.by_id[entity.name.raw] %}"
+        "{% set value = entity_contract.by_id[entity.name.raw.o] %}"
         "export const {{ entity.name.camel.o }}Store = \"{{ value.store }}\";\n"
         "export const {{ entity.name.camel.o }}PublicFields = {{ value.public_fields.count }};\n"
         "export const {{ entity.name.camel.o }}StorageFields = {{ value.storage_fields.count }};\n",
         encoding="utf-8",
     )
     (templates / "frontend.ts.j2").write_text(
-        "{% set value = frontend_contract.by_id[frontend.name.raw] %}"
+        "{% set value = frontend_contract.by_id[frontend.name.raw.o] %}"
         "export const {{ frontend.name.camel.o }}Route = \"{{ value.route_prefix }}\";\n"
         "export const {{ frontend.name.camel.o }}Screens = {{ value.screens.count }};\n"
         "export const {{ frontend.name.camel.o }}Operations = {{ value.operations.count }};\n",
