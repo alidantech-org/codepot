@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import PurePosixPath
-from types import MappingProxyType
 from typing import Any
 
 from contracts.api import ApiContract, ApiOperation, ApiSchema
@@ -57,11 +56,12 @@ class NormalizedFrontendComponentContract:
 
     @property
     def diagnostics(self) -> tuple[ContractDiagnostic, ...]:
-        return tuple(
+        values = tuple(
             diagnostic
-            for value in (self.props, *self.schemas)
-            for diagnostic in value.diagnostics
-        ) + tuple(
+            for schema_use in (self.props, *self.schemas)
+            for diagnostic in schema_use.diagnostics
+        )
+        return values + tuple(
             diagnostic
             for use in self.uses
             for diagnostic in use.diagnostics
@@ -173,9 +173,6 @@ def build_normalized_frontend_contract(
     document = _mapping(raw)
     frontends_raw = _mapping(_mapping(document.get("x-codegen")).get("frontends"))
     operation_targets = {operation.id: operation for operation in api.operations}
-    operation_targets.update(
-        {f"#/paths/{operation.id}": operation for operation in api.operations}
-    )
     schema_targets = {schema.ref: schema for schema in api.schemas.all}
     schema_targets.update({schema.id: schema for schema in api.schemas.all})
     values = tuple(
@@ -197,7 +194,6 @@ def _frontend(
     operation_targets: Mapping[str, ApiOperation],
     schema_targets: Mapping[str, ApiSchema],
 ) -> NormalizedFrontendContractView:
-    source_path = f"x-codegen.frontends.{name}"
     route_prefix = _route(raw.get("routePrefix", raw.get("route")))
     components = tuple(
         _component(
@@ -223,10 +219,7 @@ def _frontend(
     linked_operations: dict[str, ApiOperation] = {}
     linked_schemas: dict[str, ApiSchema] = {}
     for component in components:
-        _collect_schema_uses(
-            (component.props, *component.schemas),
-            destination=linked_schemas,
-        )
+        _collect_schema_uses((component.props, *component.schemas), destination=linked_schemas)
         _collect_uses(component.uses, linked_operations, linked_schemas)
     for screen in screens:
         _collect_schema_uses(
@@ -234,6 +227,7 @@ def _frontend(
             destination=linked_schemas,
         )
         _collect_uses(screen.uses, linked_operations, linked_schemas)
+    source_path = f"x-codegen.frontends.{name}"
     return NormalizedFrontendContractView(
         id=name,
         title=_text(raw.get("title", raw.get("name"))),
@@ -300,40 +294,21 @@ def _screen(
     source_path = f"x-codegen.frontends.{frontend}.screens.{name}"
     route = _route(raw.get("route"))
     components, placement = _component_placement(raw.get("components"))
+    owner = f"frontend:{frontend}:screen:{name}"
     return NormalizedFrontendScreenContract(
         id=name,
         route=route,
         full_route=_join_route(route_prefix, route),
         folder=_optional_text(raw.get("folder")),
-        params=_schema_use(
-            raw.get("params"),
-            owner=f"frontend:{frontend}:screen:{name}",
-            source_path=f"{source_path}.params",
-            schema_targets=schema_targets,
-        ),
-        query=_schema_use(
-            raw.get("query"),
-            owner=f"frontend:{frontend}:screen:{name}",
-            source_path=f"{source_path}.query",
-            schema_targets=schema_targets,
-        ),
-        body=_schema_use(
-            raw.get("body"),
-            owner=f"frontend:{frontend}:screen:{name}",
-            source_path=f"{source_path}.body",
-            schema_targets=schema_targets,
-        ),
-        response=_schema_use(
-            raw.get("response"),
-            owner=f"frontend:{frontend}:screen:{name}",
-            source_path=f"{source_path}.response",
-            schema_targets=schema_targets,
-        ),
+        params=_schema_use(raw.get("params"), owner=owner, source_path=f"{source_path}.params", schema_targets=schema_targets),
+        query=_schema_use(raw.get("query"), owner=owner, source_path=f"{source_path}.query", schema_targets=schema_targets),
+        body=_schema_use(raw.get("body"), owner=owner, source_path=f"{source_path}.body", schema_targets=schema_targets),
+        response=_schema_use(raw.get("response"), owner=owner, source_path=f"{source_path}.response", schema_targets=schema_targets),
         components=components,
         placement=placement,
         uses=_uses(
             raw.get("uses"),
-            owner=f"frontend:{frontend}:screen:{name}",
+            owner=owner,
             source_path=f"{source_path}.uses",
             operation_targets=operation_targets,
             schema_targets=schema_targets,
@@ -383,15 +358,7 @@ def _uses(
                 source=source_object(
                     raw,
                     source_path=f"{source_path}.{index}",
-                    known_keys={
-                        "name",
-                        "alias",
-                        "operation",
-                        "operationId",
-                        "schema",
-                        "purpose",
-                        "tags",
-                    },
+                    known_keys={"name", "alias", "operation", "operationId", "schema", "purpose", "tags"},
                 ),
             )
         )
@@ -415,13 +382,10 @@ def _collect_schema_uses(
     destination: dict[str, ApiSchema],
 ) -> None:
     for value in values:
-        targets = tuple(
-            reference.target
-            for reference in (value.refs or ((value.ref,) if value.ref else ()))
-            if reference.target is not None
-        )
-        for target in targets:
-            destination[target.id] = target
+        references = value.refs or ((value.ref,) if value.ref else ())
+        for reference in references:
+            if reference.target is not None:
+                destination[reference.target.id] = reference.target
         if value.schema is not None:
             destination[value.schema.id] = value.schema
 
@@ -429,8 +393,7 @@ def _collect_schema_uses(
 def _component_placement(value: Any) -> tuple[tuple[str, ...], FrozenMap]:
     if isinstance(value, Mapping):
         return tuple(str(name) for name in value), freeze_source_map(value)
-    components = _string_sequence(value)
-    return components, FrozenMap()
+    return _string_sequence(value), FrozenMap()
 
 
 def _schema_use(
@@ -442,16 +405,16 @@ def _schema_use(
 ) -> SchemaUse[ApiSchema]:
     if isinstance(value, str):
         value = {"$ref": value}
-    return build_schema_use(
-        value,
-        owner=owner,
-        source_path=source_path,
-        schema_targets=schema_targets,
-    )
+    return build_schema_use(value, owner=owner, source_path=source_path, schema_targets=schema_targets)
 
 
 def _join_route(prefix: str, route: str) -> str:
-    parts = [part for value in (prefix, route) for part in PurePosixPath(value).parts if part != "/"]
+    parts = [
+        part
+        for value in (prefix, route)
+        for part in PurePosixPath(value).parts
+        if part != "/"
+    ]
     return "/" + "/".join(parts) if parts else "/"
 
 
@@ -492,38 +455,6 @@ def _sequence(value: Any) -> tuple[Any, ...]:
     return tuple(value) if isinstance(value, list | tuple) else ()
 
 
-_FRONTEND_KEYS = {
-    "name",
-    "title",
-    "route",
-    "routePrefix",
-    "folders",
-    "components",
-    "screens",
-    "info",
-    "notes",
-}
-_COMPONENT_KEYS = {
-    "name",
-    "folder",
-    "props",
-    "schemas",
-    "uses",
-    "tags",
-    "info",
-    "notes",
-}
-_SCREEN_KEYS = {
-    "name",
-    "route",
-    "folder",
-    "params",
-    "query",
-    "body",
-    "response",
-    "components",
-    "uses",
-    "tags",
-    "info",
-    "notes",
-}
+_FRONTEND_KEYS = {"name", "title", "route", "routePrefix", "folders", "components", "screens", "info", "notes"}
+_COMPONENT_KEYS = {"name", "folder", "props", "schemas", "uses", "tags", "info", "notes"}
+_SCREEN_KEYS = {"name", "route", "folder", "params", "query", "body", "response", "components", "uses", "tags", "info", "notes"}
