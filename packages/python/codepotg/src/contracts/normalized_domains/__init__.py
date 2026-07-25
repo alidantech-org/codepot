@@ -124,18 +124,13 @@ def _compat_collect_policy_namespace(
 def _compat_is_policy(value: _CompatMapping[str, _CompatAny]) -> bool:
     if any(
         key in value
-        for key in (
-            "context",
-            "authenticated",
-            "roles",
-            "permissions",
-            "expression",
-            "tags",
-        )
+        for key in ("context", "roles", "permissions", "expression", "tags")
     ):
         return True
-    public = value.get("public")
-    return "public" in value and not isinstance(public, _CompatMapping)
+    for key in ("public", "authenticated"):
+        if key in value and not isinstance(value.get(key), _CompatMapping):
+            return True
+    return False
 
 
 del _IMPORT
