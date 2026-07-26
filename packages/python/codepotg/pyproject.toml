@@ -50,6 +50,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "build>=1.2",
+  "jsonschema>=4.23",
   "pytest>=8.3",
   "ruff>=0.9",
   "twine>=6.0",
@@ -57,10 +58,10 @@ dev = [
 
 [project.urls]
 Homepage = "https://github.com/alidantech-org/codepot"
-Documentation = "https://github.com/alidantech-org/codepot/tree/main/packages/python/codepotg"
+Documentation = "https://github.com/alidantech-org/codepot/tree/main/packages/python/codepotg/docs"
 Repository = "https://github.com/alidantech-org/codepot"
 Issues = "https://github.com/alidantech-org/codepot/issues"
-Changelog = "https://github.com/alidantech-org/codepot/blob/main/packages/python/codepotg/CHANGELOG.md"
+Changelog = "https://github.com/alidantech-org/codepot/blob/main/packages/python/codepotg/docs/CHANGELOG.md"
 
 [project.scripts]
 codepotg = "codepotg.cli.main:app"
@@ -93,6 +94,7 @@ exclude = ["tests*"]
 
 [tool.setuptools.package-data]
 codepotg = [
+  "schemas/*.json",
   "templates/**/*.j2",
   "templates/**/*.yaml",
   "templates/**/*.yml",
