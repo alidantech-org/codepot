@@ -1,30 +1,138 @@
-# Dart language-adapter tasks
+# Dart language-adapter implementation plan
 
-## Foundation
+This package implements Dart target syntax only. Flutter remains a framework/template-pack concern and must not appear as a Dart language alias or hidden behavior.
 
-- [ ] Add isolated package metadata, entry point, `.dart` target descriptor, and compatibility metadata.
-- [ ] Add architecture tests proving Flutter, source, engine, CLI, filesystem, and command independence.
-- [ ] Implement adapter factory and immutable instance context.
+## DART-001 — Package and plugin foundation
 
-## Locked configuration contract
+**Status:** planned
 
-- [ ] Define typed rules for identifiers, naming, files, libraries, imports, exports, null safety, types, literals, comments, and formatting.
-- [ ] Define typed override patches and field-specific merge or denial policies.
-- [ ] Publish defaults, rule-path documentation, and introspection schema.
-- [ ] Validate package names, SDK constraints, import policies, and incompatible language options.
+**Dependencies:** core plugin/language ports and version primitives
 
-## Syntax services
+- [ ] Add isolated package metadata, src layout, typing marker, README, and test configuration.
+- [ ] Register `dart` in `codepotg.language_adapters`.
+- [ ] Declare `.dart` target descriptor, behavior version, plugin/core/IR compatibility, and actual capabilities.
+- [ ] Implement immutable adapter factory/context.
+- [ ] Add architecture tests proving no Flutter, source, engine, writer, CLI, filesystem, command, or pack dependency.
 
-- [ ] Implement identifiers, reserved words, casing, and escaping.
-- [ ] Implement primitives, records, lists, maps, sets, generics, functions, futures, streams, nullable and required semantics.
-- [ ] Implement deterministic literals, annotations where language-level, and documentation comments.
-- [ ] Implement relative, `package:`, project-path, deferred, prefix, show, and hide import behavior.
-- [ ] Implement export planning and duplicate or prefix conflict resolution.
+## DART-002 — Typed rule schema
 
-## Quality and release
+**Status:** planned
 
-- [ ] Pass the shared language-adapter conformance suite.
-- [ ] Add focused null-safety, generic, import, and package-path tests.
-- [ ] Prove deterministic output and immutable IR input.
-- [ ] Prove no Flutter widgets, packages, folder assumptions, or framework rules exist here.
-- [ ] Version and publish independently from core and Dart/Flutter packs.
+Define immutable full rules, patches, field descriptors, defaults, merge policy, restrictions, examples, and introspection for:
+
+### Identifiers and naming
+
+- [ ] reserved words and contextual keywords;
+- [ ] role-specific identifiers for classes, enums, variables, fields, parameters, libraries, prefixes, and files;
+- [ ] casing/acronyms/invalid-character/leading-digit policy;
+- [ ] private-name underscore policy.
+
+### Files and libraries
+
+- [ ] `.dart` file naming;
+- [ ] library/part conventions as capabilities, without assuming a specific pack uses them;
+- [ ] URI path normalization;
+- [ ] source package identity inputs.
+
+### Imports and exports
+
+- [ ] relative URI, `package:`, project-path, explicit URI, default project barrel/export binding, and raw escape modes;
+- [ ] prefix (`as`), deferred, `show`, and `hide` combinators;
+- [ ] ordering/grouping and quote policy;
+- [ ] duplicate URI and prefix conflict handling;
+- [ ] export directives and combinators.
+
+### Types and null safety
+
+- [ ] core primitives;
+- [ ] lists, sets, maps, records, tuples where represented, generics, functions, futures, streams, and semantic references;
+- [ ] nullable types;
+- [ ] required named parameter semantics where requested by generation context;
+- [ ] `dynamic`, `Object`, `Object?`, `Never`, `void`, and unsupported-type diagnostics;
+- [ ] external/date/binary strategy as typed rules.
+
+### Literals, comments, and annotations
+
+- [ ] string/raw/multiline escaping;
+- [ ] number, boolean, null, list, set, map, and record literals;
+- [ ] line/block/documentation comments;
+- [ ] annotation rendering only for language-level annotation descriptors, not Flutter/framework assumptions.
+
+### Formatting metadata
+
+- [ ] indentation/newline/trailing newline for adapter-generated snippets;
+- [ ] no replacement for `dart format`.
+
+**Acceptance:** schema introspection documents all supported fields and unknown paths are errors.
+
+## DART-003 — Identifier and naming policies
+
+- [ ] Implement reserved-word handling and role-aware validity.
+- [ ] Implement deterministic file/type/member naming and acronym behavior.
+- [ ] Add property tests proving valid output and stable transforms.
+
+## DART-004 — Type renderer
+
+- [ ] Render every declared IR capability with correct precedence.
+- [ ] Preserve optional presence versus nullable type.
+- [ ] Render functions, generics, records, collection types, futures, streams, and references.
+- [ ] Report unsupported constructs rather than guessing.
+
+## DART-005 — Literal/comment renderer
+
+- [ ] Implement deterministic Dart literals and safe escaping.
+- [ ] Implement documentation comments and comment terminator safety.
+- [ ] Add raw/multiline string edge cases.
+
+## DART-006 — URI and project-path resolver
+
+- [ ] Calculate relative URIs between planned artifacts.
+- [ ] Build `package:<name>/<path>` URIs from project package-name binding and actual project paths.
+- [ ] Preserve explicit package/URI strings.
+- [ ] Resolve default export/barrel binding groups.
+- [ ] Normalize separators and reject invalid/escaping paths.
+
+## DART-007 — Import planner
+
+- [ ] Consume semantic imports.
+- [ ] Deduplicate identical URIs and combinators.
+- [ ] Assign deterministic prefixes for conflicts.
+- [ ] Merge or separate `show`/`hide` according to typed policy.
+- [ ] Support deferred imports only when declared by the request/capability.
+- [ ] Order directives deterministically.
+- [ ] Warn for raw imports.
+
+## DART-008 — Export planner and authored export templates
+
+- [ ] Render export descriptors for authored barrel/export templates.
+- [ ] Support `show`/`hide` and stable ordering.
+- [ ] Keep comments/custom text in pack templates.
+
+## DART-009 — Adapter facade
+
+- [ ] Compose policies behind the public language adapter protocol.
+- [ ] Accept immutable typed effective rules.
+- [ ] Expose capabilities and diagnostics.
+- [ ] Keep instances session-safe and free from global caches.
+
+## DART-010 — Conformance and package-specific tests
+
+- [ ] Pass shared language conformance for declared capabilities.
+- [ ] Add null-safety, records, generic functions, package URI, relative URI, prefix, show/hide, deferred, and export conflict tests.
+- [ ] Prove no Flutter widgets, state management, folder layout, pubspec ownership, or build-runner policy lives in the adapter.
+
+## DART-011 — Documentation and release
+
+- [ ] Document complete rule schema/defaults/capabilities.
+- [ ] Document project-path versus `package:` binding examples.
+- [ ] Build wheel/sdist and validate compatibility.
+- [ ] Publish independently from Dart and Flutter packs.
+
+## Completion gate
+
+- shared conformance passes;
+- every rule field is typed/introspectable/tested;
+- relative and package imports resolve from actual planned paths;
+- nullability is preserved correctly;
+- no Flutter/framework/ecosystem execution logic exists;
+- output is deterministic and IR remains immutable.
