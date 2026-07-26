@@ -16,6 +16,10 @@ TARGETS = {
         "manifest": "pyproject.toml",
         "model_parts": ("package", "src", "portable_client", "models"),
         "client_parts": ("package", "src", "portable_client", "client"),
+        "model_file": "widget.py",
+        "enum_file": "widget_status.py",
+        "response_file": "widget_list_response.py",
+        "client_file": "ListWidgetsClient.py",
         "model": "class Widget(BaseModel):",
         "uuid": "uuid.UUID",
         "response_field": "items: list[Widget]",
@@ -41,6 +45,10 @@ TARGETS = {
             "generated",
             "client",
         ),
+        "model_file": "Widget.java",
+        "enum_file": "WidgetStatus.java",
+        "response_file": "WidgetListResponse.java",
+        "client_file": "ListWidgetsClient.java",
         "model": "public record Widget(",
         "uuid": "UUID id",
         "response_field": "List<Widget> items",
@@ -52,6 +60,10 @@ TARGETS = {
         "manifest": "GeneratedClient.csproj",
         "model_parts": ("package", "Models"),
         "client_parts": ("package", "Client"),
+        "model_file": "Widget.cs",
+        "enum_file": "WidgetStatus.cs",
+        "response_file": "WidgetListResponse.cs",
+        "client_file": "ListWidgetsClient.cs",
         "model": "public sealed record Widget",
         "uuid": "Guid Id",
         "response_field": "List<Widget> Items",
@@ -63,6 +75,10 @@ TARGETS = {
         "manifest": "go.mod",
         "model_parts": ("package", "models"),
         "client_parts": ("package", "client"),
+        "model_file": "widget.go",
+        "enum_file": "widget_status.go",
+        "response_file": "widget_list_response.go",
+        "client_file": "ListWidgetsClient.go",
         "model": "type Widget struct {",
         "uuid": "Id uuid.UUID",
         "response_field": "Items []Widget",
@@ -74,6 +90,10 @@ TARGETS = {
         "manifest": "Cargo.toml",
         "model_parts": ("package", "src", "models"),
         "client_parts": ("package", "src", "client"),
+        "model_file": "widget.rs",
+        "enum_file": "widget_status.rs",
+        "response_file": "widget_list_response.rs",
+        "client_file": "ListWidgetsClient.rs",
         "model": "pub struct Widget {",
         "uuid": "pub id: uuid::Uuid",
         "response_field": "pub items: Vec<Widget>",
@@ -164,10 +184,10 @@ def test_portable_language_fixture_emits_complete_contract_and_native_package(
     model_root = output.joinpath(*target["model_parts"])
     client_root = output.joinpath(*target["client_parts"])
     manifest = output / "package" / target["manifest"]
-    model = model_root / f"Widget{target['extension']}"
-    enum = model_root / f"WidgetStatus{target['extension']}"
-    response_model = model_root / f"WidgetListResponse{target['extension']}"
-    operation = client_root / f"ListWidgetsClient{target['extension']}"
+    model = model_root / target["model_file"]
+    enum = model_root / target["enum_file"]
+    response_model = model_root / target["response_file"]
+    operation = client_root / target["client_file"]
 
     assert manifest.is_file()
     assert model.is_file()
