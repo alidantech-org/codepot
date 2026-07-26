@@ -14,6 +14,8 @@ TARGETS = {
     "python": {
         "extension": ".py",
         "manifest": "pyproject.toml",
+        "model_parts": ("package", "src", "portable_client", "models"),
+        "client_parts": ("package", "src", "portable_client", "client"),
         "model": "class Widget(BaseModel):",
         "uuid": "uuid.UUID",
         "operation": "def list_widgets(",
@@ -21,6 +23,22 @@ TARGETS = {
     "java": {
         "extension": ".java",
         "manifest": "pom.xml",
+        "model_parts": (
+            "package",
+            "src",
+            "main",
+            "java",
+            "generated",
+            "models",
+        ),
+        "client_parts": (
+            "package",
+            "src",
+            "main",
+            "java",
+            "generated",
+            "client",
+        ),
         "model": "public record Widget(",
         "uuid": "UUID id",
         "operation": "public final class ListWidgetsClient",
@@ -28,6 +46,8 @@ TARGETS = {
     "csharp": {
         "extension": ".cs",
         "manifest": "GeneratedClient.csproj",
+        "model_parts": ("package", "Models"),
+        "client_parts": ("package", "Client"),
         "model": "public sealed record Widget",
         "uuid": "Guid Id",
         "operation": "public static class ListWidgetsClient",
@@ -35,6 +55,8 @@ TARGETS = {
     "go": {
         "extension": ".go",
         "manifest": "go.mod",
+        "model_parts": ("package", "models"),
+        "client_parts": ("package", "client"),
         "model": "type Widget struct {",
         "uuid": "Id uuid.UUID",
         "operation": "const ListWidgetsMethod",
@@ -42,6 +64,8 @@ TARGETS = {
     "rust": {
         "extension": ".rs",
         "manifest": "Cargo.toml",
+        "model_parts": ("package", "src", "models"),
+        "client_parts": ("package", "src", "client"),
         "model": "pub struct Widget {",
         "uuid": "pub id: uuid::Uuid",
         "operation": "pub async fn list_widgets()",
@@ -64,7 +88,7 @@ def test_portable_language_fixture_emits_complete_contract_and_native_package(
     first_task = first.tasks[0]
     second_task = second.tasks[0]
     assert first_task.language == language
-    assert len(first_task.planned) >= 8
+    assert len(first_task.planned) >= 9
     assert len(first_task.written) == len(first_task.planned)
     assert len(set(first_task.planned)) == len(first_task.planned)
     assert first_task.refused == []
@@ -125,22 +149,27 @@ def test_portable_language_fixture_emits_complete_contract_and_native_package(
     assert "operation_count=1" in resource_text
 
     target = TARGETS[language]
+    model_root = output.joinpath(*target["model_parts"])
+    client_root = output.joinpath(*target["client_parts"])
     manifest = output / "package" / target["manifest"]
-    model = output / "native" / "schemas" / f"widget{target['extension']}"
-    operation = (
-        output
-        / "native"
-        / "operations"
-        / f"list_widgets_client{target['extension']}"
-    )
+    model = model_root / f"widget{target['extension']}"
+    enum = model_root / f"widget_status{target['extension']}"
+    operation = client_root / f"list_widgets_client{target['extension']}"
+
     assert manifest.is_file()
     assert model.is_file()
+    assert enum.is_file()
     assert operation.is_file()
 
     model_text = model.read_text(encoding="utf-8")
     assert target["model"] in model_text
     assert target["uuid"] in model_text
     assert "WidgetStatus" in model_text
+
+    enum_text = enum.read_text(encoding="utf-8")
+    assert "WidgetStatus" in enum_text
+    assert "active" in enum_text.lower()
+    assert "disabled" in enum_text.lower()
 
     operation_source = operation.read_text(encoding="utf-8")
     assert target["operation"] in operation_source
