@@ -50,6 +50,13 @@ folders:
       - native
       - schemas
 
+  native_enum:
+    select: schemas.emit_enums
+    as: schema
+    parts:
+      - native
+      - schemas
+
   operation:
     select: operations
     as: operation
