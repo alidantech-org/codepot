@@ -1,0 +1,37 @@
+{% if lang.name == "python" -%}
+from enum import StrEnum
+
+
+class {{ schema.name.pascal.o }}(StrEnum):
+{% for value in schema.api.enum_values %}    {{ value.name.screaming.o }} = "{{ value.value }}"
+{% endfor %}
+{% elif lang.name == "java" -%}
+package generated.models;
+
+public enum {{ schema.name.pascal.o }} {
+{% for value in schema.api.enum_values %}    {{ value.name.screaming.o }}{% if not loop.last %},{% else %};{% endif %}
+{% endfor %}}
+{% elif lang.name == "csharp" -%}
+namespace Generated.Models;
+
+public enum {{ schema.name.pascal.o }}
+{
+{% for value in schema.api.enum_values %}    {{ value.name.pascal.o }}{% if not loop.last %},{% endif %}
+{% endfor %}}
+{% elif lang.name == "go" -%}
+package models
+
+type {{ schema.name.pascal.o }} string
+
+const (
+{% for value in schema.api.enum_values %}    {{ schema.name.pascal.o }}{{ value.name.pascal.o }} {{ schema.name.pascal.o }} = "{{ value.value }}"
+{% endfor %})
+{% elif lang.name == "rust" -%}
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum {{ schema.name.pascal.o }} {
+{% for value in schema.api.enum_values %}    #[serde(rename = "{{ value.value }}")]
+    {{ value.name.pascal.o }},
+{% endfor %}}
+{% endif -%}
