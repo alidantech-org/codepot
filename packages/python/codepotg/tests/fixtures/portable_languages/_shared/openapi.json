@@ -49,6 +49,36 @@
         "x-operation-probe": {
           "enabled": true
         }
+      },
+      "post": {
+        "operationId": "createWidget",
+        "tags": ["widgets"],
+        "description": "Create a fixture widget",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWidgetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created widget",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Widget"
+                }
+              }
+            }
+          }
+        },
+        "x-operation-probe": {
+          "enabled": true
+        }
       }
     }
   },
@@ -87,6 +117,17 @@
           }
         },
         "x-schema-probe": "widget-list-response"
+      },
+      "CreateWidgetRequest": {
+        "type": "object",
+        "description": "Fixture create request",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/WidgetStatus"
+          }
+        },
+        "x-schema-probe": "create-widget-request"
       }
     }
   },
