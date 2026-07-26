@@ -1,0 +1,26 @@
+apiVersion: codepotg.dev/v2
+
+name: git-pack-project
+
+sources:
+  api:
+    adapter: openapi
+    file: ./openapi.yaml
+
+executables:
+  packageManager: pnpm
+
+security:
+  packCommands: approve
+
+packs:
+  typescriptSdk:
+    source:
+      git: https://github.com/alidantech-org/codepotg-packs.git
+      ref: typescript-sdk/v2.4.1
+      path: packs/typescript-sdk
+    input: api
+    output: packages/typescript-sdk
+
+    options:
+      clientName: ExampleClient
