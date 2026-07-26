@@ -1,8 +1,10 @@
-# Dart adapter design reference
+# Dart target adapter design reference
 
 ## Role
 
-This package implements Dart target syntax for templates ending in `.dart.<engine>`. Flutter remains framework policy inside packs.
+This package is resolved for templates whose target suffix is `.dart`. It detects and validates Dart targets and calculates target-aware URI/path facts from already planned artifacts.
+
+It never selects templates, extends the semantic kernel, assumes Flutter, or authors Dart source text.
 
 ## Planned plugin entry point
 
@@ -11,75 +13,90 @@ This package implements Dart target syntax for templates ending in `.dart.<engin
 dart = "codepotg_language_dart.plugin:create_plugin"
 ```
 
-## Pack rules example
+## Typed target options
+
+Options are limited to target detection, filename/identifier validation, and URI/path facts. A possible shape is:
 
 ```yaml
-languages:
+targets:
   dart:
-    identifiers:
-      reservedWordPolicy: suffix
-      suffix: Value
-    naming:
-      types: pascalCase
-      values: camelCase
-      files: snakeCase
-    imports:
+    modules:
       strategy: relative
       packageName: null
-      ordering: [dart, package, relative]
-      prefixes: automatic
-      combinators: merge
-      quoteStyle: single
-    exports:
-      ordering: stable
-    types:
-      nullSafety: enabled
-      date: DateTime
-      binary: Uint8List
-      futureResponses: true
-    comments:
-      documentation: tripleSlash
+    validation:
+      reservedWordPolicy: diagnostic
 ```
 
-Rules and overrides are typed and introspectable. A pack or project cannot supply arbitrary dictionaries.
+Every option is typed, immutable, validated, documented, and introspectable. Raw dictionaries and generic recursive merges are prohibited.
 
-## Import strategies
+The adapter must not define options for generated type/null-safety mapping, literals, comments, imports/exports syntax, annotations, serialization, formatting, or Flutter behavior. Packs implement those through templates/macros and pack options.
 
-The adapter supports semantic import requests resolved as:
+## URI/path facts
 
-```dart
-import '../models/user.dart';
-import 'package:my_sdk/src/errors/api_exception.dart';
-import 'package:shared/common.dart' show AppLogger, BaseRepository;
+Given planned provider and consumer artifacts, the adapter may calculate and validate:
+
+```text
+relative URI segments
+normalized relative URI
+package URI from an explicit package-name/project-path binding
+explicit package/module identity
+export/barrel provider destination
+path containment and escaping diagnostics
 ```
 
-A project-path binding gives the adapter a real file path, allowing correct relative URI calculation. A package binding uses the configured package name. A barrel/export group may satisfy several logical symbols.
+Example descriptor supplied to a template:
+
+```text
+module.symbols = [User]
+module.uri = package:defytickets_sdk/src/types/user.dart
+module.is_package = true
+```
+
+The template authors the statement:
+
+```jinja
+import '{{ module.uri }}' show {{ module.symbols | join(", ") }};
+```
+
+The adapter does not return the rendered line and does not choose quote style, prefixes, deferred imports, show/hide combinators, ordering, grouping, or export statement form.
+
+## Identifier and filename validation
+
+Core supplies semantic naming projections using:
+
+```text
+x.name.{casing}.{number}
+```
+
+Templates select the projection they need. The adapter may validate an authored candidate as a Dart type, variable, field, parameter, library prefix, or file stem and return diagnostics/facts. It does not automatically rename semantic objects or expose APIs such as `dart.className`.
 
 ## Internal implementation shape
 
 ```text
-DartLanguageAdapter
-├── IdentifierPolicy
-├── NamingPolicy
-├── TypeRenderer
-├── LiteralRenderer
-├── CommentRenderer
+DartTargetAdapter
+├── TargetDescriptor
+├── FileNameValidator
+├── IdentifierValidator
+├── ReservedWordCatalog
 ├── UriResolver
-├── ImportPlanner
-└── ExportPlanner
+├── PackagePathValidator
+└── CapabilityDescriptor
 ```
+
+No type renderer, literal/comment renderer, import planner/renderer, export renderer, annotation renderer, or formatter belongs in this package.
 
 ## Boundaries
 
 This package does not own:
 
-- Flutter widgets or application layout;
-- state management;
+- semantic objects, facets, selectors, or expression roots;
+- generated Dart type/null-safety/literal/comment/import/export/annotation syntax;
+- Flutter widgets, state management, navigation, or application layout;
 - `pubspec.yaml` updates or `dart pub get`;
-- OpenAPI parsing;
-- template rendering;
-- file planning/writing;
+- OpenAPI or other source parsing;
+- template rendering or selection;
+- destination planning/writing;
 - commands;
 - old generator behavior.
 
-See `../tasks/00-package-plan.md` and the core language adapter contract.
+See `../tasks/00-package-plan.md` and the core target adapter contract.
