@@ -16,26 +16,56 @@ from contracts.template import (
 from emission.imports.base import ImportPlanningContext
 from emission.imports.markdown import MarkdownImportPlanner
 
+CASES = (
+    (
+        ".py",
+        "package/src/portable_client/models/widget.py",
+        "package/src/portable_client/models/widget_status.py",
+        "from .widget_status import WidgetStatus",
+    ),
+    (
+        ".java",
+        "package/src/main/java/generated/models/widget.java",
+        "package/src/main/java/generated/models/widget_status.java",
+        "import generated.models.WidgetStatus;",
+    ),
+    (
+        ".cs",
+        "package/Models/widget.cs",
+        "package/Models/widget_status.cs",
+        "using Models;",
+    ),
+    (
+        ".go",
+        "package/models/widget.go",
+        "package/models/widget_status.go",
+        'import "portable-client/models"',
+    ),
+    (
+        ".rs",
+        "package/src/models/widget.rs",
+        "package/src/models/widget_status.rs",
+        "use crate::models::widget_status::WidgetStatus;",
+    ),
+)
+
 
 @pytest.mark.parametrize(
-    ("suffix", "statement"),
-    (
-        (".py", "from .widget_status import WidgetStatus"),
-        (".java", "import Native.Schemas.WidgetStatus;"),
-        (".cs", "using Native.Schemas;"),
-        (".go", 'import "portable-client/native/schemas"'),
-        (".rs", "use crate::native::schemas::widget_status::WidgetStatus;"),
-    ),
+    ("suffix", "current_path", "target_path", "statement"),
+    CASES,
 )
 def test_fallback_planner_builds_portable_source_imports(
     suffix: str,
+    current_path: str,
+    target_path: str,
     statement: str,
 ) -> None:
+    current_relative = PurePosixPath(current_path)
     current = TemplateFile(
-        output_path=Path(f"native/schemas/widget{suffix}"),
-        relative_path=PurePosixPath(f"native/schemas/widget{suffix}"),
-        name=f"widget{suffix}",
-        stem="widget",
+        output_path=Path(current_path),
+        relative_path=current_relative,
+        name=current_relative.name,
+        stem=current_relative.stem,
         suffix=suffix,
         group=TemplateGroup.MODELS,
     )
@@ -45,7 +75,7 @@ def test_fallback_planner_builds_portable_source_imports(
             ref="#/components/schemas/WidgetStatus",
             name=make_contract_name("WidgetStatus"),
         ),
-        relative_path=Path(f"native/schemas/widget_status{suffix}"),
+        relative_path=Path(target_path),
         is_importable=True,
         exists=True,
     )
@@ -67,8 +97,10 @@ def test_fallback_planner_builds_portable_source_imports(
 
 def test_portable_import_planner_deduplicates_statements() -> None:
     current = TemplateFile(
-        output_path=Path("native/schemas/widget.py"),
-        relative_path=PurePosixPath("native/schemas/widget.py"),
+        output_path=Path("package/src/portable_client/models/widget.py"),
+        relative_path=PurePosixPath(
+            "package/src/portable_client/models/widget.py"
+        ),
         name="widget.py",
         stem="widget",
         suffix=".py",
@@ -79,7 +111,9 @@ def test_portable_import_planner_deduplicates_statements() -> None:
             ref="#/components/schemas/WidgetStatus",
             name=make_contract_name("WidgetStatus"),
         ),
-        relative_path=Path("native/schemas/widget_status.py"),
+        relative_path=Path(
+            "package/src/portable_client/models/widget_status.py"
+        ),
         is_importable=True,
         exists=True,
     )
@@ -97,8 +131,8 @@ def test_portable_import_planner_deduplicates_statements() -> None:
 
 def test_portable_import_planner_respects_none_strategy() -> None:
     current = TemplateFile(
-        output_path=Path("native/schemas/widget.rs"),
-        relative_path=PurePosixPath("native/schemas/widget.rs"),
+        output_path=Path("package/src/models/widget.rs"),
+        relative_path=PurePosixPath("package/src/models/widget.rs"),
         name="widget.rs",
         stem="widget",
         suffix=".rs",
