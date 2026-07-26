@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping
 from typing import Any
 
+from contracts.normalized_document_contract import build_normalized_document_contract
 from contracts.template import TemplateContract
 
 
@@ -55,12 +56,16 @@ def bounded_graph_context(contract: TemplateContract) -> BoundedGraphContext:
 
     api_meta = getattr(contract.api, "meta", {})
     meta: Mapping[str, Any] = api_meta if isinstance(api_meta, Mapping) else {}
+    document_contract = meta.get("normalized_document")
+    if document_contract is None:
+        document_contract = build_normalized_document_contract(contract.api.raw)
+
     public = {
         "project": contract.project,
         "lang": contract.lang,
         "emit": contract.emit,
         "meta": contract.meta,
-        "document_contract": meta.get("normalized_document"),
+        "document_contract": document_contract,
         "selected_frontend": contract.selected_frontend,
         "selected_frontends": contract.selected_frontends,
         "frontend_count": contract.frontend_count,
