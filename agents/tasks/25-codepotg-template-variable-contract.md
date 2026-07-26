@@ -22,7 +22,8 @@ Expose every supported OpenAPI and `x-codegen` fact through stable typed templat
 - [-] Add Jinja text fixtures that render every global and selected-item variable family.
 - [-] Test schema, resource, operation, entity, frontend, parameter, request, response, field, file, dependency, provider, barrel, and lazy-source contexts.
 - [x] Test missing top-level optional data produces safe empty values rather than undefined-template failures.
-- [ ] Test safe empty values for every selected-item contract family.
+- [x] Test safe empty values for schema, operation, resource, entity, frontend, selected frontend, and file contracts through strict Jinja.
+- [ ] Add authored entity/frontend executable probes with non-empty relations, components, screens, and uses.
 - [ ] Update the variable reference and bounded-context documentation from executable tests.
 
 ## Implemented evidence awaiting validation
@@ -33,7 +34,8 @@ Expose every supported OpenAPI and `x-codegen` fact through stable typed templat
 - The renderer injects the same precomputed document and normalized roots into eager/legacy contexts only when the public `api` root is present; bounded contexts without `api` are not augmented.
 - Contract and renderer tests verify all standard top-level OpenAPI families, raw-only preservation, extensions, safe missing values, object identity, eager fallback construction, and bounded no-leak behavior.
 - The complete graph fixture now renders fields, dependencies, imports, parameters, request bodies, responses, providers, provider outputs, barrels, resolver statistics, and lazy source records into inspectable text files.
-- Portable-language Jinja fixtures prove global, schema, operation, resource, raw, extension, file-writing, package-layout, and cache-reuse behavior; entity/frontend and safe-empty selected-item probes remain open.
+- Strict-Jinja safe-empty tests cover default schema, operation, resource, entity, frontend, selected-frontend, and file contracts.
+- Portable-language Jinja fixtures prove global, schema, operation, resource, raw, extension, file-writing, package-layout, and cache-reuse behavior; authored non-empty entity/frontend probes remain open.
 
 ## Safety constraints
 
