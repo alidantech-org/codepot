@@ -23,16 +23,24 @@ PROFILE = PortableLanguageProfile(
     purpose="Rust API client and service contracts",
     framework="rust-standard-library",
     package_suffix="client",
+    package_dependencies=(
+        "serde",
+        "serde_json",
+        "reqwest",
+        "chrono",
+        "uuid",
+        "rust_decimal",
+    ),
     diagnostics=(
-        "Run `cargo check` when Cargo metadata is emitted.",
-        "Run `cargo fmt` after generation.",
+        "Run `cargo check` and `cargo test` in the generated crate.",
+        "Run `cargo fmt --check` before committing generated sources.",
     ),
 )
 
 
 @language_adapter(name=PROFILE.name, aliases=PROFILE.aliases, template_name="rust")
 class RustLanguageAdapter:
-    """Expose the complete typed contract to Rust templates."""
+    """Build complete Rust generation contracts."""
 
     name: str
     aliases: tuple[str, ...]
