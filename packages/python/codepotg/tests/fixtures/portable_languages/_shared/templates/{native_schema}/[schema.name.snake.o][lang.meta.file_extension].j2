@@ -1,7 +1,11 @@
 {% if lang.name == "python" -%}
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+import datetime
+import decimal
+import uuid
+
+from pydantic import BaseModel
 
 
 class {{ schema.name.pascal.o }}(BaseModel):
@@ -11,10 +15,20 @@ class {{ schema.name.pascal.o }}(BaseModel):
 {% elif lang.name == "java" -%}
 package generated.models;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 public record {{ schema.name.pascal.o }}(
 {% for field in schema.fields %}    {{ field.lang.type }} {{ field.name.camel.o }}{% if not loop.last %},{% endif %}
 {% endfor %}) {}
 {% elif lang.name == "csharp" -%}
+using System;
+using System.Collections.Generic;
+
 namespace Generated.Models;
 
 public sealed record {{ schema.name.pascal.o }}
@@ -23,6 +37,8 @@ public sealed record {{ schema.name.pascal.o }}
 {% endfor %}}
 {% elif lang.name == "go" -%}
 package models
+
+import "github.com/google/uuid"
 
 type {{ schema.name.pascal.o }} struct {
 {% for field in schema.fields %}    {{ field.name.pascal.o }} {{ field.lang.type }} `json:"{{ field.api.id }}{% if not field.lang.required %},omitempty{% endif %}"`
