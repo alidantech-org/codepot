@@ -19,6 +19,7 @@ Existing template variables and folder packs remain supported while graph packs 
 
 ## Guides
 
+- [Configuration schemas](configuration-schemas.md) documents the bundled Draft 2020-12 schemas for `Codepotg.yaml` and `paths.yaml`, typed `$schema` links, editor setup, and repository examples.
 - [`paths.yaml` graph](paths-yaml.md) defines named selections, emissions, explicit dependency providers, barrels, bounded contexts, lazy source variables, graph scheduling, and legacy migration.
 - [Bounded normalized roots](bounded-normalized-roots.md) lists the public graph-template roots for complete schema keywords, HTTP/domain facts, resource and operation runtime metadata, inherited entities, and authored frontends.
 - [Realistic template fixtures](realistic-template-fixtures.md) separates nine-file smoke tests from the large-contract Nest, Next, and Dart generation and profiling gate.

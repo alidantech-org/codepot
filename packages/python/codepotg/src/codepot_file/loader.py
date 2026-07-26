@@ -15,6 +15,7 @@ CODEPOTG_CONFIG_YML = "Codepotg.yml"
 CODEPOTG_CONFIG_NAME = CODEPOTG_CONFIG_YAML
 SUPPORTED_CONFIG_NAMES = (CODEPOTG_CONFIG_YAML, CODEPOTG_CONFIG_YML)
 LEGACY_CONFIG_NAMES = ("CodepotFile.yml", "CodepotFile.yaml")
+SCHEMA_KEY = "$schema"
 
 
 def resolve_codepotg_config(config_path: Path | None = None) -> Path:
@@ -87,6 +88,7 @@ def load_codepotg_config(config_path: Path | None = None) -> CodepotFile:
         allow=allow,
         defaults=dict(defaults_raw),
         tasks=tasks,
+        schema_uri=_optional_schema_uri(raw.get(SCHEMA_KEY)),
     )
 
 
@@ -98,6 +100,7 @@ def load_codepotg_yaml(path: Path) -> dict[str, Any]:
 
     if not isinstance(raw, dict):
         raise ConfigError("CodepotG config root must be an object.")
+    _optional_schema_uri(raw.get(SCHEMA_KEY))
     return raw
 
 
@@ -222,6 +225,14 @@ def _env(raw: Any, *, task_name: str, field_name: str) -> dict[str, str]:
     if not isinstance(raw, dict):
         raise ConfigError(f"Task '{task_name}' field {field_name} must be an object.")
     return {str(key): str(value) for key, value in raw.items()}
+
+
+def _optional_schema_uri(raw: Any) -> str | None:
+    if raw in (None, ""):
+        return None
+    if not isinstance(raw, str) or not raw.strip():
+        raise ConfigError("CodepotG config $schema must be a non-empty string.")
+    return raw.strip()
 
 
 def _resolve_path(root: Path, value: str) -> Path:

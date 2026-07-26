@@ -47,3 +47,4 @@ class CodepotFile:
     allow: bool
     defaults: dict[str, object]
     tasks: tuple[CodepotTask, ...]
+    schema_uri: str | None = None

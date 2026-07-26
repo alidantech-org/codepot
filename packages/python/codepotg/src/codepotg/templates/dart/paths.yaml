@@ -1,3 +1,5 @@
+$schema: https://schemas.codepot.dev/codepotg/v1/paths.schema.json
+
 template_extension: ".j2"
 strip_template_extension: true
 allow_raw_files: true
@@ -18,7 +20,7 @@ folders:
     parts:
       - lib
       - [project.meta.api_version]
-      - schemas  
+      - schemas
       - models
       - [model.emit.resource_path]
       - [model.name.path.o]
