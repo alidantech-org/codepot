@@ -23,16 +23,20 @@ PROFILE = PortableLanguageProfile(
     purpose="Go API client and service contracts",
     framework="go-standard-library",
     package_suffix="client",
+    package_dependencies=(
+        "github.com/google/uuid",
+        "github.com/shopspring/decimal",
+    ),
     diagnostics=(
-        "Run `go mod tidy` when a module file is emitted.",
-        "Run `gofmt -w .` after generation.",
+        "Run `go mod tidy` and `go test ./...` in the generated module.",
+        "Run `gofmt -w .` before committing generated sources.",
     ),
 )
 
 
 @language_adapter(name=PROFILE.name, aliases=PROFILE.aliases, template_name="go")
 class GoLanguageAdapter:
-    """Expose the complete typed contract to Go templates."""
+    """Build complete Go generation contracts."""
 
     name: str
     aliases: tuple[str, ...]
