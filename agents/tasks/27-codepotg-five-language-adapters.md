@@ -27,15 +27,18 @@ Add production-ready adapter foundations for five widely used API/client languag
 - [-] Add language-specific import planners rather than falling back to Markdown import rendering.
 - [-] Add target package metadata and build files: Python packaging, Java Maven, .NET project, Go module, and Rust Cargo.
 - [-] Validate generated fixtures with the native compiler or formatter when the tool is installed.
-- [ ] Add complete package/module entry points and native module registries.
-- [ ] Verify request and response types compile in representative operations.
+- [-] Add complete package/module entry points and native module registries.
+- [-] Verify named response types and nested referenced collection types compile in representative operations.
+- [ ] Add representative named request-body models and typed operation inputs.
 - [x] Document supported languages and adapter-authoring rules.
 
 ## Implemented evidence awaiting validation
 
-- Typed target systems cover scalar, format, collection, map, nullability, file, package, and source-layout conventions.
-- Generated fixtures now include manifests, native models, enums, operation clients, and registry-planned imports.
-- Native validation tests run Python compileall, javac, dotnet build, gofmt, and rustfmt when available.
+- Typed target systems cover scalar, format, collection, map, nullability, file, package, source-layout, filename, and support-file conventions.
+- Generated fixtures include manifests, native models, enums, named response models, typed operation clients, package/module entry points, and registry-planned imports.
+- Python emits package/model/client `__init__.py` files; Java emits package descriptors; C# emits global usings; Go emits package docs; Rust emits `lib.rs` plus model/client module registries.
+- Portable import planning now matches Java package casing, C# namespace roots, Go module paths, Rust module paths, and skips Go same-package imports.
+- Native validation runs Python compileall, javac, dotnet build, gofmt, rustfmt, and offline Go/Rust compilation when dependencies are cached.
 - Existing TypeScript and Dart planners remain selected before the portable fallback planner.
 - `docs/supported-language-adapters.md` separates implemented support from the universal future catalog and records production adapter requirements.
 
