@@ -1,0 +1,63 @@
+apiVersion: codepotg.dev/v2
+
+id: alidantech/typeorm-repositories
+version: 1.0.0
+description: Generates TypeORM entities and repositories.
+
+requires:
+  codepotg: ">=2.0 <3.0"
+  ir: ">=2.0 <3.0"
+
+exclude:
+  - _authoring/**
+  - "**/*.draft"
+
+options:
+  repositoryStyle:
+    choices: [class, functions]
+    default: class
+
+bindings:
+  baseRepository:
+    required: true
+    description: Base class imported by generated repositories.
+
+selections:
+  entities:
+    paths: [src, entities]
+    select: entities.each
+    symbols: [(entity.name.pascal.s)]
+
+  repositories:
+    paths: [src, repositories]
+    select: entities.each
+    imports:
+      entities: entities
+    bindings: [baseRepository]
+    symbols: [(entity.name.pascal.s)Repository]
+
+  entitiesIndex:
+    paths: [src, entities]
+    exports: [entities]
+
+  repositoriesIndex:
+    paths: [src, repositories]
+    exports: [repositories]
+
+  rootIndex:
+    paths: [src]
+    exports: [entitiesIndex, repositoriesIndex]
+
+executables:
+  packageManager: pnpm
+
+commands:
+  after:
+    install:
+      executable: packageManager
+      arguments: [add, typeorm@^0.3.0, reflect-metadata@^0.2.0]
+
+    format:
+      executable: packageManager
+      arguments: [exec, prettier, --write, src]
+      optional: true
