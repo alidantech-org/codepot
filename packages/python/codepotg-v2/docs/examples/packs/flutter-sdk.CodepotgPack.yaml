@@ -1,0 +1,74 @@
+apiVersion: codepotg.dev/v2
+
+id: alidantech/flutter-sdk
+version: 1.4.2
+description: Generates a Dart and Flutter API client.
+
+requires:
+  codepotg: ">=2.0 <3.0"
+  ir: ">=2.0 <3.0"
+
+options:
+  clientName:
+    default: ApiClient
+
+selections:
+  enums:
+    paths: [lib, src, models]
+    select: schemas.enums.each
+    symbols: [(enum.name.pascal.s)]
+
+  models:
+    paths: [lib, src, models]
+    select: schemas.models.each
+    imports:
+      enums: enums
+    symbols: [(model.name.pascal.s)]
+
+  modelsIndex:
+    paths: [lib, src, models]
+    exports: [enums, models]
+
+  services:
+    paths: [lib, src, services]
+    select: resources.each
+    imports:
+      models: modelsIndex
+    symbols: [(resource.name.pascal.s)Service]
+
+  servicesIndex:
+    paths: [lib, src, services]
+    exports: [services]
+
+  client:
+    paths: [lib, src]
+    imports:
+      services: servicesIndex
+    symbols: [(option.clientName)]
+
+  packageIndex:
+    paths: [lib]
+    exports: [modelsIndex, servicesIndex, client]
+
+executables:
+  flutter: flutter
+  dart: dart
+
+commands:
+  after:
+    installRuntime:
+      executable: flutter
+      arguments: [pub, add, "dio:^5.0.0", "json_annotation:^4.0.0"]
+
+    installDevelopment:
+      executable: flutter
+      arguments: [pub, add, --dev, "build_runner:^2.0.0", "json_serializable:^6.0.0"]
+
+    generateSerialization:
+      executable: flutter
+      arguments: [pub, run, build_runner, build, --delete-conflicting-outputs]
+
+    format:
+      executable: dart
+      arguments: [format, lib]
+      optional: true
