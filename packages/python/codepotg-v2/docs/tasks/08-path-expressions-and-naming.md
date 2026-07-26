@@ -1,180 +1,137 @@
-# Path-expression and semantic naming tasks
+# Selection-folder, path-expression, and naming tasks
 
-This lane implements the approved rule that a pack source path is the default output-path program.
+This lane implements the approved filesystem-driven path model.
 
-## Prohibited shortcuts
-
-No task in this lane may:
-
-- add `fileName`, `filePath`, `directory`, or similar generated-output properties to neutral IR records;
-- evaluate Jinja, Python, JavaScript, or arbitrary methods while planning paths;
-- let a template engine choose output destinations;
-- silently stringify or join arbitrary sequences;
-- use target-language adapters to select output folders;
-- bypass planning for static or binary files;
-- restore the old runtime or parse old `paths.yaml`.
-
-## PATH-001 — Semantic name and inflection model
+## PATH-001 — Semantic names
 
 **Status:** planned
 
 **Dependencies:** CORE-003, IR-001
 
-**Ownership:** `codepotg-v2/domain/ir` or a focused core naming package approved by architecture.
+- [ ] Implement immutable names with raw, clean, snake, kebab, camel, pascal, screaming, constant, dot, path, lower, and upper forms.
+- [ ] Implement original, singular, plural, and number projections with short and long names.
+- [ ] Make inflection deterministic and behavior-versioned.
+- [ ] Add irregular, uncountable, acronym, Unicode, and empty-name tests.
 
-- [ ] Implement immutable semantic name source value.
-- [ ] Implement case projections: raw, clean, snake, kebab, camel, pascal, screaming, constant, dot, path, lower, upper.
-- [ ] Implement original, singular, plural, and number projections with long and short aliases.
-- [ ] Define deterministic word splitting, acronym handling, Unicode normalization, invalid-character behavior, and empty-name diagnostics.
-- [ ] Implement behavior-versioned inflection with irregular and uncountable word support.
-- [ ] Include naming/inflection behavior version in plan, lock, and cache identities.
-- [ ] Add property tests proving case/plurality projections are immutable and deterministic.
+**Acceptance:** `(entity.name.kebab.s)` and every documented name form resolve deterministically.
 
-**Acceptance:** `[entity.name.kebab.s]`, `[resource.name.path.o]`, and all documented projections resolve without target-language or filesystem dependencies.
-
-## PATH-002 — Typed path-value registry
+## PATH-002 — Typed expression registry
 
 **Status:** planned
 
 **Dependencies:** CFG-002, PATH-001, CORE-004
 
-**Ownership:** core path contracts and configuration introspection.
+- [ ] Define typed scalar, name, path-segment, optional, and namespaced descriptors.
+- [ ] Register fixed-selection contexts plus project, pack, source, option, binding, artifact, and target metadata.
+- [ ] Expose descriptors for diagnostics, completion, schemas, and inspection.
+- [ ] Reject unknown roots and properties with suggestions.
 
-- [ ] Define typed path-safe scalar, semantic-name projection, `PathSegments`, optional value, and registered namespaced value descriptors.
-- [ ] Register stable roots for project, pack, source, unit, option, binding, group, artifact, target metadata, and active selection aliases.
-- [ ] Require plugin-provided path values to be typed, namespaced, documented, deterministic, and capability-scoped.
-- [ ] Expose registry metadata for diagnostics, editor completion, schema/help output, and `inspect paths`.
-- [ ] Reject raw parser/source objects and unregistered mapping access.
-
-**Acceptance:** every path property is discoverable through typed metadata and unknown roots/properties produce source-spanned suggestions.
-
-## PATH-003 — Path token parser
+## PATH-003 — Parenthesis expression parser
 
 **Status:** planned
 
 **Dependencies:** PATH-002
 
-**Ownership:** generation domain, not Jinja or language adapters.
+- [ ] Parse `(expression)` dynamic tokens.
+- [ ] Parse `((value))` as literal `(value)` before dynamic parsing.
+- [ ] Leave square brackets literal for framework routes.
+- [ ] Support scalar interpolation inside filenames.
+- [ ] Allow multi-segment path values only as whole path segments.
+- [ ] Preserve token source spans.
 
-- [ ] Parse literal segments.
-- [ ] Parse `{recipe}` named path recipe tokens.
-- [ ] Parse `[expression]` bounded dynamic tokens.
-- [ ] Parse `[[value]]` and `{{value}}` literal escaping.
-- [ ] Support dynamic scalar interpolation inside a filename segment.
-- [ ] Allow multi-segment `PathSegments` only when the token occupies a complete source segment.
-- [ ] Preserve token source spans for diagnostics.
-- [ ] Reject method calls, arbitrary indexing, malformed nesting, and unsupported token combinations.
+**Acceptance:** `[id]`, `[...slug]`, `[[...slug]]`, and `((admin))` compile without ambiguity.
 
-**Acceptance:** Next.js-style bracket routes, literal braces, and dynamic names compile without ambiguity.
-
-## PATH-004 — Named path recipe contract
+## PATH-004 — Selection folders
 
 **Status:** planned
 
-**Dependencies:** PACKCFG-001..PACKCFG-004, PLAN-002, PATH-003
+**Dependencies:** PACKCFG-004, PLAN selection contracts, PATH-003
 
-**Ownership:** typed `CodepotgPack.yaml` model plus planner.
+- [ ] Parse only whole `{selectionKey}` folder segments.
+- [ ] Resolve keys through pack `selections`.
+- [ ] Implement built-in `{root}` with zero path contribution.
+- [ ] Replace selection folders with compact `paths` arrays.
+- [ ] Establish fixed selector contexts before later expressions.
+- [ ] Evaluate nested selection folders left to right.
+- [ ] Support optional inline aliases and reject shadowing/cycles.
 
-- [ ] Implement `paths` mapping in the pack manifest.
-- [ ] Support structural recipes with parts only.
-- [ ] Support selection-only recipes with zero output parts.
-- [ ] Support selection-plus-parts recipes.
-- [ ] Support references to named selections and inline selections.
-- [ ] Evaluate recipe tokens left to right.
-- [ ] Make aliases introduced by earlier recipes available to later recipes and expressions.
-- [ ] Reject alias shadowing, missing prior aliases, recursive recipes, and selection cycles.
-- [ ] Record recipe and selection provenance in the plan.
-
-**Acceptance:** `{resource}/{entity}/[entity.name.kebab.s].entity.ts.jinja` can nest resource and entity fan-out deterministically.
-
-## PATH-005 — Source-path output compiler
+## PATH-005 — Filesystem output compiler
 
 **Status:** planned
 
-**Dependencies:** PLAN-001, PATH-003, PATH-004, target registry
+**Dependencies:** PACKCFG-002, PATH-003, PATH-004, target/engine registries
 
-**Ownership:** generation planner.
+- [ ] Treat each `templates/`-relative path as the default output expression.
+- [ ] Apply pack `.gitignore`, `include`, and `exclude` discovery rules.
+- [ ] Exclude `_partials/**` from emission.
+- [ ] Resolve selection folders and path expressions.
+- [ ] Preserve literal folders, suffixes, bracket routes, and target extensions.
+- [ ] Strip only the recognized engine suffix.
+- [ ] Copy static and binary files unchanged.
+- [ ] Treat `.gitignore` as control and `.gitignore.jinja` as an emitting template.
+- [ ] Prepend the pack-instance output root after pack-relative compilation.
 
-- [ ] Treat each content-root-relative source path as the default output expression.
-- [ ] Establish exact-file selection before resolving dynamic tokens.
-- [ ] Resolve named recipes and typed expressions.
-- [ ] Preserve literal prefixes, suffixes, and target extensions.
-- [ ] Strip only the registered template-engine suffix for emitted templates.
-- [ ] Preserve static/binary source suffixes and bytes.
-- [ ] Prepend the project pack-instance output root only after pack-relative path compilation.
-- [ ] Produce immutable output-expression and resolved-path values.
-- [ ] Ensure target adapters validate final filename restrictions but do not plan directories.
+**Acceptance:** ordinary files need no manifest `files`, `filePatterns`, roles, or output override.
 
-**Acceptance:** no normal template or static descriptor requires an explicit `output` field.
-
-## PATH-006 — Exceptional output overrides and named outputs
+## PATH-006 — Fixed selector registry
 
 **Status:** planned
 
-**Dependencies:** PATH-005
+**Dependencies:** PATH-004, IR selector contracts
 
-- [ ] Support explicit `output.parts` using the same typed grammar.
-- [ ] Support output overrides only when source layout cannot represent the destination cleanly.
-- [ ] Support multiple named outputs only when every ID/path is declared before rendering.
-- [ ] Prevent engines/templates from adding output IDs or destinations dynamically.
-- [ ] Include override provenance in plan inspection.
+- [ ] Implement versioned selectors for resources, entities, schemas, models, DTOs, enums, operations, and documented nested contexts.
+- [ ] Implement `.each` and `.all`.
+- [ ] Infer stable singular/plural contexts.
+- [ ] Implement optional `selector(alias)`.
+- [ ] Expose the registry through schema/editor/inspection APIs.
+- [ ] Reject pack-defined `from`/`as` traversal.
 
-**Acceptance:** exceptional overrides remain typed and cannot unlock arbitrary template expressions.
-
-## PATH-007 — Path safety and collision validation
+## PATH-007 — Safety and collisions
 
 **Status:** planned
 
 **Dependencies:** PATH-005, PATH-006
 
-- [ ] Reject absolute paths, traversal, empty invalid segments, NUL/control characters, and output-root escapes.
-- [ ] Validate platform-reserved names and target-specific final filename restrictions.
+- [ ] Reject absolute paths, traversal, root escapes, invalid segments, and platform-reserved names.
 - [ ] Detect exact, normalized, and case-insensitive collisions where relevant.
-- [ ] Validate path-length policy and symlink boundaries before writing.
-- [ ] Detect duplicate destinations across template, barrel, static, binary, and named outputs before rendering.
+- [ ] Validate path length and target filename restrictions.
+- [ ] Detect all duplicate destinations before rendering.
 
-**Acceptance:** an invalid destination prevents renderer and writer invocation.
-
-## PATH-008 — Static/binary and folder fan-out conformance
+## PATH-008 — Planned import/export paths
 
 **Status:** planned
 
-**Dependencies:** PATH-005, PLAN-002
+**Dependencies:** PATH-005, BIND-002, planning graph
 
-- [ ] Prove selection-bearing recipe tokens fan out template, static, and binary source files consistently.
-- [ ] Preserve relative structure following recipe tokens.
-- [ ] Prove static bytes remain unchanged.
-- [ ] Test nested resource/module/package fan-out.
-- [ ] Test `.gitignore`, `.env.example`, images, fixture files, and route folders.
+- [ ] Attach selection key, scope, resolved path, and declared symbols to each planned emission.
+- [ ] Resolve imports only from declared selection keys.
+- [ ] Resolve ordered exports including barrels exporting barrels.
+- [ ] Preserve global, `.all`, `.each`, and parent scope.
+- [ ] Supply immutable descriptors to language adapters and templates.
+- [ ] Reject dependency cycles and symbol conflicts before rendering.
 
-**Acceptance:** static files receive the same path power as rendered templates without becoming templates.
-
-## PATH-009 — Introspection and documentation tooling
+## PATH-009 — Inspection and editor support
 
 **Status:** planned
 
-**Dependencies:** PATH-002..PATH-008
+**Dependencies:** PATH-001..PATH-008
 
-- [ ] Implement structured `inspect paths` output showing source path, tokens, selections, aliases, resolved parts, target/engine suffix handling, and final destination.
-- [ ] Expose available path roots and name projections for editor/LSP completion.
-- [ ] Add diagnostics examples to public docs.
-- [ ] Document behavior-version changes and lock/cache impact.
+- [ ] Show source path, selection folders, contexts, expressions, resolved segments, suffix handling, and final destination.
+- [ ] Show selector/import/export graphs.
+- [ ] Expose available expressions, fixed selectors, aliases, and selection keys for completion.
+- [ ] Document behavior-version effects on locks and cache.
 
-**Acceptance:** pack authors can understand exactly why a source file resolves to a destination without reading runtime internals.
-
-## PATH-010 — Real pack fixtures
+## PATH-010 — Conformance fixtures
 
 **Status:** planned
 
 **Dependencies:** PATH-001..PATH-009
 
-- [ ] Add a TypeScript fixture using case and singular/plural variants.
-- [ ] Add a Dart package fixture using package/resource path recipes.
-- [ ] Add a Next.js fixture with literal bracket route folders.
-- [ ] Add nested resource/entity fan-out.
-- [ ] Add a static/binary fan-out fixture.
-- [ ] Add an aggregate single-file template.
-- [ ] Add explicit output-override and multiple-output fixtures.
-- [ ] Add negative fixtures for invented `fileName`, invalid properties, alias cycles, traversal, and collisions.
+- [ ] Use the checked-in TypeORM, TypeScript SDK, and Flutter SDK manifests as fixtures.
+- [ ] Add matching template trees and expected outputs.
+- [ ] Add local, Git-root, and Git-monorepo project examples.
+- [ ] Cover `{root}`, nested selections, static/binary files, partials, ignore rules, and generated `.gitignore`.
+- [ ] Cover bracket routes and escaped parenthesis routes.
+- [ ] Cover imports, barrels, symbols, missing providers, cycles, traversal, and collisions.
 
-**Acceptance:** all official pack packages consume the same path conformance fixtures and no fixture depends on hidden filename convenience properties.
+**Acceptance:** official packs share one conformance matrix and use no root `paths`, explicit `files`, or semantic filename conveniences.
