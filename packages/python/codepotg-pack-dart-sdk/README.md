@@ -1,9 +1,11 @@
 # codepotg-pack-dart-sdk
 
-Installable default Dart SDK template pack for CodepotG v2.
+Installable modular Dart SDK template pack for CodepotG v2.
 
-This package will generate a standalone Dart API package or contribute generated Dart files to an existing project. It owns its pack manifest, templates, static package files, authored export barrels, binding documentation, Pub dependency requirements, setup actions, and modular or monolithic profiles.
+This package generates one standalone Dart SDK package from the closed semantic kernel. It owns its manifest, Dart/YAML/Markdown templates, macros, partials, static package files, authored export barrels, binding documentation, exact optional commands, and package documentation.
 
-Dart syntax remains in `codepotg-language-dart`; Flutter behavior remains outside this package.
+The templates author every Dart character, including types, nullability, literals, imports, exports, comments, annotations, serialization, and client logic. `codepotg-language-dart` supplies target detection, validation, and URI/path facts only.
 
-See [`docs/tasks/00-package-plan.md`](docs/tasks/00-package-plan.md).
+This package represents one coherent standalone SDK product. Existing-project contribution, Flutter integration, or a materially different monolithic product should be separate packs rather than hidden profile/file-selection machinery.
+
+See [`docs/design/README.md`](docs/design/README.md) and [`docs/tasks/00-package-plan.md`](docs/tasks/00-package-plan.md).
