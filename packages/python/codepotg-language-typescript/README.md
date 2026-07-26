@@ -1,8 +1,10 @@
 # codepotg-language-typescript
 
-Installable TypeScript target-language adapter for CodepotG v2.
+Installable TypeScript target detection, validation, and module-path adapter for CodepotG v2.
 
-The adapter is resolved per template from target suffixes such as `.ts`, `.tsx`, `.mts`, and `.cts`. It owns TypeScript syntax and typed language rules, not OpenAPI, Node.js, NestJS, Next.js, React, template selection, output planning, or filesystem writes.
+The adapter is resolved per template from target suffixes such as `.ts`, `.tsx`, `.mts`, and `.cts`.
+
+It does **not** own TypeScript code generation. Template packs, macros, partials, and static files author every TypeScript character, including types, literals, comments, imports, exports, decorators, validators, and framework code.
 
 ## Planned entry point
 
@@ -13,10 +15,16 @@ typescript = "codepotg_language_typescript.plugin:create_plugin"
 
 ## Responsibilities
 
-- identifiers and reserved words;
-- type, literal, comment, import, export, and module-path rendering;
-- relative, alias, package, namespace, barrel, and project-path import policies;
-- typed rule defaults, patches, merge semantics, override limits, and validation;
-- deterministic conformance behavior for all TypeScript-targeting templates.
+- TypeScript target suffix detection, including longest-known names such as `.d.ts` outputs;
+- output filename, reserved-name, and declared candidate-identifier validation;
+- relative, alias, package/module, project-path, barrel, index, and extension module-specifier facts;
+- deterministic target/path capability descriptors and typed validation options;
+- diagnostics, introspection, compatibility, and conformance behavior.
 
-See [`docs/tasks/00-package-plan.md`](docs/tasks/00-package-plan.md).
+## Prohibited responsibilities
+
+- semantic-kernel/facet/selector extension;
+- type, literal, comment, import, export, decorator, validator, or framework rendering;
+- template selection, output planning, filesystem writes, commands, OpenAPI, Node/NestJS/Next.js/React policy.
+
+See [`docs/design/README.md`](docs/design/README.md) and [`docs/tasks/00-package-plan.md`](docs/tasks/00-package-plan.md).
