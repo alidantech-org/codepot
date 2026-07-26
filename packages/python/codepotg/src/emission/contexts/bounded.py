@@ -58,7 +58,10 @@ def bounded_graph_context(contract: TemplateContract) -> BoundedGraphContext:
     meta: Mapping[str, Any] = api_meta if isinstance(api_meta, Mapping) else {}
     document_contract = meta.get("normalized_document")
     if document_contract is None:
-        document_contract = build_normalized_document_contract(contract.api.raw)
+        raw = getattr(contract.api, "raw", {})
+        document_contract = build_normalized_document_contract(
+            raw if isinstance(raw, Mapping) else {}
+        )
 
     public = {
         "project": contract.project,
