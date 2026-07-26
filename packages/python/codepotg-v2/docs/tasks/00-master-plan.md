@@ -9,7 +9,7 @@ This plan implements only the approved v2 architecture. The old `packages/python
 - [x] **DOC-003** Document complete `codepotg.yaml` and `CodepotgPack.yaml` schemas.
 - [x] **DOC-004** Document language, template-engine, source, pack-provider, and ecosystem adapter contracts.
 - [x] **DOC-005** Document clean-room rewrite stages with no compatibility runtime.
-- [ ] **DOC-006** Finish package-specific design/task expansion and verify no v2 task requests old decoders or old runtime imports.
+- [x] **DOC-006** Finish package-specific design/task expansion and verify no v2 task requests old decoders or old runtime imports.
 
 ## Stage 01 — Core foundation
 
