@@ -24,7 +24,7 @@
 - [ ] Implement typed decoder, structural validator, semantic validator, serializer, and schema-introspection protocols.
 - [ ] Detect duplicate schema registrations.
 - [ ] Report unsupported kinds/versions without guessing.
-- [ ] Prove no v1 `tasks` or `paths.yaml` fallback exists.
+- [ ] Prove no old `tasks` or `paths.yaml` fallback exists.
 
 **Acceptance:** only documented v2 schema pairs decode.
 
@@ -39,7 +39,7 @@
 - [ ] Implement project units and root-relative path/value primitives.
 - [ ] Reject unknown fields with suggestions.
 
-**Tests:** full/empty optional sections, invalid IDs, unsafe paths, project-level `language`, `tasks`, and `templateDir` rejection.
+**Tests:** full/empty optional sections, invalid IDs, unsafe paths, and rejection of project-level `language`, `tasks`, and `templateDir`.
 
 ## CFG-004 — Toolchains and security model
 
@@ -61,7 +61,7 @@
 **Dependencies:** CFG-004
 
 - [ ] Decode global project `before` and `after` command declarations.
-- [ ] Implement structured executable/arguments/cwd/timeout/optional/permission fields.
+- [ ] Implement structured executable, arguments, cwd, timeout, optional, and permission fields.
 - [ ] Reject implicit shell strings unless explicit shell mode is declared and permitted.
 - [ ] Preserve command source spans.
 
@@ -71,13 +71,13 @@
 
 **Dependencies:** CFG-003
 
-- [ ] Implement local path, GitHub shorthand, generic Git, and installed-distribution locator value objects.
+- [ ] Implement local path, GitHub shorthand, generic Git, and installed-distribution locators.
 - [ ] Implement ordered pack-instance IDs.
-- [ ] Implement source, enabled, profile, output, clean, options, bindings, overrides, and project-owned commands.
-- [ ] Implement project unit attachment.
+- [ ] Implement source, enabled, profile, output root, clean, options, bindings, overrides, and project-owned commands.
+- [ ] Implement project-unit attachment.
 - [ ] Validate duplicate IDs, missing sources, and unsafe output/clean paths.
 
-**Acceptance:** same pack can be configured twice with independent instance values.
+**Acceptance:** the same pack can be configured twice with independent instance values.
 
 ## PACKCFG-001 — Pack metadata, compatibility, and traits
 
@@ -86,7 +86,7 @@
 **Dependencies:** CFG-002, CORE-003
 
 - [ ] Implement pack ID/version/description/repository/license/docs metadata.
-- [ ] Implement core, plugin API, IR, target adapter, and engine compatibility requirements.
+- [ ] Implement core, plugin API, IR, target-adapter, and engine compatibility requirements.
 - [ ] Implement composable integration traits: creates project, owns folder, contributes files, requires dependencies/bindings, runnable alone, manifest mode.
 - [ ] Add schema introspection and examples.
 
@@ -98,9 +98,9 @@
 
 - [ ] Implement one or more content roots.
 - [ ] Implement inline ignore patterns and `.codepotgignore` references.
-- [ ] Implement Gitignore-compatible matcher with negation and deterministic ordering.
+- [ ] Implement Gitignore-compatible matching with negation and deterministic ordering.
 - [ ] Implement default lifecycle and managed/protected/immutable root declarations.
-- [ ] Ensure authoring docs/tasks/caches are not emitted unless under an intentional content root.
+- [ ] Ensure authoring docs/tasks/caches are not emitted unless below an intentional content root.
 
 ## PACKCFG-003 — Options, rules, bindings, dependencies, setup
 
@@ -115,18 +115,23 @@
 - [ ] Implement setup summary, questions, detection hints, typed actions, manual steps, and pack commands.
 - [ ] Implement override policy.
 
-## PACKCFG-004 — Selections, patterns, files, profiles
+## PACKCFG-004 — Named paths, selections, descriptor patterns, files, profiles
 
 **Status:** planned
 
-**Dependencies:** PACKCFG-002, PLAN selection contracts
+**Dependencies:** PACKCFG-002, PATH-002..PATH-004, PLAN selection contracts
 
 - [ ] Implement named selection declarations.
-- [ ] Implement folder/file patterns with typed tokens and specificity.
+- [ ] Implement root `paths` mapping with optional selection and typed parts.
+- [ ] Support structural, selection-only, and selection-plus-parts path recipes.
+- [ ] Implement `filePatterns` as descriptor defaults, not the primary output-root mechanism.
 - [ ] Implement exact file configuration modifying discovered descriptors.
 - [ ] Implement roles: template, barrel, static, binary, partial, documentation.
-- [ ] Implement output expressions, binding usage, includes, providers/requires, conditions, lifecycle, local rules, named outputs.
-- [ ] Implement profiles selecting declared files/defaults.
+- [ ] Make content-root-relative source paths the normal output expressions.
+- [ ] Implement binding usage, includes, providers/requires, conditions, lifecycle, local rules, profiles, and exceptional named outputs.
+- [ ] Reject invented semantic `fileName`, `filePath`, and `directory` properties.
+
+**Acceptance:** the canonical tokenized pack example decodes to immutable typed models and requires no explicit output for ordinary files.
 
 ## RULE-001 — Rule descriptors and typed patches
 
@@ -137,7 +142,7 @@
 - [ ] Implement rule field descriptor and schema provider.
 - [ ] Implement typed full-rule and patch protocols.
 - [ ] Implement replace, append, prepend, union, merge-by-key, remove, reset-to-default, and not-overridable operations.
-- [ ] Distinguish absent/set/remove/reset states without overloading `None`.
+- [ ] Distinguish absent, set, remove, and reset states without overloading `None`.
 - [ ] Add property tests for deterministic merges.
 
 ## RULE-002 — Restrictions and provenance
@@ -146,7 +151,7 @@
 
 **Dependencies:** RULE-001
 
-- [ ] Apply adapter defaults, pack, template, project-global, project-pack, and project-template layers in fixed order.
+- [ ] Apply adapter defaults, pack, template, project-global, project-pack, and permitted project-template layers in fixed order.
 - [ ] Record provenance for every final field.
 - [ ] Apply host, adapter, pack, and project permission hierarchy.
 - [ ] Implement `inspect rules` data model.
@@ -157,7 +162,7 @@
 
 **Dependencies:** PACKCFG-003, language port
 
-- [ ] Implement import, barrel, project path, package, namespace, text, text-file, value, package-name, artifact, and raw binding value models.
+- [ ] Implement import, barrel, project path, package, namespace, text, text-file, value, package-name, artifact, and raw binding models.
 - [ ] Validate project values against pack catalog and target adapter capability.
 - [ ] Implement binding groups and default barrels.
 - [ ] Track exact template consumers.
@@ -175,11 +180,12 @@
 
 ## Acceptance gate
 
-This task group is complete when:
+This group is complete when:
 
-- canonical project and pack examples decode into immutable models;
-- schema introspection drives a configure test without hardcoded questions;
-- unknown/forbidden fields and overrides produce source-spanned diagnostics;
+- canonical project and tokenized pack examples decode into immutable models;
+- schema introspection drives configure without hardcoded questions;
+- unknown/forbidden fields, path values, and overrides produce source-spanned diagnostics;
 - no raw dictionary deep merge exists;
 - no old `tasks`/`paths.yaml` decoder exists;
-- one pack instance can configure options, bindings, output, overrides, and commands entirely inside `codepotg.yaml`.
+- no semantic record exposes invented output filenames;
+- one pack instance configures options, bindings, output root, overrides, and commands entirely in `codepotg.yaml`.
