@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping
 from typing import Any
 
-from contracts.normalized_document_contract import build_normalized_document_contract
 from contracts.template import TemplateContract
 
 
@@ -54,37 +53,33 @@ class BoundedGraphContext(Mapping[str, Any]):
 def bounded_graph_context(contract: TemplateContract) -> BoundedGraphContext:
     """Build bounded globals and internal-only selection roots."""
 
-    document_contract = build_normalized_document_contract(contract.api.raw)
+    api_meta = getattr(contract.api, "meta", {})
+    meta: Mapping[str, Any] = api_meta if isinstance(api_meta, Mapping) else {}
     public = {
         "project": contract.project,
         "lang": contract.lang,
         "emit": contract.emit,
         "meta": contract.meta,
-        "document_contract": document_contract,
+        "document_contract": meta.get("normalized_document"),
         "selected_frontend": contract.selected_frontend,
         "selected_frontends": contract.selected_frontends,
         "frontend_count": contract.frontend_count,
     }
-    api_meta = getattr(contract.api, "meta", {})
-    if isinstance(api_meta, Mapping):
-        normalized = api_meta.get("normalized")
-        domains = api_meta.get("normalized_domains")
-        schema_contract = api_meta.get("normalized_schemas")
-        codegen_contract = api_meta.get("normalized_codegen")
-        entity_contract = api_meta.get("normalized_entities")
-        frontend_contract = api_meta.get("normalized_frontends")
-        if normalized is not None:
-            public["normalized"] = normalized
-        if domains is not None:
-            public["domains"] = domains
-        if schema_contract is not None:
-            public["schema_contract"] = schema_contract
-        if codegen_contract is not None:
-            public["codegen_contract"] = codegen_contract
-        if entity_contract is not None:
-            public["entity_contract"] = entity_contract
-        if frontend_contract is not None:
-            public["frontend_contract"] = frontend_contract
+    normalized_roots = {
+        "normalized": meta.get("normalized"),
+        "domains": meta.get("normalized_domains"),
+        "schema_contract": meta.get("normalized_schemas"),
+        "codegen_contract": meta.get("normalized_codegen"),
+        "entity_contract": meta.get("normalized_entities"),
+        "frontend_contract": meta.get("normalized_frontends"),
+    }
+    public.update(
+        {
+            name: value
+            for name, value in normalized_roots.items()
+            if value is not None
+        }
+    )
 
     selection_roots = {
         "api": contract.api,
