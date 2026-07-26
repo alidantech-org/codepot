@@ -1,8 +1,10 @@
-# TypeScript adapter design reference
+# TypeScript target adapter design reference
 
 ## Role
 
-This package is resolved independently for every template whose target is TypeScript. It implements target syntax and typed TypeScript rules; it never selects templates or assumes a framework.
+This package is resolved independently for every template whose target suffix is TypeScript. It detects and validates TypeScript targets and calculates target-aware module/path facts from already planned artifacts.
+
+It never selects templates, extends the semantic kernel, assumes a framework, or authors TypeScript source text.
 
 ## Planned plugin entry point
 
@@ -18,98 +20,98 @@ typescript: .ts, .mts, .cts
 typescript-jsx: .tsx
 ```
 
-The exact descriptor split is an implementation decision, but all targets use one package and share compatible rules. Longest-known suffix matching preserves names such as `types.d.ts.jinja` as `types.d.ts` output.
+The exact descriptor split is an implementation decision, but all targets use one package and compatible validation/path contracts. Longest-known suffix matching preserves names such as `types.d.ts.jinja` as `types.d.ts` output.
 
-## Pack rules example
+## Typed target options
+
+Options are limited to target detection, filename/identifier validation, and module-path facts. A possible shape is:
 
 ```yaml
-languages:
+targets:
   typescript:
-    identifiers:
-      reservedWordPolicy: suffix
-      suffix: _
-    naming:
-      types: pascalCase
-      values: camelCase
-      files: kebabCase
+    files:
+      declarationSuffix: .d.ts
     modules:
-      syntax: esm
-    imports:
       strategy: relative
       aliases: {}
       omitExtensions: true
       indexResolution: omitIndex
-      typeImports: separate
-      quoteStyle: double
-      ordering: [sideEffect, external, alias, relative]
-    exports:
-      typeExports: separate
-    types:
-      optionalProperties: questionMark
-      nullable: unionNull
-      date: string
-      binary: Uint8Array
-    literals:
-      quoteStyle: double
-    comments:
-      documentation: jsdoc
+    validation:
+      reservedWordPolicy: diagnostic
 ```
 
-Every field is implemented by a typed dataclass/value object and a separate typed patch. The final field names may be refined before stable release, but no raw dictionary reaches the adapter.
+Every option is implemented through typed immutable models, validation, descriptors, and introspection. Raw dictionaries and generic recursive merges are prohibited.
 
-## Project override example
+The adapter must not define options for generated type mapping, literal/comment style, import/export statement rendering, decorators, validators, formatting, semicolons, or framework conventions. Those are pack/template options and macros.
 
-```yaml
-packs:
-  sdk:
-    overrides:
-      languages:
-        typescript:
-          imports:
-            strategy: alias
-            aliases:
-              "@": ./src
+## Module/path facts
+
+Given planned consumer/provider artifacts, the adapter may calculate and validate:
+
+```text
+relative path segments
+normalized module specifier
+alias match and remainder
+package/module identity
+extension omission or requirement
+index resolution
+path escaping/invalid target diagnostics
 ```
 
-The pack may restrict which fields can be overridden.
+Example descriptor supplied to a template:
 
-## Semantic import example
-
-A template requests logical symbols. The adapter receives the planned output path and binding/provider descriptors, then produces imports such as:
-
-```typescript
-import type { User } from "@/models/user";
-import { BaseRepository, AppLogger } from "@modules/common";
+```text
+module.symbols = [User]
+module.specifier = @/types/user
+module.is_relative = false
+module.is_type_only = true     # semantic usage fact from the dependency request
 ```
 
-The template does not calculate `../` paths or manually deduplicate barrel symbols.
+The template authors the statement:
+
+```jinja
+import type { {{ module.symbols | join(", ") }} } from "{{ module.specifier }}";
+```
+
+The adapter does not return the rendered line and does not choose quote, semicolon, ordering, grouping, alias spelling, or statement form.
+
+## Identifier and filename validation
+
+Core supplies semantic naming projections in the fixed order:
+
+```text
+x.name.{casing}.{number}
+```
+
+Templates select the projection they want. The adapter may validate an authored candidate as a TypeScript identifier, property name, namespace, file stem, or reserved word and return diagnostics/facts. It does not expose alternate APIs such as `typescript.className` or rename semantic objects automatically.
 
 ## Internal implementation shape
 
 ```text
-TypeScriptLanguageAdapter
-├── IdentifierPolicy
-├── NamingPolicy
-├── TypeRenderer
-├── LiteralRenderer
-├── CommentRenderer
+TypeScriptTargetAdapter
+├── TargetDescriptorRegistry
+├── FileNameValidator
+├── IdentifierValidator
+├── ReservedWordCatalog
 ├── ModulePathResolver
-├── ImportPlanner
-└── ExportPlanner
+├── ModuleSpecifierValidator
+└── CapabilityDescriptor
 ```
 
-Each component is independently unit tested. The facade implements the public language adapter protocol.
+No type renderer, literal renderer, comment renderer, import renderer, or export renderer belongs in this package.
 
 ## Boundaries
 
 This package contains no:
 
-- OpenAPI parsing;
+- OpenAPI or other source parsing;
+- semantic object/facet/selector registration;
+- generated type/literal/comment/import/export/decorator/validator syntax;
 - Node package-manager or `package.json` modification;
 - NestJS/Next.js/React rules;
 - Jinja rendering;
 - template selection;
-- output writing;
+- destination planning or writing;
 - command execution;
 - old generator imports.
 
