@@ -1,200 +1,152 @@
-# TypeScript language-adapter implementation plan
+# TypeScript target adapter implementation plan
 
-This package implements TypeScript target syntax only. It must not contain Node project management, NestJS, Next.js, React, OpenAPI, Jinja, output writing, command execution, or pack selection.
+This package detects and validates TypeScript targets and calculates module/path facts only. It must not contain source parsing, semantic-kernel extensions, generated TypeScript syntax, Node project management, frameworks, Jinja, output writing, command execution, or pack selection.
 
 ## TS-001 — Package and plugin foundation
 
 **Status:** planned
 
-**Dependencies:** core PLUG-001..PLUG-004, public language port, version primitives
+**Dependencies:** core PLUG-001..PLUG-006, target adapter port, version primitives
 
 - [ ] Add isolated `pyproject.toml`, src-layout package, typing marker, README, license metadata, and test configuration.
-- [ ] Register `typescript` factory in `codepotg.language_adapters`.
-- [ ] Declare targets and extensions: `.ts`, `.tsx`, `.mts`, `.cts`; document declaration-file handling such as `.d.ts` while preserving the full output name.
-- [ ] Declare plugin API, IR, core, and behavior versions.
-- [ ] Declare capability metadata only for features actually implemented.
-- [ ] Add import and architecture tests proving only public CodepotG APIs are used.
+- [ ] Register the TypeScript target factory in `codepotg.language_adapters`.
+- [ ] Declare `.ts`, `.tsx`, `.mts`, `.cts`, and documented declaration-file behavior while preserving complete output names.
+- [ ] Declare plugin API, core, IR, selection/planning, and behavior compatibility.
+- [ ] Declare only detection, validation, and module/path capabilities actually implemented.
+- [ ] Add architecture tests proving only public CodepotG APIs are used.
+- [ ] Add explicit tests prohibiting semantic/facet/selector registration and emitted source snippets.
 
 **Acceptance:** package installs independently and core remains importable when this distribution is absent.
 
-## TS-002 — Typed rule schema
+## TS-002 — Typed target option schema
 
 **Status:** planned
 
-**Dependencies:** core RULE-001/002
+**Dependencies:** core typed configuration/options contracts
 
-Define immutable full rules, override patches, field descriptors, defaults, merge policies, hard restrictions, examples, and introspection for:
+Define immutable options, patches only where permitted, descriptors, defaults, validation, examples, restrictions, and introspection for:
 
-### Identifiers
+### Target files
 
-- [ ] invalid-character replacement;
-- [ ] leading-digit policy;
-- [ ] reserved-word policy;
-- [ ] escape/prefix/suffix behavior;
-- [ ] Unicode policy;
-- [ ] role-specific validation for type, value, property, parameter, enum member, namespace, and file stem.
-
-### Naming
-
-- [ ] case policy by semantic role;
-- [ ] acronym handling;
-- [ ] leading/trailing separator handling;
-- [ ] file and test filename transforms.
-
-### Files and modules
-
-- [ ] `.ts`/`.tsx`/`.mts`/`.cts` conventions;
-- [ ] ESM/CommonJS syntax capability metadata without owning Node manifests;
-- [ ] module specifier extension policy;
-- [ ] index resolution;
+- [ ] target suffix/descriptor behavior;
+- [ ] declaration filename validation such as `.d.ts`;
+- [ ] invalid/reserved filename policy;
 - [ ] path separator normalization.
 
-### Imports
+### Candidate identifiers
 
-- [ ] relative, alias, module/package, project-path, barrel, default-barrel, and raw escape modes;
-- [ ] named, default, namespace, side-effect, type-only, and aliased imports;
-- [ ] grouping, ordering, quote style, semicolon policy where adapter-owned;
-- [ ] deduplication and symbol-collision alias strategy;
-- [ ] extension omission/preservation;
-- [ ] path alias mapping and longest-match behavior.
+- [ ] role-specific validation for type, value, property, parameter, enum member, namespace, and file stem candidates;
+- [ ] reserved-word diagnostics;
+- [ ] Unicode/invalid-character/leading-digit validation facts;
+- [ ] optional explicit escaping-validation facts without automatic semantic renaming.
 
-### Exports
+### Module paths
 
-- [ ] named export, export-all, type-only export, default export where requested;
-- [ ] export path resolution and stable ordering;
-- [ ] authored-barrel descriptor rendering.
+- [ ] relative and project-path calculation;
+- [ ] configured alias matching;
+- [ ] package/module strings;
+- [ ] index resolution;
+- [ ] module specifier extension policy;
+- [ ] path containment and invalid-specifier diagnostics.
 
-### Types
+**Prohibited options:** generated naming roles, type mapping, literals, comments, imports/exports syntax, quote/semicolon/formatting style, decorators, validators, or framework behavior.
 
-- [ ] primitive mapping;
-- [ ] arrays/readonly arrays;
-- [ ] records/maps;
-- [ ] tuples;
-- [ ] unions/intersections;
-- [ ] generics;
-- [ ] function types;
-- [ ] object/type references;
-- [ ] optional property versus nullable value;
-- [ ] literal types;
-- [ ] unknown/never/void behavior where semantically valid;
-- [ ] date/binary/external type strategy as typed rules, not pack assumptions.
+**Acceptance:** schema introspection documents every allowed option and rejects every unknown or syntax-rendering path.
 
-### Literals and comments
-
-- [ ] string/template escaping;
-- [ ] number/boolean/null/array/object literals;
-- [ ] property quoting;
-- [ ] line/block/documentation comments;
-- [ ] safe comment terminator handling.
-
-### Formatting metadata
-
-- [ ] indentation/newline/trailing newline and stable separator metadata only where needed for adapter-rendered snippets;
-- [ ] avoid becoming a general formatter.
-
-**Prohibited shortcut:** accepting `dict[str, object]` or generic recursive merges.
-
-**Acceptance:** schema introspection can generate complete configuration help and rejects every unknown rule path.
-
-## TS-003 — Identifier and naming policies
+## TS-003 — Target and extension resolver
 
 **Status:** planned
 
 **Dependencies:** TS-002
 
-- [ ] Implement complete reserved-word set for supported TypeScript behavior version.
-- [ ] Implement role-aware validity and escaping.
-- [ ] Implement deterministic case transforms and acronym tests.
-- [ ] Preserve semantic-name provenance in diagnostics.
-- [ ] Add property tests for valid output and determinism.
+- [ ] Implement longest-known target suffix matching.
+- [ ] Preserve full output names such as `.d.ts` after engine suffix removal.
+- [ ] Distinguish TypeScript and TSX target descriptors where capabilities differ.
+- [ ] Produce deterministic descriptor IDs and diagnostics for unsupported/ambiguous suffixes.
 
-## TS-004 — Type renderer
-
-**Status:** planned
-
-**Dependencies:** core IR type contract, TS-002
-
-- [ ] Render every declared type capability.
-- [ ] Preserve optional versus nullable distinction.
-- [ ] Apply parentheses/precedence correctly for unions, intersections, arrays, functions, and generics.
-- [ ] Resolve semantic references without reading templates or filesystem.
-- [ ] Report unsupported IR types through typed diagnostics.
-
-## TS-005 — Literal and comment renderer
+## TS-004 — Filename and identifier validation
 
 **Status:** planned
 
-- [ ] Implement deterministic literal rendering and escaping.
-- [ ] Handle unsafe Unicode/control values according to rule policy.
-- [ ] Implement comments and documentation comments without injection through terminators.
-- [ ] Add focused edge-case fixtures.
+**Dependencies:** TS-002
 
-## TS-006 — Module path resolver
+- [ ] Implement complete reserved-word/contextual-keyword catalog for the behavior version.
+- [ ] Validate target filenames/stems and declared candidate identifier roles.
+- [ ] Preserve semantic-name and template/expression provenance in diagnostics.
+- [ ] Return immutable validation facts rather than renamed strings or source snippets.
+- [ ] Add property tests for determinism and valid/invalid boundaries.
+
+## TS-005 — Module path resolver
 
 **Status:** planned
 
-**Dependencies:** binding/import public contracts
+**Dependencies:** TS-002, planned artifact/path contracts
 
-- [ ] Resolve real project paths relative to every planned output.
+- [ ] Calculate relative module paths between already planned artifacts.
 - [ ] Resolve configured aliases by longest matching project root.
-- [ ] Preserve explicit module/package strings.
-- [ ] Resolve default barrel and binding-group sources.
-- [ ] Normalize separators and apply extension/index rules.
-- [ ] Reject paths escaping the declared project/output context where appropriate.
+- [ ] Preserve explicit package/module strings and validate them.
+- [ ] Resolve project-path and authored barrel provider destinations.
+- [ ] Normalize separators and apply extension/index facts.
+- [ ] Reject escaping, invalid, or ambiguous paths.
+- [ ] Never inspect template contents or choose output directories.
 
-## TS-007 — Import planner and renderer
-
-**Status:** planned
-
-**Dependencies:** TS-006
-
-- [ ] Consume semantic import requests.
-- [ ] Deduplicate symbols and module specifiers.
-- [ ] Separate/merge type-only imports according to rules.
-- [ ] Resolve named/default/namespace collisions deterministically.
-- [ ] Assign stable aliases and report irreconcilable conflicts.
-- [ ] Group/order imports.
-- [ ] Render statements for template contexts.
-- [ ] Warn for raw imports that cannot be relocated/validated.
-
-## TS-008 — Export and authored barrel services
+## TS-006 — Dependency module descriptors
 
 **Status:** planned
 
-**Dependencies:** TS-006
+**Dependencies:** TS-005, core PLAN-006/PLAN-007
 
-- [ ] Render export descriptors supplied to authored barrel templates.
-- [ ] Support export-all, named, aliased, and type-only forms.
-- [ ] Deduplicate and order exports.
-- [ ] Keep comments/custom content entirely in the pack's barrel template.
+- [ ] Consume immutable provider/consumer artifact and semantic dependency descriptors.
+- [ ] Return module facts such as specifier, relative/package/alias classification, extension/index facts, and diagnostics.
+- [ ] Preserve symbols, local dependency name, and semantic type-only/value-use facts supplied by core.
+- [ ] Do not deduplicate, group, order, alias, quote, or render import/export statements.
+- [ ] Do not return source-code snippets.
 
-## TS-009 — Plugin adapter facade
+## TS-007 — Capability and compatibility facade
 
 **Status:** planned
 
-**Dependencies:** TS-003..TS-008
+**Dependencies:** TS-003..TS-006
 
-- [ ] Implement the public language adapter protocol by composing focused policies.
-- [ ] Accept immutable construction context and typed effective rules.
-- [ ] Expose target descriptors, capabilities, render services, and diagnostics.
+- [ ] Implement the public target adapter protocol by composing focused detection/validation/path services.
+- [ ] Accept immutable construction context and typed options.
+- [ ] Expose target descriptors, validation/path capabilities, behavior identity, and diagnostics.
 - [ ] Keep instances session-safe and free of mutable global caches.
+- [ ] Reject calls requesting unsupported syntax rendering.
 
-## TS-010 — Shared conformance
+## TS-008 — Shared conformance and negative boundaries
 
 **Status:** planned
 
-**Dependencies:** TS-009, core PLUG-006
+**Dependencies:** TS-007, core PLUG-006
 
 - [ ] Pass target/extension inference tests.
-- [ ] Pass identifier, type, literal, comment, import/export, binding, rule, determinism, immutability, and session-isolation tests for declared capabilities.
-- [ ] Add package-specific `.d.ts`, TSX, ESM/CJS syntax, type-only, alias, barrel, and collision tests.
+- [ ] Pass filename/reserved-name/candidate-identifier validation tests.
+- [ ] Pass relative, alias, package/module, project-path, index, and extension module-path tests.
+- [ ] Pass typed option, determinism, immutability, and session-isolation tests.
+- [ ] Add `.d.ts`, TSX, ESM/CJS path-fact, alias longest-match, and path collision cases.
+- [ ] Prove the package contains no TypeRenderer, LiteralRenderer, CommentRenderer, ImportRenderer, ExportRenderer, validator/decorator renderer, or framework rule path.
+- [ ] Prove it cannot extend the semantic kernel, selector registry, expression roots, or render context.
 
-## TS-011 — Documentation and release
+## TS-009 — Integration with authored templates
 
 **Status:** planned
 
-- [ ] Document every rule field and default with examples.
-- [ ] Document capability matrix and unsupported features.
+**Dependencies:** TS-008, Jinja engine, official TypeScript pack
+
+- [ ] Provide planned dependency/module facts to a fixture template.
+- [ ] Have the fixture template author TypeScript imports, exports, types, literals, comments, and operations directly.
+- [ ] Validate generated filenames/module specifiers without modifying rendered text.
+- [ ] Assert exact output changes when the template changes and unchanged output when adapter-internal representation changes without behavior change.
+- [ ] Prove no adapter-generated line exists in the output.
+
+## TS-010 — Documentation and release
+
+**Status:** planned
+
+- [ ] Document every target option, descriptor, path fact, and validation capability.
+- [ ] Document the strict template-owned syntax boundary with examples.
+- [ ] Document unsupported services explicitly.
 - [ ] Add standalone installation and third-party pack examples.
 - [ ] Build wheel/sdist and test compatibility bounds.
 - [ ] Record behavior version and release checklist.
@@ -203,9 +155,10 @@ Define immutable full rules, override patches, field descriptors, defaults, merg
 
 The package is complete only when:
 
-- it passes public language conformance;
-- every declared rule is typed/introspectable/tested;
-- imports work for relative paths, aliases, module strings, project paths, packages, and barrels;
-- no framework, Node manifest, source, engine, writer, CLI, or command logic exists;
-- neutral IR input remains immutable;
-- output is deterministic.
+- it passes public target-adapter conformance;
+- every declared option/capability is typed, introspectable, and tested;
+- relative, alias, package/module, project-path, index, and extension facts are correct;
+- candidate validation never mutates semantic names;
+- templates author every TypeScript character;
+- no source, framework, engine, writer, CLI, command, semantic-extension, or syntax-rendering logic exists;
+- output/path behavior is deterministic and all inputs remain immutable.
