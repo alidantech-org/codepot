@@ -29,7 +29,7 @@ Add production-ready adapter foundations for five widely used API/client languag
 - [-] Validate generated fixtures with the native compiler or formatter when the tool is installed.
 - [ ] Add complete package/module entry points and native module registries.
 - [ ] Verify request and response types compile in representative operations.
-- [ ] Document supported languages and adapter-authoring rules.
+- [x] Document supported languages and adapter-authoring rules.
 
 ## Implemented evidence awaiting validation
 
@@ -37,6 +37,7 @@ Add production-ready adapter foundations for five widely used API/client languag
 - Generated fixtures now include manifests, native models, enums, operation clients, and registry-planned imports.
 - Native validation tests run Python compileall, javac, dotnet build, gofmt, and rustfmt when available.
 - Existing TypeScript and Dart planners remain selected before the portable fallback planner.
+- `docs/supported-language-adapters.md` separates implemented support from the universal future catalog and records production adapter requirements.
 
 ## Safety constraints
 
