@@ -168,42 +168,36 @@ class PathConfig:
     write_policy: PathWritePolicy = field(default_factory=PathWritePolicy)
     rules: tuple[PathSyntaxRule, ...] = field(default_factory=tuple)
     meta: dict[str, Any] = field(default_factory=dict)
+    schema_uri: str | None = None
 
     def folder_by_name(self) -> dict[str, PathFolder]:
         """Return legacy folder recipes keyed by name."""
-
         return {folder.name: folder for folder in self.folders}
 
     def selection_by_name(self) -> dict[str, PathSelection]:
         """Return named selections keyed by identity."""
-
         return {selection.name: selection for selection in self.selections}
 
     def emission_by_name(self) -> dict[str, PathEmission]:
         """Return direct emissions keyed by identity."""
-
         return {emission.name: emission for emission in self.emissions}
 
     def barrel_by_name(self) -> dict[str, PathBarrel]:
         """Return barrel emissions keyed by identity."""
-
         return {barrel.name: barrel for barrel in self.barrels}
 
     def output_node_names(self) -> tuple[str, ...]:
         """Return all direct and barrel output node names deterministically."""
-
         return tuple(sorted((*self.emission_by_name(), *self.barrel_by_name())))
 
     @property
     def uses_graph(self) -> bool:
         """Whether the pack uses the named selection/emission graph."""
-
         return bool(self.selections or self.emissions or self.barrels)
 
 
 def default_path_rules() -> tuple[PathSyntaxRule, ...]:
     """Return default path syntax rules for documentation/debug output."""
-
     return (
         PathSyntaxRule(
             syntax="{folder}",
@@ -237,5 +231,4 @@ def default_path_rules() -> tuple[PathSyntaxRule, ...]:
 
 def default_path_config() -> PathConfig:
     """Return an empty default path config."""
-
     return PathConfig(rules=default_path_rules())
