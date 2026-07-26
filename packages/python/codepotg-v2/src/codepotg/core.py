@@ -3,62 +3,100 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from enum import Enum
+from functools import total_ordering
 from threading import Event
 from typing import Generic, TypeVar
 from uuid import uuid4
 
 _VERSION_PATTERN = re.compile(
     r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)"
-    r"(?:-(?P<prerelease>[0-9A-Za-z.-]+))?$"
+    r"(?:-(?P<prerelease>[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?"
+    r"(?:\+(?P<build>[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
 )
 
 
+@total_ordering
 @dataclass(frozen=True, slots=True)
 class SemanticVersion:
     major: int
     minor: int
     patch: int
     prerelease: tuple[str, ...] = ()
+    build: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if min(self.major, self.minor, self.patch) < 0:
             raise ValueError("version components must be non-negative")
-        if any(not part for part in self.prerelease):
-            raise ValueError("prerelease identifiers must not be empty")
+        for identifier in (*self.prerelease, *self.build):
+            if not identifier or not re.fullmatch(r"[0-9A-Za-z-]+", identifier):
+                raise ValueError(f"invalid semantic-version identifier: {identifier!r}")
 
     @classmethod
     def parse(cls, value: str) -> SemanticVersion:
         match = _VERSION_PATTERN.fullmatch(value.strip())
         if match is None:
             raise ValueError(f"invalid semantic version: {value!r}")
-        prerelease = match.group("prerelease")
+        prerelease = tuple(filter(None, (match.group("prerelease") or "").split(".")))
+        build = tuple(filter(None, (match.group("build") or "").split(".")))
         return cls(
             major=int(match.group("major")),
             minor=int(match.group("minor")),
             patch=int(match.group("patch")),
-            prerelease=tuple(prerelease.split(".")) if prerelease else (),
+            prerelease=prerelease,
+            build=build,
         )
 
-    def _ordering_key(self) -> tuple[object, ...]:
-        prerelease_key: tuple[tuple[int, object], ...] = tuple(
-            (0, int(part)) if part.isdigit() else (1, part) for part in self.prerelease
-        )
+    def __str__(self) -> str:
+        value = f"{self.major}.{self.minor}.{self.patch}"
+        if self.prerelease:
+            value += "-" + ".".join(self.prerelease)
+        if self.build:
+            value += "+" + ".".join(self.build)
+        return value
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SemanticVersion):
+            return False
         return (
             self.major,
             self.minor,
             self.patch,
-            1 if not self.prerelease else 0,
-            prerelease_key,
+            self.prerelease,
+        ) == (
+            other.major,
+            other.minor,
+            other.patch,
+            other.prerelease,
         )
 
     def __lt__(self, other: object) -> bool:
         if not isinstance(other, SemanticVersion):
             return NotImplemented
-        return self._ordering_key() < other._ordering_key()
+        left = (self.major, self.minor, self.patch)
+        right = (other.major, other.minor, other.patch)
+        if left != right:
+            return left < right
+        return _compare_prerelease(self.prerelease, other.prerelease) < 0
 
-    def __str__(self) -> str:
-        base = f"{self.major}.{self.minor}.{self.patch}"
-        return base if not self.prerelease else f"{base}-{'/'.join(self.prerelease)}".replace("/", ".")
+
+def _compare_prerelease(left: tuple[str, ...], right: tuple[str, ...]) -> int:
+    if left == right:
+        return 0
+    if not left:
+        return 1
+    if not right:
+        return -1
+    for left_part, right_part in zip(left, right, strict=False):
+        if left_part == right_part:
+            continue
+        left_numeric = left_part.isdigit()
+        right_numeric = right_part.isdigit()
+        if left_numeric and right_numeric:
+            return -1 if int(left_part) < int(right_part) else 1
+        if left_numeric != right_numeric:
+            return -1 if left_numeric else 1
+        return -1 if left_part < right_part else 1
+    return -1 if len(left) < len(right) else 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,7 +150,7 @@ class SourceIdentity:
             raise ValueError("source identity value must not be empty")
 
 
-@dataclass(frozen=True, slots=True, order=True)
+@dataclass(frozen=True, slots=True)
 class SourcePosition:
     line: int
     column: int
@@ -132,8 +170,14 @@ class SourceSpan:
     end: SourcePosition
 
     def __post_init__(self) -> None:
-        if self.end < self.start:
+        if (self.end.line, self.end.column) < (self.start.line, self.start.column):
             raise ValueError("source span end must not precede start")
+        if (
+            self.start.offset is not None
+            and self.end.offset is not None
+            and self.end.offset < self.start.offset
+        ):
+            raise ValueError("source span end offset must not precede start offset")
 
 
 class DiagnosticSeverity(str, Enum):
@@ -162,8 +206,13 @@ class Diagnostic:
     def __post_init__(self) -> None:
         if not self.code or not self.message:
             raise ValueError("diagnostics require a code and message")
-        if tuple(sorted(self.details, key=lambda item: item[0])) != self.details:
-            raise ValueError("diagnostic details must be sorted by key")
+        keys = tuple(key for key, _ in self.details)
+        if tuple(sorted(keys)) != keys or len(keys) != len(set(keys)):
+            raise ValueError("diagnostic details must have sorted unique keys")
+
+    @property
+    def is_error(self) -> bool:
+        return self.severity is DiagnosticSeverity.ERROR
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -187,7 +236,7 @@ class Diagnostics:
 
     @property
     def has_errors(self) -> bool:
-        return any(item.severity is DiagnosticSeverity.ERROR for item in self.items)
+        return any(item.is_error for item in self.items)
 
     def add(self, *items: Diagnostic) -> Diagnostics:
         return Diagnostics(self.items + tuple(items))
@@ -209,6 +258,9 @@ class Diagnostics:
             )
 
         return Diagnostics(tuple(sorted(self.items, key=key)))
+
+    def to_dict(self) -> tuple[dict[str, object], ...]:
+        return tuple(item.to_dict() for item in self.items)
 
 
 class OperationStatus(str, Enum):
@@ -259,8 +311,9 @@ class OperationResult(Generic[T]):
     metadata: tuple[tuple[str, object], ...] = ()
 
     def __post_init__(self) -> None:
-        if tuple(sorted(self.metadata, key=lambda item: item[0])) != self.metadata:
-            raise ValueError("operation metadata must be sorted by key")
+        keys = tuple(key for key, _ in self.metadata)
+        if tuple(sorted(keys)) != keys or len(keys) != len(set(keys)):
+            raise ValueError("operation metadata must have sorted unique keys")
         if self.status is OperationStatus.FAILED and not self.diagnostics.has_errors:
             raise ValueError("failed results require at least one error diagnostic")
 
