@@ -11,6 +11,7 @@ from src.contracts.api import (
     ApiResource,
     ApiSchema,
     ApiSchemaGroups,
+    ApiSchemaKind,
     ApiServer,
 )
 from src.contracts.names import make_contract_name
@@ -30,7 +31,7 @@ def make_api_contract() -> ApiContract:
     user_schema = ApiSchema(
         id="User",
         name=make_contract_name("User"),
-        kind="model",
+        kind=ApiSchemaKind.MODEL,
         ref="#/components/schemas/User",
         resource="users",
     )
@@ -73,17 +74,27 @@ def make_api_contract() -> ApiContract:
     )
 
 
-def make_template_contract(output_path: Path, template_root: Path | None = None) -> TemplateContract:
+def make_template_contract(
+    output_path: Path,
+    template_root: Path | None = None,
+) -> TemplateContract:
     """Create a small template contract for emission tests."""
     api = make_api_contract()
 
-    template_schema = TemplateSchema(api=api.schemas.all[0], name=api.schemas.all[0].name)
+    template_schema = TemplateSchema(
+        api=api.schemas.all[0],
+        name=api.schemas.all[0].name,
+    )
 
     return TemplateContract(
         project=TemplateProject(name=make_contract_name("test_package")),
         api=api,
         lang=TemplateLanguage(name="debug"),
-        emit=TemplateEmit(output_path=output_path, template_root=template_root, dry_run=False),
+        emit=TemplateEmit(
+            output_path=output_path,
+            template_root=template_root,
+            dry_run=False,
+        ),
         resources=(
             TemplateResource(
                 api=api.resources[0],
