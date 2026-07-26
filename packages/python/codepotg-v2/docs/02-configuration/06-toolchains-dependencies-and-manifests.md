@@ -1,188 +1,173 @@
-# Toolchains, dependencies, and manifests
+# Toolchains, dependencies, and project manifests
 
 ## Goal
 
-Packs must describe what project environment and dependencies they need without hardcoding one package manager or overwriting user-owned manifests.
+CodepotG must integrate with real Node, Dart, Flutter, and future project ecosystems without turning the semantic kernel or pack manifest into a package-manager abstraction language.
 
-## Project toolchains
+The approved baseline is deliberately narrow:
 
-The project selects the actual toolchain:
+- packs author complete manifests they own as ordinary templates;
+- packs author exact optional commands with opaque argument arrays;
+- project/host configuration supplies executable names/paths and approval policy;
+- ecosystem adapters may later inspect or plan typed changes to existing user-owned manifests through separately approved contracts;
+- no pack-level `dependencies`, `integration`, traits, setup profiles, or automatic package-manager conversion exists in the baseline `CodepotgPack.yaml`.
 
-```yaml
-toolchains:
-  node:
-    version: ">=20"
-    packageManager: pnpm
-  dart:
-    sdk: ">=3.5.0 <4.0.0"
-```
+## Owned manifests
 
-Resolution order for Node package managers:
-
-1. explicit project configuration;
-2. existing `packageManager` field in `package.json`;
-3. existing lockfile;
-4. workspace configuration;
-5. compatible pack preference;
-6. interactive configuration;
-7. error in non-interactive mode when still ambiguous.
-
-CodepotG never silently switches an established project from one package manager to another.
-
-## Pack requirements
-
-Packs should prefer capabilities over exact tools:
-
-```yaml
-dependencies:
-  node:
-    packageManagers:
-      requires: [workspaces, lockfile]
-      supported: [npm, pnpm, yarn]
-      preferred: pnpm
-```
-
-A pack requires an exact manager only when its implementation genuinely depends on a unique capability.
-
-When several packs constrain the same project unit, CodepotG intersects their supported capability sets and reports a clear conflict only when no valid tool remains.
-
-## Project units
-
-A repository may contain several independently managed units:
+When a pack creates a complete standalone product, it authors its manifest directly:
 
 ```text
-backend/           Node + pnpm
-web/               Node + pnpm
-packages/api_sdk/  Dart package
+templates/package.json.jinja
+templates/pubspec.yaml.jinja
+templates/pyproject.toml.jinja
 ```
 
-`codepotg.yaml` may define units and attach packs to them so package-manager choices are scoped rather than assumed global to the repository.
+The template owns every manifest field and dependency declaration. Options/bindings may provide typed values such as package name or version, but core does not understand or rewrite the generated manifest.
 
-## Ecosystem adapters
+The output is planned, rendered, validated, staged, and owned like every other artifact.
 
-Typed ecosystem adapters understand manifests and tools:
+## Existing project manifests
 
-- Node project adapter: `package.json`, scripts, dependencies, dev dependencies, exports, workspaces, package-manager metadata, lockfiles;
-- Dart project adapter: `pubspec.yaml`, dependencies, dev dependencies, SDK constraints, Flutter sections, assets, workspaces;
-- future Python, Cargo, Gradle, and Maven adapters follow the same port.
+A pack must not replace an existing user-owned `package.json`, `pubspec.yaml`, or other manifest unless the project explicitly designates that output as pack-owned.
 
-## Owned versus contributed manifests
+Integration with an existing manifest requires a known ecosystem-adapter contract that is:
 
-A pack may fully template a manifest it owns, for example a new standalone Dart package with its own `pubspec.yaml`.
+- typed and versioned;
+- separately approved and documented;
+- explicit in the project plan;
+- limited to known manifest operations;
+- conflict-detecting and source-preserving where practical;
+- subject to host/project permissions.
 
-A pack extending an existing project declares typed contributions instead of replacing the user-owned manifest.
+This is infrastructure/project integration, not application semantic-kernel extension.
+
+Until such a contract is implemented for a specific ecosystem, the pack provides:
+
+- exact optional commands;
+- documented manual actions;
+- required bindings;
+- readiness warnings.
+
+It does not add arbitrary manifest contribution dictionaries to `CodepotgPack.yaml`.
+
+## Exact commands
+
+Dependency installation and project tools are represented as exact authored commands:
 
 ```yaml
-integration:
-  manifestMode: contribute
+executables:
+  packageManager: pnpm
 
-dependencies:
-  node:
-    runtime:
-      "@nestjs/swagger": "^8.0.0"
-    development:
-      prettier: "^3.0.0"
-    scripts:
-      format: "prettier --write src"
+commands:
+  after:
+    installRuntime:
+      executable: packageManager
+      arguments: [add, axios@^1.0.0]
+
+    typecheck:
+      executable: packageManager
+      arguments: [exec, tsc, --noEmit]
+      optional: true
 ```
 
-The ecosystem adapter validates and applies the desired state.
+Core treats arguments as opaque tokens. It does not:
 
-## Pack traits
+- translate a dependency map into npm/pnpm/Yarn/Dart commands;
+- select versions;
+- infer runtime versus development dependencies;
+- rewrite package-manager syntax;
+- silently switch package managers;
+- execute without policy/approval.
 
-Integration behavior is described through independent traits such as:
+A project may replace the executable name/path while preserving the exact pack-authored argument list unless it explicitly overrides/disables the command through typed project configuration.
+
+## Toolchain/executable facts
+
+The project may declare executable names/paths and host capabilities required to resolve commands:
 
 ```yaml
-integration:
-  createsProject: false
-  ownsFolder: true
-  contributesFiles: true
-  requiresDependencies: true
-  requiresBindings: false
-  runnableAlone: true
-  manifestMode: owned
+executables:
+  packageManager: pnpm
+  dart: dart
+  flutter: flutter
 ```
 
-This supports:
+A separately approved ecosystem adapter may inspect known project metadata and offer candidates, but ambiguous discovery is never selected silently.
 
-- complete runnable projects;
-- standalone packages inside a workspace;
-- existing-project extensions;
-- fragment packs;
-- mixed packs that combine several traits.
+Toolchain versions/capabilities may be reported by inspection or setup actions. They do not alter the closed application semantic kernel or generated template context unless a documented binding/option explicitly supplies a value.
 
-## Dependency source types
+## Pack product boundary
 
-Known ecosystem schemas support normal registry dependencies and explicit sources.
+One `CodepotgPack.yaml` represents one coherent product and deterministic file inventory.
 
-Node examples:
+Do not add pack traits/profile matrices such as:
 
-```yaml
-dependencies:
-  node:
-    runtime:
-      zod: "^4.0.0"
-      company-runtime:
-        git:
-          url: git+ssh://git@github.com/company/runtime.git
-          ref: v3.1.0
+```text
+createsProject
+ownsFolder
+contributesFiles
+runnableAlone
+manifestMode
+standalonePackage
+contribute
+minimal
+monolithic
 ```
 
-Dart examples:
+A materially different standalone package, existing-project integration, framework architecture, or monolithic artifact is a separate pack with its own identity, manifest, templates, tests, and versioning.
 
-```yaml
-dependencies:
-  dart:
-    hosted:
-      dio: "^5.0.0"
-    packages:
-      internal_models:
-        git:
-          url: git@github.com:company/internal-models.git
-          ref: v2.0.0
+This keeps pack behavior inspectable from the filesystem and selection registry.
+
+## Ecosystem adapter boundary
+
+An ecosystem adapter may eventually own known operations such as:
+
+```text
+inspect existing package manifest
+validate package/workspace identity
+plan a typed dependency addition
+plan a typed asset/workspace/export contribution
+report conflicts/manual steps
 ```
 
-## Installation policy
+It cannot:
 
-A pack may declare one of these setup recommendations:
+- add semantic objects, facets, selectors, or template-context values;
+- render application source code;
+- turn arbitrary pack dictionaries into manifest mutations;
+- execute commands directly;
+- bypass command approval or writer ownership;
+- infer package changes from application IR without an explicit pack/project request.
 
-- `declareOnly` — report desired state only;
-- `suggest` — show manifest changes and exact actions;
-- `ask` — offer to apply changes and install;
-- `automatic` — request automatic action under security policy.
+Every contribution is visible in the complete plan before modification.
 
-A downloaded pack cannot force execution when host or project policy requires approval or denial.
+## Security
 
-## Lifecycle scripts
+Installation can run third-party lifecycle scripts and access networks. Exact commands declare requested capabilities and remain subject to the strictest host/project policy.
 
-Dependency installation can execute third-party lifecycle scripts. The security policy treats lifecycle scripts separately and may:
-
-- allow;
-- require approval;
-- disable when supported;
-- deny installation.
+Downloaded pack commands require approval by default. Approval identity includes exact pack source/commit/digest, executable reference, argument list, working directory, environment/capability request, and relevant lock identity.
 
 ## Planning output
 
-Before modification or command execution, the plan shows:
+Before writing or execution, the plan reports:
 
-- manifest files affected;
-- exact dependency additions or version conflicts;
-- scripts or workspace entries added;
-- selected package manager;
-- install action and capabilities;
-- manual steps when automatic contribution is unsupported.
+- pack-owned manifest artifacts to create/change/delete/leave;
+- known ecosystem contributions when supported;
+- exact commands and executables;
+- requested filesystem/network/process capabilities;
+- approval state;
+- unresolved manual actions;
+- conflicts with user-owned project files.
 
-## Tests
+## Required tests
 
-Required tests cover:
-
-- package-manager detection precedence;
-- constraint intersection;
-- no silent manager switching;
-- owned versus contributed manifests;
-- duplicate and conflicting dependency declarations;
-- workspace registration;
-- Node and Dart typed serialization;
-- install policy and lifecycle-script security;
-- several toolchain units in one project.
+- owned manifest templates follow normal artifact planning/ownership;
+- exact command argument boundaries survive decode/plan unchanged;
+- executable replacement does not rewrite arguments;
+- no dependency-map-to-command conversion exists;
+- no pack traits/profiles/integration/dependencies sections decode in the baseline manifest;
+- existing user manifests are not replaced implicitly;
+- ecosystem contribution contracts are typed, visible, conflict-detecting, and non-semantic;
+- command changes invalidate approval;
+- lifecycle/network/filesystem permissions are enforced;
+- output state remains separate from the dependency lock.
