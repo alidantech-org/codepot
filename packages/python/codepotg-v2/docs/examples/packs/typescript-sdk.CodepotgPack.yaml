@@ -2,7 +2,7 @@ apiVersion: codepotg.dev/v2
 
 id: alidantech/typescript-sdk
 version: 2.4.1
-description: Generates a typed TypeScript API client.
+description: Generates a typed TypeScript API client from groups, schemas, and operations.
 
 requires:
   codepotg: ">=2.0 <3.0"
@@ -15,47 +15,44 @@ options:
 selections:
   enums:
     paths: [src, types, enums]
-    select: schemas.enums.each
-    symbols: [(enum.name.pascal.s)]
+    select: groups.schemas.enums.each
+    symbols:
+      - (schema.name.pascal.s)
 
-  dtos:
-    paths: [src, types, dtos]
-    select: schemas.dtos.each
+  schemaTypes:
+    paths: [src, types, schemas]
+    select: groups.schemas.objects.each
     imports:
       enums: enums
-    symbols: [(dto.name.pascal.s)]
-
-  models:
-    paths: [src, types, models]
-    select: schemas.models.each
-    imports:
-      enums: enums
-    symbols: [(model.name.pascal.s)]
+    symbols:
+      - (schema.name.pascal.s)
 
   typesIndex:
     paths: [src, types]
-    exports: [enums, dtos, models]
+    exports: [enums, schemaTypes]
 
-  services:
-    paths: [src, services]
-    select: resources.each
+  groupClients:
+    paths: [src, clients]
+    select: groups.each
     imports:
       types: typesIndex
-    symbols: [(resource.name.pascal.s)Service]
+    symbols:
+      - (group.name.pascal.s)Client
 
-  servicesIndex:
-    paths: [src, services]
-    exports: [services]
+  clientsIndex:
+    paths: [src, clients]
+    exports: [groupClients]
 
   client:
     paths: [src]
     imports:
-      services: servicesIndex
-    symbols: [(option.clientName)]
+      clients: clientsIndex
+    symbols:
+      - (option.clientName)
 
   rootIndex:
     paths: [src]
-    exports: [typesIndex, servicesIndex, client]
+    exports: [typesIndex, clientsIndex, client]
 
 executables:
   packageManager: pnpm
