@@ -1,0 +1,65 @@
+# yaml-language-server: $schema=https://schemas.codepot.dev/codepotg/v1/paths.schema.json
+$schema: https://schemas.codepot.dev/codepotg/v1/paths.schema.json
+
+template_extension: .j2
+strip_template_extension: true
+allow_raw_files: false
+
+imports:
+  strategy: relative
+
+write_policy:
+  default_mode: managed
+  managed_roots:
+    - generated
+  immutable_roots:
+    - generated/barrels
+  protected_roots:
+    - generated
+  clean_roots:
+    - generated
+
+selections:
+  models:
+    select: schemas.emit_models
+    as: model
+    scope: each
+
+  operations:
+    select: operations
+    as: operation
+    scope: each
+
+emissions:
+  model-files:
+    selection: models
+    template: model.py.j2
+    output:
+      - generated
+      - models
+      - "[model.emit.file_name]"
+    provides:
+      - models
+
+  operation-files:
+    selection: operations
+    template: operation.py.j2
+    output:
+      - generated
+      - client
+      - "[operation.name.snake.o]_client.py"
+    imports:
+      models: model-files
+    provides:
+      - operations
+
+barrels:
+  model-barrel:
+    template: models_init.py.j2
+    output:
+      - generated
+      - barrels
+      - models.py
+    exports:
+      - model-files
+    lifecycle: immutable
