@@ -2,7 +2,7 @@ apiVersion: codepotg.dev/v2
 
 id: alidantech/typeorm-repositories
 version: 1.0.0
-description: Generates TypeORM entities and repositories.
+description: Generates TypeORM persistence classes and repositories from storage mappings.
 
 requires:
   codepotg: ">=2.0 <3.0"
@@ -20,25 +20,27 @@ options:
 bindings:
   baseRepository:
     required: true
-    description: Base class imported by generated repositories.
+    description: Base class referenced by generated repository templates.
 
 selections:
-  entities:
-    paths: [src, entities]
-    select: entities.each
-    symbols: [(entity.name.pascal.s)]
+  persistenceTypes:
+    paths: [src, persistence]
+    select: groups.storage.mappings.each
+    symbols:
+      - (mapping.schema.name.pascal.s)Entity
 
   repositories:
     paths: [src, repositories]
-    select: entities.each
+    select: groups.storage.mappings.each
     imports:
-      entities: entities
+      persistenceType: persistenceTypes
     bindings: [baseRepository]
-    symbols: [(entity.name.pascal.s)Repository]
+    symbols:
+      - (mapping.schema.name.pascal.s)Repository
 
-  entitiesIndex:
-    paths: [src, entities]
-    exports: [entities]
+  persistenceIndex:
+    paths: [src, persistence]
+    exports: [persistenceTypes]
 
   repositoriesIndex:
     paths: [src, repositories]
@@ -46,7 +48,7 @@ selections:
 
   rootIndex:
     paths: [src]
-    exports: [entitiesIndex, repositoriesIndex]
+    exports: [persistenceIndex, repositoriesIndex]
 
 executables:
   packageManager: pnpm
