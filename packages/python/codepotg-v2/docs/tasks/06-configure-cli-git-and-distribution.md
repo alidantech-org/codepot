@@ -7,9 +7,9 @@
 **Dependencies:** CFG schema introspection, PACKCFG-003, BIND-002
 
 - [ ] Define typed question, candidate, answer, validation, and update result models.
-- [ ] Generate questions from pack option/binding/setup descriptors rather than hardcoded CLI flows.
-- [ ] Support single choice, multiple choice, boolean, typed text/path/value, discovered import candidate, and approval prompt.
-- [ ] Keep the application workflow frontend-neutral.
+- [ ] Generate questions from pack options, bindings, executable defaults, and command approvals.
+- [ ] Support typed text/path/value, discovered binding candidate, and approval prompts.
+- [ ] Keep the workflow frontend-neutral.
 
 ## CONFIGURE-001 — Configure project workflow
 
@@ -18,34 +18,34 @@
 **Dependencies:** SETUP-001, API facade, pack provider
 
 - [ ] Load and validate `codepotg.yaml`.
-- [ ] Resolve all selected packs and read `CodepotgPack.yaml`.
-- [ ] Inspect project units, manifests, lockfiles, aliases, and declared discovery locations through controlled ports.
-- [ ] Ask only for missing or invalid public pack inputs.
-- [ ] Write results directly under `packs.<instance>` in `codepotg.yaml`.
+- [ ] Resolve each direct `packs.<instance>.source` and read `CodepotgPack.yaml`.
+- [ ] Ask only for missing or invalid public pack inputs, bindings, executable choices, and approvals.
+- [ ] Write project answers directly under the matching pack instance.
 - [ ] Preserve unrelated project configuration/comments where practical.
-- [ ] Support configure all, one pack instance, and non-interactive `--check`.
+- [ ] Support configure all, one pack, and non-interactive `--check`.
 
 ## CONFIGURE-002 — Add-pack workflow
 
 **Status:** planned
 
-**Dependencies:** CONFIGURE-001, GIT/local provider
+**Dependencies:** CONFIGURE-001, GIT-001, GIT-002
 
-- [ ] Implement add local/Git/GitHub pack as a named instance.
+- [ ] Add a local pack with `source.local`.
+- [ ] Add a Git pack with `source.git`, required `ref`, and optional `path`.
 - [ ] Resolve identity and show trust/command requirements before configuring.
-- [ ] Suggest a unique instance name.
-- [ ] Run pack setup questions after adding.
-- [ ] Update lock only after successful resolution.
+- [ ] Suggest a unique project-local instance name.
+- [ ] Update the lock only after successful resolution.
+- [ ] Do not create a registry alias or `use` indirection.
 
 ## CONFIGURE-003 — Detection and readiness report
 
 **Status:** planned
 
-**Dependencies:** CONFIGURE-001, ecosystem adapters
+**Dependencies:** CONFIGURE-001, ecosystem/language adapters
 
-- [ ] Detect package managers, project units, manifests, candidate symbols/files/modules, and likely framework capabilities.
+- [ ] Detect candidate source files, executable names/paths, bindings, and project units.
 - [ ] Never silently choose ambiguous binding candidates.
-- [ ] Produce remaining dependency, binding, command approval, and manual-step report.
+- [ ] Report remaining bindings, executable replacements, command approvals, and manual work.
 - [ ] Support flexible local and strict CI checks.
 
 ## CLI-001 — Thin CLI shell
@@ -54,12 +54,11 @@
 
 **Dependencies:** public API operations
 
-- [ ] Implement commands: configure, validate, plan, generate, plugins, pack inspect/add, lock, approvals, cache.
+- [ ] Implement configure, validate, plan, generate, plugins, pack inspect/add, lock, approvals, and cache commands.
 - [ ] Parse arguments into typed API requests.
 - [ ] Render structured diagnostics/events/results.
 - [ ] Define stable exit-code policy.
 - [ ] Keep generation/configuration business logic out of handlers.
-- [ ] Test CLI/API result equivalence.
 
 ## MCP-001 — Structured adapter surface
 
@@ -67,8 +66,8 @@
 
 **Dependencies:** API-002
 
-- [ ] Ensure requests/results serialize without terminal-specific fields.
-- [ ] Define tool-ready operations for validate, inspect plan, generate memory/archive, list plugins, inspect pack, configure questions, and approvals.
+- [ ] Ensure requests/results serialize without terminal-only fields.
+- [ ] Define validate, inspect plan, generate memory/archive, inspect pack, configure, lock, and approval operations.
 - [ ] Apply server-safe policy by default.
 - [ ] Support progress/cancellation hooks.
 
@@ -78,55 +77,65 @@
 
 **Dependencies:** pack-provider port, PACKCFG loader
 
-- [ ] Resolve local directory and optional subdirectory.
-- [ ] Validate containment, manifest presence, content digest, and trust metadata.
-- [ ] Snapshot or otherwise prevent mid-run mutation from producing inconsistent plans.
+- [ ] Resolve `source.local` relative to `codepotg.yaml`.
+- [ ] Validate containment, manifest presence, identity/version, and content digest.
+- [ ] Create a stable run snapshot so mid-run edits cannot change the plan.
+- [ ] Detect local content drift against frozen locks.
+- [ ] Never execute pack commands during source resolution.
 
 ## GIT-002 — Generic Git provider
 
 **Status:** planned
 
-**Dependencies:** GIT-001, safe command/process infrastructure or Git library decision
+**Dependencies:** GIT-001, controlled Git/process infrastructure
 
-- [ ] Resolve HTTPS/SSH repository, ref, and pack subdirectory.
-- [ ] Use existing Git credentials/credential helpers.
-- [ ] Resolve branch/tag to immutable commit.
-- [ ] Fetch into controlled cache and clean partial failures.
+- [ ] Resolve `source.git` HTTPS/SSH URL, required `ref`, and optional subdirectory.
+- [ ] Use existing Git credentials, SSH agents, and credential helpers.
+- [ ] Resolve branch/tag/commit to one immutable commit.
+- [ ] Fetch into a controlled content-addressed cache and clean partial failures.
+- [ ] Validate repository-relative `path` containment and pack identity.
 - [ ] Redact credentials from diagnostics/events.
-- [ ] Support private repositories without storing tokens in project/lock files.
+- [ ] Support public, private, and enterprise Git hosts through the same provider.
 
-## GIT-003 — GitHub shorthand
+**Acceptance:** no GitHub-specific locator is required; GitHub is handled as a normal Git host.
+
+## GIT-003 — Source syntax and discovery integration
 
 **Status:** planned
 
-**Dependencies:** GIT-002
+**Dependencies:** GIT-001, GIT-002, CONFIGURE-002
 
-- [ ] Resolve `owner/repository` shorthand to a Git URL.
-- [ ] Support optional ref and subdirectory.
-- [ ] Keep provider implementation generic enough for GitHub Enterprise and other Git hosts later.
+- [ ] Enforce exactly one of `source.local` or `source.git`.
+- [ ] Require `ref` for every Git source.
+- [ ] Keep pack identity/version in the resolved manifest rather than project config.
+- [ ] Allow a future marketplace to return complete source blocks without becoming a runtime registry.
+- [ ] Add local, Git-root, Git-monorepo, branch, tag, commit, SSH, and invalid-source fixtures.
 
-## LOCK-001 — Lock schema and resolver
+## LOCK-001 — `codepotg.lock.yaml` schema and resolver
 
 **Status:** planned
 
 **Dependencies:** version/digest primitives, GIT providers, plugin registry
 
-- [ ] Define typed `codepotg.lock` schema.
-- [ ] Record requested locator/ref, resolved commit/version, subdirectory, manifest/content digest, plugin versions, behavior versions, IR/schema versions, and selected profile.
-- [ ] Implement locked and latest-compatible resolution modes.
-- [ ] Report drift and missing/incompatible locked components.
-- [ ] Never store credentials/secrets.
+- [ ] Define typed `codepotg.dev/lock/v1` schema.
+- [ ] Record project/runtime behavior identity.
+- [ ] Record each instance's requested local path or Git URL/ref/path.
+- [ ] Record exact Git commit, discovered pack ID/version, manifest/content digests, plugin versions, and behavior versions.
+- [ ] Keep local content digests for frozen drift detection.
+- [ ] Never store credentials, secrets, environment values, or approval tokens.
+- [ ] Implement deterministic serialization matching the checked-in example.
 
 ## LOCK-002 — Reproducibility and approvals
 
 **Status:** planned
 
-**Dependencies:** LOCK-001, CMD-003
+**Dependencies:** LOCK-001, CMD approval infrastructure
 
-- [ ] Include lock identity in generation result/cache keys.
-- [ ] Tie pack command approvals to exact locked identity.
-- [ ] Require reapproval on commit/digest change.
-- [ ] Add lock inspect/update/frozen checks.
+- [ ] Include lock identity in generation/cache keys.
+- [ ] Tie pack command approvals to exact source, commit, subdirectory, digest, executable reference, and arguments.
+- [ ] Require reapproval on source/content/command change.
+- [ ] Implement inspect, update, frozen, and offline checks.
+- [ ] Never update a frozen lock silently.
 
 ## DIST-001 — Minimal core distribution
 
@@ -134,7 +143,7 @@
 
 **Dependencies:** stable core/plugin contracts
 
-- [ ] Publish metadata for `codepotg-core` with no mandatory source/language/engine/pack defaults.
+- [ ] Publish `codepotg-core` with no mandatory source/language/engine/pack defaults.
 - [ ] Prove embedded hosts can choose only required plugins.
 - [ ] Document executable Python-plugin trust.
 
@@ -145,25 +154,27 @@
 **Dependencies:** official adapter/pack releases
 
 - [ ] Publish `codepotg` as the simple user installation.
-- [ ] Depend on compatible OpenAPI, TypeScript, Dart, Jinja, and default SDK packs.
+- [ ] Depend on compatible OpenAPI, TypeScript, Dart, Jinja, and initial SDK packs.
 - [ ] Expose the CLI entry point.
-- [ ] Add extras for optional future adapters.
-- [ ] Test `pip install codepotg` in a fresh environment and immediate plugin listing/generation.
+- [ ] Test fresh installation and immediate plugin listing/generation.
 
-## DIST-003 — Pack discovery metadata
+## DIST-003 — Optional pack discovery metadata
 
 **Status:** planned
 
-**Dependencies:** Git pack identity stable
+**Dependencies:** direct Git source identity stable
 
-- [ ] Define metadata the future website can index: ID, description, Git repository, pack path, tags, versions, targets, frameworks, dependencies, bindings, commands, docs, verification.
-- [ ] Keep initial installation from Git rather than requiring hosted pack bytes.
-- [ ] Ensure private packs can remain direct project Git references.
+- [ ] Define metadata a future website may index: ID, description, Git URL, ref/tag suggestions, pack path, targets, frameworks, bindings, commands, docs, and verification.
+- [ ] Make discovery return a complete `source` block suitable for insertion into `codepotg.yaml`.
+- [ ] Keep runtime pack resolution direct from the project source block.
+- [ ] Ensure private packs remain direct unindexed references.
 
 ## Acceptance gate
 
-- Configure writes only `codepotg.yaml` for project-owned answers.
-- CLI is a frontend over Python API.
-- Git providers use existing credentials and lock immutable commits.
-- Server-safe structured operations execute no commands.
+- Local and Git project examples decode exactly.
+- Git refs resolve to immutable commits.
+- The mixed example produces a deterministic `codepotg.lock.yaml` shape.
+- No `registries`, `use`, GitHub shorthand, or mutable catalog mapping is required.
+- Existing Git credentials work without being persisted.
+- Server-safe structured operations execute no commands or network resolution unless the host permits them.
 - Batteries-included installation works without manual adapter setup.

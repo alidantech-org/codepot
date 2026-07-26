@@ -1,136 +1,153 @@
-# Path expressions, named path recipes, and name tokens
+# Selection folders, path expressions, and name tokens
 
 ## Core rule
 
-The relative source path of a pack file is its default output-path program.
+The pack filesystem is the default output program.
 
-CodepotG does not expect semantic records such as `entity`, `model`, `operation`, or `resource` to expose invented properties such as `fileName`, `filePath`, or `directory`. A pack author composes the output location directly from:
+Literal folders and files preserve their relative location below `templates/`. Only a whole folder segment written as `{selectionKey}` is replaced through the pack manifest.
 
-- literal path segments already present in the pack source tree;
-- named path recipes referenced with `{recipe}`;
-- bounded typed values referenced with `[expression]`;
-- explicit casing and original/singular/plural name projections;
-- the target and template-engine suffixes already present on the source filename.
-
-For example:
+Example:
 
 ```text
-templates/{repositories}/[entity.name.kebab.s].repository.ts.jinja
+templates/{repositories}/(entity.name.kebab.s).repository.ts.jinja
 ```
 
-may resolve to:
+with:
+
+```yaml
+selections:
+  repositories:
+    paths: [src, repositories]
+    select: entities.each
+```
+
+may emit:
 
 ```text
 src/repositories/order.repository.ts
 ```
 
-The final `.jinja` engine suffix is removed. The `.ts` target suffix remains. No `entity.fileName` property is involved.
+The final `.jinja` engine suffix is removed. The `.ts` target suffix remains. No semantic `entity.fileName` property is involved.
 
 ## Path syntax
 
-CodepotG v2 supports four source-path token forms:
+CodepotG v2 uses three simple forms:
 
 ```text
-{recipe}       named path recipe
-[expression]   bounded typed path expression
-[[value]]      literal bracketed value: [value]
-{{value}}      literal braced value: {value}
+{selectionKey}   registered selection folder
+(expression)     bounded typed path/name expression
+((value))        literal parenthesized value: (value)
 ```
+
+Square brackets are ordinary literal characters.
 
 Examples:
 
 ```text
-{models}/[model.name.kebab.s].model.ts.jinja
-{resource}/[resource.name.path.o]/index.ts.jinja
+{models}/(model.name.kebab.s).model.ts.jinja
+{resourceFiles}/(resource.name.path.o)/index.ts.jinja
+app/[id]/page.tsx.jinja
+app/[...slug]/page.tsx.jinja
 app/[[...slug]]/page.tsx.jinja
-routes/{{id}}/handler.ts.jinja
+app/((admin))/page.tsx.jinja
 ```
 
-The escaping forms are required for targets such as Next.js route folders where brackets or braces are literal output characters.
+The last example emits `app/(admin)/page.tsx`.
 
-## Named path recipes
+## Selection folders
 
-`CodepotgPack.yaml` may declare reusable named path recipes under `paths`:
-
-```yaml
-paths:
-  repositories:
-    parts:
-      - src
-      - repositories
-
-  resource:
-    selection:
-      each: resources
-      as: resource
-    parts:
-      - src
-      - modules
-      - "[resource.path]"
-      - "[resource.name.path.o]"
-
-  entity:
-    selection:
-      each: resource.entities
-      as: entity
-    parts:
-      - entities
-```
-
-A recipe has two independent responsibilities:
-
-1. it may contribute zero or more destination path parts;
-2. it may introduce a selection alias and fan out every matching descendant file.
-
-A structural recipe may have only `parts`. A fan-out recipe may have `selection` and `parts`. A selection-only recipe may emit no parts.
-
-## Left-to-right composition and alias scope
-
-Path tokens are evaluated from left to right.
+A selection folder is a whole source-path segment:
 
 ```text
-{resource}/{entity}/[entity.name.kebab.s].entity.ts.jinja
+{repositories}
 ```
 
-Resolution proceeds as follows:
-
-1. `{resource}` selects each resource as `resource` and emits its configured parts;
-2. `{entity}` may reference the active `resource`, selects `resource.entities` as `entity`, and emits `entities`;
-3. `[entity.name.kebab.s]` resolves from the active entity alias;
-4. `.entity.ts` is preserved as literal filename text;
-5. `.jinja` is stripped as the engine suffix.
-
-Aliases introduced by earlier recipe tokens are available to later recipes and expressions. An alias may not be silently shadowed. Recursive recipe references and selection cycles are rejected during planning.
-
-## File-level selections
-
-A file descriptor may still declare a named or inline selection when the source path does not introduce it:
+It must match a key under `CodepotgPack.yaml` `selections`:
 
 ```yaml
-paths:
-  repositories:
-    parts: [src, repositories]
-
 selections:
-  entities:
-    from: entities
-    as: entity
-
-files:
-  "{repositories}/[entity.name.kebab.s].repository.ts.jinja":
-    id: repository
-    role: template
-    selection:
-      use: entities
+  repositories:
+    paths: [src, repositories]
+    select: entities.each
 ```
 
-The file selection is established before its dynamic path expressions are resolved.
+The selection key has two responsibilities:
 
-Recipe-owned selection is preferred when an entire folder tree, including static files, should fan out together. File-owned selection is preferred when only one file needs the selected context.
+1. contribute pack-relative output path segments through `paths`;
+2. optionally establish a fixed data selection through `select`.
+
+The folder name itself is not emitted.
+
+Unknown selection keys are errors.
+
+## `{root}`
+
+`{root}` is built in and contributes no path segments.
+
+```text
+templates/{root}/package.json.jinja
+```
+
+emits:
+
+```text
+package.json
+```
+
+relative to the configured pack-instance output root.
+
+It is useful when a pack author wants to group root-emitted files physically without adding that grouping folder to output.
+
+## Literal paths
+
+Literal source paths remain literal:
+
+```text
+templates/assets/logo.png          -> assets/logo.png
+templates/src/config.ts.jinja      -> src/config.ts
+templates/package.json.jinja       -> package.json
+```
+
+Literal static and binary files are copied unchanged. Literal templates are rendered and lose only the recognized engine suffix.
+
+## Dynamic expressions
+
+Dynamic values use one expression syntax:
+
+```text
+(entity.name.kebab.s)
+(resource.name.path.o)
+(option.clientName)
+(project.name.snake.o)
+```
+
+The expression language is bounded and typed. It is not Jinja, Python, JavaScript, shell, or arbitrary object traversal.
+
+Expressions may appear as a whole segment or as part of a filename:
+
+```text
+(entity.name.kebab.s).repository.ts.jinja
+(resource.name.kebab.p)-routes.ts.jinja
+```
+
+A multi-segment `PathSegments` value may expand only when the expression occupies the whole path segment. It cannot be embedded inside a filename.
+
+## Literal parentheses
+
+Because single parentheses mark an expression, double parentheses escape literal parentheses:
+
+```text
+((admin)) -> (admin)
+((group-name)) -> (group-name)
+```
+
+The parser checks the escaped form before expression parsing.
 
 ## Name token contract
 
-Every neutral semantic item with a meaningful authored name exposes a typed `name` value. The stable case projections are:
+Every neutral semantic item with a meaningful authored name exposes a typed `name` value.
+
+Stable case projections:
 
 ```text
 raw
@@ -156,174 +173,175 @@ p / plural
 number
 ```
 
-Examples:
-
-```text
-[entity.name.pascal.s]
-[entity.name.kebab.p]
-[resource.name.path.o]
-[operation.name.camel.o]
-[enum.name.screaming.s]
-```
-
 Long names are also supported:
 
 ```text
-[entity.name.pascal.singular]
-[resource.name.path.original]
-[model.name.snake.plural]
+original
+singular
+plural
 ```
 
-`original` preserves the source lexical number. `singular` and `plural` are produced by the configured, behavior-versioned inflection service. Irregular and uncountable names must be deterministic and testable. The naming/inflection behavior version participates in lock and cache identities.
-
-## Path values and scalar values
-
-A path expression resolves to one of a small set of typed values:
-
-- path-safe scalar;
-- semantic name projection;
-- `PathSegments`;
-- optional path-safe value;
-- registered namespaced path value.
-
-A `PathSegments` value such as `resource.path` may expand into several destination segments when the expression occupies the whole source segment:
+Examples:
 
 ```text
-{root}/[resource.path]/[resource.name.path.o]/index.ts.jinja
+(entity.name.pascal.s)
+(entity.name.kebab.p)
+(resource.name.path.o)
+(operation.name.camel.o)
+(enum.name.screaming.s)
 ```
 
-A multi-segment value may not be embedded inside a filename. This is invalid:
-
-```text
-prefix-[resource.path].ts.jinja
-```
-
-Sequences are never joined through hidden stringification. A pack must use a typed, declared join or projection when joining is required.
+`original` preserves source lexical number. `singular` and `plural` are deterministic, behavior-versioned inflections. Irregular and uncountable names are explicitly tested. Naming/inflection behavior participates in lock and cache identity.
 
 ## Stable expression roots
 
-The initial registry should support typed descriptors for:
+The initial registry supports typed descriptors for:
 
-- current selection aliases such as `resource`, `entity`, `operation`, or `model`;
-- `project` identity and declared project variables;
-- `pack` identity and version;
-- named `source` metadata;
-- selected project `unit` metadata;
+- current fixed-selection contexts such as `resource`, `entity`, `operation`, `schema`, `model`, `dto`, and `enum`;
+- `project` identity and declared project values;
+- `pack` identity/version;
+- named semantic `source` metadata;
 - `option` values declared by the pack;
 - path-safe `binding` values;
-- deterministic `group` keys;
-- already planned `artifact` paths where the dependency graph permits them;
-- target metadata such as the resolved target ID and suffix.
+- deterministic group/scope keys;
+- already planned artifacts where the dependency graph permits them;
+- target metadata registered by adapters.
 
-Plugins may register additional namespaced path values only through typed descriptors. A template pack cannot register executable path code.
+Plugins may register additional namespaced typed values. Packs cannot register executable expression code.
 
 ## Expression safety
 
-`[expression]` is not Jinja, Python, JavaScript, or arbitrary attribute access.
-
-The path-expression compiler validates every root and property against registered typed descriptors. It must reject:
+The compiler rejects:
 
 - method calls;
 - arbitrary indexing;
 - unregistered properties;
 - parser/source implementation objects;
-- environment-variable access not declared as a binding;
+- undeclared environment access;
 - filesystem reads;
 - non-deterministic values;
-- values that cannot become safe path segments.
+- unsafe path values;
+- hidden joining/stringification of collections.
 
-Diagnostics must identify the source path, token span, unknown property, and available alternatives.
+Diagnostics identify the source path, token span, unknown property, and available alternatives.
 
 ## Source path to destination algorithm
 
-For each discovered source file:
+For each discovered file:
 
-1. determine its content-root-relative source path;
-2. establish any exact file selection;
-3. parse static, recipe, dynamic, and escaped tokens;
-4. expand named recipes left to right, including nested selection fan-out;
-5. resolve typed expressions;
-6. preserve literal prefixes, suffixes, and target extensions;
-7. remove only the recognized template-engine suffix for emitted templates;
-8. preserve the complete relative path for static/binary files after token expansion;
-9. normalize and validate every path segment;
-10. prepend the project pack-instance output root;
-11. reject traversal, absolute paths, reserved segments, case collisions, and duplicate destinations.
+1. determine its path relative to `templates/`;
+2. apply pack `.gitignore`, `include`, and `exclude` discovery rules;
+3. classify `_partials` as non-emitting;
+4. parse literal segments, `{selectionKey}` folders, `(expression)` values, and `((literal))` escapes;
+5. establish fixed selection contexts for encountered selection folders;
+6. replace each selection folder with its `paths` segments;
+7. resolve typed expressions;
+8. preserve literal prefixes, suffixes, and target extensions;
+9. remove only a recognized template-engine suffix;
+10. copy static/binary bytes unchanged;
+11. normalize and validate all path segments;
+12. prepend the project pack-instance output root;
+13. reject traversal, absolute paths, reserved segments, case collisions, and duplicate destinations.
 
-## Explicit output overrides
+## Selection scope and nesting
 
-Most files should not need an `output` field. Their source path is already the output recipe.
+Selection folders are evaluated left to right. A later fixed selector may use a context established by an earlier selection folder.
 
-An explicit override is allowed only when the pack source layout cannot reasonably represent the destination or when one template declares multiple named outputs. It uses the same typed path grammar:
+```text
+{resources}/{resourceEntities}/(entity.name.kebab.s).entity.ts.jinja
+```
+
+could use:
 
 ```yaml
-files:
-  "authoring/combined.ts.jinja":
-    id: combined
-    role: template
-    selection:
-      scope: aggregate
-    output:
-      parts:
-        - gen
-        - "[project.name.kebab.o]-sdk.ts"
+selections:
+  resources:
+    paths: [src, modules, (resource.name.path.o)]
+    select: resources.each
+
+  resourceEntities:
+    paths: [entities]
+    select: resource.entities.each
 ```
 
-An override does not unlock Jinja expressions or arbitrary path creation. Named outputs must all be declared before rendering.
+The output path is still relative to the pack-instance output root.
 
-## Static files and tokenized folders
+Aliases are normally inferred by the fixed selector. An optional inline alias may be used:
 
-Static and binary files use the same source-path program:
+```yaml
+select: resource.entities.each(repositoryEntity)
+```
+
+Aliases may not shadow active contexts silently.
+
+## Imports and exports use planned paths
+
+A selection's `imports` and `exports` refer to other selection keys. The planner resolves those dependencies after destinations and symbols are known.
+
+```yaml
+repositories:
+  paths: [src, repositories]
+  select: entities.each
+  imports:
+    entities: entities
+
+repositoriesIndex:
+  paths: [src, repositories]
+  exports: [repositories]
+```
+
+Language adapters calculate legal module paths from the planned destinations. They do not choose output folders or parse pack source paths.
+
+## Static files and `.gitignore`
+
+Static and binary files are emitted without registration.
+
+A pack-root `.gitignore` is a discovery control file and is not emitted. A generated `.gitignore` is authored as a template:
 
 ```text
-templates/{package}/.gitignore
-templates/{package}/assets/logo.png
-templates/{resource}/README.md
+templates/.gitignore.jinja -> .gitignore
 ```
 
-If `{package}` or `{resource}` owns a selection, the unchanged bytes are copied once per selected context into the resolved path. This preserves the strongest part of the former folder design without a separate static-emission subsystem.
-
-## Authored barrels
-
-A barrel remains an ordinary template file:
-
-```text
-templates/{modelsRoot}/index.ts.jinja
-```
-
-Its path is composed by the same rules as every other template. The manifest marks it `role: barrel` and declares which artifact providers it exports. The template owns comments and output text; the planner only supplies the typed export context.
+This avoids accidentally copying the pack's own ignore rules into generated projects.
 
 ## Adapter responsibilities
 
-Core owns path syntax, name projections, inflection, token parsing, and safe path composition.
+Core owns:
 
-A target-language adapter:
+- selection-folder parsing;
+- fixed selector resolution;
+- semantic name projections and inflection;
+- typed expression evaluation;
+- safe path composition;
+- collision detection.
 
-- declares target extensions;
-- validates final filenames for target-specific restrictions;
-- may expose typed namespaced target path values;
-- does not invent `fileName` properties on IR records;
-- does not select output folders;
-- does not parse template source paths itself.
+A language adapter owns:
 
-An ecosystem adapter may expose typed project-unit or package path values. A template-engine adapter has no authority over output path planning.
+- target suffix registration;
+- final target filename validation;
+- module path calculation;
+- target imports/exports;
+- reserved-name restrictions.
+
+A template-engine adapter renders already planned output and cannot add destinations.
 
 ## Required tests
 
 The path subsystem must test:
 
-- every case and original/singular/plural name projection;
+- every case and original/singular/plural projection;
 - irregular and uncountable names;
-- nested named recipes and alias scope;
-- structural, selection-only, and selection-plus-parts recipes;
-- file-owned selections;
-- static and binary fan-out;
-- embedded scalar tokens and multi-segment path values;
-- literal bracket and brace escaping;
+- `{selectionKey}` and `{root}` folders;
+- fixed `.each`/`.all` selectors and optional aliases;
+- nested resource/entity selection folders;
+- `(expression)` parsing and `((literal))` escaping;
+- literal Next.js bracket routes;
+- literal/static/binary discovery;
+- `_partials` exclusion;
+- pack `.gitignore`, include, and exclude rules;
+- `.gitignore.jinja` emission;
 - engine suffix stripping and target suffix preservation;
-- Next.js-style literal route names;
 - invalid roots/properties with suggestions;
-- cycles, alias shadowing, traversal, reserved names, and collisions;
-- deterministic behavior and cache-key changes when naming behavior changes;
-- explicit output overrides and multiple declared outputs;
-- rejection of invented `fileName` and `directory` properties.
+- traversal, reserved names, cycles, shadowing, and collisions;
+- imports/exports consuming planned paths;
+- rejection of invented `fileName`, `filePath`, and `directory` properties.

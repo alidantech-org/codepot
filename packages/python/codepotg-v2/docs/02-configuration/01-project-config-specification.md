@@ -2,304 +2,253 @@
 
 ## Purpose
 
-`codepotg.yaml` is the only user-authored project configuration file required by CodepotG v2. It registers semantic sources, project toolchains, security policy, global lifecycle commands, and configured pack instances.
+`codepotg.yaml` is the project-owned configuration file. It names semantic inputs, executable names or paths, command policy, project commands, and ordered pack instances.
 
-It does not describe internal templates and does not select one global language.
+It does not list pack templates, selection folders, generated symbols, or one global language.
 
 ## Canonical shape
 
 ```yaml
 apiVersion: codepotg.dev/v2
-kind: Project
 
-metadata:
-  name: defytickets-organiser
-  description: Generated clients and application integrations.
-
-allow: true
+name: defytickets-generated
 
 sources:
-  backendApi:
+  api:
     adapter: openapi
-    path: ../backend/sdk/openapi/openapi.v1.yaml
-    options: {}
+    file: ./openapi.yaml
 
-variables:
-  productName: DefyTickets
-
-toolchains:
-  node:
-    version: ">=20"
-    packageManager: pnpm
-  dart:
-    sdk: ">=3.5.0 <4.0.0"
+executables:
+  packageManager: pnpm
+  flutter: flutter
+  dart: dart
 
 security:
-  commands:
-    project: allow
-    packs: requireApproval
-  dependencyLifecycleScripts: requireApproval
+  packCommands: approve
+
+packs:
+  backendRepositories:
+    source:
+      local: ./packs/typeorm-repositories
+    input: api
+    output: apps/backend
+
+    options:
+      repositoryStyle: class
+
+    bindings:
+      baseRepository:
+        from: src/database/base.repository.ts
+        symbol: BaseRepository
+
+  typescriptSdk:
+    source:
+      git: https://github.com/alidantech-org/codepotg-packs.git
+      ref: typescript-sdk/v2.4.1
+      path: packs/typescript-sdk
+    input: api
+    output: packages/typescript-sdk
+
+  flutterSdk:
+    source:
+      git: https://github.com/alidantech-org/codepotg-pack-flutter-sdk.git
+      ref: v1.4.2
+    input: api
+    output: apps/mobile
 
 commands:
   before:
-    - id: generate-openapi-spec
-      name: Generate OpenAPI specification
-      cwd: ../backend
-      executable: pnpm
+    refreshOpenApi:
+      executable: packageManager
       arguments: [exec, codepot-openapi, generate]
-  after:
-    - id: validate-complete-project
-      executable: pnpm
-      arguments: [typecheck]
-      optional: true
+      cwd: ../backend
 
-packs:
-  server:
-    use:
-      path: ../backend/sdk/next
-    source: backendApi
-    enabled: true
-    profile: modular
-    output:
-      root: ./_
-    clean:
-      - gen
-    options:
-      generateExamples: false
-    bindings:
-      common:
-        from:
-          barrel: "@modules/common"
-        symbols:
-          baseRepository: BaseRepository
-          logger: AppLogger
-    overrides:
-      languages:
-        typescript:
-          imports:
-            aliases:
-              "@": ./src
-    commands:
-      before: []
-      after:
-        - id: lint-generated
-          action: node.eslint.fix
-          paths: ["{output.root}/gen/**/*.{ts,tsx}"]
-          optional: true
+  after:
+    formatWorkspace:
+      executable: packageManager
+      arguments: [exec, prettier, --write, packages/typescript-sdk]
+      optional: true
 ```
 
 ## Root fields
 
 ### `apiVersion`
 
-Required. Selects the typed project schema. Initial value:
+Required schema version. Initial value: `codepotg.dev/v2`.
 
-```text
-codepotg.dev/v2
-```
+### `name`
 
-### `kind`
-
-Required and exactly `Project`.
-
-### `metadata`
-
-Required identity object:
-
-- `name`: stable project name;
-- `description`: optional human description;
-- namespaced metadata extensions may be added only through registered extension schemas.
-
-### `allow`
-
-Required explicit generation permission. Generation does not write files when `allow` is false. Validation, configuration, and plan inspection remain available.
+Required project identity used in diagnostics, plans, and lock metadata.
 
 ### `sources`
 
-Named semantic inputs. Each source specifies:
+Named semantic inputs. Each entry selects a source adapter and provides its adapter-owned location/options.
 
-- source adapter ID;
-- local path, in-memory identity, or adapter-supported locator;
-- adapter-owned typed options;
-- optional declared digest or freshness policy.
+```yaml
+sources:
+  publicApi:
+    adapter: openapi
+    file: ./specs/public.yaml
+```
 
-Packs reference a source by name. Several packs may use the same normalized source without reparsing it.
+Several pack instances may consume the same normalized source through `input`.
 
-### `variables`
+### `executables`
 
-Project-owned values intentionally exposed to pack options or declared binding inputs. Variables are typed at the consuming contract. They are not an unrestricted template-global dictionary.
+Project-selected executable names or paths:
 
-### `toolchains`
+```yaml
+executables:
+  packageManager: pnpm
+  flutter: C:/tools/flutter/bin/flutter
+```
 
-Project environment selections such as:
+A pack command may reference one of these keys. Project values replace matching pack defaults.
 
-- Node version and package manager;
-- Dart SDK;
-- Python interpreter/package tool;
-- Java JDK/build tool;
-- formatter or linter choices where standardized.
-
-Packs declare compatible capabilities. The project selects the actual tool when needed.
+CodepotG does not infer command arguments from the executable and does not translate package-manager syntax.
 
 ### `security`
 
-Project-requested policy. Host policy remains authoritative and may tighten every field.
+Project-requested policy. Host policy remains authoritative. Downloaded pack commands require approval by default.
 
 ### `commands`
 
-Project-global commands:
+Project-global commands. `before` runs once before pack generation; `after` runs once after all selected packs.
 
-- `before` runs once before configured packs;
-- `after` runs once after all selected packs complete and commit according to phase rules.
+Commands are keyed mappings:
 
-These are project-owned, not pack-owned.
+```yaml
+commands:
+  after:
+    verify:
+      executable: packageManager
+      arguments: [test]
+      optional: true
+```
+
+Arguments are opaque strings. Shell parsing is not used unless a separately approved shell mode is added later.
 
 ### `packs`
 
-Ordered mapping of project pack instances. The key is a project-local instance ID, so the same pack can be configured multiple times.
+Ordered mapping of project-local pack instance names. The same pack may be configured more than once.
 
 ## Pack instance fields
 
-### `use`
-
-Required pack locator. Supported planned forms:
-
-```yaml
-use:
-  path: ./packs/server
-```
-
-```yaml
-use:
-  github: alidantech-org/codepotg-nestjs-pack
-  ref: v2.1.0
-  path: packs/server
-```
-
-```yaml
-use:
-  git:
-    url: git@github.com:alidantech-org/private-packs.git
-    ref: main
-    path: packs/server
-```
-
-The resolved immutable commit and digest belong in `codepotg.lock`.
-
 ### `source`
 
-Name of a project source consumed by the pack. A pack that creates only static scaffolding may omit it when its contract allows no semantic source.
+Required direct pack locator. Exactly one source form is allowed.
 
-### `enabled`
+Local pack:
 
-Optional boolean, default true.
+```yaml
+source:
+  local: ./packs/server-sdk
+```
 
-### `profile`
+Git pack at repository root:
 
-Optional pack-defined profile such as `modular`, `monolithic`, or `minimal`. A profile selects declared file descriptors or defaults; it does not select a language.
+```yaml
+source:
+  git: https://github.com/alidantech-org/codepotg-pack-flutter-sdk.git
+  ref: v1.4.2
+```
+
+Git monorepo pack:
+
+```yaml
+source:
+  git: git@github.com:alidantech-org/private-packs.git
+  ref: main
+  path: packs/server-sdk
+```
+
+Rules:
+
+- `local` is relative to `codepotg.yaml`;
+- `git` accepts normal HTTPS or SSH Git URLs;
+- `ref` is required and may be a branch, tag, or commit;
+- `path` is optional and relative to the repository root;
+- `local` and `git` may not appear together;
+- branches and tags are resolved to immutable commits in `codepotg.lock.yaml`.
+
+There is no separate registry alias and no `use` indirection.
+
+### `input`
+
+Optional name of a project semantic source. Static-only packs may omit it.
+
+`input` is intentionally distinct from `source`: `source` locates the pack; `input` locates the semantic data consumed by it.
 
 ### `output`
 
-Pack-instance output configuration:
+Required pack-instance emission root relative to the project configuration file:
 
-- `root` required unless the pack owns the project root by contract;
-- optional mount or package path;
-- instance-specific lifecycle restrictions.
+```yaml
+output: packages/typescript-sdk
+```
 
-All pack output paths resolve beneath the effective root unless explicitly allowed by host policy.
-
-### `clean`
-
-Project-approved relative clean scopes for this pack. Pack declarations may suggest managed roots, but the project and host control destructive cleanup.
+Every `paths` array in the pack manifest is relative to this output root.
 
 ### `options`
 
-Values for the pack's public typed option schema. Unknown options are errors.
+Values for the pack's public options. Unknown values are errors.
 
 ### `bindings`
 
-Project values satisfying the pack's public binding catalog. Supported shapes are determined by binding kind and language adapter contracts.
-
-Example module import:
+Project values satisfying public pack bindings. A binding may point to a project module/path/barrel and symbol according to the installed language adapter.
 
 ```yaml
 bindings:
   baseRepository:
+    from: src/database/base.repository.ts
     symbol: BaseRepository
-    from:
-      module: "@modules/common/base"
 ```
 
-Example real project path, allowing relative-path calculation:
+### `executables`
+
+Optional per-instance executable overrides:
 
 ```yaml
-bindings:
-  baseRepository:
-    symbol: BaseRepository
-    from:
-      projectPath: src/modules/common/base-repository.ts
+executables:
+  packageManager: ./tools/pnpm
 ```
 
-Example default barrel for several binding IDs:
-
-```yaml
-bindings:
-  common:
-    from:
-      barrel: "@modules/common"
-    symbols:
-      baseRepository: BaseRepository
-      logger: AppLogger
-```
-
-### `overrides`
-
-Typed project overrides allowed by adapter and pack policy. Common scopes:
-
-- `languages` for project-wide target-syntax conventions used by this pack instance;
-- `templateEngines` for safe engine options allowed by the engine and pack;
-- `templates` for explicitly exposed template-level options, output destinations, or local rules.
-
-Overrides are typed patches, not recursively merged YAML.
+Resolution order is instance override, project executable, then pack default.
 
 ### `commands`
 
-Project-owned commands associated with this pack instance. They run around only this configured instance and use project-command trust policy.
+Optional project-owned commands scoped to this pack instance. They use project trust policy and do not mutate the pack manifest.
 
-## Execution order
+## Lifecycle order
 
-The default lifecycle is:
-
-1. project global `before` commands;
-2. pack instance project-owned `before` commands;
-3. pack-owned approved setup/before actions;
+1. project `before` commands;
+2. pack-instance project `before` commands;
+3. approved pack `before` commands;
 4. pack planning and generation;
-5. pack-owned approved after actions;
-6. pack instance project-owned `after` commands;
-7. next pack;
-8. project global `after` commands.
+5. approved pack `after` commands;
+6. pack-instance project `after` commands;
+7. next pack instance;
+8. project `after` commands.
 
-Exact transaction phase placement must be declared by each action. Commands that mutate generated staging content run before commit. Commands intended to validate committed project state run after commit and cannot be described as part of an atomic file transaction.
+## Lock ownership
 
-## Configure command ownership
+`codepotg.lock.yaml` is generated by CodepotG. It records the exact resolved pack snapshot, identity, digest, and behavior versions. Credentials and secrets never enter the lock.
 
-`codepotg configure` reads pack manifests, detects project toolchains and candidate bindings, asks typed setup questions, and writes answers directly under the matching `packs.<instance>` entry in `codepotg.yaml`.
-
-It does not create another editable pack configuration file.
+See [`../05-distribution/02-git-github-locking-and-trust.md`](../05-distribution/02-git-github-locking-and-trust.md).
 
 ## Validation
 
-Validation must report:
+Validation rejects:
 
-- unknown project and pack fields;
-- missing sources;
-- duplicate or invalid instance IDs;
-- unresolved pack locators;
-- invalid options or bindings;
-- incompatible toolchain constraints;
-- forbidden overrides;
-- unsafe output or clean paths;
-- command capability and approval requirements;
+- unknown fields;
+- duplicate pack instance names;
+- mixed local/Git source forms;
+- missing Git refs;
+- unsafe local, repository, subdirectory, or output paths;
+- missing semantic inputs;
+- invalid pack options or bindings;
+- unknown executable references;
+- unapproved commands;
 - lock drift.
 
 ## Non-goals
@@ -307,8 +256,9 @@ Validation must report:
 `codepotg.yaml` does not contain:
 
 - project-level `language`;
-- internal template file lists;
-- pack-internal selections;
+- pack-internal template lists;
+- arbitrary selection declarations;
 - old `tasks` entries;
-- a `templateDir` field;
-- arbitrary raw YAML passed directly to templates.
+- `templateDir`;
+- package-manager dependency conversion logic;
+- a separate registry-to-pack mapping.

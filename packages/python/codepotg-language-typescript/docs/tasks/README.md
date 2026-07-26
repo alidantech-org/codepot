@@ -1,11 +1,13 @@
 # TypeScript adapter task tracking
 
-Read `../design/README.md`, the core language-adapter contract, and `codepotg-v2/docs/00-governance/01-agent-working-rules.md` before claiming work.
+Read the package design, central language-adapter contract, path-expression specification, and agent rules before claiming work.
 
-- Claim task IDs in `codepotg-v2/docs/tasks/PARALLEL_WORK.md`.
-- Use statuses `planned`, `claimed`, `in_progress`, `blocked`, `review`, `complete`, or `superseded`.
-- Mark `[x]` only after implementation, focused tests, shared language conformance, documentation, and progress evidence pass.
-- Append every coherent commit to `PROGRESS.md` with exact test commands/results and next task.
-- Do not add framework, source, engine, writer, CLI, command, or old-generator responsibilities.
+- Claim TS task IDs in `PARALLEL_WORK.md`.
+- Core owns semantic name projections and path composition.
+- This adapter validates TypeScript target filenames/extensions and renders imports/exports; it does not select output folders or add `fileName` to IR.
+- Record exact tests and progress evidence.
 
-The detailed task sequence is in [`00-package-plan.md`](00-package-plan.md).
+Task files:
+
+- [`00-package-plan.md`](00-package-plan.md)
+- [`01-path-contract.md`](01-path-contract.md)

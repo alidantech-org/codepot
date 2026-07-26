@@ -1,36 +1,41 @@
-# 02 — Typed configuration and pack contracts
+# 02 — Typed project and pack configuration
 
-CodepotG v2 has two primary authored configuration files:
+CodepotG v2 has two authored YAML contracts:
 
-- `codepotg.yaml` — everything owned by the user project;
-- `CodepotgPack.yaml` — everything owned by one template pack.
+- `codepotg.yaml` — project-owned sources, executables, commands, and pack instances;
+- `CodepotgPack.yaml` — pack identity, options, bindings, selections, dependencies between generated emissions, and pack commands.
 
 V2 does not decode old `tasks`, project-level `language`, `templateDir`, or `paths.yaml`.
 
 ## Documents
 
-- [`01-project-config-specification.md`](01-project-config-specification.md) — complete `codepotg.yaml` schema, pack instances, commands, bindings, overrides, outputs, and configure ownership.
-- [`02-pack-manifest-specification.md`](02-pack-manifest-specification.md) — complete `CodepotgPack.yaml` schema, heterogeneous files, selections, patterns, bindings, dependencies, setup, commands, and authored barrels.
-- [`03-typed-configuration-registry.md`](03-typed-configuration-registry.md) — location-aware documents, exact schema registry, plugin-owned typed sections, introspection, validation, and serialization.
-- [`04-rules-overrides-and-bindings.md`](04-rules-overrides-and-bindings.md) — core-owned merge protocol, restrictions, binding kinds, barrels, project paths, and unresolved behavior.
-- [`05-commands-security-and-setup.md`](05-commands-security-and-setup.md) — ownership, typed actions, raw commands, trust, capabilities, approvals, environment, phases, and setup questions.
-- [`06-toolchains-dependencies-and-manifests.md`](06-toolchains-dependencies-and-manifests.md) — package managers, project units, ecosystem adapters, owned/contributed manifests, dependencies, and install policy.
-- [`07-complete-project-and-pack-example.md`](07-complete-project-and-pack-example.md) — one complete linked project/pack example showing source, profile, output, bindings, overrides, selections, files, authored barrel, static files, dependencies, setup, and commands.
+- [`01-project-config-specification.md`](01-project-config-specification.md) — direct local/Git pack sources, semantic inputs, output roots, executables, bindings, and commands.
+- [`02-pack-manifest-specification.md`](02-pack-manifest-specification.md) — filesystem discovery, compact selection registry, imports, exports, symbols, bindings, and exact pack commands.
+- [`03-typed-configuration-registry.md`](03-typed-configuration-registry.md) — location-aware documents, schema families, introspection, validation, and serialization.
+- [`04-rules-overrides-and-bindings.md`](04-rules-overrides-and-bindings.md) — typed project values, restrictions, external bindings, and generated dependency planning.
+- [`05-commands-security-and-setup.md`](05-commands-security-and-setup.md) — command trust, exact argument boundaries, approvals, environment, and lifecycle phases.
+- [`06-toolchains-dependencies-and-manifests.md`](06-toolchains-dependencies-and-manifests.md) — adapter-owned project/tool integration where real ecosystems require it.
+- [`07-complete-project-and-pack-example.md`](07-complete-project-and-pack-example.md) — one linked project using local, Git-monorepo, and independent Git packs plus a generated lock.
+- [`../examples`](../examples/README.md) — standalone YAML examples used by documentation and future conformance tests.
 
 ## Ownership summary
 
 ### Project
 
-The project owns sources/spec paths, toolchains, security request, global commands, pack instances, output roots, clean scopes, options, bindings, overrides, and project-owned per-pack commands.
+The project owns semantic inputs, direct pack sources, executable names/paths, command policy, global commands, pack-instance output roots, options, bindings, and project-owned overrides.
 
 ### Pack
 
-The pack owns content discovery, file roles, selections, output expressions, templates, static files, partials, authored barrels, public bindings, language/engine rules, dependencies, setup, manual instructions, and pack-owned commands.
+The pack owns identity, compatibility, include/exclude rules, public options/bindings, registered selection folders, pack-relative paths, generated imports/exports/symbols, executable defaults, and exact pack commands.
 
-### Template
+### Filesystem
 
-Every template owns its target syntax, normally inferred from `file-name.<target>.<engine>`. A pack and project can contain many targets.
+The `templates/` tree owns literal files, literal directories, dynamic filenames, static assets, partials, and authored barrels. Ordinary files are discovered rather than registered individually.
+
+### Adapters
+
+Language adapters own target import/export syntax and module paths. Template-engine adapters render already planned content. Neither chooses output directories.
 
 ## Typed processing rule
 
-Raw YAML ends at the configuration infrastructure. Application and domain services receive immutable typed models. Unknown fields are errors, and rule/override merging never uses generic recursive dictionary merging.
+Raw YAML ends inside configuration infrastructure. Domain/application services receive immutable typed models. Unknown fields are errors, and no generic recursive dictionary merge is permitted.

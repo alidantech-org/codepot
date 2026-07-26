@@ -1,4 +1,4 @@
-# Neutral IR, selection, and planning tasks
+# Neutral IR, selection, path composition, and planning tasks
 
 ## IR-001 — Provenance and semantic identity
 
@@ -10,13 +10,15 @@
 - [ ] Preserve source spans without storing parser-specific objects.
 - [ ] Implement stable hashing and deterministic ordering.
 
-## IR-002 — Names and type expressions
+## IR-002 — Semantic names and type expressions
 
 **Status:** planned
 
-**Dependencies:** IR-001
+**Dependencies:** IR-001, PATH-001
 
-- [ ] Implement semantic names independent from target-language rendering.
+- [ ] Implement semantic names independent from target-language rendering and output filenames.
+- [ ] Expose typed case and original/singular/plural projections through the core naming contract.
+- [ ] Do not add `fileName`, `filePath`, or `directory` properties to semantic items.
 - [ ] Implement primitive, reference, array, map, tuple, union, intersection, nullable, optional, generic, literal, function, and unknown/unsupported diagnostic type forms.
 - [ ] Keep optional presence distinct from nullable value.
 - [ ] Add visitor/matcher contracts without language-specific imports.
@@ -37,11 +39,11 @@
 
 **Dependencies:** IR-003
 
-- [ ] Define registered namespaced extension values for source provenance that does not belong in core semantics.
+- [ ] Define registered namespaced extension values for source provenance not belonging in core semantics.
 - [ ] Prevent source-specific classes from escaping through extensions.
 - [ ] Add serialization and size/depth limits.
 
-## PLAN-001 — Pack file discovery descriptors
+## PLAN-001 — Pack source-file discovery descriptors
 
 **Status:** planned
 
@@ -49,9 +51,10 @@
 
 - [ ] Walk content roots deterministically.
 - [ ] Apply ignore rules before descriptor creation.
+- [ ] Preserve exact content-root-relative source paths including braces/brackets.
 - [ ] Infer engine and target suffixes.
 - [ ] Detect text versus binary safely.
-- [ ] Apply patterns and exact file settings to one descriptor.
+- [ ] Apply descriptor patterns and exact settings to one descriptor.
 - [ ] Validate explicit target/engine conflicts.
 - [ ] Keep authored documentation and partials non-emitting by default.
 
@@ -66,17 +69,19 @@
 - [ ] Produce stable selection identities for cache keys.
 - [ ] Diagnose missing fields and unsupported expressions before invocation creation.
 
-## PLAN-003 — Folder-pattern fan-out
+## PLAN-003 — Named path recipe and source-tree fan-out
 
 **Status:** planned
 
-**Dependencies:** PLAN-001, PLAN-002
+**Dependencies:** PLAN-001, PLAN-002, PATH-003..PATH-005
 
-- [ ] Bind folder tokens to declared selection aliases.
-- [ ] Preserve relative file structure beneath matched patterns.
+- [ ] Resolve `{recipe}` tokens left to right.
+- [ ] Apply structural, selection-only, and selection-plus-parts recipes.
+- [ ] Scope nested aliases and validate prior-alias requirements.
+- [ ] Preserve literal relative source structure after recipe expansion.
 - [ ] Fan out templates, static text, and binary files consistently.
-- [ ] Implement specificity and conflict diagnostics.
-- [ ] Allow exact file output overrides without duplicate descriptors.
+- [ ] Apply descriptor-pattern specificity independently from destination composition.
+- [ ] Reject recursive recipes, alias shadowing, cycles, and duplicate invocations.
 
 ## PLAN-004 — Template invocation model
 
@@ -87,7 +92,7 @@
 - [ ] Implement invocation identity, selected context, effective target/engine rules, bindings, imports, includes, outputs, lifecycle, and profile state.
 - [ ] Resolve one target and one engine per template invocation.
 - [ ] Implement aggregate/monolithic invocation.
-- [ ] Implement multiple declared named outputs.
+- [ ] Implement multiple predeclared named outputs.
 
 ## PLAN-005 — Includes and partial graph
 
@@ -122,15 +127,19 @@
 - [ ] Deduplicate and alias collisions deterministically.
 - [ ] Create immutable export descriptors for authored barrel templates.
 - [ ] Prove comments/custom text remain owned by the barrel template.
+- [ ] Ensure import planning consumes resolved artifact paths but does not choose output paths.
 
-## PLAN-008 — Output and lifecycle graph
+## PLAN-008 — Source-path output and lifecycle graph
 
 **Status:** planned
 
-**Dependencies:** PLAN-004
+**Dependencies:** PLAN-004, PATH-005..PATH-007
 
-- [ ] Compile typed output expressions.
-- [ ] Reject traversal, absolute escape, invalid segments, symlink escape, and platform case collisions.
+- [ ] Compile the content-root-relative source path as the default output expression.
+- [ ] Resolve `[expression]`, escaping, name projections, and recipe output parts.
+- [ ] Strip only the engine suffix and preserve target suffixes.
+- [ ] Support exceptional explicit output and predeclared named outputs through the same grammar.
+- [ ] Reject traversal, absolute escape, invalid segments, symlink escape, target filename violations, and platform case collisions.
 - [ ] Detect duplicate destinations before render.
 - [ ] Resolve managed, immutable, protected, and unmanaged intent with project/host restrictions.
 
@@ -149,17 +158,19 @@
 
 **Status:** planned
 
-**Dependencies:** PLAN-001..PLAN-009
+**Dependencies:** PLAN-001..PLAN-009, PATH-009
 
 - [ ] Produce stable human and structured plan views.
-- [ ] Include source/pack/plugin versions, effective rules, files, selections, graph edges, outputs, commands, approvals, and actions.
+- [ ] Include source/pack/plugin versions, effective rules, source paths, parsed tokens, recipe expansions, selections, graph edges, outputs, commands, approvals, and actions.
 - [ ] Exclude secrets.
 - [ ] Add deterministic snapshots for small fixtures.
 
 ## Acceptance gate
 
 - IR has no OpenAPI, TypeScript, Dart, Jinja, filesystem, command, or CLI imports.
-- A heterogeneous pack plans templates, static files, binary files, partials, and authored barrels.
+- Semantic items expose names and meaning, not generated filenames.
+- A heterogeneous pack plans tokenized templates, static files, binary files, partials, and authored barrels.
 - Invalid plans never call renderers or writers.
-- All graph diagnostics identify source descriptors and related providers.
+- All graph/path diagnostics identify source descriptors, token spans, aliases, and related providers.
 - One aggregate template can plan a single complete generated file.
+- Every normal output can be explained from the pack source path plus named recipes and typed values.

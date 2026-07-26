@@ -1,0 +1,59 @@
+apiVersion: codepotg.dev/v2
+
+name: defytickets-generated
+
+sources:
+  api:
+    adapter: openapi
+    file: ./openapi.yaml
+
+executables:
+  packageManager: pnpm
+  flutter: flutter
+  dart: dart
+
+security:
+  packCommands: approve
+
+packs:
+  backendRepositories:
+    source:
+      local: ./packs/typeorm-repositories
+    input: api
+    output: apps/backend
+
+    options:
+      repositoryStyle: class
+
+    bindings:
+      baseRepository:
+        from: src/database/base.repository.ts
+        symbol: BaseRepository
+
+  typescriptSdk:
+    source:
+      git: https://github.com/alidantech-org/codepotg-packs.git
+      ref: typescript-sdk/v2.4.1
+      path: packs/typescript-sdk
+    input: api
+    output: packages/typescript-sdk
+
+    options:
+      clientName: DefyTicketsClient
+
+  flutterSdk:
+    source:
+      git: https://github.com/alidantech-org/codepotg-pack-flutter-sdk.git
+      ref: v1.4.2
+    input: api
+    output: apps/mobile
+
+    options:
+      clientName: DefyTicketsClient
+
+commands:
+  after:
+    formatWorkspace:
+      executable: packageManager
+      arguments: [exec, prettier, --write, packages/typescript-sdk]
+      optional: true
