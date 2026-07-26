@@ -2,11 +2,11 @@
 
 | Date | Commit | Area | Status | Notes |
 |---|---|---|---|---|
-| 2026-07-26 | pending | Documentation foundation | complete | Registered the agreed architecture, migration direction, package boundaries, and task system. Replace `pending` with the landing commit SHA in the next documentation update. |
+| 2026-07-26 | `763f7128` | Documentation foundation | complete | Registered the agreed architecture, migration direction, package boundaries, empty core directories, master tasks, and progress system. |
 
 ## Current stage
 
-Documentation and empty package scaffolding. Runtime implementation has not started.
+Documentation and package scaffolding. Runtime implementation has not started.
 
 ## Current risks
 
