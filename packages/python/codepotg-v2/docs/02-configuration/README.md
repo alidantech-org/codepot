@@ -3,14 +3,16 @@
 CodepotG v2 has two authored YAML contracts:
 
 - `codepotg.yaml` — project-owned sources, executables, commands, and pack instances;
-- `CodepotgPack.yaml` — pack identity, options, bindings, selections, dependencies between generated emissions, and pack commands.
+- `CodepotgPack.yaml` — pack identity, options, bindings, root-first fixed selections, generated dependencies, symbols, and pack commands.
 
 V2 does not decode old `tasks`, project-level `language`, `templateDir`, or `paths.yaml`.
+
+Configuration cannot extend the closed semantic kernel. Packs cannot register semantic concepts, facets, selector grammar, expression properties, or template-context values.
 
 ## Documents
 
 - [`01-project-config-specification.md`](01-project-config-specification.md) — direct local/Git pack sources, semantic inputs, output roots, executables, bindings, and commands.
-- [`02-pack-manifest-specification.md`](02-pack-manifest-specification.md) — filesystem discovery, compact selection registry, imports, exports, symbols, bindings, and exact pack commands.
+- [`02-pack-manifest-specification.md`](02-pack-manifest-specification.md) — filesystem discovery, root-first fixed selectors, imports, exports, symbols, bindings, and exact pack commands.
 - [`03-typed-configuration-registry.md`](03-typed-configuration-registry.md) — location-aware documents, schema families, introspection, validation, and serialization.
 - [`04-rules-overrides-and-bindings.md`](04-rules-overrides-and-bindings.md) — typed project values, restrictions, external bindings, and generated dependency planning.
 - [`05-commands-security-and-setup.md`](05-commands-security-and-setup.md) — command trust, exact argument boundaries, approvals, environment, and lifecycle phases.
@@ -28,13 +30,21 @@ The project owns semantic inputs, direct pack sources, executable names/paths, c
 
 The pack owns identity, compatibility, include/exclude rules, public options/bindings, registered selection folders, pack-relative paths, generated imports/exports/symbols, executable defaults, and exact pack commands.
 
+The pack consumes only documented semantic-kernel values and selectors.
+
 ### Filesystem
 
-The `templates/` tree owns literal files, literal directories, dynamic filenames, static assets, partials, and authored barrels. Ordinary files are discovered rather than registered individually.
+The `templates/` tree owns literal files, literal directories, dynamic filenames, static assets, partials, authored barrels, and every emitted character. Ordinary files are discovered rather than registered individually.
+
+### Core/planner
+
+Core owns the closed kernel, semantic validation, root-first selector registry, semantic/provider matching, planned artifact identities, generated dependency resolution, path/module facts, impact graphs, collision checks, and safety.
 
 ### Adapters
 
-Language adapters own target import/export syntax and module paths. Template-engine adapters render already planned content. Neither chooses output directories.
+- Source adapters normalize supported source concepts into the known kernel and cannot extend it.
+- Language adapters detect targets, validate identifiers/filenames, and calculate target-aware module/path facts. They do not emit imports, exports, types, literals, comments, validators, decorators, or framework code.
+- Template-engine adapters render already planned immutable contexts. They do not choose outputs or semantic meaning.
 
 ## Typed processing rule
 
