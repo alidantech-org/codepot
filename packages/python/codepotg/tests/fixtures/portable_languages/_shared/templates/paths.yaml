@@ -12,6 +12,9 @@ write_policy:
     - operations
     - resources
     - package
+  immutable_roots:
+    - contract
+    - package
   protected_roots:
     - contract
     - schemas
