@@ -64,6 +64,12 @@ folders:
     parts:
       - "[lang.meta.type_system.client_root]"
 
+  native_support:
+    select: lang.meta.type_system.support_files
+    as: support
+    parts:
+      - "[support.root]"
+
   resource:
     select: resources
     as: resource
