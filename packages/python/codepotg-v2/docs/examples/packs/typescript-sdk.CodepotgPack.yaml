@@ -1,0 +1,72 @@
+apiVersion: codepotg.dev/v2
+
+id: alidantech/typescript-sdk
+version: 2.4.1
+description: Generates a typed TypeScript API client.
+
+requires:
+  codepotg: ">=2.0 <3.0"
+  ir: ">=2.0 <3.0"
+
+options:
+  clientName:
+    default: ApiClient
+
+selections:
+  enums:
+    paths: [src, types, enums]
+    select: schemas.enums.each
+    symbols: [(enum.name.pascal.s)]
+
+  dtos:
+    paths: [src, types, dtos]
+    select: schemas.dtos.each
+    imports:
+      enums: enums
+    symbols: [(dto.name.pascal.s)]
+
+  models:
+    paths: [src, types, models]
+    select: schemas.models.each
+    imports:
+      enums: enums
+    symbols: [(model.name.pascal.s)]
+
+  typesIndex:
+    paths: [src, types]
+    exports: [enums, dtos, models]
+
+  services:
+    paths: [src, services]
+    select: resources.each
+    imports:
+      types: typesIndex
+    symbols: [(resource.name.pascal.s)Service]
+
+  servicesIndex:
+    paths: [src, services]
+    exports: [services]
+
+  client:
+    paths: [src]
+    imports:
+      services: servicesIndex
+    symbols: [(option.clientName)]
+
+  rootIndex:
+    paths: [src]
+    exports: [typesIndex, servicesIndex, client]
+
+executables:
+  packageManager: pnpm
+
+commands:
+  after:
+    install:
+      executable: packageManager
+      arguments: [add, axios@^1.0.0]
+
+    format:
+      executable: packageManager
+      arguments: [exec, prettier, --write, src]
+      optional: true
