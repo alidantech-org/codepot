@@ -2,7 +2,7 @@ apiVersion: codepotg.dev/v2
 
 id: alidantech/flutter-sdk
 version: 1.4.2
-description: Generates a Dart and Flutter API client.
+description: Generates a Dart and Flutter API client from groups, schemas, and operations.
 
 requires:
   codepotg: ">=2.0 <3.0"
@@ -14,41 +14,45 @@ options:
 
 selections:
   enums:
-    paths: [lib, src, models]
-    select: schemas.enums.each
-    symbols: [(enum.name.pascal.s)]
+    paths: [lib, src, types, enums]
+    select: groups.schemas.enums.each
+    symbols:
+      - (schema.name.pascal.s)
 
-  models:
-    paths: [lib, src, models]
-    select: schemas.models.each
+  schemaTypes:
+    paths: [lib, src, types, schemas]
+    select: groups.schemas.objects.each
     imports:
       enums: enums
-    symbols: [(model.name.pascal.s)]
+    symbols:
+      - (schema.name.pascal.s)
 
-  modelsIndex:
-    paths: [lib, src, models]
-    exports: [enums, models]
+  typesIndex:
+    paths: [lib, src, types]
+    exports: [enums, schemaTypes]
 
-  services:
-    paths: [lib, src, services]
-    select: resources.each
+  groupClients:
+    paths: [lib, src, clients]
+    select: groups.each
     imports:
-      models: modelsIndex
-    symbols: [(resource.name.pascal.s)Service]
+      types: typesIndex
+    symbols:
+      - (group.name.pascal.s)Client
 
-  servicesIndex:
-    paths: [lib, src, services]
-    exports: [services]
+  clientsIndex:
+    paths: [lib, src, clients]
+    exports: [groupClients]
 
   client:
     paths: [lib, src]
     imports:
-      services: servicesIndex
-    symbols: [(option.clientName)]
+      clients: clientsIndex
+    symbols:
+      - (option.clientName)
 
   packageIndex:
     paths: [lib]
-    exports: [modelsIndex, servicesIndex, client]
+    exports: [typesIndex, clientsIndex, client]
 
 executables:
   flutter: flutter
