@@ -42,6 +42,6 @@ def test_add_task_preserves_schema_links(tmp_path: Path) -> None:
     content = config.read_text(encoding="utf-8")
     loaded = load_codepotg_config(config)
     assert content.count("yaml-language-server: $schema=") == 1
-    assert content.count("$schema:") == 2  # modeline plus YAML field
+    assert content.count("$schema:") == 1
     assert loaded.schema_uri == CODEPOTG_SCHEMA_ID
     assert {task.name for task in loaded.tasks} == {"sdk", "java-client"}
