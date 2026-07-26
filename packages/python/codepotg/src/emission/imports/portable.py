@@ -61,7 +61,7 @@ def _planned_import(
         path, statement = _python_import(current, target, symbol)
         style = "python_from"
     elif suffix == ".java":
-        path = _dotted_parent(target, pascal_file=True)
+        path = _java_package(target)
         statement = f"import {path}.{symbol};"
         style = "java_import"
     elif suffix == ".cs":
@@ -109,27 +109,36 @@ def _python_import(
     return module, f"from {module} import {symbol}"
 
 
-def _dotted_parent(target: PurePosixPath, *, pascal_file: bool) -> str:
-    parts = list(target.with_suffix("").parts)
-    if pascal_file and parts:
-        parts.pop()
-    return ".".join(_pascal(part) for part in parts) or "generated"
+def _java_package(target: PurePosixPath) -> str:
+    parts = _after_marker(target.parent.parts, "java")
+    return ".".join(parts) or "generated"
 
 
 def _csharp_namespace(target: PurePosixPath) -> str:
-    parts = target.parent.parts
+    parts = _after_marker(target.parent.parts, "package")
     return ".".join(_pascal(part) for part in parts) or "Generated"
 
 
 def _go_package(target: PurePosixPath, *, package_name: str | None) -> str:
     root = (package_name or "generated").replace("_", "-")
-    parent = "/".join(target.parent.parts)
+    parts = _after_marker(target.parent.parts, "package")
+    parent = "/".join(parts)
     return f"{root}/{parent}" if parent else root
 
 
 def _rust_path(target: PurePosixPath) -> str:
-    parts = ("crate", *target.with_suffix("").parts)
-    return "::".join(part.replace("-", "_") for part in parts)
+    parts = _after_marker(target.with_suffix("").parts, "src")
+    return "::".join(
+        ("crate", *(part.replace("-", "_") for part in parts))
+    )
+
+
+def _after_marker(parts: tuple[str, ...], marker: str) -> tuple[str, ...]:
+    try:
+        index = parts.index(marker)
+    except ValueError:
+        return parts
+    return parts[index + 1 :]
 
 
 def _dependency_symbol(dependency: TemplateDependency) -> str:
@@ -139,4 +148,5 @@ def _dependency_symbol(dependency: TemplateDependency) -> str:
 
 
 def _pascal(value: str) -> str:
-    return "".join(part[:1].upper() + part[1:] for part in value.replace("-", "_").split("_") if part)
+    words = value.replace("-", "_").split("_")
+    return "".join(word[:1].upper() + word[1:] for word in words if word)
