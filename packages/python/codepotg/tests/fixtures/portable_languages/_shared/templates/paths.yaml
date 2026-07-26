@@ -10,21 +10,18 @@ write_policy:
     - operations
     - resources
     - package
-    - native
   protected_roots:
     - contract
     - schemas
     - operations
     - resources
     - package
-    - native
   clean_roots:
     - contract
     - schemas
     - operations
     - resources
     - package
-    - native
 
 folders:
   root:
@@ -35,7 +32,7 @@ folders:
   package:
     mode: once
     parts:
-      - package
+      - "[lang.meta.type_system.package_root]"
 
   schema:
     select: schemas.all
@@ -47,15 +44,13 @@ folders:
     select: schemas.emit_models
     as: schema
     parts:
-      - native
-      - schemas
+      - "[lang.meta.type_system.model_root]"
 
   native_enum:
     select: schemas.emit_enums
     as: schema
     parts:
-      - native
-      - schemas
+      - "[lang.meta.type_system.model_root]"
 
   operation:
     select: operations
@@ -67,8 +62,7 @@ folders:
     select: operations
     as: operation
     parts:
-      - native
-      - operations
+      - "[lang.meta.type_system.client_root]"
 
   resource:
     select: resources
