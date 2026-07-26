@@ -1,3 +1,10 @@
-# Task tracking
+# TypeScript SDK pack task tracking
 
-Use `[ ]` for pending and `[x]` for complete. Mark an active unchecked item with `**IN PROGRESS**`. Every completed task must include focused tests, documentation, generated fixture review, and a progress-log row with the landing commit SHA.
+Read `../design/README.md`, the v2 pack manifest specification, and the central agent rules before claiming work.
+
+- Claim PACK-TS task IDs in `codepotg-v2/docs/tasks/PARALLEL_WORK.md`.
+- Mark `[x]` only after manifest/templates/static files/bindings/setup/actions, focused tests, realistic fixture validation, docs, and progress evidence pass.
+- Record exact test/tool commands in `PROGRESS.md`.
+- Author only the new v2 pack; do not implement old `paths.yaml` or generator behavior.
+
+The detailed sequence is in [`00-package-plan.md`](00-package-plan.md).

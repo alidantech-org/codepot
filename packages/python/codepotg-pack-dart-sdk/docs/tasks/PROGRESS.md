@@ -1,5 +1,6 @@
-# Progress log
+# Dart SDK pack progress
 
-| Date | Commit | Area | Status | Notes |
-|---|---|---|---|---|
-| 2026-07-26 | `7f05618f` | Package scaffold | complete | Added README, task ledger, package-data placeholders, and test boundaries. No implementation has started. |
+| Date | Commit | Task | Status | Tests/evidence | Notes |
+|---|---|---|---|---|---|
+| 2026-07-26 | `7f05618f` | Package scaffold | complete | Documentation/files only; no runtime tests. | Created pack/test/task boundaries. |
+| 2026-07-26 | `01041597` | New v2 pack design | complete | Documentation review only; no runtime tests. | Added standalone/contributed manifest/profile/template/static/binding/setup plan PACK-DART-001..PACK-DART-014. |
