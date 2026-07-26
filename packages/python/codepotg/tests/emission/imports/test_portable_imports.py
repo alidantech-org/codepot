@@ -18,20 +18,22 @@ from emission.imports.markdown import MarkdownImportPlanner
 
 
 @pytest.mark.parametrize(
-    ("suffix", "statement"),
+    ("suffix", "target_parent", "statement"),
     (
-        (".py", "from .widget_status import WidgetStatus"),
-        (".java", "import native.schemas.WidgetStatus;"),
-        (".cs", "using Generated.Native.Schemas;"),
+        (".py", "native/schemas", "from .widget_status import WidgetStatus"),
+        (".java", "native/schemas", "import native.schemas.WidgetStatus;"),
+        (".cs", "native/schemas", "using Generated.Native.Schemas;"),
         (
             ".go",
-            'import "example.com/generated/portable_client/native/schemas"',
+            "native/enums",
+            'import "example.com/generated/portable_client/native/enums"',
         ),
-        (".rs", "use crate::native::schemas::widget_status::WidgetStatus;"),
+        (".rs", "native/schemas", "use crate::native::schemas::widget_status::WidgetStatus;"),
     ),
 )
 def test_fallback_planner_builds_portable_source_imports(
     suffix: str,
+    target_parent: str,
     statement: str,
 ) -> None:
     current = TemplateFile(
@@ -48,7 +50,7 @@ def test_fallback_planner_builds_portable_source_imports(
             ref="#/components/schemas/WidgetStatus",
             name=make_contract_name("WidgetStatus"),
         ),
-        relative_path=Path(f"native/schemas/widget_status{suffix}"),
+        relative_path=Path(f"{target_parent}/widget_status{suffix}"),
         is_importable=True,
         exists=True,
     )
