@@ -1,4 +1,4 @@
-"""Executable Jinja fixture coverage for portable language adapters."""
+"""Executable Jinja and native artifact coverage for production adapters."""
 
 from __future__ import annotations
 
@@ -10,10 +10,47 @@ import pytest
 from app import GeneratorApp
 
 LANGUAGES = ("python", "java", "csharp", "go", "rust")
+TARGETS = {
+    "python": {
+        "extension": ".py",
+        "manifest": "pyproject.toml",
+        "model": "class Widget(BaseModel):",
+        "uuid": "uuid.UUID",
+        "operation": "def list_widgets(",
+    },
+    "java": {
+        "extension": ".java",
+        "manifest": "pom.xml",
+        "model": "public record Widget(",
+        "uuid": "UUID id",
+        "operation": "public final class ListWidgetsClient",
+    },
+    "csharp": {
+        "extension": ".cs",
+        "manifest": "GeneratedClient.csproj",
+        "model": "public sealed record Widget",
+        "uuid": "Guid Id",
+        "operation": "public static class ListWidgetsClient",
+    },
+    "go": {
+        "extension": ".go",
+        "manifest": "go.mod",
+        "model": "type Widget struct {",
+        "uuid": "Id uuid.UUID",
+        "operation": "const ListWidgetsMethod",
+    },
+    "rust": {
+        "extension": ".rs",
+        "manifest": "Cargo.toml",
+        "model": "pub struct Widget {",
+        "uuid": "pub id: uuid::Uuid",
+        "operation": "pub async fn list_widgets()",
+    },
+}
 
 
 @pytest.mark.parametrize("language", LANGUAGES)
-def test_portable_language_fixture_emits_complete_variable_probe(
+def test_portable_language_fixture_emits_complete_contract_and_native_package(
     tmp_path: Path,
     language: str,
 ) -> None:
@@ -27,7 +64,7 @@ def test_portable_language_fixture_emits_complete_variable_probe(
     first_task = first.tasks[0]
     second_task = second.tasks[0]
     assert first_task.language == language
-    assert len(first_task.planned) >= 5
+    assert len(first_task.planned) >= 8
     assert len(first_task.written) == len(first_task.planned)
     assert len(set(first_task.planned)) == len(first_task.planned)
     assert first_task.refused == []
@@ -41,7 +78,9 @@ def test_portable_language_fixture_emits_complete_variable_probe(
     )
 
     output = workspace / language / ".generated-review"
-    global_probe = (output / "contract" / "variables.txt").read_text(encoding="utf-8")
+    global_probe = (output / "contract" / "variables.txt").read_text(
+        encoding="utf-8"
+    )
     expected = {
         f"language={language}",
         "complete_contract=True",
@@ -84,3 +123,25 @@ def test_portable_language_fixture_emits_complete_variable_probe(
     assert "selection=resource" in resource_text
     assert "name=Widgets" in resource_text
     assert "operation_count=1" in resource_text
+
+    target = TARGETS[language]
+    manifest = output / "package" / target["manifest"]
+    model = output / "native" / "schemas" / f"widget{target['extension']}"
+    operation = (
+        output
+        / "native"
+        / "operations"
+        / f"list_widgets_client{target['extension']}"
+    )
+    assert manifest.is_file()
+    assert model.is_file()
+    assert operation.is_file()
+
+    model_text = model.read_text(encoding="utf-8")
+    assert target["model"] in model_text
+    assert target["uuid"] in model_text
+    assert "WidgetStatus" in model_text
+
+    operation_source = operation.read_text(encoding="utf-8")
+    assert target["operation"] in operation_source
+    assert "/widgets" in operation_source
