@@ -16,56 +16,29 @@ from contracts.template import (
 from emission.imports.base import ImportPlanningContext
 from emission.imports.markdown import MarkdownImportPlanner
 
-CASES = (
-    (
-        ".py",
-        "package/src/portable_client/models/widget.py",
-        "package/src/portable_client/models/widget_status.py",
-        "from .widget_status import WidgetStatus",
-    ),
-    (
-        ".java",
-        "package/src/main/java/generated/models/widget.java",
-        "package/src/main/java/generated/models/widget_status.java",
-        "import generated.models.WidgetStatus;",
-    ),
-    (
-        ".cs",
-        "package/Models/widget.cs",
-        "package/Models/widget_status.cs",
-        "using Models;",
-    ),
-    (
-        ".go",
-        "package/models/widget.go",
-        "package/models/widget_status.go",
-        'import "portable-client/models"',
-    ),
-    (
-        ".rs",
-        "package/src/models/widget.rs",
-        "package/src/models/widget_status.rs",
-        "use crate::models::widget_status::WidgetStatus;",
-    ),
-)
-
 
 @pytest.mark.parametrize(
-    ("suffix", "current_path", "target_path", "statement"),
-    CASES,
+    ("suffix", "statement"),
+    (
+        (".py", "from .widget_status import WidgetStatus"),
+        (".java", "import native.schemas.WidgetStatus;"),
+        (".cs", "using Generated.Native.Schemas;"),
+        (
+            ".go",
+            'import "example.com/generated/portable_client/native/schemas"',
+        ),
+        (".rs", "use crate::native::schemas::widget_status::WidgetStatus;"),
+    ),
 )
 def test_fallback_planner_builds_portable_source_imports(
     suffix: str,
-    current_path: str,
-    target_path: str,
     statement: str,
 ) -> None:
-    current_relative = PurePosixPath(current_path)
     current = TemplateFile(
-        output_path=Path(current_path),
-        relative_path=current_relative,
-        name=current_relative.name,
-        stem=current_relative.stem,
+        output_path=Path(f"native/schemas/widget{suffix}"),
+        relative_path=PurePosixPath(f"native/schemas/widget{suffix}"),
+        name=f"widget{suffix}",
+        stem="widget",
         suffix=suffix,
         group=TemplateGroup.MODELS,
     )
@@ -75,7 +48,7 @@ def test_fallback_planner_builds_portable_source_imports(
             ref="#/components/schemas/WidgetStatus",
             name=make_contract_name("WidgetStatus"),
         ),
-        relative_path=Path(target_path),
+        relative_path=Path(f"native/schemas/widget_status{suffix}"),
         is_importable=True,
         exists=True,
     )
@@ -97,10 +70,8 @@ def test_fallback_planner_builds_portable_source_imports(
 
 def test_portable_import_planner_deduplicates_statements() -> None:
     current = TemplateFile(
-        output_path=Path("package/src/portable_client/models/widget.py"),
-        relative_path=PurePosixPath(
-            "package/src/portable_client/models/widget.py"
-        ),
+        output_path=Path("native/schemas/widget.py"),
+        relative_path=PurePosixPath("native/schemas/widget.py"),
         name="widget.py",
         stem="widget",
         suffix=".py",
@@ -111,9 +82,7 @@ def test_portable_import_planner_deduplicates_statements() -> None:
             ref="#/components/schemas/WidgetStatus",
             name=make_contract_name("WidgetStatus"),
         ),
-        relative_path=Path(
-            "package/src/portable_client/models/widget_status.py"
-        ),
+        relative_path=Path("native/schemas/widget_status.py"),
         is_importable=True,
         exists=True,
     )
@@ -129,10 +98,41 @@ def test_portable_import_planner_deduplicates_statements() -> None:
     assert len(imports) == 1
 
 
+def test_go_import_planner_skips_same_package_dependencies() -> None:
+    current = TemplateFile(
+        output_path=Path("package/models/widget.go"),
+        relative_path=PurePosixPath("package/models/widget.go"),
+        name="widget.go",
+        stem="widget",
+        suffix=".go",
+    )
+    dependency = TemplateDependency(
+        ref="#/components/schemas/WidgetStatus",
+        target=TemplateDependencyTarget(
+            ref="#/components/schemas/WidgetStatus",
+            name=make_contract_name("WidgetStatus"),
+        ),
+        relative_path=Path("package/models/widget_status.go"),
+        is_importable=True,
+        exists=True,
+    )
+
+    imports = MarkdownImportPlanner().plan_imports(
+        ImportPlanningContext(
+            current_file=current,
+            dependencies=(dependency,),
+            strategy="relative",
+            package_name="portable_client",
+        )
+    )
+
+    assert imports == ()
+
+
 def test_portable_import_planner_respects_none_strategy() -> None:
     current = TemplateFile(
-        output_path=Path("package/src/models/widget.rs"),
-        relative_path=PurePosixPath("package/src/models/widget.rs"),
+        output_path=Path("native/schemas/widget.rs"),
+        relative_path=PurePosixPath("native/schemas/widget.rs"),
         name="widget.rs",
         stem="widget",
         suffix=".rs",
