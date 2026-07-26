@@ -1,14 +1,14 @@
-# Selections, folder patterns, and static files
+# Selections, named path recipes, descriptor patterns, and static files
 
 ## Selection is pack-owned
 
-The pack decides which normalized records or planned artifacts each file consumes. The project does not list internal templates or selection rules.
+The pack decides which normalized records or planned artifacts each source file consumes. The project does not list internal templates, path recipes, or selection rules.
 
-## Supported invocation modes
+## Supported selection modes
 
 ### Once
 
-One invocation for the pack/project context.
+One invocation for the project/pack context.
 
 ```yaml
 selection:
@@ -55,21 +55,35 @@ selection:
 
 ### Artifact-derived
 
-A later template may select planned artifacts or capabilities from earlier templates, for example an authored barrel or registry.
+A later template may select planned artifacts or capabilities from earlier templates, for example an authored barrel, registry, package manifest, or documentation index.
 
-## Filters and ordering
+## Where selection may be declared
 
-Selections use a bounded typed expression language. Supported operations are declared by the IR/selection contract and validated before execution.
+Selection can be declared in three places:
 
-Templates do not query the complete source graph or perform hidden discovery.
+1. a reusable named `selection`;
+2. a named path recipe under `paths`;
+3. an exact file descriptor.
 
-Ordering must be explicit or defined by the collection contract so output remains deterministic.
+A path-recipe selection is ideal when a whole source subtree should fan out together. A file selection is ideal when only one source file needs the alias.
 
-## Folder patterns
+## Named path recipes replace vague output-root patterns
 
-Folder patterns apply shared selection and output defaults to matching discovered files.
+A named path recipe composes output parts and may own fan-out:
 
-Example pack content:
+```yaml
+paths:
+  module:
+    selection:
+      each: modules
+      as: module
+    parts:
+      - src
+      - modules
+      - "[module.name.path.o]"
+```
+
+Pack content:
 
 ```text
 templates/
@@ -79,42 +93,86 @@ templates/
     └── .gitkeep
 ```
 
-Manifest:
+Result:
+
+- `module.ts.jinja` renders once per module;
+- `README.md` copies once per module;
+- `.gitkeep` copies once per module;
+- every output begins with the parts emitted by `{module}`;
+- relative source structure after `{module}` remains intact;
+- no invented `module.directory` value is required.
+
+## Nested path recipes
+
+Recipes can compose nested selections:
+
+```yaml
+paths:
+  resource:
+    selection:
+      each: resources
+      as: resource
+    parts:
+      - src
+      - modules
+      - "[resource.name.path.o]"
+
+  entity:
+    selection:
+      each: resource.entities
+      as: entity
+    parts:
+      - entities
+```
+
+Source path:
+
+```text
+{resource}/{entity}/[entity.name.kebab.s].entity.ts.jinja
+```
+
+The `entity` recipe is valid only after a context has introduced `resource`. The planner validates alias availability before creating invocations.
+
+## Descriptor patterns
+
+`filePatterns` remain useful, but their primary purpose is configuring matching source descriptors rather than inventing output directories.
+
+Examples:
 
 ```yaml
 filePatterns:
-  "{module}/**":
-    selection:
-      each: modules
-      as: module
-    output:
-      root: src/modules/{module.directory}
+  "**/*.spec.ts.jinja":
+    profiles: [tests]
+    localRules:
+      typescript:
+        comments:
+          generatedHeader: test
+
+  "_partials/**/*.jinja":
+    role: partial
 ```
 
-Result:
-
-- template content renders once per module;
-- static README copies once per module;
-- static `.gitkeep` copies once per module;
-- relative structure below the pattern is preserved unless an exact file override changes it.
-
-This keeps the useful fan-out behavior of tokenized folders without retaining a separate old folder execution subsystem.
-
-## Pattern precedence
+Pattern precedence is deterministic:
 
 1. content-root defaults;
 2. broad matching `filePatterns`;
 3. more specific matching patterns;
 4. exact `files` entry;
-5. project override only when the pack exposes that field.
+5. project override only when the pack explicitly exposes that field.
 
-Conflicting values at equal specificity are errors rather than ordering accidents.
+Conflicting values at equal specificity are errors.
+
+## Filters and ordering
+
+Selections use a bounded typed expression language. Supported fields and operations come from the IR/selection descriptors and are validated before invocation creation.
+
+Templates do not query the complete source graph or perform hidden discovery. Ordering must be explicit or guaranteed by the collection contract.
 
 ## Gitignore-compatible exclusions
 
 Packs may define inline patterns and/or `.codepotgignore`.
 
-Supported behavior should match familiar Gitignore rules:
+Supported behavior includes:
 
 - `*` and `?` within a path segment;
 - `**` across directories;
@@ -124,23 +182,41 @@ Supported behavior should match familiar Gitignore rules:
 - comments in ignore files;
 - deterministic application order.
 
-Ignored files do not receive descriptors and cannot be included by templates.
+Ignored files receive no descriptor and cannot be included by templates.
 
-## Static file fan-out
+## Static and binary fan-out
 
-Static content can be copied:
+Static or binary content can be copied:
 
-- once to its relative destination;
+- once to its token-resolved relative destination;
 - once for each selected record;
 - once for each group;
-- under a folder-pattern output root;
-- into an owned standalone package or full project.
+- below a selection-bearing path recipe;
+- into an owned standalone package or complete project.
 
-Static bytes remain unchanged. Path variables are resolved by the planner.
+Content bytes remain unchanged. Only the destination is planned.
+
+Example:
+
+```text
+templates/{package}/.gitignore
+templates/{package}/assets/logo.png
+```
+
+```yaml
+paths:
+  package:
+    selection:
+      each: packages
+      as: package
+    parts:
+      - packages
+      - "[package.name.path.o]"
+```
 
 ## Profiles
 
-Profiles choose declared files and defaults:
+Profiles choose declared source descriptors and option defaults:
 
 ```yaml
 profiles:
@@ -150,17 +226,20 @@ profiles:
     enable: [completeApi]
 ```
 
-Profiles cannot activate ignored files, bypass bindings, or select a global language.
+Profiles cannot activate ignored files, bypass bindings, change undeclared paths, or select a global language.
 
-## Tests
+## Required tests
 
-Required tests cover:
+Tests cover:
 
-- once, each, grouped, aggregate, and artifact-derived selection;
+- once, each, grouped, aggregate, and artifact-derived selections;
 - deterministic filters and ordering;
-- folder token binding;
-- static fan-out;
-- pattern precedence and conflicts;
+- structural and selection-bearing path recipes;
+- nested recipe alias scope;
+- static and binary fan-out;
+- descriptor-pattern precedence and conflicts;
 - ignore and negation semantics;
 - profile activation;
+- source-path relative structure preservation;
+- no hidden `fileName` or `directory` dependency;
 - no source graph access from templates.

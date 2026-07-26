@@ -1,44 +1,22 @@
-# 03 — Generation, planning, and output safety
+# 03 — Generation, path composition, and output safety
 
-CodepotG v2 plans every pack file and every output before rendering or writing.
+Generation is planned from pack source files, typed selections, named path recipes, bindings, dependencies, and adapter rules. No renderer or writer is called until the complete plan is valid.
 
-## Documents
+## Mandatory documents
 
-- [`01-template-file-model.md`](01-template-file-model.md) — one descriptor per source file, template/barrel/static/binary/partial/documentation roles, target/engine inference, outputs, and authored barrels.
-- [`02-selection-folder-patterns-and-static-files.md`](02-selection-folder-patterns-and-static-files.md) — once/each/grouped/aggregate/artifact selections, tokenized folder fan-out, profiles, and Gitignore-compatible exclusions.
-- [`03-planning-execution-and-transaction.md`](03-planning-execution-and-transaction.md) — complete immutable plans, dependency graphs, invocations, path safety, writers, ownership, rollback, dry run, readiness, and cache.
+1. [`00-path-expressions-and-name-tokens.md`](00-path-expressions-and-name-tokens.md) — source paths as output programs, `{recipe}` expansion, `[expression]` tokens, casing, and original/singular/plural naming.
+2. [`01-template-file-model.md`](01-template-file-model.md) — unified template, barrel, static, binary, partial, and documentation descriptors.
+3. [`02-selection-folder-patterns-and-static-files.md`](02-selection-folder-patterns-and-static-files.md) — selections, path-recipe fan-out, descriptor patterns, static content, and profiles.
+4. [`03-planning-execution-and-transaction.md`](03-planning-execution-and-transaction.md) — invocation graphs, validation, rendering, transactions, and cache.
 
-## Processing pipeline
+## Locked generation rules
 
-```text
-load and decode typed v2 Project
-→ resolve immutable pack snapshots
-→ load typed v2 TemplatePack manifests
-→ discover/classify files exactly once
-→ normalize named sources into neutral IR
-→ resolve selections, rules, bindings, dependencies, setup, and commands
-→ create per-template/static invocations
-→ build and validate all graphs and outputs
-→ render/copy into staging or memory
-→ compare exact content
-→ commit transaction
-→ run permitted post-commit actions
-```
-
-There is no global language pipeline. One `TemplateInvocation` has one target adapter, one engine adapter, one selected context or aggregate, typed effective rules, bindings, dependencies, and declared outputs.
-
-## Safety summary
-
-Before rendering, CodepotG validates:
-
-- target and engine availability;
-- include and artifact graph cycles;
-- required/ambiguous providers;
-- cross-target partial compatibility;
-- rule and override permissions;
-- bindings and readiness policy;
-- command capabilities and approvals;
-- path traversal, symlinks, case collisions, and duplicate destinations;
-- managed/protected/immutable ownership conflicts.
-
-Static files and binary assets pass through the same plan and writer safety model as rendered templates.
+- The content-root-relative source path is the default output-path expression.
+- Semantic IR records do not expose invented `fileName` or `directory` values.
+- Named path recipes live under `CodepotgPack.yaml` `paths` and are referenced with `{recipe}`.
+- Typed dynamic values use `[expression]` and support stable casing plus original/singular/plural projections.
+- The recognized template-engine suffix is stripped; the target suffix remains.
+- Static and binary files are emitted by default after the same path-token expansion.
+- Barrels are authored template files, not system-generated files.
+- Explicit output overrides use the same bounded path grammar and are exceptional.
+- Every output, import, dependency, and command is planned before rendering.
