@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
@@ -11,6 +11,16 @@ from typing import Any
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
 from contracts.emission import TemplateContext
+from contracts.normalized_document_contract import build_normalized_document_contract
+
+_NORMALIZED_ROOTS = {
+    "normalized": "normalized",
+    "domains": "normalized_domains",
+    "schema_contract": "normalized_schemas",
+    "codegen_contract": "normalized_codegen",
+    "entity_contract": "normalized_entities",
+    "frontend_contract": "normalized_frontends",
+}
 
 
 def create_environment(template_root: Path) -> Environment:
@@ -82,7 +92,37 @@ def render_template(
     """Render a template by relative path using the shared compiled cache."""
     environment = cached_environment(template_root)
     template = environment.get_template(relative_path.as_posix())
-    return template.render(**context)
+    return template.render(**_with_normalized_roots(context))
+
+
+def _with_normalized_roots(context: TemplateContext) -> TemplateContext:
+    """Add stable normalized roots to compatibility render contexts.
+
+    Direct eager and queued legacy contexts include the compatibility ``api`` root.
+    Bounded graph contexts intentionally omit it from their public render mapping, so
+    this helper cannot leak the full document or hidden selection collections into
+    graph templates.
+    """
+
+    api = context.get("api")
+    if api is None:
+        return context
+
+    rendered = dict(context)
+    api_meta = getattr(api, "meta", {})
+    meta: Mapping[str, Any] = api_meta if isinstance(api_meta, Mapping) else {}
+
+    document = meta.get("normalized_document")
+    if document is None:
+        document = build_normalized_document_contract(getattr(api, "raw", {}))
+    rendered.setdefault("document_contract", document)
+
+    for public_name, meta_name in _NORMALIZED_ROOTS.items():
+        value = meta.get(meta_name)
+        if value is not None:
+            rendered.setdefault(public_name, value)
+
+    return rendered
 
 
 def value(item: Any, default: str = "-") -> str:

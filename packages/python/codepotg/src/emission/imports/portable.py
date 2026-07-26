@@ -31,6 +31,8 @@ class PortableImportPlanner:
             if not dependency.is_importable or dependency.relative_path is None:
                 continue
             target = to_posix_path(dependency.relative_path)
+            if context.current_file.suffix == ".go" and current.parent == target.parent:
+                continue
             symbol = _dependency_symbol(dependency)
             planned = _planned_import(
                 suffix=context.current_file.suffix,
@@ -116,14 +118,15 @@ def _java_package(target: PurePosixPath) -> str:
 
 def _csharp_namespace(target: PurePosixPath) -> str:
     parts = _after_marker(target.parent.parts, "package")
-    return ".".join(_pascal(part) for part in parts) or "Generated"
+    suffix = ".".join(_pascal(part) for part in parts)
+    return f"Generated.{suffix}" if suffix else "Generated"
 
 
 def _go_package(target: PurePosixPath, *, package_name: str | None) -> str:
-    root = (package_name or "generated").replace("_", "-")
+    module = f"example.com/generated/{package_name or 'generated'}"
     parts = _after_marker(target.parent.parts, "package")
     parent = "/".join(parts)
-    return f"{root}/{parent}" if parent else root
+    return f"{module}/{parent}" if parent else module
 
 
 def _rust_path(target: PurePosixPath) -> str:

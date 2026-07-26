@@ -40,10 +40,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Widget"
-                  }
+                  "$ref": "#/components/schemas/WidgetListResponse"
                 }
               }
             }
@@ -76,6 +73,20 @@
           }
         },
         "x-schema-probe": "widget"
+      },
+      "WidgetListResponse": {
+        "type": "object",
+        "description": "Fixture list response",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Widget"
+            }
+          }
+        },
+        "x-schema-probe": "widget-list-response"
       }
     }
   },

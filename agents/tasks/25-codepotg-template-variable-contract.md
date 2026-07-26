@@ -17,12 +17,13 @@ Expose every supported OpenAPI and `x-codegen` fact through stable typed templat
 - [x] Preserve all authored top-level OpenAPI source information in typed facts or lossless raw/extension escape hatches.
 - [-] Preserve every selected-item source value through typed facts or per-item raw/extension/meta escape hatches.
 - [x] Attach normalized contracts once at the inference boundary and reuse them in bounded rendering.
-- [-] Expose the same normalized roots through direct eager, queued legacy, and bounded graph contexts.
+- [x] Expose the same normalized roots through direct eager, queued legacy, and bounded graph rendering without leaking hidden graph selections.
 - [x] Add typed context aliases instead of loose undocumented dictionaries for the planned bounded roots.
 - [-] Add Jinja text fixtures that render every global and selected-item variable family.
 - [-] Test schema, resource, operation, entity, frontend, parameter, request, response, field, file, dependency, provider, barrel, and lazy-source contexts.
 - [x] Test missing top-level optional data produces safe empty values rather than undefined-template failures.
-- [ ] Test safe empty values for every selected-item contract family.
+- [x] Test safe empty values for schema, operation, resource, entity, frontend, selected frontend, and file contracts through strict Jinja.
+- [ ] Add authored entity/frontend executable probes with non-empty relations, components, screens, and uses.
 - [ ] Update the variable reference and bounded-context documentation from executable tests.
 
 ## Implemented evidence awaiting validation
@@ -30,8 +31,11 @@ Expose every supported OpenAPI and `x-codegen` fact through stable typed templat
 - `normalized_document_contract.py` covers info, servers, paths, webhooks, all reusable component registries, security, tags, external docs, extensions, raw source, diagnostics, and loss counts.
 - Lossless inference stores the shared object at `api.meta["normalized_document"]`.
 - Bounded graph contexts reuse that object as `document_contract` while keeping the full compatibility `api` root hidden for selection resolution only.
-- Contract tests verify all standard top-level OpenAPI families, raw-only preservation, extensions, safe missing values, and object identity through bounded rendering.
-- Portable-language Jinja fixtures already prove global, schema, operation, resource, raw, extension, and file-writing behavior; remaining contract families still require executable probes.
+- The renderer injects the same precomputed document and normalized roots into eager/legacy contexts only when the public `api` root is present; bounded contexts without `api` are not augmented.
+- Contract and renderer tests verify all standard top-level OpenAPI families, raw-only preservation, extensions, safe missing values, object identity, eager fallback construction, and bounded no-leak behavior.
+- The complete graph fixture now renders fields, dependencies, imports, parameters, request bodies, responses, providers, provider outputs, barrels, resolver statistics, and lazy source records into inspectable text files.
+- Strict-Jinja safe-empty tests cover default schema, operation, resource, entity, frontend, selected-frontend, and file contracts.
+- Portable-language Jinja fixtures prove global, schema, operation, resource, raw, extension, file-writing, package-layout, and cache-reuse behavior; authored non-empty entity/frontend probes remain open.
 
 ## Safety constraints
 

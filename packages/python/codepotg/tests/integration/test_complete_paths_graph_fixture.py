@@ -54,6 +54,13 @@ def test_complete_paths_graph_fixture(tmp_path: Path) -> None:
     assert "provider=enum-types" in model
     assert "document_openapi=3.1.0" in model
     assert "resolver_loads=" in model
+    assert "field_count=2" in model
+    assert "field=id|required=True|nullable=False" in model
+    assert "field=status|required=True|nullable=False" in model
+    assert "schema_ref=#/components/schemas/WidgetStatus" in model
+    assert "dependency=#/components/schemas/WidgetStatus" in model
+    assert "importable=True|exists=True|symbol=WidgetStatus" in model
+    assert "import=" in model
 
     assert "node=model-audit" in audit
     assert "source_ref=#/components/schemas/Widget" in audit
@@ -64,6 +71,16 @@ def test_complete_paths_graph_fixture(tmp_path: Path) -> None:
     assert "provider_dtos=dto-types" in operation_text
     assert "provider_enums=enum-types" in operation_text
     assert "resolved_operation=operation:" in operation_text
+    assert "parameter=limit|location=query|required=False" in operation_text
+    assert "request_present=True" in operation_text
+    assert "request_required=True|content_types=application/json" in operation_text
+    assert "schema_refs=#/components/schemas/CreateWidgetDto" in operation_text
+    assert "response=200|success=True|error=False" in operation_text
+    assert "response=201|success=True|error=False" in operation_text
+    assert "schema_refs=#/components/schemas/Widget" in operation_text
+    assert "dependency=#/components/schemas/Widget" in operation_text
+    assert "purpose=operation_response" in operation_text
+    assert "import=" in operation_text
 
     assert "scope=resource" in resource_text
     assert "count=2" in resource_text

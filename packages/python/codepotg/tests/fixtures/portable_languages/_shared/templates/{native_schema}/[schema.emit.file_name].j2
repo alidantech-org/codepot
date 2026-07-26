@@ -40,9 +40,11 @@ public sealed record {{ schema.name.pascal.o }}
 {% endfor %}}
 {% elif lang.name == "go" -%}
 package models
-
+{% set go = namespace(uuid=false) %}
+{% for field in schema.fields %}{% if "uuid.UUID" in field.lang.type %}{% set go.uuid = true %}{% endif %}{% endfor %}
+{% if go.uuid %}
 import "github.com/google/uuid"
-{% for import in file.imports %}{{ import.statement }}
+{% endif %}{% for import in file.imports %}{{ import.statement }}
 {% endfor %}
 type {{ schema.name.pascal.o }} struct {
 {% for field in schema.fields %}    {{ field.name.pascal.o }} {{ field.lang.type }} `json:"{{ field.api.id }}{% if not field.lang.required %},omitempty{% endif %}"`
