@@ -2,13 +2,11 @@
 
 ## Primary product interface
 
-The Python API is the primary CodepotG v2 interface. The CLI, MCP tools, HTTP services, playgrounds, notebooks, and IDE integrations call the same application services.
+The Python API is the primary CodepotG v2 interface. CLI, MCP, HTTP, playground, notebook, IDE, and future blast-radius UI integrations call the same application services.
 
-Generation logic must never depend on terminal arguments, `print`, `sys.exit`, or the process current directory.
+Generation logic never depends on terminal arguments, printing, process exit, or current working directory.
 
 ## Supported facade
-
-The high-level facade should support immutable construction:
 
 ```python
 from codepotg import CodepotG
@@ -16,7 +14,7 @@ from codepotg import CodepotG
 runtime = CodepotG.standard()
 ```
 
-Hosts may provide explicit services and policies:
+Hosts may construct explicit immutable compositions:
 
 ```python
 runtime = CodepotG.create(
@@ -28,22 +26,26 @@ runtime = CodepotG.create(
 )
 ```
 
+Composition selects adapters/infrastructure. It does not replace or extend the closed semantic kernel, selector registry, expression contract, or template-context types.
+
 ## Core operations
 
-The facade exposes synchronous and asynchronous variants of:
+Synchronous and asynchronous operations include:
 
 - configure a project or pack instance;
-- validate project and pack configuration;
-- inspect installed plugins and their rule schemas;
-- inspect a pack contract;
-- resolve Git/local packs and lock them;
-- compile and inspect a complete generation plan;
+- validate project/pack configuration and closed semantic input;
+- inspect installed adapters and typed option schemas;
+- inspect a pack contract and filesystem descriptors;
+- resolve local/Git packs and locks;
+- compile and inspect a complete semantic/artifact plan;
+- explain one artifact or declared symbol;
+- query impact/blast radius from a semantic item or proposed change;
+- dry-run create/change/delete/leave decisions;
 - generate to memory, filesystem, or archive;
-- inspect unresolved bindings and setup actions;
-- approve or deny command capabilities;
-- inspect cache and lock state.
+- inspect unresolved bindings, commands, approvals, and readiness actions;
+- inspect cache, ownership/generation state, and lock state.
 
-The initial stable surface should prefer request objects:
+Request objects are preferred:
 
 ```python
 result = runtime.generate(
@@ -61,67 +63,99 @@ request = GenerationRequest(
 )
 ```
 
+Programmatic construction still uses the fixed public kernel/configuration types. Callers cannot register arbitrary semantic nodes, facets, selectors, or context properties.
+
 ## Sessions
 
 Each operation creates an isolated session containing:
 
-- request identity;
-- cancellation token;
-- event sink;
+- request/session identity;
+- cancellation token and runtime event sink;
 - diagnostics;
 - loaded source documents;
-- normalized IR;
-- resolved packs and plugins;
-- effective rules;
-- generation graph;
+- normalized immutable closed-kernel IR;
+- private typed relationship indexes;
+- resolved packs/adapters and behavior identities;
+- effective typed options/bindings;
+- root-first selector instances;
+- complete artifact/dependency/export/path graph;
+- explain/impact graph;
 - staged artifacts;
 - command approvals;
-- cache scope.
+- ownership/generation-state and cache scope.
 
-A reusable runtime may serve concurrent requests, but session state must never leak between them.
+A reusable runtime may serve concurrent requests, but session state never leaks.
 
 ## Results
 
-Operations return structured result types instead of raising for expected validation failures.
-
-Examples:
+Expected validation/planning failures return structured results rather than generic exceptions.
 
 ```text
 ConfigureResult
 ValidationResult
+InspectionResult
 PlanResult
+ExplainResult
+ImpactResult
 GenerationResult
 PackResolutionResult
 ApprovalResult
+StateResult
 ```
 
 Every result contains:
 
 - status;
-- diagnostics;
-- operation-specific data;
-- events or event summary;
-- readiness actions where applicable;
-- stable serialization for MCP/HTTP boundaries.
+- deterministic diagnostics;
+- operation-specific typed data;
+- runtime events or summary;
+- readiness/manual actions where applicable;
+- reproducibility identities;
+- stable serialization for CLI/MCP/HTTP/IDE boundaries.
 
-Unexpected programming or infrastructure failures may raise typed exceptions at the API boundary after being converted into diagnostics where possible.
+Unexpected programming/infrastructure failures may raise typed exceptions at the API boundary after diagnostic conversion where possible.
 
-## Generation result status
+## Plan, explain, and impact
 
-Generation is not only success or failure. Supported readiness statuses are:
+`plan` compiles the complete semantic and artifact plan without writing.
 
-- `ready`;
-- `generated_with_warnings`;
-- `generated_with_actions`;
-- `partially_generated`;
-- `failed`;
-- `cancelled`.
+`explain` traces an artifact/symbol through:
 
-Fragment packs may generate useful output while reporting unresolved bindings, dependencies, or manual integration steps.
+```text
+source provenance and semantic identity
+→ fixed selector and active scope
+→ template/static descriptor
+→ options/bindings/generated dependencies
+→ declared symbols and destination
+```
+
+`impact` uses the same plan to report:
+
+```text
+changed semantic item/relation
+→ affected selections
+→ affected invocations
+→ affected provider/consumer/barrel artifacts
+```
+
+Initial guarantees are artifact- and symbol-level. Exact generated-line source maps require explicit future engine support and are not fabricated by the API.
+
+## Status
+
+Generation/readiness statuses may include:
+
+```text
+ready
+generated_with_warnings
+generated_with_actions
+partially_generated
+failed
+cancelled
+```
+
+Fragment or integration packs may produce useful output while reporting unresolved bindings/manual actions when project policy permits it.
 
 ## In-memory operation
-
-Playgrounds and servers must be able to avoid temporary output directories:
 
 ```python
 result = runtime.generate(
@@ -132,25 +166,29 @@ for artifact in result.artifacts:
     print(artifact.path, artifact.content)
 ```
 
-Writers are ports, so the same plan can target:
+Writers are ports, so the same valid plan can target:
 
 - transactional filesystem output;
 - memory;
-- ZIP or tar archive;
-- controlled object storage adapters.
+- archive;
+- controlled future stores.
 
-## Events
+Templates never receive writer handles or host filesystem authority.
 
-The runtime emits structured events rather than terminal text:
+## Runtime events
+
+Runtime progress events are distinct from application semantic `group.events`:
 
 ```text
 ConfigurationLoaded
 PackResolved
-PluginResolved
+AdapterResolved
 SourceLoaded
 NormalizationStarted
 NormalizationCompleted
+SemanticValidated
 PlanCompiled
+ImpactCalculated
 ArtifactStarted
 ArtifactCompleted
 CommandApprovalRequired
@@ -158,37 +196,30 @@ TransactionCommitted
 OperationFailed
 ```
 
-CLI and server frontends format or stream these events independently.
+Frontends format/stream runtime events independently.
 
 ## Async behavior
 
-Async operations support:
+Async operations support cancellation, host deadlines, controlled remote pack/reference retrieval, event streaming, asynchronous writers/stores, and approved subprocess execution.
 
-- cancellation;
-- deadlines supplied by the host;
-- remote Git pack retrieval;
-- event streaming;
-- asynchronous artifact stores;
-- approved subprocess execution.
-
-The sync API may wrap the same application services, but it must not create nested event loops or hide cancellation.
+Sync and async APIs use the same application services and must not hide cancellation or create unsafe nested loops.
 
 ## Server-safe defaults
 
-`SecurityPolicy.server_safe()` should deny:
+`SecurityPolicy.server_safe()` denies:
 
-- project commands;
-- pack commands;
-- shell execution;
-- network access except explicitly supplied pack/source providers;
+- project/pack commands and shell execution;
+- network except explicitly authorized providers/loaders;
 - environment inheritance;
-- filesystem access outside declared inputs and output staging.
+- filesystem access outside declared inputs/staging;
+- template access to filesystem/network/environment/processes;
+- plugin semantic-kernel mutation.
 
-A project or pack cannot weaken host policy.
+A project, pack, or adapter cannot weaken host policy.
 
 ## Public namespace policy
 
-Supported extension imports should be exposed from stable modules such as:
+Stable public modules may include:
 
 ```text
 codepotg.api
@@ -201,4 +232,4 @@ codepotg.diagnostics
 codepotg.testing
 ```
 
-Internal modules are private and must not be used by adapters.
+Private graph/index builders and implementation modules are not extension points. No public generic semantic registration or target source-renderer API exists.
