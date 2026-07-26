@@ -6,7 +6,8 @@ import decimal
 import uuid
 
 from pydantic import BaseModel
-
+{% for import in file.imports %}{{ import.statement }}
+{% endfor %}
 
 class {{ schema.name.pascal.o }}(BaseModel):
 {% if schema.fields %}{% for field in schema.fields %}    {{ field.name.snake.o }}: {{ field.lang.type }}{% if not field.lang.required %} = None{% endif %}
@@ -21,14 +22,16 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
+{% for import in file.imports %}{{ import.statement }}
+{% endfor %}
 public record {{ schema.name.pascal.o }}(
 {% for field in schema.fields %}    {{ field.lang.type }} {{ field.name.camel.o }}{% if not loop.last %},{% endif %}
 {% endfor %}) {}
 {% elif lang.name == "csharp" -%}
 using System;
 using System.Collections.Generic;
-
+{% for import in file.imports %}{{ import.statement }}
+{% endfor %}
 namespace Generated.Models;
 
 public sealed record {{ schema.name.pascal.o }}
@@ -39,13 +42,15 @@ public sealed record {{ schema.name.pascal.o }}
 package models
 
 import "github.com/google/uuid"
-
+{% for import in file.imports %}{{ import.statement }}
+{% endfor %}
 type {{ schema.name.pascal.o }} struct {
 {% for field in schema.fields %}    {{ field.name.pascal.o }} {{ field.lang.type }} `json:"{{ field.api.id }}{% if not field.lang.required %},omitempty{% endif %}"`
 {% endfor %}}
 {% elif lang.name == "rust" -%}
 use serde::{Deserialize, Serialize};
-
+{% for import in file.imports %}{{ import.statement }}
+{% endfor %}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct {{ schema.name.pascal.o }} {
 {% for field in schema.fields %}    #[serde(rename = "{{ field.api.id }}")]
