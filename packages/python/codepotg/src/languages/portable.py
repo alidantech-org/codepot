@@ -200,8 +200,9 @@ def _target_schema_groups(
     groups: TemplateSchemaGroups,
     type_system: PortableTypeSystem,
 ) -> TemplateSchemaGroups:
+    schema_names = {item.api.ref: item.name.pascal.o for item in groups.all}
     converted = {
-        item.api.ref: _target_schema(item, type_system)
+        item.api.ref: _target_schema(item, type_system, schema_names)
         for item in groups.all
     }
     values: dict[str, tuple[TemplateSchema, ...]] = {}
@@ -214,10 +215,12 @@ def _target_schema_groups(
 def _target_schema(
     schema: TemplateSchema,
     type_system: PortableTypeSystem,
+    schema_names: dict[str, str],
 ) -> TemplateSchema:
     symbol = schema.name.pascal.o
     fields_value = tuple(
-        _target_field(field, type_system, schema_names=None) for field in schema.fields
+        _target_field(field, type_system, schema_names=schema_names)
+        for field in schema.fields
     )
     if schema.api.kind.value == "primitive":
         target_type = type_system.resolve(
@@ -225,8 +228,6 @@ def _target_schema(
             format=schema.api.primitive_format,
             nullable=schema.api.nullable,
         )
-    elif schema.api.kind.value == "enum":
-        target_type = symbol
     else:
         target_type = symbol
     return replace(
@@ -382,10 +383,18 @@ def _api_field_type(
     *,
     schema_names: dict[str, str] | None,
 ) -> str:
-    if field.schema_ref and schema_names and field.schema_ref in schema_names:
-        value = schema_names[field.schema_ref]
+    if field.schema_ref:
+        value = (
+            schema_names.get(field.schema_ref)
+            if schema_names is not None
+            else None
+        ) or field.schema_ref.rsplit("/", maxsplit=1)[-1]
     elif field.type.raw_type == "array" or field.type.kind.value == "array":
-        item = _target_ref(field.item_ref, schema_names) if isinstance(field, ApiField) else None
+        item = (
+            _target_ref(field.item_ref, schema_names)
+            if isinstance(field, ApiField)
+            else None
+        )
         if item is None:
             item = type_system.resolve(
                 field.type.item_type,
@@ -403,9 +412,11 @@ def _api_field_type(
 
 
 def _target_ref(ref: str | None, schema_names: dict[str, str] | None) -> str | None:
-    if ref is None or schema_names is None:
+    if ref is None:
         return None
-    return schema_names.get(ref)
+    if schema_names is None:
+        return ref.rsplit("/", maxsplit=1)[-1]
+    return schema_names.get(ref, ref.rsplit("/", maxsplit=1)[-1])
 
 
 def _field_name(name: Any, language: str) -> str:
