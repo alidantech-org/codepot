@@ -30,6 +30,7 @@ class PortableTypeSystem:
     package_root: tuple[str, ...] = ("package",)
     model_root: tuple[str, ...] = ("package", "src", "models")
     client_root: tuple[str, ...] = ("package", "src", "client")
+    type_filenames: bool = False
 
     def resolve(
         self,
@@ -58,8 +59,11 @@ class PortableTypeSystem:
     def model_filename(self, name: Any) -> str:
         """Build one deterministic model source filename from a NameSet or string."""
 
-        stem = getattr(getattr(name, "snake", None), "o", None) or str(name)
-        return f"{stem}{self.file_extension}"
+        if self.type_filenames:
+            stem = getattr(getattr(name, "pascal", None), "o", None)
+        else:
+            stem = getattr(getattr(name, "snake", None), "o", None)
+        return f"{stem or str(name)}{self.file_extension}"
 
 
 def _frozen(values: Mapping[str, str]) -> Mapping[str, str]:
@@ -136,6 +140,7 @@ JAVA_TYPES = PortableTypeSystem(
     package_root=("package",),
     model_root=("package", "src", "main", "java", "generated", "models"),
     client_root=("package", "src", "main", "java", "generated", "client"),
+    type_filenames=True,
 )
 
 CSHARP_TYPES = PortableTypeSystem(
@@ -174,6 +179,7 @@ CSHARP_TYPES = PortableTypeSystem(
     package_root=("package",),
     model_root=("package", "Models"),
     client_root=("package", "Client"),
+    type_filenames=True,
 )
 
 GO_TYPES = PortableTypeSystem(
