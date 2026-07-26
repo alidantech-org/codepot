@@ -6,7 +6,20 @@ This file coordinates implementation across conversations. Claim a task before c
 
 | Task ID | Package/subsystem | Owner/chat | Status | Expected files | Dependencies | Notes |
 |---|---|---|---|---|---|---|
-| CORE-001..CORE-006, PATH-001, IR-001..IR-010, SOURCE-001, PLUG-001 public contracts | `codepotg-v2` foundation, closed IR, and adapter ports | current ChatGPT implementation session | in_progress | `pyproject.toml`, public `src/codepotg/**` primitives/IR/plugin/port/testing modules, focused unit/contract/architecture tests, task/progress evidence | DOC-001..DOC-007 | Establish the smallest tested public foundation required for OpenAPI, TypeScript, Dart, and Jinja packages to proceed independently. No planner, writer, CLI, or compatibility runtime is included. |
+| CORE-001..CORE-006, PATH-001, IR-001..IR-010, SOURCE-001, PLUG-001 public contracts | `codepotg-v2` foundation, closed IR, and adapter ports | current ChatGPT implementation session | in_progress | `pyproject.toml`, public `src/codepotg/**` primitives/IR/plugin/port/testing modules, focused unit/contract/architecture tests, task/progress evidence | DOC-001..DOC-007 | Public foundation is implemented and under verification. No planner, writer, CLI, or compatibility runtime is included. |
+
+## Parallel package lanes now available
+
+The following package-local tasks may now be claimed in separate conversations without editing `packages/python/codepotg-v2/src/codepotg/**`:
+
+| Package | Tasks that may begin | Public contracts available |
+|---|---|---|
+| `codepotg-openapi` | OA-001 package foundation, OA-002 adapter entry point, typed normalization work beginning from schemas/groups/operations | `codepotg.ir`, `codepotg.diagnostics`, `codepotg.ports.SourceAdapter*`, `codepotg.testing.assert_source_adapter_conformance` |
+| `codepotg-language-typescript` | TS-001 foundation through target descriptor/identifier/path validation scaffolding | `codepotg.plugins`, `codepotg.ports.TargetAdapter`, target/path request and result types, target conformance helper |
+| `codepotg-language-dart` | DART-001 foundation through target descriptor/identifier/path validation scaffolding | same public target contracts as TypeScript |
+| `codepotg-template-jinja` | Jinja package foundation, immutable render request/result, deterministic engine scaffolding | `codepotg.ports.TemplateEngine`, `RenderRequest`, `RenderResult`, engine conformance helper |
+
+These lanes may depend only on published modules. Any missing public requirement must be recorded against the owning core task rather than importing private implementation files or redefining the kernel.
 
 ## Planned task lanes
 
@@ -51,7 +64,7 @@ This file coordinates implementation across conversations. Claim a task before c
 
 ## Conflict rule
 
-Two agents must not edit the same implementation file concurrently. Closed-kernel, selector, path/name, dependency, IR, validation, plugin, and render-context contracts require narrow ownership because every adapter and pack depends on them.
+Two agents must not edit the same implementation file concurrently. Closed-kernel, selector, path/name, dependency, IR, validation, plugin, and render-context contracts require narrow ownership because adapters and packs depend on them.
 
 ## Design gates
 
