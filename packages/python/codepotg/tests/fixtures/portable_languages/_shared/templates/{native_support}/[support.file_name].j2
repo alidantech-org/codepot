@@ -1,0 +1,46 @@
+{% if support.kind == "python_package" -%}
+"""Generated portable API client package."""
+{% elif support.kind == "python_models" -%}
+{% for schema in schemas.emit_models %}from .{{ schema.name.snake.o }} import {{ schema.name.pascal.o }}
+{% endfor %}{% for schema in schemas.emit_enums %}from .{{ schema.name.snake.o }} import {{ schema.name.pascal.o }}
+{% endfor %}
+__all__ = [
+{% for schema in schemas.emit_models %}    "{{ schema.name.pascal.o }}",
+{% endfor %}{% for schema in schemas.emit_enums %}    "{{ schema.name.pascal.o }}",
+{% endfor %}]
+{% elif support.kind == "python_client" -%}
+{% for operation in operations %}from .{{ operation.name.pascal.o }}Client import {{ operation.lang.function_name }}
+{% endfor %}
+__all__ = [
+{% for operation in operations %}    "{{ operation.lang.function_name }}",
+{% endfor %}]
+{% elif support.kind == "java_models" -%}
+/** Generated API model package. */
+package generated.models;
+{% elif support.kind == "java_client" -%}
+/** Generated API client package. */
+package generated.client;
+{% elif support.kind == "csharp_global" -%}
+global using System;
+global using System.Collections.Generic;
+{% elif support.kind == "go_models" -%}
+// Package models contains generated API data contracts.
+package models
+{% elif support.kind == "go_client" -%}
+// Package client contains generated API operation clients.
+package client
+{% elif support.kind == "rust_lib" -%}
+pub mod client;
+pub mod models;
+{% elif support.kind == "rust_models" -%}
+{% for schema in schemas.emit_models %}pub mod {{ schema.name.snake.o }};
+pub use {{ schema.name.snake.o }}::{{ schema.name.pascal.o }};
+{% endfor %}{% for schema in schemas.emit_enums %}pub mod {{ schema.name.snake.o }};
+pub use {{ schema.name.snake.o }}::{{ schema.name.pascal.o }};
+{% endfor %}
+{% elif support.kind == "rust_client" -%}
+{% for operation in operations %}#[path = "{{ operation.name.pascal.o }}Client.rs"]
+pub mod {{ operation.name.snake.o }}_client;
+pub use {{ operation.name.snake.o }}_client::*;
+{% endfor %}
+{% endif -%}
