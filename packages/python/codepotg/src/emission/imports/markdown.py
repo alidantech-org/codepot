@@ -1,18 +1,22 @@
-"""Markdown import/link planner."""
+"""Markdown links and portable-source import delegation."""
 
 from __future__ import annotations
 
 from contracts.template import TemplateDependency, TemplateImport
 from emission.imports.base import ImportPlanningContext
 from emission.imports.paths import relative_posix_path, to_posix_path
+from emission.imports.portable import PortableImportPlanner
 
 STYLE_MARKDOWN_LINK = "markdown_link"
 
 
 class MarkdownImportPlanner:
-    """Build relative Markdown links for importable dependencies."""
+    """Build Markdown links or delegate supported source-language imports."""
 
     def plan_imports(self, context: ImportPlanningContext) -> tuple[TemplateImport, ...]:
+        portable = PortableImportPlanner()
+        if portable.supports(context):
+            return portable.plan_imports(context)
         if context.strategy == "none":
             return ()
 
