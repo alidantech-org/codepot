@@ -15,6 +15,7 @@ V2 does not decode old `tasks`, project-level `language`, `templateDir`, or `pat
 - [`04-rules-overrides-and-bindings.md`](04-rules-overrides-and-bindings.md) — core-owned merge protocol, restrictions, binding kinds, barrels, project paths, and unresolved behavior.
 - [`05-commands-security-and-setup.md`](05-commands-security-and-setup.md) — ownership, typed actions, raw commands, trust, capabilities, approvals, environment, phases, and setup questions.
 - [`06-toolchains-dependencies-and-manifests.md`](06-toolchains-dependencies-and-manifests.md) — package managers, project units, ecosystem adapters, owned/contributed manifests, dependencies, and install policy.
+- [`07-complete-project-and-pack-example.md`](07-complete-project-and-pack-example.md) — one complete linked project/pack example showing source, profile, output, bindings, overrides, selections, files, authored barrel, static files, dependencies, setup, and commands.
 
 ## Ownership summary
 
