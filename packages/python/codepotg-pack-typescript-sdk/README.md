@@ -1,9 +1,13 @@
 # codepotg-pack-typescript-sdk
 
-Installable default TypeScript SDK template pack for CodepotG v2.
+Installable modular TypeScript SDK template pack for CodepotG v2.
 
-This package will prove that a pack can be heterogeneous and self-describing: TypeScript templates, authored barrel templates, JSON or Markdown templates, unchanged static files, public bindings, Node dependency contributions, setup guidance, and optional finishing commands all live behind one `CodepotgPack.yaml` contract.
+The pack consumes the closed kernel through group-rooted schema and operation contexts. Its templates, macros, partials, and static files author every TypeScript character, including types, imports, exports, literals, comments, errors, and client methods.
 
-The pack must support both modular generation and a monolithic profile that can generate the complete SDK in one file. It relies on `codepotg-language-typescript` and a compatible template-engine adapter but must not receive special access to core.
+The pack is heterogeneous and self-describing: TypeScript templates, authored barrels, JSON/Markdown/package templates, unchanged static files, public bindings, exact optional commands, and documentation live behind one `CodepotgPack.yaml` contract.
 
-See [`docs/tasks/00-package-plan.md`](docs/tasks/00-package-plan.md).
+This package represents one coherent modular SDK product. A materially different monolithic, framework-specific, or host-contribution product should be a separate pack rather than hidden manifest profile/file-selection machinery.
+
+`codepotg-language-typescript` supplies target detection, validation, and module-path facts only. It does not generate TypeScript syntax.
+
+See [`docs/design/README.md`](docs/design/README.md) and [`docs/tasks/00-package-plan.md`](docs/tasks/00-package-plan.md).
