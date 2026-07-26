@@ -1,0 +1,39 @@
+{% if lang.name == "python" -%}
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "{{ lang.package.name }}"
+version = "{{ lang.package.version }}"
+dependencies = [
+{% for dependency in lang.package.dependencies %}  "{{ dependency }}",
+{% endfor %}]
+{% elif lang.name == "java" -%}
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>generated</groupId>
+  <artifactId>{{ lang.package.name }}</artifactId>
+  <version>{{ lang.package.version }}</version>
+</project>
+{% elif lang.name == "csharp" -%}
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+</Project>
+{% elif lang.name == "go" -%}
+module example.com/generated/{{ lang.package.name }}
+
+go 1.22
+{% elif lang.name == "rust" -%}
+[package]
+name = "{{ lang.package.name | replace('_', '-') }}"
+version = "{{ lang.package.version }}"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+{% endif -%}
