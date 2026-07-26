@@ -11,10 +11,12 @@ import yaml
 from codepot_file.loader import (
     CODEPOTG_CONFIG_NAME,
     LEGACY_CONFIG_NAMES,
+    SCHEMA_KEY,
     load_codepotg_config,
     load_codepotg_yaml,
     resolve_codepotg_config,
 )
+from codepotg.schemas import CODEPOTG_SCHEMA_ID
 from core.errors import ConfigError
 
 DEFAULT_TASK_NAME = "sdk"
@@ -22,6 +24,7 @@ DEFAULT_INPUT = "./openapi.yaml"
 DEFAULT_LANGUAGE = "typescript"
 DEFAULT_TEMPLATE_DIR: str | None = None
 DEFAULT_OUTPUT = "./generated"
+_SCHEMA_MODELINE = f"# yaml-language-server: $schema={CODEPOTG_SCHEMA_ID}\n"
 
 
 class _IndentDumper(yaml.SafeDumper):
@@ -67,6 +70,7 @@ def init_codepotg_config(
                 path.unlink()
 
     raw = {
+        SCHEMA_KEY: CODEPOTG_SCHEMA_ID,
         "allow": True,
         "tasks": {
             draft.name: _task_to_yaml(
@@ -93,6 +97,7 @@ def add_task_to_codepotg_config(
         raise ConfigError(f"Task editing refused. Set allow: true in {CODEPOTG_CONFIG_NAME}.")
 
     raw = load_codepotg_yaml(path)
+    raw.setdefault(SCHEMA_KEY, CODEPOTG_SCHEMA_ID)
     tasks = raw.setdefault("tasks", {})
     if not isinstance(tasks, dict):
         raise ConfigError("Codepotg.yaml tasks must be an object.")
@@ -124,24 +129,24 @@ def starter_draft(name: str = DEFAULT_TASK_NAME) -> TaskDraft:
 
 
 def write_codepotg_config(path: Path, raw: dict[str, Any]) -> None:
-    """Write CodepotG YAML with stable top-level ordering."""
-    ordered: dict[str, Any] = {}
+    """Write CodepotG YAML with stable top-level ordering and schema metadata."""
+    ordered: dict[str, Any] = {
+        SCHEMA_KEY: raw.get(SCHEMA_KEY) or CODEPOTG_SCHEMA_ID,
+    }
     if "allow" in raw:
         ordered["allow"] = raw["allow"]
     if "defaults" in raw and raw["defaults"] not in (None, {}):
         ordered["defaults"] = raw["defaults"]
     ordered["tasks"] = raw.get("tasks") or {}
 
-    path.write_text(
-        yaml.dump(
-            ordered,
-            Dumper=_IndentDumper,
-            sort_keys=False,
-            default_flow_style=False,
-            allow_unicode=True,
-        ),
-        encoding="utf-8",
+    yaml_text = yaml.dump(
+        ordered,
+        Dumper=_IndentDumper,
+        sort_keys=False,
+        default_flow_style=False,
+        allow_unicode=True,
     )
+    path.write_text(_SCHEMA_MODELINE + yaml_text, encoding="utf-8")
 
 
 def _existing_configs(root: Path) -> list[Path]:
