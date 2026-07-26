@@ -1,13 +1,26 @@
 # CodepotG v2 design documentation
 
-The documents are intentionally grouped in implementation order.
+These documents are the architecture baseline for the clean rewrite. The existing `packages/python/codepotg` package remains the old runtime; v2 does not implement old configuration decoders or import old internals.
 
-1. [`01-foundation`](01-foundation/README.md) — polished package structure, dependency direction, public API, and testing rules.
-2. [`02-configuration`](02-configuration/README.md) — typed project and pack contracts, templates, bindings, overrides, commands, and setup.
-3. [`03-generation`](03-generation/README.md) — planning, selection, static files, imports, barrels, execution, and transactions.
-4. [`04-plugins`](04-plugins/README.md) — installable source, language, template-engine, and pack packages.
-5. [`05-distribution`](05-distribution/README.md) — bundled defaults, Git-hosted packs, Python API, CLI, server, and MCP usage.
-6. [`06-migration`](06-migration/README.md) — compatibility with the existing `codepotg.yaml`, `paths.yaml`, packs, and outputs.
-7. [`tasks`](tasks/README.md) — executable rewrite backlog and progress records.
+## Mandatory reading
 
-These documents are the architecture baseline. Changes must update the relevant document and task record before or with implementation.
+1. [`00-governance/00-approved-architecture.md`](00-governance/00-approved-architecture.md)
+2. [`00-governance/01-agent-working-rules.md`](00-governance/01-agent-working-rules.md)
+3. the design section for the assigned subsystem
+4. [`tasks/PARALLEL_WORK.md`](tasks/PARALLEL_WORK.md)
+5. the relevant core and package task ledgers
+
+## Design sections
+
+1. [`00-governance`](00-governance/00-approved-architecture.md) — locked decisions, parallel-agent rules, and change policy.
+2. [`01-foundation`](01-foundation/README.md) — package structure, dependency direction, Python API, diagnostics, events, results, and cancellation.
+3. [`02-configuration`](02-configuration/README.md) — complete `codepotg.yaml`, `CodepotgPack.yaml`, typed registry, rules, overrides, bindings, commands, toolchains, dependencies, and manifests.
+4. [`03-generation`](03-generation/README.md) — pack file discovery, selections, folder patterns, static files, authored barrels, planning graphs, rendering, transactions, and cache.
+5. [`04-plugins`](04-plugins/README.md) — plugin system and source, language, template-engine, pack-provider, and ecosystem adapter contracts.
+6. [`05-distribution`](05-distribution/README.md) — Python-first interfaces, minimal and batteries-included packages, Git/GitHub packs, locks, and trust.
+7. [`06-rewrite`](06-rewrite/01-clean-room-rewrite-policy.md) — clean-room policy and staged implementation plan without compatibility runtime.
+8. [`tasks`](tasks/README.md) — task IDs, dependencies, acceptance criteria, parallel ownership, and progress evidence.
+
+## Truth and change rule
+
+Implementation must follow the approved documents. A design change requires the process in `00-governance/02-design-change-policy.md` and task updates before implementation.
