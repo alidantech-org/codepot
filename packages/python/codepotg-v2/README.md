@@ -1,8 +1,70 @@
 # CodepotG v2
 
-CodepotG v2 is the clean-room rewrite of the Python generation runtime. This directory contains the approved closed semantic kernel, project/pack contracts, adapter boundaries, implementation stages, package task tracking, and empty implementation placeholders.
+CodepotG v2 is the clean-room rewrite of the Python generation runtime. This directory contains the approved closed semantic kernel, project/pack contracts, adapter boundaries, implementation stages, package task tracking, and the first tested public foundation.
 
 The existing `packages/python/codepotg` package remains untouched and serves only as a source of real requirements and representative outputs. New implementation must not import its internals or reproduce its global registries, raw YAML processing, CLI-centered logic, OpenAPI leakage, overlapping emission paths, or old configuration runtime.
+
+## Implemented foundation
+
+The initial `codepotg-core` package now provides:
+
+- dependency-free Python 3.11+ packaging under the future `codepotg` namespace;
+- semantic/API/behavior version values;
+- source identities, spans, immutable diagnostics, cancellation, statuses, and operation results;
+- the exact `name.<case>.<number>` projection contract;
+- a closed typed IR for groups, structural schemas, operations, known facets, views, storage mappings, policies, events, listeners, execution hooks, workflows, and compensation;
+- cross-reference validation before generation;
+- fixed root-first selectors such as `groups.operations.each` and `groups.storage.mappings.each`;
+- immutable plugin descriptors and registry conflict diagnostics;
+- public source-adapter, target-adapter, and template-engine protocols;
+- reusable conformance helpers for independently developed adapter packages;
+- unit, connected-contract, conformance, import-smoke, and architecture-boundary tests.
+
+This foundation is intentionally not a generator yet. It is the public contract that allows `codepotg-openapi`, TypeScript/Dart target adapters, and the Jinja engine to be implemented in parallel without importing private core code.
+
+## Parallel package imports
+
+OpenAPI/source adapters use:
+
+```python
+from codepotg.diagnostics import Diagnostic, Diagnostics
+from codepotg.ir import Contract, Group, Operation, Schema
+from codepotg.ports import SourceAdapter, SourceAdapterRequest, SourceAdapterResult
+```
+
+Target adapters use:
+
+```python
+from codepotg.ports import (
+    IdentifierValidationRequest,
+    ModulePathFacts,
+    ModulePathRequest,
+    OutputPathValidationRequest,
+    TargetAdapter,
+    TargetDescriptor,
+)
+```
+
+Template engines use:
+
+```python
+from codepotg.ports import RenderRequest, RenderResult, TemplateEngine
+```
+
+All adapter packages can run the same public conformance helpers from `codepotg.testing`.
+
+## Local verification
+
+From this package directory:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest
+python -m ruff check src tests
+python -m build
+```
+
+No GitHub workflow is required or added.
 
 ## Primary goals
 
@@ -39,4 +101,4 @@ The implementation backlog is in [`docs/tasks/00-master-plan.md`](docs/tasks/00-
 
 ## Status
 
-Documentation and directory scaffold only. Runtime implementation and packaging metadata have not started.
+Foundation implementation is in progress on `chatgpt/codepotx-restart`. Configuration decoding, pack discovery, artifact planning, rendering, writing, and CLI work remain future task lanes.
