@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 from app.models import EmitOutput
 from app.workflows import generate as generate_workflow
 from cli.main import app
+from codepotg.schemas import CODEPOTG_SCHEMA_ID
 
 CONFIG_NAME = "Codepotg.yaml"
 
@@ -67,6 +68,7 @@ def test_init_yes_creates_minimal_starter_with_bundled_templates(tmp_path: Path)
 
     assert result.exit_code == 0
     assert config == {
+        "$schema": CODEPOTG_SCHEMA_ID,
         "allow": True,
         "tasks": {
             "sdk": {
