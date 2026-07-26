@@ -59,6 +59,8 @@ emissions:
     template: model-audit.txt.j2
     output: [generated, audits, "[model.name.path.o].txt"]
     provides: [model-audits]
+    imports:
+      enums: enum-types
 
   dto-types:
     selection: dtos
