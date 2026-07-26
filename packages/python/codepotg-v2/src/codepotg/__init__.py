@@ -24,6 +24,13 @@ from .core import (
 from .ir import Contract, Group, Operation, Schema, SemanticId
 from .naming import Name, NameProjection
 from .plugins import PluginCategory, PluginDescriptor, PluginRegistry, PluginTrust
+from .selectors import (
+    DEFAULT_SELECTOR_REGISTRY,
+    SelectionCardinality,
+    SelectionContext,
+    SelectorDescriptor,
+    SelectorRegistry,
+)
 from .validation import ContractValidator, validate_contract
 
 __version__ = str(CORE_VERSION)
@@ -35,6 +42,7 @@ __all__ = [
     "CancellationToken",
     "Contract",
     "ContractValidator",
+    "DEFAULT_SELECTOR_REGISTRY",
     "Diagnostic",
     "DiagnosticSeverity",
     "Diagnostics",
@@ -56,6 +64,10 @@ __all__ = [
     "PluginTrust",
     "SELECTION_BEHAVIOR_VERSION",
     "Schema",
+    "SelectionCardinality",
+    "SelectionContext",
+    "SelectorDescriptor",
+    "SelectorRegistry",
     "SemanticId",
     "SemanticVersion",
     "SourceIdentity",
