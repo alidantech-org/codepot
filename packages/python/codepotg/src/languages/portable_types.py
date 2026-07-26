@@ -12,6 +12,15 @@ from typing import Any, Mapping
 
 
 @dataclass(frozen=True)
+class PortableSupportFile:
+    """One generated package/module support file."""
+
+    root: tuple[str, ...]
+    file_name: str
+    kind: str
+
+
+@dataclass(frozen=True)
 class PortableTypeSystem:
     """Deterministic target type, package, file, and layout conventions."""
 
@@ -30,6 +39,7 @@ class PortableTypeSystem:
     package_root: tuple[str, ...] = ("package",)
     model_root: tuple[str, ...] = ("package", "src", "models")
     client_root: tuple[str, ...] = ("package", "src", "client")
+    support_files: tuple[PortableSupportFile, ...] = ()
     type_filenames: bool = False
 
     def resolve(
@@ -102,6 +112,11 @@ PYTHON_TYPES = PortableTypeSystem(
     package_root=("package",),
     model_root=("package", "src", "portable_client", "models"),
     client_root=("package", "src", "portable_client", "client"),
+    support_files=(
+        PortableSupportFile(("package", "src", "portable_client"), "__init__.py", "python_package"),
+        PortableSupportFile(("package", "src", "portable_client", "models"), "__init__.py", "python_models"),
+        PortableSupportFile(("package", "src", "portable_client", "client"), "__init__.py", "python_client"),
+    ),
 )
 
 JAVA_TYPES = PortableTypeSystem(
@@ -140,6 +155,10 @@ JAVA_TYPES = PortableTypeSystem(
     package_root=("package",),
     model_root=("package", "src", "main", "java", "generated", "models"),
     client_root=("package", "src", "main", "java", "generated", "client"),
+    support_files=(
+        PortableSupportFile(("package", "src", "main", "java", "generated", "models"), "package-info.java", "java_models"),
+        PortableSupportFile(("package", "src", "main", "java", "generated", "client"), "package-info.java", "java_client"),
+    ),
     type_filenames=True,
 )
 
@@ -179,6 +198,9 @@ CSHARP_TYPES = PortableTypeSystem(
     package_root=("package",),
     model_root=("package", "Models"),
     client_root=("package", "Client"),
+    support_files=(
+        PortableSupportFile(("package",), "GlobalUsings.cs", "csharp_global"),
+    ),
     type_filenames=True,
 )
 
@@ -218,6 +240,10 @@ GO_TYPES = PortableTypeSystem(
     package_root=("package",),
     model_root=("package", "models"),
     client_root=("package", "client"),
+    support_files=(
+        PortableSupportFile(("package", "models"), "doc.go", "go_models"),
+        PortableSupportFile(("package", "client"), "doc.go", "go_client"),
+    ),
 )
 
 RUST_TYPES = PortableTypeSystem(
@@ -256,6 +282,11 @@ RUST_TYPES = PortableTypeSystem(
     package_root=("package",),
     model_root=("package", "src", "models"),
     client_root=("package", "src", "client"),
+    support_files=(
+        PortableSupportFile(("package", "src"), "lib.rs", "rust_lib"),
+        PortableSupportFile(("package", "src", "models"), "mod.rs", "rust_models"),
+        PortableSupportFile(("package", "src", "client"), "mod.rs", "rust_client"),
+    ),
 )
 
 TYPE_SYSTEMS: Mapping[str, PortableTypeSystem] = MappingProxyType(
