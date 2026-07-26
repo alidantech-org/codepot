@@ -4,7 +4,9 @@ This file coordinates implementation across conversations. Claim a task before c
 
 ## Active claims
 
-No active implementation claims. The closed semantic kernel, simplified project/pack contracts, root-first selectors, direct Git source, template-owned syntax, adapter boundaries, and package task plans are documented.
+| Task ID | Package/subsystem | Owner/chat | Status | Expected files | Dependencies | Notes |
+|---|---|---|---|---|---|---|
+| CORE-001..CORE-006, PATH-001, IR-001..IR-010, SOURCE-001, PLUG-001 public contracts | `codepotg-v2` foundation, closed IR, and adapter ports | current ChatGPT implementation session | in_progress | `pyproject.toml`, public `src/codepotg/**` primitives/IR/plugin/port/testing modules, focused unit/contract/architecture tests, task/progress evidence | DOC-001..DOC-007 | Establish the smallest tested public foundation required for OpenAPI, TypeScript, Dart, and Jinja packages to proceed independently. No planner, writer, CLI, or compatibility runtime is included. |
 
 ## Planned task lanes
 
