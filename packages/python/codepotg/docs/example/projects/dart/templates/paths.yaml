@@ -1,0 +1,30 @@
+template_extension: ".j2"
+strip_template_extension: true
+allow_raw_files: true
+
+imports:
+  strategy: relative
+
+folders:
+  root:
+    mode: once
+    parts:
+      - contract
+
+  schema:
+    select: schemas.all
+    as: schema
+    parts:
+      - schemas
+
+  operation:
+    select: operations
+    as: operation
+    parts:
+      - operations
+
+  resource:
+    select: resources
+    as: resource
+    parts:
+      - resources

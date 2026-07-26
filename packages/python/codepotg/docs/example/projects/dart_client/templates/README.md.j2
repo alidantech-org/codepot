@@ -1,0 +1,261 @@
+# {{ project.name.pascal.o }}
+
+{{ project.description }}
+
+> **Auto-generated** — do not edit generated output manually.
+> Re-run the app's `Codepotg.yaml` API task when the API contract changes.
+
+## Dependency model
+
+Applications depend only on this generated package. It directly depends on
+`flutter_api_bridge` and exposes the supported transport configuration and
+runtime controls through its root library.
+
+```text
+Flutter application
+  -> {{ lang.package.name }}
+    -> flutter_api_bridge
+      -> Dio + persistent cookies + secure auth + Hive cache + retries
+```
+
+```yaml
+dependencies:
+  {{ lang.package.name }}:
+    path: pkg/api
+```
+
+The application does not need to add or import `flutter_api_bridge` itself.
+
+### Bridge dependency
+
+The fixture uses a generic sibling path while the bridge package is developed locally:
+
+```yaml
+flutter_api_bridge:
+  path: ../flutter_api_bridge
+```
+
+A published template pack should replace this with the supported package version.
+
+## Configure before `runApp`
+
+```dart
+import 'package:{{ lang.package.name }}/{{ project.name.path.o }}.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await {{ project.name.pascal.o }}.initialize(
+    baseUri: Uri.parse(apiBaseUrl),
+    auth: const CookieStrategy(),
+    cookiesEnabled: true,
+    cache: const ApiCacheConfig(
+      defaultPolicy: ApiCachePolicy.networkFirst,
+      defaultTtl: Duration(minutes: 5),
+    ),
+    retry: const ApiRetryConfig(maxAttempts: 3),
+    clientIdentity: () => const ApiClientIdentity(
+      applicationName: '{{ project.name.pascal.o }}App',
+      applicationVersion: '1.0.0',
+      platform: 'android',
+    ),
+  );
+
+  runApp(const MyApp());
+}
+```
+
+For complete custom configuration, call:
+
+```dart
+await {{ project.name.pascal.o }}.configure(
+  ApiBridgeConfig(
+    baseUri: Uri.parse(apiBaseUrl),
+    auth: const CookieStrategy(),
+  ),
+);
+```
+
+## Call generated features
+
+```dart
+final result = await {{ project.name.pascal.o }}.instance
+    .{{ project.meta.api_version_name.camel.o }}
+    .someResource
+    .someOperation();
+```
+
+Each operation returns `ApiResult<T>`. The caller can inspect whether data came
+from the network, memory cache, Hive, or stale offline fallback:
+
+```dart
+final source = result.metadata?.source;
+final isOfflineFallback = result.metadata?.isOfflineFallback ?? false;
+final isStale = result.metadata?.isStale ?? false;
+```
+
+## Start the user and cache session after login
+
+The active session ID partitions cached data. Changing it clears the previous
+active cache partition by default, preventing data from one account being shown
+to another.
+
+Cookie-backed login:
+
+```dart
+final login = await {{ project.name.pascal.o }}.instance
+    .{{ project.meta.api_version_name.camel.o }}
+    .auth
+    .login(body: request);
+
+if (login.isSuccess) {
+  await {{ project.name.pascal.o }}.initializeUserSession(
+    sessionId: login.dataOrNull!.user.id,
+    metadata: <String, Object?>{
+      'companyId': login.dataOrNull!.user.companyId,
+    },
+  );
+}
+```
+
+Bearer-backed login:
+
+```dart
+await {{ project.name.pascal.o }}.initializeUserSession(
+  sessionId: account.id,
+  bearerToken: login.accessToken,
+);
+```
+
+Manual authorization headers:
+
+```dart
+await {{ project.name.pascal.o }}.initializeUserSession(
+  sessionId: account.id,
+  authHeaders: <String, String>{
+    'Authorization': 'Custom ${login.credential}',
+  },
+);
+```
+
+Persistent cookies are captured from all `Set-Cookie` responses and restored
+before the first request after a process restart. Bearer credentials and manual
+session headers use secure platform storage.
+
+Token or cookie refresh endpoint orchestration remains application/generated
+API logic. After a successful typed refresh call, initialize the same session
+again with the replacement bearer token or headers when applicable.
+
+## Per-request transport options
+
+Every generated operation accepts `options`. Custom options remain intact and
+the generated method adds its stable operation ID automatically.
+
+```dart
+final result = await {{ project.name.pascal.o }}.instance
+    .{{ project.meta.api_version_name.camel.o }}
+    .someResource
+    .someOperation(
+      options: const ApiGetRequestOptions(
+        headers: <String, String>{'X-Tenant': 'company-7'},
+        cookies: <String, String>{'preview': 'enabled'},
+        cachePolicy: ApiCachePolicy.networkWithStaleFallback,
+        cacheTtl: Duration(minutes: 15),
+      ),
+    );
+```
+
+Common controls include:
+
+- custom headers and request-only cookie overrides;
+- `noAuth`;
+- cancellation;
+- retry override and idempotency keys;
+- cache tag/path invalidation;
+- full active-session cache clearing.
+
+GET controls include:
+
+```dart
+const ApiGetRequestOptions(cache: false);
+const ApiGetRequestOptions(forceRefresh: true);
+const ApiGetRequestOptions(cachePolicy: ApiCachePolicy.cacheOnly);
+```
+
+## Cache clearing and logout
+
+```dart
+await {{ project.name.pascal.o }}.clearActiveSessionCache();
+await {{ project.name.pascal.o }}.clearSessionCache('user-42');
+await {{ project.name.pascal.o }}.clearAllCache();
+```
+
+Logout clears the full generated connection cache, credentials, and persistent
+cookies:
+
+```dart
+try {
+  await {{ project.name.pascal.o }}.instance
+      .{{ project.meta.api_version_name.camel.o }}
+      .auth
+      .logout();
+} finally {
+  await {{ project.name.pascal.o }}.logout();
+}
+```
+
+## Authentication state
+
+```dart
+final session = {{ project.name.pascal.o }}.auth.current;
+final subscription = {{ project.name.pascal.o }}.auth.changes.listen((next) {
+  // Update navigation or application state.
+});
+```
+
+A 401 expires the local transport session once. Refresh execution is not
+invented by the bridge because the generated typed refresh endpoint and backend
+contract remain authoritative.
+
+## Generate from an example mobile app
+
+An example mobile app declares the API task in `Codepotg.yaml`:
+
+```yaml
+tasks:
+  api:
+    input: ../backend/dev/openapi/v1/openapi.v1.yaml
+    language: dart
+    templateDir: ../backend/dev/templates/dart
+    output: ./pkg/api
+```
+
+Run the app's normal Codepot `api` task. It compiles the backend OpenAPI file,
+renders this package into `pkg/api`, resolves Dart dependencies, runs
+`build_runner`, formats the package, and refreshes the Flutter app dependencies.
+
+## Post-generation validation
+
+From the generated package:
+
+```bash
+cd pkg/api
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+dart format --output=none --set-exit-if-changed lib
+flutter analyze
+flutter test
+```
+
+The backend also provides a validator for an already generated app package:
+
+```bash
+CODEPOTG_APP_DIR=../example_app pnpm openapi:validate:dart-runtime
+```
+
+Use another fictional app path when validating a second client. The validator reads
+`<app>/Codepotg.yaml` and validates `<app>/pkg/api`; it does not incorrectly
+expect `codepot-openapi generate` to emit a Dart package inside the backend.
+
+Verify the generated application imports only this package and all generated
+operations carry stable operation IDs.

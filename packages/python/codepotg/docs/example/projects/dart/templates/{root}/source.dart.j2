@@ -1,0 +1,9 @@
+const sourceContract = <String, Object?>{
+  'openapi': '{{ api.raw['openapi'] }}',
+  'title': '{{ api.raw['info']['title'] }}',
+  'listOperation': '{{ api.raw['paths']['/users']['get']['operationId'] }}',
+  'extensionOwner': '{{ api.extensions['x-fixture']['owner'] }}',
+  'extensionEnabled': '{{ api.extensions['x-fixture']['enabled'] }}',
+  'extensionValues': <String>[{% for value in api.extensions['x-fixture']['values'] %}'{{ value }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+  'explicitNullPreserved': '{{ api.extensions['x-fixture']['explicitNull'] is none }}',
+};

@@ -1,0 +1,15 @@
+{% set normalized_schema = schema_contract.by_id[enum.api.id] %}
+/**
+* ---------------------------------------------------------------------------
+* {{ enum.name.pascal.o }}
+* Normalized schema: {{ normalized_schema.id }}
+* ---------------------------------------------------------------------------
+*
+* @description Represents the {{ enum.name.pascal.o }} enumeration.
+*
+*/
+export enum {{ enum.name.pascal.o }} {
+{% for value in enum.meta.enum_values %}
+{{ value.safe_name }} = "{{ value.wire }}",
+{% endfor %}
+}

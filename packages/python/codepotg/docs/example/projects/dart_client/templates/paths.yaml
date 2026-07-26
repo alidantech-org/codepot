@@ -1,0 +1,86 @@
+template_extension: '.j2'
+strip_template_extension: true
+allow_raw_files: true
+
+imports:
+  strategy: package
+
+write_policy:
+  default_mode: managed
+  managed_roots:
+    - lib
+    - README.md
+    - pubspec.yaml
+    - analysis_options.yaml
+    - .gitignore
+    - .prettierrc
+    - .vscode
+  immutable_roots:
+    - lib
+  protected_roots:
+    - lib
+  clean_roots:
+    - lib
+
+folders:
+  version:
+    mode: once
+    parts:
+      - lib
+      - [project.meta.api_version]
+
+  model:
+    select: schemas.emit_models
+    as: model
+    parts:
+      - lib
+      - [project.meta.api_version]
+      - schemas
+      - models
+      - [model.emit.resource_path]
+      - [model.name.path.o]
+
+  dto:
+    select: schemas.emit_dtos
+    as: dto
+    parts:
+      - lib
+      - [project.meta.api_version]
+      - schemas
+      - models
+      - [dto.emit.resource_path]
+      - [dto.name.path.o]
+
+  enum:
+    select: schemas.emit_enums
+    as: enum
+    parts:
+      - lib
+      - [project.meta.api_version]
+      - schemas
+      - enums
+      - [enum.name.path.o]
+
+  route_root:
+    mode: once
+    parts:
+      - lib
+      - [project.meta.api_version]
+      - routes
+
+  route_group:
+    select: features
+    as: resource
+    parts:
+      - lib
+      - [project.meta.api_version]
+      - routes
+      - constants
+
+  feature:
+    select: features
+    as: resource
+    parts:
+      - lib
+      - [project.meta.api_version]
+      - features

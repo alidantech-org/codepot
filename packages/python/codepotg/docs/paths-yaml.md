@@ -367,3 +367,46 @@ The command reports:
 - barrels, scopes, and export membership;
 - unknown keys and invalid references;
 - dependency cycles and unsafe template paths.
+
+
+---------------------------- info about improvemenet ----------------------------------------------
+Good problem to dig into — this spec already has solid bones (explicit providers, atomic writes, typed scopes), so the improvements here are mostly about reducing ambiguity and boilerplate rather than redesigning anything. In priority order:
+
+**1. Fix the actual bug first**
+The concerns list says: `selection -> chooses source data; emission -> renders one template; tbarrel -> aggregates outputs`. Everywhere else in the doc it's `barrel`, not `tbarrel`. This is a small thing, but it's a perfect illustration of the AI-friendliness problem: if a doc has an inconsistent term, an LLM ingesting this spec to generate a `paths.yaml` may pattern-match on either name and produce invalid config with total confidence. Fix typos like this aggressively — they cost humans a raised eyebrow and cost AI tooling a silent failure.
+
+**2. Ship a JSON Schema for `paths.yaml`**
+This is the single highest-leverage change for both audiences. With a real schema (yaml-language-server compatible):
+- Humans get autocomplete + inline validation in their editor instead of discovering typos via `codepotg paths` or a failed generation.
+- An AI agent editing the file can validate its own output *before* running generation, instead of guessing at valid keys/enums from prose docs and hoping.
+- You can enforce context-specific enums properly — e.g. right now barrels silently reject `scope: each` as a runtime error ("`each` is invalid for barrels"). If `SelectionScope` and `BarrelScope` are two distinct schema types instead of one shared `each|all|resource` enum, that becomes a compile-time/schema-time impossibility instead of a generation-time failure. Fewer states you can even represent = less for anyone (human or model) to get wrong.
+
+**3. Collapse the bracket dialects in output paths**
+Right now one field can contain three different token syntaxes: `[expression]` (dynamic), `[[value]]` (literal bracket), `{{value}}` (literal brace). That's three conventions to memorize for two concepts (dynamic vs. literal), inside a system that *already* uses Jinja everywhere else. Every extra syntax is a place an LLM will regress to whichever templating style it's seen more of in training (almost certainly `{{ }}` for *everything*, including where you meant literal). I'd either:
+- reuse actual Jinja delimiters for dynamic parts (`{{ dto.name.path.o }}.ts`) since templates already speak Jinja, and treat anything without delimiters as literal — no escaping mini-language needed, or
+- if you need to keep a distinct DSL for other reasons, document it as a tiny formal grammar (3 rules) right next to every example, not just in one "Dynamic output parts" section readers may skip.
+
+**4. Kill the `as` / `alias` duplication**
+Selections and barrels both accept `as` or `alias` for the same field, with a rule that they "must not conflict." Two spellings of one concept doubles the surface an AI has to consider (which one is canonical? do I need both?) for zero added expressiveness. Pick `as`, keep `alias` as a silently-normalized deprecated input if you need back-compat, but don't document them as two equally valid choices.
+
+**5. Reduce boilerplate for the 80% case**
+Every emission needs a separately-declared `selections:` entry, even when nothing else reuses that selection. For the common case — one selection feeding exactly one emission — that's two objects to write and mentally link via a name, every time. Consider letting an emission declare `select:` inline directly:
+
+```yaml
+emissions:
+  dto-types:
+    select: schemas.emit_dtos      # implicit private selection
+    as: dto
+    template: templates/dto.type.ts.j2
+    output: [generated, models, "{{ dto.name.path.o }}.ts"]
+```
+
+...and only require the explicit `selections:` block once a selection is actually shared by more than one emission. This is standard progressive disclosure: simple things should look simple, and an AI generating a one-off pack shouldn't have to reason about sharing semantics it doesn't need yet.
+
+**6. Document the `.pascal.o` / `.path.o` convention explicitly, once, in one place**
+It shows up in every template you've shared (`.pascal.o`, `.camel.o`, `.path.o`) but I never saw its shape defined anywhere in these docs. Unexplained terse suffixes like `.o` are exactly what causes an LLM to guess plausible-but-wrong usage on an edge case (what happens for a name with no valid identifier form? what does `.o` even stand for?). A single "Name object reference" table — every accessor, what it returns, one example each — pays for itself every time someone (human or AI) writes a new template.
+
+**7. Make `codepotg paths` machine-readable**
+It already reports selections, emissions, barrels, cycles, and unsafe paths — genuinely good. Add a `--json` flag so an agent can consume that dependency graph programmatically (to auto-fix a missing `imports:` entry, for instance) instead of scraping CLI text. Same idea for generation failures: "more than one configured provider emits the same required ref" should come back as structured data (`{ref, providers: [...], emission}`), not just prose — that's the difference between an AI agent that can propose a fix and one that can only tell you it broke.
+
+The common thread: almost everything above is about **collapsing ambiguity into schema** wherever possible, so both a human's editor and an AI's validation pass catch mistakes before generation runs, rather than during it.

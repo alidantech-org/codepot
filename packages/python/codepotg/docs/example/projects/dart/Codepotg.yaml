@@ -1,0 +1,8 @@
+allow: true
+
+tasks:
+  fixture:
+    input: ./openapi.yaml
+    language: dart
+    templateDir: ./templates
+    output: ./.generated
