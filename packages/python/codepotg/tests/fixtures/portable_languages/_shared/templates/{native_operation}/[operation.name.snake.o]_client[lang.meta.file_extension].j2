@@ -2,37 +2,62 @@
 from __future__ import annotations
 
 import httpx
+{% for item in file.imports %}{{ item.statement }}
+{% endfor %}
 
 
-def {{ operation.lang.function_name }}(client: httpx.Client) -> httpx.Response:
-    return client.request("{{ operation.api.method | upper }}", "{{ operation.api.path }}")
+def {{ operation.lang.function_name }}(client: httpx.Client) -> {{ operation.meta.response_type or "object" }}:
+    response = client.request("{{ operation.api.method | upper }}", "{{ operation.api.path }}")
+    response.raise_for_status()
+    return {{ operation.meta.response_type or "object" }}.model_validate(response.json())
 {% elif lang.name == "java" -%}
 package generated.client;
 
+{% for item in file.imports %}{{ item.statement }}
+{% endfor %}
 public final class {{ operation.name.pascal.o }}Client {
     public static final String METHOD = "{{ operation.api.method | upper }}";
     public static final String PATH = "{{ operation.api.path }}";
 
     private {{ operation.name.pascal.o }}Client() {}
+
+    public static {{ operation.meta.response_type or "Object" }} decodeResponse(String json) {
+        throw new UnsupportedOperationException("Connect a JSON mapper in the selected Java profile");
+    }
 }
 {% elif lang.name == "csharp" -%}
+using System;
+{% for item in file.imports %}{{ item.statement }}
+{% endfor %}
 namespace Generated.Client;
 
 public static class {{ operation.name.pascal.o }}Client
 {
     public const string Method = "{{ operation.api.method | upper }}";
     public const string Path = "{{ operation.api.path }}";
+
+    public static {{ operation.meta.response_type or "object" }} DecodeResponse(string json) =>
+        throw new NotImplementedException("Connect a JSON serializer in the selected C# profile");
 }
 {% elif lang.name == "go" -%}
 package client
 
+{% for item in file.imports %}{{ item.statement }}
+{% endfor %}
 const {{ operation.name.pascal.o }}Method = "{{ operation.api.method | upper }}"
 const {{ operation.name.pascal.o }}Path = "{{ operation.api.path }}"
+
+func Decode{{ operation.name.pascal.o }}Response(data []byte) (models.{{ operation.meta.response_type or "any" }}, error) {
+    var value models.{{ operation.meta.response_type or "any" }}
+    return value, nil
+}
 {% elif lang.name == "rust" -%}
+{% for item in file.imports %}{{ item.statement }}
+{% endfor %}
 pub const METHOD: &str = "{{ operation.api.method | upper }}";
 pub const PATH: &str = "{{ operation.api.path }}";
 
-pub async fn {{ operation.lang.function_name }}() -> Result<(), reqwest::Error> {
-    Ok(())
+pub async fn {{ operation.lang.function_name }}() -> Result<{{ operation.meta.response_type or "serde_json::Value" }}, reqwest::Error> {
+    unimplemented!("Connect the selected Rust HTTP profile")
 }
 {% endif -%}
