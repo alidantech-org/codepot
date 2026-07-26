@@ -9,7 +9,7 @@ Literal folders and files preserve their relative location below `templates/`. O
 Example:
 
 ```text
-templates/{repositories}/(entity.name.kebab.s).repository.ts.jinja
+templates/{repositories}/(mapping.schema.name.kebab.s).repository.ts.jinja
 ```
 
 with:
@@ -18,7 +18,7 @@ with:
 selections:
   repositories:
     paths: [src, repositories]
-    select: entities.each
+    select: groups.storage.mappings.each
 ```
 
 may emit:
@@ -27,7 +27,7 @@ may emit:
 src/repositories/order.repository.ts
 ```
 
-The final `.jinja` engine suffix is removed. The `.ts` target suffix remains. No semantic `entity.fileName` property is involved.
+The final `.jinja` engine suffix is removed. The `.ts` target suffix remains. No semantic `fileName` property is involved.
 
 ## Path syntax
 
@@ -44,8 +44,9 @@ Square brackets are ordinary literal characters.
 Examples:
 
 ```text
-{models}/(model.name.kebab.s).model.ts.jinja
-{resourceFiles}/(resource.name.path.o)/index.ts.jinja
+{schemas}/(schema.name.kebab.s).ts.jinja
+{groupModules}/(group.name.path.o)/index.ts.jinja
+{operations}/(operation.name.kebab.s).operation.ts.jinja
 app/[id]/page.tsx.jinja
 app/[...slug]/page.tsx.jinja
 app/[[...slug]]/page.tsx.jinja
@@ -68,35 +69,25 @@ It must match a key under `CodepotgPack.yaml` `selections`:
 selections:
   repositories:
     paths: [src, repositories]
-    select: entities.each
+    select: groups.storage.mappings.each
 ```
 
-The selection key has two responsibilities:
+The selection key:
 
-1. contribute pack-relative output path segments through `paths`;
-2. optionally establish a fixed data selection through `select`.
+1. contributes pack-relative output path segments through `paths`;
+2. optionally establishes one fixed semantic selection through `select`.
 
-The folder name itself is not emitted.
-
-Unknown selection keys are errors.
+The folder name itself is not emitted. Unknown selection keys are errors.
 
 ## `{root}`
 
-`{root}` is built in and contributes no path segments.
+`{root}` is built in and contributes no path segments:
 
 ```text
-templates/{root}/package.json.jinja
+templates/{root}/package.json.jinja -> package.json
 ```
 
-emits:
-
-```text
-package.json
-```
-
-relative to the configured pack-instance output root.
-
-It is useful when a pack author wants to group root-emitted files physically without adding that grouping folder to output.
+It groups root-emitted files physically without adding that grouping folder to output.
 
 ## Literal paths
 
@@ -115,10 +106,13 @@ Literal static and binary files are copied unchanged. Literal templates are rend
 Dynamic values use one expression syntax:
 
 ```text
-(entity.name.kebab.s)
-(resource.name.path.o)
+(group.name.path.original)
+(schema.name.kebab.singular)
+(operation.name.camel.original)
+(mapping.schema.name.pascal.singular)
+(workflow.name.kebab.original)
 (option.clientName)
-(project.name.snake.o)
+(project.name.snake.original)
 ```
 
 The expression language is bounded and typed. It is not Jinja, Python, JavaScript, shell, or arbitrary object traversal.
@@ -126,11 +120,11 @@ The expression language is bounded and typed. It is not Jinja, Python, JavaScrip
 Expressions may appear as a whole segment or as part of a filename:
 
 ```text
-(entity.name.kebab.s).repository.ts.jinja
-(resource.name.kebab.p)-routes.ts.jinja
+(schema.name.kebab.s).schema.ts.jinja
+(operation.name.kebab.s)-handler.ts.jinja
 ```
 
-A multi-segment `PathSegments` value may expand only when the expression occupies the whole path segment. It cannot be embedded inside a filename.
+A multi-segment path value may expand only when the expression occupies the whole path segment. It cannot be embedded inside a filename.
 
 ## Literal parentheses
 
@@ -181,33 +175,90 @@ singular
 plural
 ```
 
+The ordering is always:
+
+```text
+x.name.{casing}.{number}
+```
+
 Examples:
 
 ```text
-(entity.name.pascal.s)
-(entity.name.kebab.p)
-(resource.name.path.o)
-(operation.name.camel.o)
-(enum.name.screaming.s)
+(group.name.path.original)
+(schema.name.pascal.singular)
+(operation.name.camel.original)
+(field.name.snake.original)
+(mapping.schema.name.kebab.singular)
+(event.name.dot.original)
+```
+
+Do not introduce reversed forms such as:
+
+```text
+schema.name.singular.pascal
 ```
 
 `original` preserves source lexical number. `singular` and `plural` are deterministic, behavior-versioned inflections. Irregular and uncountable names are explicitly tested. Naming/inflection behavior participates in lock and cache identity.
 
 ## Stable expression roots
 
-The initial registry supports typed descriptors for:
+Expression roots come only from the closed semantic kernel and the current planned invocation.
 
-- current fixed-selection contexts such as `resource`, `entity`, `operation`, `schema`, `model`, `dto`, and `enum`;
-- `project` identity and declared project values;
-- `pack` identity/version;
-- named semantic `source` metadata;
-- `option` values declared by the pack;
-- path-safe `binding` values;
-- deterministic group/scope keys;
-- already planned artifacts where the dependency graph permits them;
-- target metadata registered by adapters.
+Initial semantic roots include:
 
-Plugins may register additional namespaced typed values. Packs cannot register executable expression code.
+```text
+group
+schema
+field
+operation
+input
+output
+failure
+view
+mapping
+workflow
+step
+policy
+event
+```
+
+Other documented roots include:
+
+```text
+project
+pack
+source
+option
+binding
+imports
+exports
+artifact
+target
+```
+
+Semantic paths follow outer-to-inner order:
+
+```text
+group.operations
+operation.facets.http
+mapping.schema
+workflow.steps
+step.compensation.operation
+```
+
+Adapters and packs cannot register additional semantic roots or arbitrary expression properties. A new root/property requires a kernel change and behavior version.
+
+The expression registry does not expose neutral roots named:
+
+```text
+resource
+model
+entity
+frontend
+ui
+```
+
+Those may appear only as literal template vocabulary, source provenance, or bounded raw/extension data.
 
 ## Expression safety
 
@@ -215,13 +266,15 @@ The compiler rejects:
 
 - method calls;
 - arbitrary indexing;
-- unregistered properties;
+- unregistered roots or properties;
+- arbitrary graph traversal;
 - parser/source implementation objects;
 - undeclared environment access;
 - filesystem reads;
 - non-deterministic values;
 - unsafe path values;
-- hidden joining/stringification of collections.
+- hidden joining/stringification of collections;
+- semantic `fileName`, `filePath`, or `directory` shortcuts.
 
 Diagnostics identify the source path, token span, unknown property, and available alternatives.
 
@@ -233,7 +286,7 @@ For each discovered file:
 2. apply pack `.gitignore`, `include`, and `exclude` discovery rules;
 3. classify `_partials` as non-emitting;
 4. parse literal segments, `{selectionKey}` folders, `(expression)` values, and `((literal))` escapes;
-5. establish fixed selection contexts for encountered selection folders;
+5. establish fixed root-first selection contexts for encountered selection folders;
 6. replace each selection folder with its `paths` segments;
 7. resolve typed expressions;
 8. preserve literal prefixes, suffixes, and target extensions;
@@ -248,49 +301,51 @@ For each discovered file:
 Selection folders are evaluated left to right. A later fixed selector may use a context established by an earlier selection folder.
 
 ```text
-{resources}/{resourceEntities}/(entity.name.kebab.s).entity.ts.jinja
+{groupModules}/{operations}/(operation.name.kebab.s).ts.jinja
 ```
 
-could use:
+may use:
 
 ```yaml
 selections:
-  resources:
-    paths: [src, modules, (resource.name.path.o)]
-    select: resources.each
+  groupModules:
+    paths: [src, modules, (group.name.path.o)]
+    select: groups.each
 
-  resourceEntities:
-    paths: [entities]
-    select: resource.entities.each
+  operations:
+    paths: [operations]
+    select: group.operations.each
 ```
 
-The output path is still relative to the pack-instance output root.
+The output path remains relative to the pack-instance output root.
 
-Aliases are normally inferred by the fixed selector. An optional inline alias may be used:
+An optional inline alias may be used:
 
 ```yaml
-select: resource.entities.each(repositoryEntity)
+select: group.operations.each(handlerOperation)
 ```
 
 Aliases may not shadow active contexts silently.
 
+The planner rejects reversed or ambiguous selector roots such as `operations.group`, `http.groups`, or `storage.groups`.
+
 ## Imports and exports use planned paths
 
-A selection's `imports` and `exports` refer to other selection keys. The planner resolves those dependencies after destinations and symbols are known.
+A selection's `imports` and `exports` refer to other selection keys. The planner resolves semantic/provider matches after destinations and symbols are known.
 
 ```yaml
 repositories:
   paths: [src, repositories]
-  select: entities.each
+  select: groups.storage.mappings.each
   imports:
-    entities: entities
+    persistenceType: persistenceTypes
 
 repositoriesIndex:
   paths: [src, repositories]
   exports: [repositories]
 ```
 
-Language adapters calculate legal module paths from the planned destinations. They do not choose output folders or parse pack source paths.
+CodepotG calculates stable provider artifact identities and destination-relative path facts. A target adapter may validate/normalize target-aware module specifier facts. The template authors all import/export statements and formatting.
 
 ## Static files and `.gitignore`
 
@@ -302,38 +357,40 @@ A pack-root `.gitignore` is a discovery control file and is not emitted. A gener
 templates/.gitignore.jinja -> .gitignore
 ```
 
-This avoids accidentally copying the pack's own ignore rules into generated projects.
-
-## Adapter responsibilities
+## Responsibility boundaries
 
 Core owns:
 
+- closed semantic roots and properties;
+- root-first fixed selector resolution;
 - selection-folder parsing;
-- fixed selector resolution;
 - semantic name projections and inflection;
 - typed expression evaluation;
 - safe path composition;
+- provider/artifact path facts;
 - collision detection.
 
-A language adapter owns:
+A language adapter may own:
 
 - target suffix registration;
-- final target filename validation;
-- module path calculation;
-- target imports/exports;
-- reserved-name restrictions.
+- target filename and reserved-name validation;
+- target-aware module/path normalization and validation;
+- capability facts required by templates.
 
-A template-engine adapter renders already planned output and cannot add destinations.
+A language adapter does not emit imports, exports, types, literals, comments, validators, decorators, or framework syntax.
+
+A template-engine adapter renders already planned output and cannot add destinations or semantic values.
 
 ## Required tests
 
 The path subsystem must test:
 
-- every case and original/singular/plural projection;
+- every case and original/singular/plural projection in the correct order;
 - irregular and uncountable names;
 - `{selectionKey}` and `{root}` folders;
-- fixed `.each`/`.all` selectors and optional aliases;
-- nested resource/entity selection folders;
+- root-first fixed `.each`/`.all` selectors and optional aliases;
+- nested `group` then child selection folders;
+- rejection of `resource`, `model`, `entity`, reversed-root, and arbitrary-query selectors;
 - `(expression)` parsing and `((literal))` escaping;
 - literal Next.js bracket routes;
 - literal/static/binary discovery;
@@ -343,5 +400,5 @@ The path subsystem must test:
 - engine suffix stripping and target suffix preservation;
 - invalid roots/properties with suggestions;
 - traversal, reserved names, cycles, shadowing, and collisions;
-- imports/exports consuming planned paths;
+- imports/exports consuming planned provider/path facts;
 - rejection of invented `fileName`, `filePath`, and `directory` properties.
