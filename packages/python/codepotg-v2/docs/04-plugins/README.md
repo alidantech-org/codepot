@@ -1,8 +1,15 @@
 # 04 — Installable plugin packages
 
-CodepotG extensions are ordinary installable, versioned, deployable Python packages discovered through Python entry points. Official and third-party plugins use the same public contracts and receive no hidden access to core internals.
+CodepotG extensions are ordinary installable, versioned Python packages discovered through Python entry points. Official and third-party plugins use the same public contracts and receive no hidden access to core internals.
 
-## Planned package families
+## Documents
+
+- [`01-plugin-system.md`](01-plugin-system.md) — categories, descriptors, entry points, registries, contexts, trust, failures, and conformance.
+- [`02-language-adapter-contract.md`](02-language-adapter-contract.md) — per-template target resolution, semantic services, typed rule families, imports/exports, capabilities, boundaries, and tests.
+- [`03-template-engine-adapter-contract.md`](03-template-engine-adapter-contract.md) — immutable render context, engine rules, includes, sandbox, named outputs, cache, boundaries, and tests.
+- [`04-source-pack-and-ecosystem-adapters.md`](04-source-pack-and-ecosystem-adapters.md) — source normalization, local/Git pack providers, project manifests, dependencies, package managers, and ecosystem actions.
+
+## Initial packages
 
 ```text
 codepotg-openapi
@@ -14,32 +21,16 @@ codepotg-pack-dart-sdk
 codepotg-pack-flutter-sdk
 ```
 
-Each package has its own README, task ledger, tests, and progress record under `packages/python`.
+Each package has its own design reference, detailed task ledger, test boundaries, and progress record.
 
-## Source adapters
+## Locked rules
 
-A source adapter loads one source format and normalizes directly into the neutral IR. It does not plan templates, render code, write files, run commands, or expose source-specific graphs to language adapters and templates. The initial adapter is OpenAPI.
-
-## Language adapters
-
-A language adapter is resolved per template from its target extension or explicit target. It owns target syntax only: identifiers, reserved words, types, literals, comments, imports, exports, module paths, package paths, and typed language-rule decoding and merging.
-
-It does not load OpenAPI, select templates, choose output paths, own template engines, write files, run commands, or assume a framework. TypeScript does not mean NestJS, Next.js, React, or Node. Dart does not mean Flutter.
-
-Internally, target descriptors distinguish programming languages, markup, data, configuration, query languages, and plain text while preserving the simple user-facing `languages` section.
-
-## Template-engine adapters
-
-A template-engine adapter renders an immutable plain context and resolves includes only through the pack template registry. It publishes a typed, locked engine configuration model. Security-sensitive settings such as arbitrary Python access, unrestricted filesystem access, or dynamic imports are host-controlled and cannot be enabled by a downloaded pack.
-
-The initial engine is sandboxed Jinja.
-
-## Plugin metadata and compatibility
-
-Every plugin publishes an ID, aliases, package version, plugin API version, supported IR and configuration versions, capabilities, entry-point factory, typed option or rule contract, and diagnostics metadata. Core distinguishes package release version, Python public API version, plugin API version, IR version, project schema version, pack schema version, and lock-file version.
-
-Instance registries validate duplicate IDs, aliases, API compatibility, capabilities, and conflicts. Import-time decorator registries and directory scanning of internal packages are forbidden.
-
-## Conformance testing
-
-Core publishes reusable contract suites. Every implementation proves deterministic behavior, immutable inputs, stable diagnostics, capability declarations, option decoding, rule merging, and absence of hidden global state. Removing an official adapter package must only make that capability unavailable; it must not break core imports.
+- Core never hardcodes official adapter behavior.
+- Importing a package does not mutate a global registry.
+- Discovery uses Python entry points and returns factories/descriptors.
+- Runtime instances own registries and explicit least-authority contexts.
+- Language adapters do not assume frameworks.
+- Template engines do not own target syntax or outputs.
+- Source adapters normalize directly to neutral IR.
+- Ecosystem adapters plan manifest/toolchain intent but do not execute commands directly.
+- Removing one optional plugin only removes its capabilities; core import continues to work.
