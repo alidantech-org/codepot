@@ -16,6 +16,7 @@ from codepotg.schemas import (
     schema_path,
 )
 from contracts.path_yaml import PathYamlError
+from core.errors import ConfigError
 from emission.paths.config_loader import load_path_config
 
 
@@ -116,6 +117,19 @@ def test_paths_schema_matches_strict_loader_contract(tmp_path: Path) -> None:
     assert loaded.output_node_names() == ("model-barrel", "model-files")
 
 
+def test_documented_yaml_examples_validate_against_bundled_schemas() -> None:
+    package_root = Path(__file__).resolve().parents[2]
+    examples = package_root / "docs" / "examples"
+
+    codepotg = yaml.safe_load((examples / "Codepotg.yaml").read_text(encoding="utf-8"))
+    paths = yaml.safe_load((examples / "paths.yaml").read_text(encoding="utf-8"))
+
+    Draft202012Validator(load_schema("codepotg")).validate(codepotg)
+    Draft202012Validator(load_schema("paths")).validate(paths)
+    assert codepotg["$schema"] == CODEPOTG_SCHEMA_ID
+    assert paths["$schema"] == PATHS_SCHEMA_ID
+
+
 def test_paths_schema_reference_does_not_weaken_strict_unknown_key_validation(
     tmp_path: Path,
 ) -> None:
@@ -156,5 +170,5 @@ def test_schema_reference_must_be_a_non_empty_string(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    with pytest.raises(Exception, match=r"\$schema"):
+    with pytest.raises(ConfigError, match=r"\$schema"):
         load_codepotg_config(config)
