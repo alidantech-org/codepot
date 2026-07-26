@@ -164,10 +164,10 @@ def test_portable_language_fixture_emits_complete_contract_and_native_package(
     model_root = output.joinpath(*target["model_parts"])
     client_root = output.joinpath(*target["client_parts"])
     manifest = output / "package" / target["manifest"]
-    model = model_root / f"widget{target['extension']}"
-    enum = model_root / f"widget_status{target['extension']}"
-    response_model = model_root / f"widget_list_response{target['extension']}"
-    operation = client_root / f"list_widgets_client{target['extension']}"
+    model = model_root / f"Widget{target['extension']}"
+    enum = model_root / f"WidgetStatus{target['extension']}"
+    response_model = model_root / f"WidgetListResponse{target['extension']}"
+    operation = client_root / f"ListWidgetsClient{target['extension']}"
 
     assert manifest.is_file()
     assert model.is_file()
