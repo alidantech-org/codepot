@@ -15,4 +15,12 @@ dto_output_count={{ provider_outputs.dtos | length }}
 enum_output_count={{ provider_outputs.enums | length }}
 dependency_count={{ file.dependencies | length }}
 import_count={{ file.imports | length }}
-resolved_operation={{ resolve.operation(operation.api.id).key }}
+parameter_count={{ operation.parameters | length }}
+{% for parameter in operation.parameters %}parameter={{ parameter.api.id }}|location={{ parameter.lang.location }}|required={{ parameter.lang.required }}|schema_ref={{ parameter.api.schema_ref or "" }}|display={{ parameter.lang.display_name }}
+{% endfor %}request_present={{ operation.request_body is not none }}
+{% if operation.request_body %}request_required={{ operation.request_body.lang.required }}|content_types={{ operation.request_body.lang.content_types | join(",") }}|schema_refs={{ operation.request_body.api.schema_refs | join(",") }}
+{% endif %}response_count={{ operation.responses | length }}
+{% for response in operation.responses %}response={{ response.lang.status_code }}|success={{ response.lang.is_success }}|error={{ response.lang.is_error }}|content_types={{ response.lang.content_types | join(",") }}|schema_refs={{ response.api.schema_refs | join(",") }}
+{% endfor %}{% for dependency in file.dependencies %}dependency={{ dependency.ref }}|purpose={{ dependency.purpose }}|exists={{ dependency.exists }}|importable={{ dependency.is_importable }}
+{% endfor %}{% for import in file.imports %}import={{ import.statement }}|style={{ import.style }}|path={{ import.path }}
+{% endfor %}resolved_operation={{ resolve.operation(operation.api.id).key }}
