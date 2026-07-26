@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -24,10 +25,16 @@ def _generate(tmp_path: Path, language: str) -> Path:
     return workspace / language / ".generated-review" / "package"
 
 
-def _run(command: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
+def _run(
+    command: list[str],
+    *,
+    cwd: Path,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         command,
         cwd=cwd,
+        env=env,
         check=False,
         capture_output=True,
         text=True,
@@ -41,6 +48,18 @@ def _assert_success(result: subprocess.CompletedProcess[str]) -> None:
         f"stdout:\n{result.stdout}\n"
         f"stderr:\n{result.stderr}"
     )
+
+
+def _skip_for_missing_offline_dependency(
+    result: subprocess.CompletedProcess[str],
+    *,
+    markers: tuple[str, ...],
+) -> None:
+    if result.returncode == 0:
+        return
+    output = f"{result.stdout}\n{result.stderr}".lower()
+    if any(marker.lower() in output for marker in markers):
+        pytest.skip("native dependencies are not available in the local offline cache")
 
 
 def test_generated_python_package_byte_compiles(tmp_path: Path) -> None:
@@ -58,7 +77,9 @@ def test_generated_java_package_compiles_when_javac_is_available(tmp_path: Path)
         pytest.skip("javac is not installed")
 
     package = _generate(tmp_path, "java")
-    sources = sorted(str(path) for path in (package / "src" / "main" / "java").rglob("*.java"))
+    sources = sorted(
+        str(path) for path in (package / "src" / "main" / "java").rglob("*.java")
+    )
     assert sources
     classes = package / "target" / "fixture-classes"
     classes.mkdir(parents=True, exist_ok=True)
@@ -92,6 +113,28 @@ def test_generated_go_sources_are_gofmt_clean_when_available(tmp_path: Path) -> 
     assert result.stdout == "", result.stdout
 
 
+def test_generated_go_package_compiles_offline_when_dependencies_are_cached(
+    tmp_path: Path,
+) -> None:
+    go = shutil.which("go")
+    if go is None:
+        pytest.skip("go is not installed")
+
+    package = _generate(tmp_path, "go")
+    env = os.environ.copy()
+    env.update({"GOPROXY": "off", "GOSUMDB": "off"})
+    result = _run([go, "test", "./..."], cwd=package, env=env)
+    _skip_for_missing_offline_dependency(
+        result,
+        markers=(
+            "module lookup disabled by goproxy=off",
+            "missing go.sum entry",
+            "no required module provides package",
+        ),
+    )
+    _assert_success(result)
+
+
 def test_generated_rust_sources_are_rustfmt_clean_when_available(tmp_path: Path) -> None:
     rustfmt = shutil.which("rustfmt")
     if rustfmt is None:
@@ -101,4 +144,24 @@ def test_generated_rust_sources_are_rustfmt_clean_when_available(tmp_path: Path)
     sources = sorted(str(path) for path in (package / "src").rglob("*.rs"))
     assert sources
     result = _run([rustfmt, "--check", *sources], cwd=package)
+    _assert_success(result)
+
+
+def test_generated_rust_package_checks_offline_when_dependencies_are_cached(
+    tmp_path: Path,
+) -> None:
+    cargo = shutil.which("cargo")
+    if cargo is None:
+        pytest.skip("cargo is not installed")
+
+    package = _generate(tmp_path, "rust")
+    result = _run([cargo, "check", "--offline"], cwd=package)
+    _skip_for_missing_offline_dependency(
+        result,
+        markers=(
+            "no matching package named",
+            "failed to download",
+            "attempting to make an http request",
+        ),
+    )
     _assert_success(result)
