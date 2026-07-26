@@ -1,6 +1,6 @@
 # Complete project, pack, and lock example
 
-This example links one project to three independently authored packs using the simplified filesystem-driven design.
+This example links one project to three independently authored packs using the closed semantic kernel and simplified filesystem-driven design.
 
 ## Project files
 
@@ -76,7 +76,25 @@ commands:
       optional: true
 ```
 
-The project declares each pack source directly. `input` references semantic data; `output` is the pack emission root.
+The project declares each pack source directly. `input` references semantic data; `output` is the pack emission root. The project cannot add semantic concepts, facets, or selectors.
+
+## OpenAPI normalization used by all packs
+
+The OpenAPI adapter normalizes the source into the known kernel:
+
+```text
+contract.groups
+└── group: orders
+    ├── schemas
+    ├── operations
+    ├── storage.mappings       when typed x-codegen metadata declares them
+    ├── views                  when typed x-codegen metadata declares them
+    ├── workflows              when typed x-codegen metadata declares them
+    ├── policies
+    └── events
+```
+
+HTTP paths and methods become `operation.facets.http`; operation data remains under inputs, outputs, failures, and effects. The three packs consume the same semantic identities but author different output text.
 
 ## TypeORM pack manifest
 
@@ -85,10 +103,11 @@ apiVersion: codepotg.dev/v2
 
 id: alidantech/typeorm-repositories
 version: 1.0.0
-description: Generates TypeORM entities and repositories.
+description: Generates TypeORM persistence classes and repositories from storage mappings.
 
 requires:
   codepotg: ">=2.0 <3.0"
+  ir: ">=2.0 <3.0"
 
 options:
   repositoryStyle:
@@ -98,25 +117,27 @@ options:
 bindings:
   baseRepository:
     required: true
-    description: Base class imported by generated repositories.
+    description: Base class referenced by generated repository templates.
 
 selections:
-  entities:
-    paths: [src, entities]
-    select: entities.each
-    symbols: [(entity.name.pascal.s)]
+  persistenceTypes:
+    paths: [src, persistence]
+    select: groups.storage.mappings.each
+    symbols:
+      - (mapping.schema.name.pascal.s)Entity
 
   repositories:
     paths: [src, repositories]
-    select: entities.each
+    select: groups.storage.mappings.each
     imports:
-      entities: entities
+      persistenceType: persistenceTypes
     bindings: [baseRepository]
-    symbols: [(entity.name.pascal.s)Repository]
+    symbols:
+      - (mapping.schema.name.pascal.s)Repository
 
-  entitiesIndex:
-    paths: [src, entities]
-    exports: [entities]
+  persistenceIndex:
+    paths: [src, persistence]
+    exports: [persistenceTypes]
 
   repositoriesIndex:
     paths: [src, repositories]
@@ -124,7 +145,7 @@ selections:
 
   rootIndex:
     paths: [src]
-    exports: [entitiesIndex, repositoriesIndex]
+    exports: [persistenceIndex, repositoriesIndex]
 
 executables:
   packageManager: pnpm
@@ -140,11 +161,11 @@ Pack filesystem:
 
 ```text
 templates/
-├── {entities}/
-│   └── (entity.name.kebab.s).entity.ts.jinja
+├── {persistenceTypes}/
+│   └── (mapping.schema.name.kebab.s).entity.ts.jinja
 ├── {repositories}/
-│   └── (entity.name.kebab.s).repository.ts.jinja
-├── {entitiesIndex}/
+│   └── (mapping.schema.name.kebab.s).repository.ts.jinja
+├── {persistenceIndex}/
 │   └── index.ts.jinja
 ├── {repositoriesIndex}/
 │   └── index.ts.jinja
@@ -156,13 +177,15 @@ templates/
 └── .gitignore.jinja
 ```
 
-For `OrderItem`, the repository template emits relative to the pack output root:
+For a mapping whose schema is `OrderItem`, the repository template may emit:
 
 ```text
 src/repositories/order-item.repository.ts
 ```
 
-The `repositories` import registry explicitly says generated entity dependencies come from the `entities` selection. `repositoriesIndex` receives the emitted repository paths and symbols and writes its own export syntax.
+`Entity` is authored TypeORM output vocabulary. The neutral selected object is `mapping`.
+
+The `repositories` dependency says that the corresponding generated persistence type comes from `persistenceTypes`. CodepotG matches artifacts through the same mapping/schema semantic identity, resolves symbols and path/module facts, and passes descriptors to the repository template. The template writes the TypeScript import and class code.
 
 ## TypeScript SDK pack summary
 
@@ -170,94 +193,115 @@ The `repositories` import registry explicitly says generated entity dependencies
 selections:
   enums:
     paths: [src, types, enums]
-    select: schemas.enums.each
-    symbols: [(enum.name.pascal.s)]
+    select: groups.schemas.enums.each
+    symbols:
+      - (schema.name.pascal.s)
 
-  dtos:
-    paths: [src, types, dtos]
-    select: schemas.dtos.each
+  schemaTypes:
+    paths: [src, types, schemas]
+    select: groups.schemas.objects.each
     imports:
       enums: enums
-    symbols: [(dto.name.pascal.s)]
-
-  models:
-    paths: [src, types, models]
-    select: schemas.models.each
-    imports:
-      enums: enums
-    symbols: [(model.name.pascal.s)]
+    symbols:
+      - (schema.name.pascal.s)
 
   typesIndex:
     paths: [src, types]
-    exports: [enums, dtos, models]
+    exports: [enums, schemaTypes]
 
-  services:
-    paths: [src, services]
-    select: resources.each
+  groupClients:
+    paths: [src, clients]
+    select: groups.each
     imports:
       types: typesIndex
-    symbols: [(resource.name.pascal.s)Service]
+    symbols:
+      - (group.name.pascal.s)Client
 
-  servicesIndex:
-    paths: [src, services]
-    exports: [services]
+  clientsIndex:
+    paths: [src, clients]
+    exports: [groupClients]
 
   client:
     paths: [src]
     imports:
-      services: servicesIndex
-    symbols: [(option.clientName)]
+      clients: clientsIndex
+    symbols:
+      - (option.clientName)
 
   rootIndex:
     paths: [src]
-    exports: [typesIndex, servicesIndex, client]
+    exports: [typesIndex, clientsIndex, client]
 ```
 
-The service selection imports required symbols through one types barrel when possible. The resolver uses declared symbols and scope; the TypeScript adapter produces the final import statements.
+A `groupClients` template receives `group` and traverses `group.operations`. Each operation exposes inputs, outputs, failures, effects, and known facets. The pack decides whether to generate a class, functions, method groups, request types, or documentation.
+
+The TypeScript target adapter validates output names and resolves target-aware module-specifier facts. The templates author all TypeScript imports, exports, types, comments, literals, and client logic.
 
 ## Flutter SDK pack summary
 
 ```yaml
 selections:
   enums:
-    paths: [lib, src, models]
-    select: schemas.enums.each
-    symbols: [(enum.name.pascal.s)]
+    paths: [lib, src, types, enums]
+    select: groups.schemas.enums.each
+    symbols:
+      - (schema.name.pascal.s)
 
-  models:
-    paths: [lib, src, models]
-    select: schemas.models.each
+  schemaTypes:
+    paths: [lib, src, types, schemas]
+    select: groups.schemas.objects.each
     imports:
       enums: enums
-    symbols: [(model.name.pascal.s)]
+    symbols:
+      - (schema.name.pascal.s)
 
-  modelsIndex:
-    paths: [lib, src, models]
-    exports: [enums, models]
+  typesIndex:
+    paths: [lib, src, types]
+    exports: [enums, schemaTypes]
 
-  services:
-    paths: [lib, src, services]
-    select: resources.each
+  groupClients:
+    paths: [lib, src, clients]
+    select: groups.each
     imports:
-      models: modelsIndex
-    symbols: [(resource.name.pascal.s)Service]
+      types: typesIndex
+    symbols:
+      - (group.name.pascal.s)Client
 
-  servicesIndex:
-    paths: [lib, src, services]
-    exports: [services]
+  clientsIndex:
+    paths: [lib, src, clients]
+    exports: [groupClients]
 
   client:
     paths: [lib, src]
     imports:
-      services: servicesIndex
-    symbols: [(option.clientName)]
+      clients: clientsIndex
+    symbols:
+      - (option.clientName)
 
   packageIndex:
     paths: [lib]
-    exports: [modelsIndex, servicesIndex, client]
+    exports: [typesIndex, clientsIndex, client]
 ```
 
-Flutter uses `lib` because all pack `paths` values are relative to the configured pack output root.
+Flutter uses `lib` because all pack `paths` values are relative to the configured pack output root. The Dart/Flutter templates author every class, import, export, annotation, serialization expression, and client call.
+
+A separate Flutter application pack may select `groups.views.each` when the semantic input actually contains known view declarations. The SDK pack does not invent views from HTTP operations.
+
+## Connected-generation behavior
+
+All three packs can depend on one semantic schema identity without sharing filenames or target syntax:
+
+```text
+schema: Order
+├── TypeScript type artifact
+├── Dart type artifact
+├── storage mapping artifact
+├── repository artifact
+├── group client methods
+└── documentation artifacts
+```
+
+Changing `Order.email` or an operation that uses `Order` lets the planner report the affected selections and artifacts before writing. The dependency graph is semantic, while all generated text remains pack-authored.
 
 ## Generated lock excerpt
 
@@ -265,6 +309,12 @@ Flutter uses `lib` because all pack `paths` values are relative to the configure
 apiVersion: codepotg.dev/lock/v1
 
 project: defytickets-generated
+
+runtime:
+  codepotg: 2.0.0
+  ir: 2.0
+  namingBehavior: 1
+  selectionBehavior: 1
 
 packs:
   backendRepositories:
@@ -287,7 +337,7 @@ packs:
     contentDigest: sha256:4444444444444444444444444444444444444444444444444444444444444444
 ```
 
-The lock keeps the requested Git ref and exact resolved commit. It stores no credentials.
+The lock keeps requested Git refs, exact resolved commits, pack/plugin versions, and behavior identity. It stores no credentials and no generated output hashes. Output digests belong to the ownership/generation-state manifest.
 
 ## Full standalone example files
 
