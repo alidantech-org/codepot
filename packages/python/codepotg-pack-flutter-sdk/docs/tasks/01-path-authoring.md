@@ -1,27 +1,29 @@
-# Flutter SDK tokenized path-authoring tasks
+# Flutter SDK selection-folder authoring tasks
 
-## PACK-FLUTTER-PATH-001 — Package and integration paths
+## PACK-FLUTTER-PATH-001 — Package and integration template tree
 
 **Dependencies:** PATH-001..PATH-010, Dart adapter, Flutter/Dart ecosystem contracts
 
-- [ ] Author generated API models under tokenized Dart source paths.
-- [ ] Author clients/services/providers/adapters with explicit case/plurality name tokens.
-- [ ] Author package/export files and static assets through structural or selection-bearing path recipes.
-- [ ] Support both owned standalone-package roots and contributed existing-app roots.
+- [ ] Place models, enums, services, and clients under registered selection folders.
+- [ ] Use `(name.case.number)` expressions for generated Dart filenames.
+- [ ] Author package/export libraries as normal templates whose selections declare `exports`.
+- [ ] Keep `pubspec.yaml.jinja`, analysis options, assets, docs, and other literal files unregistered.
+- [ ] Support both standalone package and existing-app output roots through project `output` plus pack-relative `lib` paths.
 
 ## PACK-FLUTTER-PATH-002 — Framework boundaries
 
-- [ ] Keep Dart filename validation in the Dart adapter.
-- [ ] Keep Flutter project/unit detection in the ecosystem/framework integration layer.
-- [ ] Keep output folder decisions in the pack source tree and `paths` recipes.
-- [ ] Do not derive destinations from UI/state-management framework internals unless exposed as typed pack options or bindings.
+- [ ] Keep Dart filename and import validation in the Dart adapter.
+- [ ] Keep Flutter project/unit detection in the ecosystem layer.
+- [ ] Keep output folder decisions in the pack filesystem and selection `paths` arrays.
+- [ ] Declare generated dependencies through `imports` and symbols explicitly.
+- [ ] Do not derive destinations from UI/state-management internals unless exposed as typed options or bindings.
 
 ## PACK-FLUTTER-PATH-003 — Conformance
 
-- [ ] Test modular and monolithic profiles.
-- [ ] Test package name, resource name, model name, nested folder, static asset, export barrel, and generated documentation paths.
-- [ ] Test existing-app integration and standalone-package generation.
-- [ ] Prove no ordinary descriptor needs explicit output configuration.
-- [ ] Prove no semantic fixture exposes `fileName`, `filePath`, or `directory`.
+- [ ] Load `codepotg-v2/docs/examples/packs/flutter-sdk.CodepotgPack.yaml` as the baseline fixture.
+- [ ] Test package, resource, model, nested folder, static asset, barrel, and documentation paths.
+- [ ] Test direct versus barrel imports, barrels exporting barrels, and least-required symbols.
+- [ ] Test existing-app integration and standalone package generation.
+- [ ] Prove no root `paths`, explicit `files`, or semantic filename conveniences exist.
 
-**Acceptance:** Flutter fixtures use the shared path-expression subsystem and contain no private pack filename algorithm.
+**Acceptance:** Flutter fixtures use the shared selection-folder/path-expression subsystem and contain no private filename algorithm.
