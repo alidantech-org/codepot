@@ -1,6 +1,6 @@
 # TypeScript SDK pack implementation plan
 
-This package authors a new v2 TypeScript SDK pack. It may study existing generated outputs for requirements, but it does not parse old `paths.yaml`, import old pack code, or preserve hidden barrel/generator behavior.
+This package authors one modular v2 TypeScript SDK pack. It consumes the closed semantic kernel through root-first fixed selectors and authors every TypeScript character in templates/macros/partials. It does not parse old `paths.yaml`, import old pack code, extend the kernel, or depend on language-adapter syntax renderers.
 
 ## PACK-TS-001 — Package and provider foundation
 
@@ -9,148 +9,144 @@ This package authors a new v2 TypeScript SDK pack. It may study existing generat
 **Dependencies:** stable pack-provider/public pack contracts
 
 - [ ] Add isolated package metadata, package-data rules, README, license, and tests.
-- [ ] Register installed-pack provider metadata if official packs are discoverable through Python distributions.
+- [ ] Register installed-pack metadata if official packs are discoverable through Python distributions.
 - [ ] Include `CodepotgPack.yaml`, templates, static/binary assets, partials, pack docs, and examples in wheel/sdist.
-- [ ] Declare core, pack-schema, IR, TypeScript adapter, Jinja engine, and ecosystem compatibility.
+- [ ] Declare core, pack-schema, IR/naming/selection behavior, TypeScript target adapter, Jinja engine, and Node project compatibility.
+- [ ] Add architecture tests proving the pack has no semantic-extension or private-core access.
 
-## PACK-TS-002 — Manifest identity and traits
+## PACK-TS-002 — One coherent manifest product
 
-- [ ] Define metadata, compatibility, content roots, ignore rules, write policy, and override policy.
-- [ ] Declare supported traits/profiles: standalone package, contributed files, modular SDK, monolithic single-file SDK where supported.
-- [ ] Declare owned versus contributed `package.json` behavior by profile.
-- [ ] Declare public setup documentation.
+- [ ] Define root identity, compatibility, include/exclude rules, options, bindings, selections, executable defaults, and exact commands.
+- [ ] Produce one modular SDK product with deterministic file inventory.
+- [ ] Do not add root profiles, file IDs, `filePatterns`, write-policy matrices, or hidden product activation.
+- [ ] Treat materially different monolithic/framework/contribution products as separate future packs.
+- [ ] Add public setup documentation.
 
-## PACK-TS-003 — Pack options
+## PACK-TS-003 — Typed pack options
 
-Define typed options with defaults, validation, docs, examples, and configure prompts for choices such as:
+Define documented typed options only where authored templates can vary output without changing the semantic kernel or hidden file inventory:
 
-- [ ] modular versus monolithic profile;
-- [ ] model/DTO/operation/client/error/docs/test generation toggles;
-- [ ] client style and request function organization;
-- [ ] serialization/date/binary strategies that are pack policy and map into supported TypeScript adapter rules or template branches;
-- [ ] generated package name/version when the pack owns a package;
-- [ ] example/test generation;
-- [ ] optional framework-neutral hooks.
+- [ ] client name;
+- [ ] client method/function organization;
+- [ ] transport abstraction choice among pack-authored branches;
+- [ ] date/binary/serialization representation;
+- [ ] error/result strategy;
+- [ ] optional examples/docs content where files remain valid and intentional;
+- [ ] package identity values used by authored package templates.
 
-Do not expose internal template filenames as normal user options.
+Do not expose internal filenames, selectors, semantic contexts, language-adapter render rules, or arbitrary dictionaries.
 
-## PACK-TS-004 — Selections
+## PACK-TS-004 — Root-first selections
 
-- [ ] Define named selections for models, enums, DTOs, requests, responses, operations, resources/tags, errors, and aggregate project context.
-- [ ] Define deterministic filters/order/grouping.
-- [ ] Define artifact-derived selections for authored barrels and registries.
-- [ ] Support complete aggregate context for one-file output.
+- [ ] Define `groups.schemas.enums.each` enum selection.
+- [ ] Define `groups.schemas.objects.each` schema-type selection.
+- [ ] Define `groups.each` group-client selection whose templates traverse `group.operations`.
+- [ ] Define authored types/client/root barrel selections through ordered `exports`.
+- [ ] Define explicit generated dependencies through selection keys and declared symbols.
+- [ ] Use only context roots such as `group`, `schema`, `operation`, `input`, `output`, and `failure`.
+- [ ] Do not use neutral model/resource/entity/service/request/response selector roots.
+- [ ] Do not add arbitrary filtering/query DSLs.
 
-## PACK-TS-005 — Template and static file inventory
+## PACK-TS-005 — Template and static inventory
 
-Author new templates/files for:
+Author new files for:
 
-- [ ] model and enum types;
-- [ ] request/response DTOs;
-- [ ] operation/request functions or client methods;
+- [ ] structural schema and enum types;
+- [ ] group-scoped client classes/functions iterating operations;
+- [ ] operation input/output/failure handling;
+- [ ] HTTP request construction from `operation.facets.http`;
 - [ ] API client/runtime interfaces;
-- [ ] error types and response handling;
-- [ ] shared type/util files;
-- [ ] configuration/documentation files;
-- [ ] optional examples/tests;
-- [ ] authored `index.ts.jinja` and nested barrel templates;
-- [ ] neutral/license/header partials;
-- [ ] static `.gitignore`, `.env.example`, license, sample configs, fixture assets where appropriate;
-- [ ] optional owned `package.json.jinja`, `tsconfig.json`, and other package assets by standalone profile.
+- [ ] error/result abstractions;
+- [ ] shared authored utilities/configuration;
+- [ ] authored nested and root barrel templates;
+- [ ] package/configuration/documentation files;
+- [ ] optional examples/tests where included in this coherent product;
+- [ ] neutral/license/header and syntax macros/partials;
+- [ ] static configuration/assets where appropriate.
 
-Each file must have one descriptor; no root system `barrels` key is allowed.
+Every emitted character, including types/imports/exports/comments/literals/HTTP calls, is pack-authored. Each discovered file has one descriptor; no root barrel subsystem exists.
 
-## PACK-TS-006 — File patterns and profiles
+## PACK-TS-006 — Filesystem layout and target inference
 
-- [ ] Use `filePatterns` for per-resource/module folder fan-out where useful.
-- [ ] Prove static files under tokenized folders copy to every selected destination.
-- [ ] Define modular, grouped, minimal, and monolithic profiles through declared file IDs.
-- [ ] Ensure every template target is inferred from filename such as `.ts.jinja`, `.json.jinja`, `.md.jinja`.
-- [ ] Use explicit targets only for ambiguous names such as `Dockerfile.jinja`.
+- [ ] Use `{selectionKey}` folders for schema/group fan-out.
+- [ ] Use `(expression)` with `x.name.{casing}.{number}` for filenames.
+- [ ] Prove static files under selection folders fan out without rendering.
+- [ ] Infer `.ts`, `.tsx`, `.json`, `.md`, and other targets from filenames.
+- [ ] Use `{root}` only when physical authoring layout should not create an output folder.
+- [ ] Validate no duplicate descriptors/destinations.
+- [ ] Do not add profiles or `filePatterns`.
 
 ## PACK-TS-007 — Binding catalog
 
-Declare and document every project integration point, with exact template consumers:
+Declare/document exact template consumers for external integration points such as:
 
 - [ ] HTTP transport/client abstraction;
 - [ ] authentication/token source;
 - [ ] base URL/config provider;
 - [ ] error mapping;
 - [ ] logger;
-- [ ] custom date/serialization helper;
-- [ ] project-owned base model/client type if offered;
-- [ ] package name or output namespace;
-- [ ] artifact references to another pack where needed.
+- [ ] custom serialization helpers;
+- [ ] package/module identity;
+- [ ] explicit artifacts from another pack where required.
 
 For each binding:
 
-- [ ] define kind, target, required state, accepted sources, suggested symbol, discovery hints, missing policy, docs, examples;
-- [ ] support module, projectPath, barrel/default-barrel, package, and raw escape where meaningful;
-- [ ] allow one project barrel to satisfy several bindings;
-- [ ] mark optional behavior so omitted bindings do not create unused imports.
+- [ ] define typed kind, required state, accepted sources, docs, examples, and missing policy;
+- [ ] support module, project path, package, namespace, text/value, and artifact facts where meaningful;
+- [ ] list exact selection/template consumers;
+- [ ] keep generated selection dependencies separate under `imports`/`exports`;
+- [ ] ensure templates author all binding/import syntax.
 
-## PACK-TS-008 — Language and engine rules
+## PACK-TS-008 — Template-owned TypeScript conventions
 
-- [ ] Define pack-owned TypeScript defaults using only fields published by the TypeScript adapter.
-- [ ] Define safe Jinja pack rules using only engine schema fields.
-- [ ] Define exact override policy for aliases, import strategy, extension omission, naming, formatting metadata, and exposed template rules.
-- [ ] Deny overrides that would break pack invariants.
-- [ ] Do not use raw dictionary options or hidden filters to bypass adapter rules.
+- [ ] Author Jinja macros/partials for TypeScript type expressions, identifier placement, optional/nullable syntax, literals, comments, imports, exports, and formatting.
+- [ ] Use core naming projections directly in the approved order.
+- [ ] Consume TypeScript target adapter facts only for suffix, filename/identifier validation, and module specifiers.
+- [ ] Define pack options/branches for supported conventions.
+- [ ] Reject reliance on TypeRenderer, ImportRenderer, language naming APIs, or pre-rendered adapter snippets.
+- [ ] Keep NestJS/React/Next.js/framework conventions outside this framework-neutral SDK pack.
 
-## PACK-TS-009 — Dependencies and manifests
+## PACK-TS-009 — Package files and exact commands
 
-- [ ] Declare typed Node runtime/development dependencies by feature/profile.
-- [ ] Support npm, pnpm, and Yarn capabilities without hardcoded package-manager commands.
-- [ ] For standalone package profile, own a complete package manifest through an authored template or typed owned-manifest contract.
-- [ ] For contributed mode, use typed manifest contributions rather than replacing user `package.json`.
-- [ ] Declare scripts/exports/workspace contributions where required.
+- [ ] Author complete `package.json.jinja`, `tsconfig.json`, README, and static package files for this pack product.
+- [ ] Express dependency installation/format/typecheck/test behavior as exact optional commands with opaque arguments.
+- [ ] Keep package-manager intelligence outside semantic core.
+- [ ] Ensure downloaded commands require approval by default.
+- [ ] Record package/output digests in ownership state, not the dependency lock.
 
-## PACK-TS-010 — Setup, commands, and docs
+## PACK-TS-010 — Small connected fixture
 
-- [ ] Define `codepotg configure` questions for options/bindings/package identity.
-- [ ] Define detection hints for aliases, package name, candidate transport/auth/logger symbols, manifests, and package manager.
-- [ ] Define typed optional actions for dependency ensure, ESLint unused-import fix, formatting, type checking, and tests.
-- [ ] Mark command phases and capabilities.
-- [ ] Add manual integration steps and pack setup docs.
-- [ ] Ensure pack-owned downloaded commands require approval by default.
+- [ ] Add one group with enum/object schemas and operations containing inputs, outputs, failures, effects, and HTTP facets.
+- [ ] Generate schema types, a group client, errors, package files, and authored barrels.
+- [ ] Test semantic dependency matching and module facts.
+- [ ] Test template-authored imports/exports/types byte-for-byte.
+- [ ] Test static files, partials, ignores, bindings, missing policies, and strict readiness.
+- [ ] Test no duplicate output/descriptors and no removed vocabulary/selectors.
 
-## PACK-TS-011 — Small contract fixtures
+## PACK-TS-011 — Realistic SDK project
 
-- [ ] Add minimal source/IR fixture producing one enum, model, request, response, operation, error, and barrel.
-- [ ] Test modular output.
-- [ ] Test monolithic single-file output.
-- [ ] Test default barrel binding and project-path relative import.
-- [ ] Test static files, partials, ignores, profiles, missing binding placeholder, and strict readiness.
-- [ ] Test no duplicate output/descriptors.
+- [ ] Generate an inspectable multi-group SDK with package metadata, docs, examples, and tests.
+- [ ] Validate TypeScript syntax/type checking through declared commands when available.
+- [ ] Assert exact artifact explain traces and schema/operation blast radius.
+- [ ] Record generated inventory and intentional pack conventions.
+- [ ] Prove all generated text changes originate in templates/macros or semantic input facts.
 
-## PACK-TS-012 — Realistic SDK project
+## PACK-TS-012 — Resolution, distribution, and release
 
-- [ ] Generate an inspectable multi-resource SDK with package metadata, docs, examples, and tests.
-- [ ] Validate TypeScript syntax/type checking using declared toolchain actions when available.
-- [ ] Validate npm, pnpm, and Yarn planning; at least one complete install/build fixture must run in repository-supported environments.
-- [ ] Record generated file inventory and intentional design decisions.
-
-## PACK-TS-013 — Git and installed distribution
-
-- [ ] Prove local directory pack resolution.
-- [ ] Prove generic Git/GitHub subdirectory resolution and lock identity using controlled fixtures.
-- [ ] Prove installed distribution package-data discovery.
+- [ ] Prove local directory, generic Git subdirectory, lock identity, and installed distribution resolution.
 - [ ] Prove command approval digest changes when pack content/command changes.
-
-## PACK-TS-014 — Requirements comparison and release
-
-- [ ] Inspect representative old outputs only to identify missing user requirements.
-- [ ] Record intentional output differences; never add old runtime/manifest parser compatibility.
-- [ ] Pass pack manifest, discovery, file, static, binding, rules, command, planner, writer, and integration suites.
-- [ ] Build wheel/sdist and verify all pack data is included.
-- [ ] Version and publish independently.
+- [ ] Inspect representative old outputs only to identify requirements and document intentional differences.
+- [ ] Never add old runtime/manifest parser compatibility.
+- [ ] Pass manifest, discovery, selection, semantic dependency, template, static, binding, command, planner, impact, writer, and integration suites.
+- [ ] Build wheel/sdist with complete pack data and publish independently.
 
 ## Completion gate
 
-- project users configure the pack only through one `packs.<instance>` entry;
-- no project-level language or internal template knowledge is required;
-- barrels are authored templates;
+- the project config contains one direct pack instance and no global language/profile/internal template list;
+- all selections are closed-kernel and group-rooted;
+- barrels and every TypeScript statement are authored templates;
+- target adapter provides validation/path facts only;
 - static files copy by default;
-- bindings/dependencies/setup/commands are fully documented;
-- modular and monolithic fixtures are deterministic and validate;
-- no old `paths.yaml` or pack implementation dependency exists.
+- bindings and exact commands are fully documented;
+- realistic output validates and blast-radius reports are deterministic;
+- no old `paths.yaml`, profiles, file patterns, resource/model/entity contexts, semantic extension, or old pack implementation dependency exists.
