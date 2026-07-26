@@ -1,70 +1,151 @@
-# Flutter SDK/integration pack design reference
+# Flutter application-integration pack design reference
 
 ## Purpose
 
-This pack applies Flutter framework conventions on top of the Dart language adapter and Dart ecosystem adapter. Flutter is not a language alias.
+This pack applies Flutter conventions through authored Dart and Flutter templates. Flutter is not a language alias, and the Dart target adapter does not render Dart syntax.
 
-## Planned profiles
+The pack represents one generated integration layer for a host Flutter application. It consumes known groups, schemas, operations, and views from the closed CodepotG kernel.
 
-- `standalonePackage` — generated Flutter/Dart package with owned pubspec and package assets;
-- `existingApp` — files and typed pubspec/assets contributions to a host Flutter app;
-- `minimalClient` — models/client/errors only;
-- `providerIntegration` — optional explicit provider/state integration;
-- `monolithic` — aggregate API layer where useful.
+## Semantic inputs
+
+```text
+contract.groups
+group.schemas
+group.operations
+group.views
+view.parts
+view.triggers
+view.flows
+operation.inputs
+operation.outputs
+operation.failures
+operation.effects
+operation.facets.http
+operation.facets.access
+```
+
+The pack does not invent views from HTTP operations. View files emit only when the source contains known `group.views` declarations.
+
+## Product boundary
+
+The pack may generate:
+
+- Dart schema and enum types;
+- group-scoped API clients;
+- Flutter view files from declared views;
+- trigger-to-operation wiring from declared relationships;
+- error, transport, configuration, and state abstractions;
+- authored export files;
+- documentation and static assets;
+- known host-project dependency and asset contributions;
+- exact optional format, analyze, test, and build-runner commands.
+
+It does not implement hidden standalone, existing-app, minimal, provider, or monolithic profiles. A materially different state-management, package, or interaction architecture should be a separate pack.
+
+## Selection design
+
+```yaml
+selections:
+  enums:
+    paths: [lib, generated, types, enums]
+    select: groups.schemas.enums.each
+    symbols:
+      - (schema.name.pascal.s)
+
+  schemaTypes:
+    paths: [lib, generated, types, schemas]
+    select: groups.schemas.objects.each
+    imports:
+      enums: enums
+    symbols:
+      - (schema.name.pascal.s)
+
+  typesIndex:
+    paths: [lib, generated, types]
+    exports: [enums, schemaTypes]
+
+  groupClients:
+    paths: [lib, generated, clients]
+    select: groups.each
+    imports:
+      types: typesIndex
+    symbols:
+      - (group.name.pascal.s)Client
+
+  views:
+    paths: [lib, generated, views]
+    select: groups.views.each
+    imports:
+      types: typesIndex
+      clients: groupClients
+    symbols:
+      - (view.name.pascal.s)View
+
+  generatedIndex:
+    paths: [lib, generated]
+    exports: [typesIndex, groupClients, views]
+```
+
+`View` is authored Flutter output vocabulary. The neutral selected object is `view`. The pack never selects neutral model, resource, service, frontend, UI, screen, page, component, widget, or entity roots.
 
 ## File examples
 
 ```text
 templates/
-├── lib/src/models/model.dart.jinja
-├── lib/src/api/api_client.dart.jinja
-├── lib/src/api/operation.dart.jinja
-├── lib/src/errors/api_error.dart.jinja
-├── lib/src/providers/api_provider.dart.jinja
-├── lib/flutter_api.dart.jinja
-├── pubspec.yaml.jinja
-├── README.md.jinja
-├── analysis_options.yaml
-├── .env.example
-└── assets/example.json
+├── {enums}/(schema.name.snake.s).dart.jinja
+├── {schemaTypes}/(schema.name.snake.s).dart.jinja
+├── {typesIndex}/types.dart.jinja
+├── {groupClients}/(group.name.snake.s)_client.dart.jinja
+├── {views}/(view.name.snake.s)_view.dart.jinja
+├── {generatedIndex}/generated.dart.jinja
+├── README.generated.md.jinja
+├── analysis_options.generated.yaml
+├── assets/example.json
+└── _partials/
+    ├── render-type.dart.jinja
+    ├── render-imports.dart.jinja
+    ├── render-view-trigger.dart.jinja
+    └── license.txt.jinja
 ```
 
-Dart exports are authored templates. Static files and assets copy by default. Provider/UI-specific files activate only through explicit profile/options.
+Selection-scoped templates fan out from known semantic contexts. Static assets copy unchanged.
+
+## Template syntax ownership
+
+The pack authors all Dart and Flutter text, including types, nullability, imports, exports, annotations, serialization, widgets, layouts, routes, forms, state integration, operation calls, access presentation, comments, literals, and formatting.
+
+The Dart target adapter validates output and candidate names and supplies URI and path facts only.
 
 ## Project configuration example
 
 ```yaml
 packs:
-  mobileApi:
-    use:
-      github: alidantech-org/codepotg-flutter-sdk-pack
-      ref: v2.0.0
-    source: backendApi
-    profile: existingApp
-    output:
-      root: apps/mobile/lib/generated_api
+  mobileIntegration:
+    source:
+      git: https://github.com/alidantech-org/codepotg-packs.git
+      ref: flutter-integration/v2.0.0
+      path: packs/flutter-integration
+    input: backendApi
+    output: apps/mobile
     bindings:
       transport:
+        from: riderescue_core/network/app_http_client.dart
         symbol: AppHttpClient
-        from:
-          package: riderescue_core
-          path: network/app_http_client.dart
-      authToken:
-        symbol: TokenProvider
-        from:
-          barrel: "package:riderescue_core/auth.dart"
 ```
 
-## Pack responsibilities
+No `use`, profile, global language, output-root object, or internal template list is required.
 
-- Flutter-specific file layout and integration profiles;
-- bindings for transport, auth, base URL, errors, logging, and optional provider layer;
-- typed Flutter/Dart dependencies, assets, and pubspec intent;
-- configure detection and manual setup;
-- optional approved pub get, build runner, format, analyze, and test actions.
+## Host integration
+
+Host Flutter and Dart dependencies, assets, and project changes use known ecosystem contribution contracts where implemented. Exact commands remain authored commands subject to approval.
 
 ## Boundaries
 
-Dart syntax belongs to the Dart adapter. Pubspec merging belongs to the ecosystem adapter. The pack does not hardcode one state-management library by default and does not parse old pack formats.
+- The pack consumes only known closed-kernel concepts and root-first selectors.
+- It cannot add frontend, UI, screen, widget, facet, selector, or arbitrary context concepts.
+- Every generated Dart and Flutter character is authored in pack files.
+- Materially different architecture choices become separate packs.
+- Dart target detection and path facts remain in the Dart adapter; it does not render syntax.
+- The pack does not parse OpenAPI, old pack formats, profiles, or `filePatterns`.
 
 See `../tasks/00-package-plan.md`.
