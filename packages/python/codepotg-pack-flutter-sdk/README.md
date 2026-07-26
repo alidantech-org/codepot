@@ -1,7 +1,11 @@
 # codepotg-pack-flutter-sdk
 
-Installable Flutter framework pack for CodepotG v2, built on the Dart language adapter rather than treating Flutter as a language.
+Installable Flutter application-integration template pack for CodepotG v2.
 
-The pack will generate a standalone Flutter-facing API package, a folder inside an application, or contributed files depending on project configuration. It owns Flutter conventions, package and asset files, bindings, dependency requirements, setup documentation, build-runner actions, and framework-specific templates.
+The pack consumes closed-kernel groups, schemas, operations, and declared views to generate one coherent Flutter-facing API and interaction layer inside a host Flutter application.
 
-See [`docs/tasks/00-package-plan.md`](docs/tasks/00-package-plan.md).
+Its templates, macros, partials, and static files author every Dart/Flutter character, including types, clients, imports, exports, widgets, navigation, state integration, annotations, and serialization. The Dart target adapter supplies target validation and URI/path facts only.
+
+Flutter remains framework pack policy rather than a language alias. Standalone Flutter packages, alternative state-management products, or materially different integrations should be separate packs rather than hidden profile/file-selection machinery.
+
+See [`docs/design/README.md`](docs/design/README.md) and [`docs/tasks/00-package-plan.md`](docs/tasks/00-package-plan.md).
