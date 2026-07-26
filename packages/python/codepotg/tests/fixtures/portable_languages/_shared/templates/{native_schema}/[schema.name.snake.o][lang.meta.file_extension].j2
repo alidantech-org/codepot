@@ -1,0 +1,38 @@
+{% if lang.name == "python" -%}
+from __future__ import annotations
+
+from pydantic import BaseModel, Field
+
+
+class {{ schema.name.pascal.o }}(BaseModel):
+{% if schema.fields %}{% for field in schema.fields %}    {{ field.name.snake.o }}: {{ field.lang.type }}{% if not field.lang.required %} = None{% endif %}
+{% endfor %}{% else %}    pass
+{% endif %}
+{% elif lang.name == "java" -%}
+package generated.models;
+
+public record {{ schema.name.pascal.o }}(
+{% for field in schema.fields %}    {{ field.lang.type }} {{ field.name.camel.o }}{% if not loop.last %},{% endif %}
+{% endfor %}) {}
+{% elif lang.name == "csharp" -%}
+namespace Generated.Models;
+
+public sealed record {{ schema.name.pascal.o }}
+{
+{% for field in schema.fields %}    public {{ field.lang.type }} {{ field.name.pascal.o }} { get; init; }{% if not field.lang.required %} = default;{% endif %}
+{% endfor %}}
+{% elif lang.name == "go" -%}
+package models
+
+type {{ schema.name.pascal.o }} struct {
+{% for field in schema.fields %}    {{ field.name.pascal.o }} {{ field.lang.type }} `json:"{{ field.api.id }}{% if not field.lang.required %},omitempty{% endif %}"`
+{% endfor %}}
+{% elif lang.name == "rust" -%}
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct {{ schema.name.pascal.o }} {
+{% for field in schema.fields %}    #[serde(rename = "{{ field.api.id }}")]
+    pub {{ field.name.snake.o }}: {{ field.lang.type }},
+{% endfor %}}
+{% endif -%}
