@@ -1,416 +1,300 @@
-# Complete linked project and pack example
+# Complete project, pack, and lock example
 
-This example shows how `codepotg.yaml`, `CodepotgPack.yaml`, and tokenized pack source paths cooperate without exposing pack internals to the project.
+This example links one project to three independently authored packs using the simplified filesystem-driven design.
 
-## Project repository
+## Project files
 
 ```text
-organiser/
+defytickets/
 ├── codepotg.yaml
-├── package.json
-├── pnpm-lock.yaml
-├── src/
-└── _/
+├── codepotg.lock.yaml
+├── openapi.yaml
+├── packs/
+│   └── typeorm-repositories/
+└── apps/
+    ├── backend/
+    └── mobile/
 ```
 
 ## Project `codepotg.yaml`
 
 ```yaml
 apiVersion: codepotg.dev/v2
-kind: Project
 
-metadata:
-  name: defytickets-organiser
-
-allow: true
+name: defytickets-generated
 
 sources:
-  backendApi:
+  api:
     adapter: openapi
-    path: ../backend/sdk/openapi/openapi.v1.yaml
-    options:
-      validation: strict
+    file: ./openapi.yaml
 
-toolchains:
-  node:
-    version: ">=20"
-    packageManager: pnpm
+executables:
+  packageManager: pnpm
+  flutter: flutter
+  dart: dart
 
 security:
-  commands:
-    project: allow
-    packs: requireApproval
-  dependencyLifecycleScripts: requireApproval
-
-commands:
-  before:
-    - id: generate-openapi-spec
-      name: Generate OpenAPI specification from backend contracts
-      cwd: ../backend
-      executable: pnpm
-      arguments: [exec, codepot-openapi, generate]
-  after: []
+  packCommands: approve
 
 packs:
-  serverSdk:
-    use:
-      github: alidantech-org/codepotg-next-actions-pack
-      ref: v2.0.0
-    source: backendApi
-    profile: modular
-    output:
-      root: ./_
-    clean:
-      - gen
+  backendRepositories:
+    source:
+      local: ./packs/typeorm-repositories
+    input: api
+    output: apps/backend
     options:
-      generateExamples: false
-      generateTests: true
+      repositoryStyle: class
     bindings:
-      common:
-        from:
-          barrel: "@modules/common"
-        symbols:
-          logger: AppLogger
-          tokenProvider: TokenProvider
-      serverClient:
-        symbol: ServerClient
-        from:
-          projectPath: src/lib/server-client.ts
-    overrides:
-      languages:
-        typescript:
-          imports:
-            strategy: alias
-            aliases:
-              "@": ./src
-              "@modules": ./src/modules
-    commands:
-      before: []
-      after:
-        - id: project-typecheck-generated
-          executable: pnpm
-          arguments: [typecheck:gen]
-          optional: true
-```
+      baseRepository:
+        from: src/database/base.repository.ts
+        symbol: BaseRepository
 
-The project knows only the source, pack/profile, output and clean scope, public options, public bindings, permitted overrides, and project-owned commands. It does not list internal templates, output filenames, path recipes, or one global language.
+  typescriptSdk:
+    source:
+      git: https://github.com/alidantech-org/codepotg-packs.git
+      ref: typescript-sdk/v2.4.1
+      path: packs/typescript-sdk
+    input: api
+    output: packages/typescript-sdk
+    options:
+      clientName: DefyTicketsClient
 
-## Pack repository
-
-The path tokens are real pack source names:
-
-```text
-codepotg-next-actions-pack/
-├── CodepotgPack.yaml
-├── templates/
-│   ├── {models}/
-│   │   └── [model.name.kebab.s].model.ts.jinja
-│   ├── {actions}/
-│   │   └── [operation.name.kebab.o].action.ts.jinja
-│   ├── {generatedRoot}/
-│   │   ├── index.ts.jinja
-│   │   ├── sdk.ts.jinja
-│   │   ├── README.md.jinja
-│   │   ├── eslint.config.mjs
-│   │   └── .gitignore
-│   └── _partials/
-│       └── license.txt.jinja
-└── docs/
-    ├── setup.md
-    └── bindings/
-        ├── logger.md
-        ├── token-provider.md
-        └── server-client.md
-```
-
-## Pack `CodepotgPack.yaml`
-
-```yaml
-apiVersion: codepotg.dev/v2
-kind: TemplatePack
-
-metadata:
-  id: alidantech/next-actions
-  version: 2.0.0
-  description: Generates typed server actions and supporting SDK files.
-  documentation: docs/setup.md
-
-compatibility:
-  codepotg: ">=2.0.0 <3.0.0"
-  ir: ">=2.0 <3.0"
-
-integration:
-  createsProject: false
-  ownsFolder: false
-  contributesFiles: true
-  requiresDependencies: true
-  requiresBindings: true
-  runnableAlone: false
-  manifestMode: contribute
-
-content:
-  root: templates
-  ignore:
-    - "_authoring/**"
-    - "**/*.draft"
-
-writePolicy:
-  defaultMode: managed
-  managedRoots: [gen]
-
-options:
-  generateExamples:
-    type: boolean
-    default: false
-    description: Generate example request usage.
-  generateTests:
-    type: boolean
-    default: true
-    description: Generate representative tests.
-
-languages:
-  typescript:
-    naming:
-      types: pascalCase
-      values: camelCase
-    imports:
-      strategy: relative
-      omitExtensions: true
-      typeImports: separate
-
-  markdown:
-    formatting:
-      lineWidth: 100
-
-templateEngines:
-  jinja:
-    undefinedBehavior: error
-    whitespace:
-      trimBlocks: true
-      leftStripBlocks: true
-      keepTrailingNewline: true
-
-bindings:
-  logger:
-    kind: import
-    target: typescript
-    required: false
-    title: Application logger
-    acceptedSources: [module, projectPath, barrel]
-    documentation: docs/bindings/logger.md
-    whenMissing: omit
-
-  tokenProvider:
-    kind: import
-    target: typescript
-    required: false
-    title: Authentication token provider
-    acceptedSources: [module, projectPath, barrel]
-    documentation: docs/bindings/token-provider.md
-    whenMissing: omit
-
-  serverClient:
-    kind: import
-    target: typescript
-    required: true
-    title: Project server client
-    acceptedSources: [module, projectPath, barrel]
-    documentation: docs/bindings/server-client.md
-    whenMissing: prompt
-
-selections:
-  models:
-    from: schemas.models
-    as: model
-    orderBy: name
-
-  operations:
-    from: operations
-    as: operation
-    orderBy: operationId
-
-  completeSdk:
-    scope: aggregate
-    collect:
-      models:
-        from: schemas.models
-        orderBy: name
-      operations:
-        from: operations
-        orderBy: operationId
-
-paths:
-  models:
-    selection:
-      use: models
-    parts:
-      - gen
-      - models
-
-  actions:
-    selection:
-      use: operations
-    parts:
-      - gen
-      - actions
-
-  generatedRoot:
-    parts:
-      - gen
-
-filePatterns:
-  "_partials/**/*.jinja":
-    role: partial
-
-  "**/*.spec.ts.jinja":
-    profiles: [tests]
-
-files:
-  "{models}/[model.name.kebab.s].model.ts.jinja":
-    id: model
-    role: template
-    provides:
-      - model.semantic
-
-  "{actions}/[operation.name.kebab.o].action.ts.jinja":
-    id: action
-    role: template
-    uses:
-      bindings: [logger, tokenProvider, serverClient]
-    provides:
-      - action.operation
-
-  "{generatedRoot}/index.ts.jinja":
-    id: index
-    role: barrel
-    selection:
-      scope: aggregate
-    exports:
-      include: [model, action]
-
-  "{generatedRoot}/sdk.ts.jinja":
-    id: completeSdk
-    role: template
-    selection:
-      use: completeSdk
-    uses:
-      bindings: [logger, tokenProvider, serverClient]
-
-  "{generatedRoot}/README.md.jinja":
-    id: generatedReadme
-    role: template
-    selection:
-      scope: project
-
-  "_partials/license.txt.jinja":
-    id: licenseHeader
-    role: partial
-    target: plainText
-
-  "{generatedRoot}/eslint.config.mjs":
-    id: eslintConfig
-    role: static
-
-  "{generatedRoot}/.gitignore":
-    id: generatedIgnore
-    role: static
-
-profiles:
-  modular:
-    enable: [model, action, index, generatedReadme, eslintConfig, generatedIgnore]
-
-  monolithic:
-    enable: [completeSdk, generatedReadme, eslintConfig, generatedIgnore]
-
-dependencies:
-  node:
-    runtime:
-      zod: "^4.0.0"
-    development:
-      eslint: "^9.0.0"
-      prettier: "^3.0.0"
-    packageManagers:
-      supported: [npm, pnpm, yarn]
-
-setup:
-  summary: Configure project client imports and optional logging/authentication integrations.
-  documentation: docs/setup.md
-  questions:
-    - binding: serverClient
-      prompt: Select the project server client export.
-    - binding: logger
-      prompt: Select an application logger or omit logging.
-    - binding: tokenProvider
-      prompt: Select a token provider or omit authenticated requests.
-  actions:
-    after:
-      - id: ensure-dependencies
-        action: node.dependencies.ensure
-        approval: required
-  manualSteps:
-    - id: expose-server-client
-      title: Ensure the selected server client is available to generated actions.
-      documentation: docs/bindings/server-client.md
+  flutterSdk:
+    source:
+      git: https://github.com/alidantech-org/codepotg-pack-flutter-sdk.git
+      ref: v1.4.2
+    input: api
+    output: apps/mobile
+    options:
+      clientName: DefyTicketsClient
 
 commands:
   after:
-    - id: remove-unused-imports
-      action: node.eslint.fix
-      paths: ["{output.root}/gen/**/*.{ts,tsx}"]
+    formatWorkspace:
+      executable: packageManager
+      arguments: [exec, prettier, --write, packages/typescript-sdk]
       optional: true
-
-    - id: format-generated
-      action: node.format
-      paths: ["{output.root}/gen"]
-      optional: true
-
-overridePolicy:
-  languages:
-    typescript:
-      imports:
-        strategy: allow
-        aliases: allow
-        omitExtensions: allow
-  templateEngines:
-    jinja:
-      whitespace:
-        trimBlocks: allow
-        leftStripBlocks: allow
 ```
 
-## Destination examples
+The project declares each pack source directly. `input` references semantic data; `output` is the pack emission root.
 
-Given selected records named `Order`, `Orders`, and `ListOrders`, the source path rules may produce:
+## TypeORM pack manifest
+
+```yaml
+apiVersion: codepotg.dev/v2
+
+id: alidantech/typeorm-repositories
+version: 1.0.0
+description: Generates TypeORM entities and repositories.
+
+requires:
+  codepotg: ">=2.0 <3.0"
+
+options:
+  repositoryStyle:
+    choices: [class, functions]
+    default: class
+
+bindings:
+  baseRepository:
+    required: true
+    description: Base class imported by generated repositories.
+
+selections:
+  entities:
+    paths: [src, entities]
+    select: entities.each
+    symbols: [(entity.name.pascal.s)]
+
+  repositories:
+    paths: [src, repositories]
+    select: entities.each
+    imports:
+      entities: entities
+    bindings: [baseRepository]
+    symbols: [(entity.name.pascal.s)Repository]
+
+  entitiesIndex:
+    paths: [src, entities]
+    exports: [entities]
+
+  repositoriesIndex:
+    paths: [src, repositories]
+    exports: [repositories]
+
+  rootIndex:
+    paths: [src]
+    exports: [entitiesIndex, repositoriesIndex]
+
+executables:
+  packageManager: pnpm
+
+commands:
+  after:
+    install:
+      executable: packageManager
+      arguments: [add, typeorm@^0.3.0, reflect-metadata@^0.2.0]
+```
+
+Pack filesystem:
 
 ```text
-{models}/[model.name.kebab.s].model.ts.jinja
-→ gen/models/order.model.ts
-
-{actions}/[operation.name.kebab.o].action.ts.jinja
-→ gen/actions/list-orders.action.ts
-
-{generatedRoot}/index.ts.jinja
-→ gen/index.ts
-
-{generatedRoot}/eslint.config.mjs
-→ gen/eslint.config.mjs
+templates/
+├── {entities}/
+│   └── (entity.name.kebab.s).entity.ts.jinja
+├── {repositories}/
+│   └── (entity.name.kebab.s).repository.ts.jinja
+├── {entitiesIndex}/
+│   └── index.ts.jinja
+├── {repositoriesIndex}/
+│   └── index.ts.jinja
+├── {rootIndex}/
+│   └── index.ts.jinja
+├── _partials/
+│   └── license.txt.jinja
+├── README.md.jinja
+└── .gitignore.jinja
 ```
 
-The model name is deliberately singularized through `.s`; the operation name keeps its original lexical number through `.o`.
+For `OrderItem`, the repository template emits relative to the pack output root:
 
-## Planning summary
+```text
+src/repositories/order-item.repository.ts
+```
 
-1. `serverSdk` resolves the pack and semantic source.
-2. The selected profile activates source descriptors.
-3. Engine and target adapters are inferred from each source filename.
-4. Named path recipes establish selections and output parts.
-5. Dynamic name tokens apply explicit case and original/singular/plural projections.
-6. Project bindings satisfy logical pack binding IDs.
-7. The TypeScript adapter plans imports but does not plan output folders.
-8. Dependencies become typed `package.json` contributions.
-9. Commands/actions are inspected and approved according to policy.
-10. Every output and graph edge is validated before rendering.
-11. Files stage beneath the project pack-instance root `./_`.
-12. The complete transaction commits only after validation succeeds.
+The `repositories` import registry explicitly says generated entity dependencies come from the `entities` selection. `repositoriesIndex` receives the emitted repository paths and symbols and writes its own export syntax.
 
-The project user never needs to know the pack's internal source paths, but pack authors have full explicit control over path composition.
+## TypeScript SDK pack summary
+
+```yaml
+selections:
+  enums:
+    paths: [src, types, enums]
+    select: schemas.enums.each
+    symbols: [(enum.name.pascal.s)]
+
+  dtos:
+    paths: [src, types, dtos]
+    select: schemas.dtos.each
+    imports:
+      enums: enums
+    symbols: [(dto.name.pascal.s)]
+
+  models:
+    paths: [src, types, models]
+    select: schemas.models.each
+    imports:
+      enums: enums
+    symbols: [(model.name.pascal.s)]
+
+  typesIndex:
+    paths: [src, types]
+    exports: [enums, dtos, models]
+
+  services:
+    paths: [src, services]
+    select: resources.each
+    imports:
+      types: typesIndex
+    symbols: [(resource.name.pascal.s)Service]
+
+  servicesIndex:
+    paths: [src, services]
+    exports: [services]
+
+  client:
+    paths: [src]
+    imports:
+      services: servicesIndex
+    symbols: [(option.clientName)]
+
+  rootIndex:
+    paths: [src]
+    exports: [typesIndex, servicesIndex, client]
+```
+
+The service selection imports required symbols through one types barrel when possible. The resolver uses declared symbols and scope; the TypeScript adapter produces the final import statements.
+
+## Flutter SDK pack summary
+
+```yaml
+selections:
+  enums:
+    paths: [lib, src, models]
+    select: schemas.enums.each
+    symbols: [(enum.name.pascal.s)]
+
+  models:
+    paths: [lib, src, models]
+    select: schemas.models.each
+    imports:
+      enums: enums
+    symbols: [(model.name.pascal.s)]
+
+  modelsIndex:
+    paths: [lib, src, models]
+    exports: [enums, models]
+
+  services:
+    paths: [lib, src, services]
+    select: resources.each
+    imports:
+      models: modelsIndex
+    symbols: [(resource.name.pascal.s)Service]
+
+  servicesIndex:
+    paths: [lib, src, services]
+    exports: [services]
+
+  client:
+    paths: [lib, src]
+    imports:
+      services: servicesIndex
+    symbols: [(option.clientName)]
+
+  packageIndex:
+    paths: [lib]
+    exports: [modelsIndex, servicesIndex, client]
+```
+
+Flutter uses `lib` because all pack `paths` values are relative to the configured pack output root.
+
+## Generated lock excerpt
+
+```yaml
+apiVersion: codepotg.dev/lock/v1
+
+project: defytickets-generated
+
+packs:
+  backendRepositories:
+    source:
+      local: ./packs/typeorm-repositories
+    pack:
+      id: alidantech/typeorm-repositories
+      version: 1.0.0
+    contentDigest: sha256:2222222222222222222222222222222222222222222222222222222222222222
+
+  typescriptSdk:
+    source:
+      git: https://github.com/alidantech-org/codepotg-packs.git
+      ref: typescript-sdk/v2.4.1
+      commit: 53e69ea110cf7739d54782d776be63ab46dfe243
+      path: packs/typescript-sdk
+    pack:
+      id: alidantech/typescript-sdk
+      version: 2.4.1
+    contentDigest: sha256:4444444444444444444444444444444444444444444444444444444444444444
+```
+
+The lock keeps the requested Git ref and exact resolved commit. It stores no credentials.
+
+## Full standalone example files
+
+- [`../examples/project/codepotg.local.yaml`](../examples/project/codepotg.local.yaml)
+- [`../examples/project/codepotg.git.yaml`](../examples/project/codepotg.git.yaml)
+- [`../examples/project/codepotg.mixed.yaml`](../examples/project/codepotg.mixed.yaml)
+- [`../examples/project/codepotg.lock.yaml`](../examples/project/codepotg.lock.yaml)
+- [`../examples/packs/typeorm-repositories.CodepotgPack.yaml`](../examples/packs/typeorm-repositories.CodepotgPack.yaml)
+- [`../examples/packs/typescript-sdk.CodepotgPack.yaml`](../examples/packs/typescript-sdk.CodepotgPack.yaml)
+- [`../examples/packs/flutter-sdk.CodepotgPack.yaml`](../examples/packs/flutter-sdk.CodepotgPack.yaml)
