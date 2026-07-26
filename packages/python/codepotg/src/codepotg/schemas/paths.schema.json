@@ -67,12 +67,19 @@
       "type": "string",
       "minLength": 1
     },
+    "dynamicPathPart": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "prefixItems": [
+        {"$ref": "#/$defs/nonEmptyString"}
+      ],
+      "items": false
+    },
     "pathPart": {
       "oneOf": [
-        {"type": "string"},
-        {"type": "number"},
-        {"type": "integer"},
-        {"type": "boolean"}
+        {"$ref": "#/$defs/nonEmptyString"},
+        {"$ref": "#/$defs/dynamicPathPart"}
       ]
     },
     "pathParts": {
