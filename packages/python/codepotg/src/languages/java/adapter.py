@@ -23,16 +23,21 @@ PROFILE = PortableLanguageProfile(
     purpose="Java API client and service contracts",
     framework="jvm",
     package_suffix="client",
+    package_dependencies=(
+        "com.fasterxml.jackson.core:jackson-databind",
+        "com.fasterxml.jackson.datatype:jackson-datatype-jsr310",
+    ),
+    package_dev_dependencies=("org.junit.jupiter:junit-jupiter",),
     diagnostics=(
-        "Run `./gradlew build` or the configured Maven build after generation.",
-        "Run the project formatter before committing generated Java sources.",
+        "Run `./mvnw test` or `./gradlew test` in the generated package.",
+        "Run the configured Java formatter before committing generated sources.",
     ),
 )
 
 
 @language_adapter(name=PROFILE.name, aliases=PROFILE.aliases, template_name="java")
 class JavaLanguageAdapter:
-    """Expose the complete typed contract to Java templates."""
+    """Build complete Java generation contracts."""
 
     name: str
     aliases: tuple[str, ...]
