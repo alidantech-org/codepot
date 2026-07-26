@@ -2,31 +2,43 @@
 
 ## Source adapters
 
-A source adapter converts one declared semantic input into the neutral IR.
+A source adapter converts one declared semantic input into the closed CodepotG kernel.
 
 It owns:
 
 - source option schema;
 - source loading through controlled ports;
-- syntax parsing;
-- source validation;
-- reference resolution;
-- direct normalization to neutral IR;
+- syntax parsing and source-format validation;
+- source-format reference resolution;
+- deterministic mapping into known groups, schemas, operations, views, storage mappings, policies, events, workflows, relationships, and known facets;
 - provenance and source diagnostics;
 - source digest contribution.
 
-It does not own templates, target languages, output paths, writing, commands, or CLI behavior.
+It does not own templates, target languages, output paths, writing, commands, CLI behavior, or semantic-kernel evolution.
 
-The initial OpenAPI adapter must parse once, resolve references once, and produce the canonical IR directly. It must not expose OpenAPI-specific objects to language adapters or templates except through explicitly typed provenance/extensions approved by the IR contract.
+A source adapter cannot:
+
+- add semantic node kinds, relations, schema kinds, or roles;
+- add facets or attachment locations;
+- add selectors, expression roots, template-context properties, or kernel validators;
+- expose generic graph/fact bags as a substitute for typed kernel contracts;
+- leak parser/library/resolver objects into core or templates;
+- silently interpret unknown source metadata as supported application semantics.
+
+Unknown source metadata may be preserved only through documented bounded immutable `extensions`, `raw`, and provenance escape hatches. Preservation does not make the metadata a supported facet or semantic object.
+
+The OpenAPI adapter must parse once, resolve references once, decode supported OpenAPI and typed/versioned Codepot `x-codegen` metadata, and produce the canonical kernel directly. It must not expose OpenAPI-specific objects to packs/templates except through approved provenance/raw/extension values.
 
 Required source-adapter conformance tests:
 
-- deterministic IR;
+- deterministic immutable kernel output and digest;
 - source-span diagnostics;
-- bounded reference resolution;
+- bounded controlled reference resolution;
 - cancellation;
 - no mutable global parser state;
-- no source-specific types escaping into core domain APIs;
+- no source-specific types escaping into public domain APIs;
+- no semantic/facet/selector/context registration;
+- bounded extension/raw behavior;
 - source digest stability;
 - in-memory and filesystem source loading.
 
@@ -38,7 +50,6 @@ Initial providers:
 
 - local directory;
 - generic Git;
-- GitHub shorthand resolved through Git;
 - installed Python pack distribution where supported.
 
 A resolved pack includes:
@@ -52,9 +63,9 @@ A resolved pack includes:
 - trust metadata;
 - local snapshot root.
 
-The provider does not parse `CodepotgPack.yaml`; it supplies the snapshot to the typed pack loader.
+The provider does not parse `CodepotgPack.yaml`, semantic sources, or templates. It supplies the snapshot to the typed pack loader.
 
-Git providers use the user's existing Git authentication and credential helpers. Tokens are never stored in `codepotg.yaml` or `codepotg.lock`.
+Git providers use the user's existing Git authentication and credential helpers. Tokens are never stored in `codepotg.yaml` or `codepotg.lock.yaml`.
 
 Required provider tests:
 
@@ -69,17 +80,17 @@ Required provider tests:
 
 ## Ecosystem adapters
 
-An ecosystem adapter understands project manifests, dependency intent, package-manager capabilities, and typed setup actions for one ecosystem.
+An ecosystem adapter understands known project manifests, package-manager/toolchain capabilities, and typed project contribution/setup actions for one ecosystem.
 
 Examples:
 
 - Node: package.json, workspaces, npm/pnpm/Yarn, scripts, dependencies, exports;
 - Dart: pubspec.yaml, Dart/Flutter SDK constraints, pub dependencies, assets, workspace registration;
-- future Python, Cargo, Gradle, and Maven adapters.
+- future Python, Cargo, Gradle, and Maven project adapters.
 
-It owns:
+It may own:
 
-- typed dependency schema;
+- typed project contribution schemas;
 - manifest detection and decoding;
 - owned versus contributed manifest updates;
 - toolchain/package-manager capability metadata;
@@ -87,20 +98,23 @@ It owns:
 - typed action resolution;
 - conflict diagnostics.
 
-It does not execute commands directly; it produces command/action plans consumed through the command executor and security policy.
+It does not execute commands directly; it produces command/action plans consumed through the executor and security policy.
+
+It also cannot add application semantic objects/facets/selectors or author generated application syntax. Package-manager command arguments remain exact project/pack-authored commands unless a separately approved project-contribution contract explicitly owns a typed change.
 
 Required ecosystem tests:
 
 - manifest round trips;
 - minimal-diff contribution behavior where practical;
-- dependency conflict handling;
-- package-manager detection precedence;
+- conflict handling;
+- package-manager/toolchain detection precedence;
 - capability intersection;
 - no silent toolchain switching;
 - owned versus contributed manifests;
 - action resolution and command capability declarations;
-- lifecycle-script policy.
+- lifecycle-script policy;
+- no semantic-kernel or generated-syntax ownership.
 
 ## Port boundaries
 
-All three adapter categories use public immutable request/result types. They must not import CLI modules, old generator modules, or concrete runtime singletons.
+All adapter categories use public immutable request/result types. They must not import CLI modules, old generator modules, private semantic builders, or concrete runtime singletons.
