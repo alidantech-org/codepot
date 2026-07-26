@@ -23,16 +23,18 @@ PROFILE = PortableLanguageProfile(
     purpose="Python API client and service contracts",
     framework="python-standard-library",
     package_suffix="client",
+    package_dependencies=("httpx>=0.27", "pydantic>=2.7"),
+    package_dev_dependencies=("pytest>=8", "ruff>=0.5"),
     diagnostics=(
-        "Run `python -m pip install -e .` when package metadata is emitted.",
-        "Run `python -m ruff format .` after generation when Ruff is available.",
+        "Run `python -m pip install -e .` in the generated package.",
+        "Run `python -m pytest` and `python -m ruff check .` after generation.",
     ),
 )
 
 
 @language_adapter(name=PROFILE.name, aliases=PROFILE.aliases, template_name="python")
 class PythonLanguageAdapter:
-    """Expose the complete typed contract to Python templates."""
+    """Build complete Python generation contracts."""
 
     name: str
     aliases: tuple[str, ...]
