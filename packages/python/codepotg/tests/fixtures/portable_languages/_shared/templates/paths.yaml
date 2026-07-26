@@ -9,16 +9,22 @@ write_policy:
     - schemas
     - operations
     - resources
+    - package
+    - native
   protected_roots:
     - contract
     - schemas
     - operations
     - resources
+    - package
+    - native
   clean_roots:
     - contract
     - schemas
     - operations
     - resources
+    - package
+    - native
 
 folders:
   root:
@@ -26,16 +32,35 @@ folders:
     parts:
       - contract
 
+  package:
+    mode: once
+    parts:
+      - package
+
   schema:
     select: schemas.all
     as: schema
     parts:
       - schemas
 
+  native_schema:
+    select: schemas.emit_models
+    as: schema
+    parts:
+      - native
+      - schemas
+
   operation:
     select: operations
     as: operation
     parts:
+      - operations
+
+  native_operation:
+    select: operations
+    as: operation
+    parts:
+      - native
       - operations
 
   resource:
