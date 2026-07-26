@@ -1,7 +1,7 @@
 """Typed target-language metadata shared by production adapters.
 
 The adapters remain language-neutral at inference time. This module translates the
-already-normalized schema facts into target spellings that templates can consume.
+already-normalized schema facts into target spellings and package layouts.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from typing import Any, Mapping
 
 @dataclass(frozen=True)
 class PortableTypeSystem:
-    """Deterministic target type, package, and file conventions."""
+    """Deterministic target type, package, file, and layout conventions."""
 
     language: str
     file_extension: str
@@ -27,6 +27,9 @@ class PortableTypeSystem:
     unknown_type: str = "object"
     package_file: str = ""
     source_root: str = "src"
+    package_root: tuple[str, ...] = ("package",)
+    model_root: tuple[str, ...] = ("package", "src", "models")
+    client_root: tuple[str, ...] = ("package", "src", "client")
 
     def resolve(
         self,
@@ -91,6 +94,10 @@ PYTHON_TYPES = PortableTypeSystem(
     nullable_template="{value} | None",
     unknown_type="object",
     package_file="pyproject.toml",
+    source_root="src",
+    package_root=("package",),
+    model_root=("package", "src", "portable_client", "models"),
+    client_root=("package", "src", "portable_client", "client"),
 )
 
 JAVA_TYPES = PortableTypeSystem(
@@ -126,6 +133,9 @@ JAVA_TYPES = PortableTypeSystem(
     unknown_type="Object",
     package_file="pom.xml",
     source_root="src/main/java",
+    package_root=("package",),
+    model_root=("package", "src", "main", "java", "generated", "models"),
+    client_root=("package", "src", "main", "java", "generated", "client"),
 )
 
 CSHARP_TYPES = PortableTypeSystem(
@@ -160,6 +170,10 @@ CSHARP_TYPES = PortableTypeSystem(
     nullable_template="{value}?",
     unknown_type="object",
     package_file="GeneratedClient.csproj",
+    source_root=".",
+    package_root=("package",),
+    model_root=("package", "Models"),
+    client_root=("package", "Client"),
 )
 
 GO_TYPES = PortableTypeSystem(
@@ -194,6 +208,10 @@ GO_TYPES = PortableTypeSystem(
     nullable_template="*{value}",
     unknown_type="any",
     package_file="go.mod",
+    source_root=".",
+    package_root=("package",),
+    model_root=("package", "models"),
+    client_root=("package", "client"),
 )
 
 RUST_TYPES = PortableTypeSystem(
@@ -228,6 +246,10 @@ RUST_TYPES = PortableTypeSystem(
     nullable_template="Option<{value}>",
     unknown_type="serde_json::Value",
     package_file="Cargo.toml",
+    source_root="src",
+    package_root=("package",),
+    model_root=("package", "src", "models"),
+    client_root=("package", "src", "client"),
 )
 
 TYPE_SYSTEMS: Mapping[str, PortableTypeSystem] = MappingProxyType(
