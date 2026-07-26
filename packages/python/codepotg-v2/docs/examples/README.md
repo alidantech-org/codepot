@@ -1,13 +1,13 @@
 # CodepotG v2 configuration examples
 
-These files are planning fixtures for the approved human-oriented configuration design. Runtime implementation has not started.
+These files are planning fixtures for the approved closed-kernel and filesystem-driven configuration design. Runtime implementation has not started.
 
 ## Project examples
 
 - [`project/codepotg.local.yaml`](project/codepotg.local.yaml) — one local pack during pack development.
 - [`project/codepotg.git.yaml`](project/codepotg.git.yaml) — one pack from a Git monorepo using URL, ref, and subdirectory.
 - [`project/codepotg.mixed.yaml`](project/codepotg.mixed.yaml) — local TypeORM pack plus Git-hosted TypeScript and Flutter packs.
-- [`project/codepotg.lock.yaml`](project/codepotg.lock.yaml) — generated lock for the mixed project, including exact commits and digests.
+- [`project/codepotg.lock.yaml`](project/codepotg.lock.yaml) — generated dependency lock for the mixed project, including exact commits and digests.
 
 ## Pack examples
 
@@ -21,9 +21,9 @@ These files are planning fixtures for the approved human-oriented configuration 
 
 ```text
 templates/
-├── {entities}/(entity.name.kebab.s).entity.ts.jinja
-├── {repositories}/(entity.name.kebab.s).repository.ts.jinja
-├── {entitiesIndex}/index.ts.jinja
+├── {persistenceTypes}/(mapping.schema.name.kebab.s).entity.ts.jinja
+├── {repositories}/(mapping.schema.name.kebab.s).repository.ts.jinja
+├── {persistenceIndex}/index.ts.jinja
 ├── {repositoriesIndex}/index.ts.jinja
 ├── {rootIndex}/index.ts.jinja
 ├── _partials/license.txt.jinja
@@ -31,48 +31,56 @@ templates/
 └── .gitignore.jinja
 ```
 
+`Entity` is template-authored TypeORM vocabulary. The selected neutral context is `groups.storage.mappings.each` and the template receives `mapping` plus its related schema/storage facts.
+
 ### TypeScript SDK
 
 ```text
 templates/
-├── {enums}/(enum.name.kebab.s).ts.jinja
-├── {dtos}/(dto.name.kebab.s).dto.ts.jinja
-├── {models}/(model.name.kebab.s).model.ts.jinja
+├── {enums}/(schema.name.kebab.s).ts.jinja
+├── {schemaTypes}/(schema.name.kebab.s).ts.jinja
 ├── {typesIndex}/index.ts.jinja
-├── {services}/(resource.name.kebab.s).service.ts.jinja
-├── {servicesIndex}/index.ts.jinja
+├── {groupClients}/(group.name.kebab.s).client.ts.jinja
+├── {clientsIndex}/index.ts.jinja
 ├── {client}/(option.clientName).ts.jinja
 ├── {rootIndex}/index.ts.jinja
 ├── package.json.jinja
 └── tsconfig.json
 ```
 
+The group-client template iterates `group.operations` and inspects operation inputs, outputs, failures, effects, and known facets. Every TypeScript type, import, export, literal, comment, and client method is authored by the templates/macros.
+
 ### Flutter SDK
 
 ```text
 templates/
-├── {enums}/(enum.name.snake.s).dart.jinja
-├── {models}/(model.name.snake.s).dart.jinja
-├── {modelsIndex}/models.dart.jinja
-├── {services}/(resource.name.snake.s)_service.dart.jinja
-├── {servicesIndex}/services.dart.jinja
+├── {enums}/(schema.name.snake.s).dart.jinja
+├── {schemaTypes}/(schema.name.snake.s).dart.jinja
+├── {typesIndex}/types.dart.jinja
+├── {groupClients}/(group.name.snake.s)_client.dart.jinja
+├── {clientsIndex}/clients.dart.jinja
 ├── {client}/(option.clientName.snake.o).dart.jinja
 ├── {packageIndex}/defytickets_sdk.dart.jinja
 ├── pubspec.yaml.jinja
 └── analysis_options.yaml
 ```
 
+Flutter/Dart syntax remains entirely pack-authored. The target adapter only detects/validates `.dart` output and calculates documented target-aware module/path facts.
+
 ## Design rules demonstrated
 
 - pack instances carry direct `source.local` or `source.git` configuration;
 - semantic source references use `input`;
 - output paths are relative to each pack instance's `output` root;
+- packs consume the closed semantic kernel and cannot add facets/selectors/context values;
+- preferred selectors start from `groups` and traverse outer-to-inner;
 - only `{selectionKey}` folders require manifest registration;
-- `(expression)` resolves names and `((value))` emits literal parentheses;
+- `(expression)` resolves names using `x.name.{casing}.{number}` and `((value))` emits literal parentheses;
 - ordinary templates/static files are discovered automatically;
 - imports and exports reference selection keys directly;
-- symbols are explicit;
+- semantic provider matching, symbols, and module/path facts are planned before rendering;
+- templates author all import/export and target syntax;
 - command arguments are exact opaque values authored by the pack/project;
-- the lock stores immutable resolution and no credentials.
+- the dependency lock stores immutable input/behavior resolution and no credentials or generated-output hashes.
 
-The YAML files were parsed successfully during the documentation update. Future schema/conformance tests must load these exact fixtures.
+The YAML files are documentation fixtures. Future schema/conformance tests must parse these exact files and verify their selectors against the closed kernel.
