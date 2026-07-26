@@ -61,7 +61,7 @@ Homepage = "https://github.com/alidantech-org/codepot"
 Documentation = "https://github.com/alidantech-org/codepot/tree/main/packages/python/codepotg/docs"
 Repository = "https://github.com/alidantech-org/codepot"
 Issues = "https://github.com/alidantech-org/codepot/issues"
-Changelog = "https://github.com/alidantech-org/codepot/blob/main/packages/python/codepotg/docs/CHANGELOG.md"
+Changelog = "https://github.com/alidantech-org/codepot/blob/main/packages/python/codepotg/CHANGELOG.md"
 
 [project.scripts]
 codepotg = "codepotg.cli.main:app"
