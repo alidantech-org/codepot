@@ -4,13 +4,20 @@ This folder is the implementation control plane for the clean rewrite. Design do
 
 ## Mandatory rules
 
-- Read `../00-governance/00-approved-architecture.md` before claiming work.
+- Read `../00-governance/00-approved-architecture.md` and `../00-governance/04-closed-semantic-kernel.md` before claiming work.
 - Read `../02-configuration/02-pack-manifest-specification.md` before changing pack configuration.
-- Read `../03-generation/00-path-expressions-and-name-tokens.md` before changing discovery, selectors, paths, names, imports/exports, or official packs.
+- Read `../03-generation/00-path-expressions-and-name-tokens.md` before changing discovery, selectors, paths, names, generated dependencies, or official packs.
 - Read `../05-distribution/02-git-github-locking-and-trust.md` before changing local/Git providers or locks.
 - V2 tasks must not add old `tasks`, project-level `language`, `templateDir`, `paths.yaml`, `registries`, `use`, old runtime imports, or fallback execution.
-- Do not add `fileName`, `filePath`, `directory`, or equivalent output conveniences to semantic IR records.
-- Do not restore root pack `paths`, `files`, or `filePatterns`; ordinary content is filesystem-discovered and explicit emissions are registered under `selections`.
+- The semantic kernel is closed. Adapters, packs, plugins, and templates cannot add semantic objects, relations, facets, selectors, expression roots, context properties, or validation rules for invented concepts.
+- Do not use `resource`, `model`, `entity`, `frontend`, or `ui` as neutral v2 kernel/selector/context roots.
+- Selectors are fixed, versioned, root-first, and normally begin with `groups` or an active `group` context. Do not add arbitrary query/traversal DSLs.
+- Every named semantic projection follows `x.name.{casing}.{number}`.
+- Do not add `fileName`, `filePath`, `directory`, language class-name, or similar output conveniences to semantic IR.
+- Templates, macros, partials, and static files own every emitted character. Language adapters must not render types, literals, imports, exports, comments, validators, decorators, formatting, or framework code.
+- Do not restore root pack `paths`, explicit `files`, `filePatterns`, or profile machinery; ordinary content is filesystem-discovered and explicit emissions are registered under `selections`.
+- Generated dependencies are declared through selection keys/symbols and resolved through semantic identity/scope. Templates author dependency syntax.
+- Generated output hashes/state belong to ownership/generation state, not `codepotg.lock.yaml`.
 - Claim implementation work in `PARALLEL_WORK.md` before editing implementation files.
 - Use task IDs in commits and progress notes.
 - One active owner per task.
@@ -44,13 +51,13 @@ Every implementation task identifies:
 
 - `00-master-plan.md` — staged program-level plan.
 - `01-core-foundation-and-api.md` — packages, diagnostics, events, runtime, and Python API.
-- `02-configuration-and-pack-contracts.md` — simplified project/pack schemas, executable/command contracts, selections, imports/exports, and bindings.
-- `03-ir-selection-and-planning.md` — neutral IR, fixed selectors, planning graphs, imports, readiness, and artifacts.
-- `04-plugin-system-and-conformance.md` — plugin protocols, discovery, registries for installed plugins, and shared suites.
-- `05-writers-cache-and-security.md` — transactional writers, cache, exact commands, approvals, and manifests.
+- `02-configuration-and-pack-contracts.md` — simplified project/pack schemas, root-first selections, dependency descriptors, bindings, and exact commands.
+- `03-ir-selection-and-planning.md` — closed semantic kernel, known facets, workflows/compensation, fixed selectors, artifact/impact graphs, explain, and conservative incremental generation.
+- `04-plugin-system-and-conformance.md` — adapter protocols, discovery, runtime registries, closed-kernel enforcement, and non-rendering target adapter suites.
+- `05-writers-cache-and-security.md` — transactional writers, ownership/generation state, cache, exact commands, approvals, and manifests.
 - `06-configure-cli-git-and-distribution.md` — configure workflow, direct local/Git pack sources, `codepotg.lock.yaml`, CLI, and distributions.
-- `07-testing-packs-and-release.md` — official adapters/packs, fixtures, re-authoring, quality gates, and release.
-- `08-path-expressions-and-naming.md` — semantic names, `(expression)`, `{selectionKey}`, `{root}`, filesystem compilation, and path conformance.
+- `07-testing-packs-and-release.md` — connected semantic fixtures, official adapters/packs, re-authoring, impact/incremental verification, and release gates.
+- `08-path-expressions-and-naming.md` — naming order, `(expression)`, `{selectionKey}`, `{root}`, root-first contexts, filesystem compilation, and path conformance.
 - `PARALLEL_WORK.md` — active ownership and lane coordination.
 - `PROGRESS.md` — append-only evidence log.
 
