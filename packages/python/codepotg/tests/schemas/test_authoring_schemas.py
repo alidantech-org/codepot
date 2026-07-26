@@ -130,6 +130,18 @@ def test_documented_yaml_examples_validate_against_bundled_schemas() -> None:
     assert paths["$schema"] == PATHS_SCHEMA_ID
 
 
+def test_bundled_template_path_configs_validate_against_schema() -> None:
+    package_root = Path(__file__).resolve().parents[2]
+    template_root = package_root / "src" / "codepotg" / "templates"
+    validator = Draft202012Validator(load_schema("paths"))
+
+    for language in ("debug", "typescript", "next", "dart"):
+        path = template_root / language / "paths.yaml"
+        document = yaml.safe_load(path.read_text(encoding="utf-8"))
+        validator.validate(document)
+        assert document["$schema"] == PATHS_SCHEMA_ID
+
+
 def test_paths_schema_reference_does_not_weaken_strict_unknown_key_validation(
     tmp_path: Path,
 ) -> None:
