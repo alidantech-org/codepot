@@ -1,26 +1,30 @@
-# Dart SDK tokenized path-authoring tasks
+# Dart SDK selection-folder authoring tasks
 
-## PACK-DART-PATH-001 — Standalone package paths
+## PACK-DART-PATH-001 — Author the package template tree
 
 **Dependencies:** PATH-001..PATH-010, Dart target descriptor, Dart ecosystem contract
 
-- [ ] Author owned package files through structural recipes such as `{packageRoot}/pubspec.yaml.jinja` and `{packageRoot}/analysis_options.yaml`.
-- [ ] Author model templates under `{models}/[model.name.snake.s].dart.jinja`.
-- [ ] Author operations/clients under explicit snake/path name projections.
-- [ ] Author export barrels as normal `.dart.jinja` templates.
-- [ ] Copy static package files through tokenized paths without rendering.
+- [ ] Keep `pubspec.yaml.jinja`, `analysis_options.yaml`, documentation, and static files literal and unregistered.
+- [ ] Place model templates under `{models}/(model.name.snake.s).dart.jinja`.
+- [ ] Place services/clients under registered selection folders using explicit snake/path name expressions.
+- [ ] Author export libraries as normal templates whose selections declare `exports`.
+- [ ] Use `{root}` only when physical grouping should not add an output folder.
 
-## PACK-DART-PATH-002 — Existing-project integration
+## PACK-DART-PATH-002 — Declare dependencies and outputs
 
-- [ ] Support a project output root plus package/unit path values without inventing directory fields on IR records.
-- [ ] Test relative and `package:` imports independently from file destination composition.
-- [ ] Test a package name binding used for imports but not silently used as an output folder.
+- [ ] Use compact `paths: [lib, ...]` arrays relative to the pack-instance output root.
+- [ ] Use fixed selectors such as `schemas.models.each`, `schemas.enums.each`, and `resources.each`.
+- [ ] Declare generated dependencies with `imports` and generated libraries/barrels with `exports`.
+- [ ] Declare emitted Dart symbols explicitly.
+- [ ] Keep Dart filename/module validation in the Dart adapter.
+- [ ] Keep `package:` versus relative import calculation separate from destination composition.
 
 ## PACK-DART-PATH-003 — Conformance
 
-- [ ] Test singular/plural model names, acronyms, nested resource paths, generated exports, and static fan-out.
-- [ ] Test owned `pubspec.yaml`, contributed host files, modular output, and monolithic single-file output.
-- [ ] Prove all normal outputs require no explicit manifest `output` field.
+- [ ] Test singular/plural names, acronyms, nested resources, exports, static files, partials, and generated `.gitignore`.
+- [ ] Test standalone package and existing-project output roots.
+- [ ] Test direct versus barrel imports and least-required symbols.
+- [ ] Prove no root `paths`, `files`, `filePatterns`, or ordinary explicit output fields are required.
 - [ ] Prove no semantic fixture exposes `fileName`, `filePath`, or `directory`.
 
-**Acceptance:** standalone and hosted Dart fixtures resolve every destination from source paths, recipes, typed names, and project output roots.
+**Acceptance:** Dart fixtures resolve destinations from the filesystem, registered selections, fixed selectors, typed names, and the project output root.
