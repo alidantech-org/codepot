@@ -36,8 +36,8 @@ Existing template variables and folder packs remain supported while graph packs 
 - [Lossless OpenAPI access](openapi-preservation.md) defines how standard OpenAPI, JSON Schema,
   known Codepot extensions, unknown extensions, references, and original source objects are
   preserved without forcing templates to parse raw dictionaries.
-- [Language adapters](language-adapters.md) explains how every target language and text format can
-  consume the same normalized contract without adding target-specific behavior to inference.
+- [Supported language adapters](supported-language-adapters.md) records the adapters and native fixtures that exist today, their validation state, and the production requirements for adding another target.
+- [Language adapters](language-adapters.md) explains the open-ended adapter architecture and future target catalog without implying that every listed target is already implemented.
 - [Compatibility](compatibility.md) defines the non-breaking migration and stability policy.
 
 ## Public contract principles
