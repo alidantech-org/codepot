@@ -1,10 +1,10 @@
 # Parallel work registry
 
-This file coordinates work across conversations. Claim a task before changing implementation files.
+This file coordinates implementation across conversations. Claim a task before changing implementation files.
 
 ## Active claims
 
-No active implementation claims. The approved project, pack, selection-folder, direct Git source, and lock documentation is complete.
+No active implementation claims. The closed semantic kernel, simplified project/pack contracts, root-first selectors, direct Git source, template-owned syntax, adapter boundaries, and package task plans are documented.
 
 ## Planned task lanes
 
@@ -12,21 +12,24 @@ No active implementation claims. The approved project, pack, selection-folder, d
 |---|---|---|---|
 | Core primitives | CORE-001..CORE-006 | `codepotg-v2` | documentation accepted |
 | Semantic naming/expressions | PATH-001..PATH-003 | core naming/path contracts | core version and diagnostics available |
-| Configuration | CFG-001..CFG-006, PACKCFG-001..PACKCFG-004 | `codepotg-v2/config` | core diagnostics available |
-| Fixed selectors/selection folders | PATH-004, PATH-006 | generation/config/IR contracts | typed config and selector contracts stable |
-| IR/source contracts | IR-001..IR-004 | `domain/ir`, source port | core primitives and PATH-001 stable |
-| Filesystem discovery/path planning | PLAN-001..PLAN-010, PATH-005, PATH-007..PATH-010 | generation domain/application | pack config, expressions, selectors, and IR stable |
-| Generated imports/exports | BIND-002 plus planner tasks | generation graph + language ports | selection emissions, paths, and symbols stable |
-| Plugin runtime | PLUG-001..PLUG-011 | plugins/ports/runtime | public primitives stable |
-| Writers/cache | WRITE-001..WRITE-006, CACHE-001..CACHE-002 | infrastructure + ports | artifact/path plan stable |
+| Configuration | CFG-001..CFG-006, PACKCFG-001..PACKCFG-005 | `codepotg-v2/config` | core diagnostics available |
+| Closed semantic kernel | IR-001..IR-010 | domain/IR and validators | core primitives and PATH-001 stable |
+| Root-first selectors/selection folders | PLAN-002..PLAN-004, PATH-004, PATH-006 | generation/config/IR contracts | typed config and kernel stable |
+| Filesystem discovery/path planning | PLAN-001, PLAN-003..PLAN-010, PATH-005, PATH-007..PATH-010 | generation domain/application | pack config, expressions, selectors, and IR stable |
+| Generated dependencies/path facts | BIND-002, PLAN-006..PLAN-007, PATH-008 | semantic artifact graph + target path ports | selections, artifacts, destinations, and symbols stable |
+| Explain and impact | PLAN-010..PLAN-011 | planner/inspection API | semantic and artifact plans stable |
+| Conservative incremental generation | PLAN-012 | planner/cache/state | deterministic full generation and impact graph proven |
+| Plugin runtime | PLUG-001..PLUG-011 | plugins/ports/runtime | public primitives and closed-kernel boundary stable |
+| Writers/cache/state | WRITE/CACHE tasks | infrastructure + ports | artifact/path plan stable |
 | Commands/setup | CFG-004..CFG-005, CMD, SETUP/CONFIGURE/ECO | application/infrastructure | config/security contracts stable |
-| Python API/CLI | API/CLI/MCP | api/application/cli | core use cases stable |
+| Python API/CLI | API/CLI/MCP and impact API | api/application/cli | core use cases stable |
 | Local/Git distribution | GIT/LOCK/DIST | pack provider/lock/cache | direct source and pack manifest contracts stable |
-| OpenAPI adapter | OA-001..OA-012 | `codepotg-openapi` | IR/source port stable |
-| TypeScript adapter | TS-001..TS-011 and TS-PATH | `codepotg-language-typescript` | language port and planned import/export contract stable |
-| Dart adapter | DART-001..DART-011 and DART-PATH | `codepotg-language-dart` | language port and planned import/export contract stable |
-| Jinja engine | JINJA-001..JINJA-011 | `codepotg-template-jinja` | engine port/context stable |
-| Official packs | PACK-TS/PACK-DART/PACK-FLUTTER | pack packages | simplified manifest, PATH-001..PATH-010, planner, and adapters stable |
+| OpenAPI adapter | OA-001..OA-020 | `codepotg-openapi` | closed IR/source port stable |
+| TypeScript target adapter | TS-001..TS-010 | `codepotg-language-typescript` | target validation/path port and PLAN-007 stable |
+| Dart target adapter | DART-001..DART-010 | `codepotg-language-dart` | target validation/path port and PLAN-007 stable |
+| Jinja engine | JINJA tasks | `codepotg-template-jinja` | engine port/immutable context stable |
+| Official packs | PACK-TS/PACK-DART/PACK-FLUTTER | pack packages | simplified manifest, closed kernel, PATH/PLAN, target adapters, and engine stable |
+| Connected system fixture | PACK-SYSTEM, TEST-003..TEST-005 | cross-package integration | official adapters/packs and impact plan stable |
 
 ## Claim procedure
 
@@ -42,18 +45,24 @@ No active implementation claims. The approved project, pack, selection-folder, d
 
 | Task ID | Package/subsystem | Owner/chat | Status | Expected files | Dependencies | Notes |
 |---|---|---|---|---|---|---|
-| PATH-001 | semantic naming | chat identifier | claimed | focused naming modules/tests only | CORE-003, IR-001 | Example only; remove when making a real claim. |
+| CORE-001 | package foundation | chat identifier | claimed | package metadata/import tests only | DOC-001..DOC-007 | Example only; remove when making a real claim. |
 
 ## Conflict rule
 
-Two agents must not edit the same implementation file concurrently. Public selector, path, name, import/export, rule, IR, and plugin contracts require narrow ownership because adapters and packs depend on them.
+Two agents must not edit the same implementation file concurrently. Closed-kernel, selector, path/name, dependency, IR, validation, plugin, and render-context contracts require narrow ownership because every adapter and pack depends on them.
 
 ## Design gates
 
-- Official packs must use filesystem discovery, registered `{selectionKey}` folders, fixed selectors, `(expression)`, explicit imports/exports/symbols, and pack-relative `paths` arrays.
-- Adapters must consume already planned paths and dependency descriptors; they must not parse pack source syntax or choose output directories.
-- Git provider work must implement direct `source.local`/`source.git` and must not introduce `registries`, `use`, or GitHub-only locators.
-- Command work must preserve exact opaque arguments and must not infer installation syntax from dependency metadata.
+- Core alone owns semantic objects, relations, schema kinds/roles, known facets, root-first selectors, expression roots, template contexts, and semantic validation.
+- Source adapters normalize only into the known kernel and cannot register semantic extensions.
+- Packs use filesystem discovery, registered `{selectionKey}` folders, fixed root-first selectors, `(expression)`, explicit imports/exports/symbols, and pack-relative `paths` arrays.
+- Templates, macros, partials, and static files own every emitted character.
+- Target adapters validate targets/names and calculate module/path facts; they do not render types, literals, comments, imports, exports, validators, decorators, formatting, or framework code.
+- No implementation may restore neutral resource/model/entity/frontend/UI roots, reversed selectors, arbitrary query/traversal DSLs, profiles, or `filePatterns`.
+- Git provider work implements direct `source.local`/`source.git` and must not introduce registries, `use`, or GitHub-only locators.
+- Command work preserves exact opaque arguments and does not infer installation syntax from dependency metadata.
+- Output hashes/state belong to ownership/generation state, not the dependency lock.
+- Incremental generation begins only after deterministic full generation and impact analysis are proven.
 
 ## Blockers
 
