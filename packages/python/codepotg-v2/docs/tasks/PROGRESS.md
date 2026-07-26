@@ -10,10 +10,11 @@
 | 2026-07-26 | `8fe8dbdf` | Earlier tokenized path draft | superseded | Documentation review only; no runtime tests. | The `{recipe}` plus `[expression]` and verbose pack sections were replaced by the later approved simplification. |
 | 2026-07-26 | `ec2db972` | Approved pack/project simplification | complete | Parsed all seven standalone YAML examples with `yaml.safe_load`; reviewed architecture, project/pack schemas, generation docs, Git/lock docs, and CFG/GIT/PATH tasks. No runtime tests because implementation has not started. | Approved direct `source.local`/`source.git`, fixed selectors, `{selectionKey}`, `{root}`, `(expression)`, `((literal))`, filesystem-discovered files, explicit imports/exports/symbols, exact commands, and `codepotg.lock.yaml`. |
 | 2026-07-26 | `446d6965` | Example reconciliation and verification | complete | Re-read mixed project, lock, and TypeScript pack examples from `chatgpt/codepotx-restart`; confirmed the branch head preserved all example files. No runtime tests. | Replaced the concurrently added obsolete `use` sample with the approved direct source/input form. |
+| 2026-07-26 | `e5d23587` | Central and package task alignment | complete | Reviewed central CFG/PLAN/PATH/GIT ledgers, parallel lanes, TypeScript/Dart adapter path tasks, and TypeScript/Dart/Flutter pack path tasks. No runtime tests. | Removed affirmative implementation guidance for root `paths`, explicit `files`, arbitrary selectors, `{recipe}`, `[expression]`, registries, and `use`. |
 
 ## Current stage
 
-The human-oriented project, pack, path, import/export, command, direct Git source, and lock-file contracts are documented and approved. Standalone examples exist for local, Git, mixed, TypeORM, TypeScript SDK, Flutter SDK, and lock configurations.
+The human-oriented project, pack, path, import/export, command, direct Git source, and lock-file contracts are documented and approved. Standalone examples exist for local, Git, mixed, TypeORM, TypeScript SDK, Flutter SDK, and lock configurations. Central and package-local implementation tasks now point to the same approved design.
 
 Runtime implementation has not started.
 
@@ -23,9 +24,9 @@ Runtime implementation has not started.
 - The fixed selector list and generated import/symbol matching must remain versioned and introspectable.
 - Exact command arguments must remain opaque to core; package-manager intelligence must not leak into command planning.
 - Git credentials must stay outside project/pack/lock files and diagnostics.
-- Official pack tasks still contain older wording in package-local ledgers and must be reconciled before those packages are implemented.
+- Historical progress entries may mention the superseded syntax; they are evidence records, not current contracts.
 - The future `codepotg` import namespace must be cut over in an isolated release environment because old and new distributions cannot own it simultaneously.
 
 ## Next action
 
-Before runtime work, reconcile package-local official pack and language-adapter task ledgers with the newly approved central contracts. Then claim the earliest dependency-safe core/configuration task in `PARALLEL_WORK.md`.
+Claim the earliest dependency-safe core/configuration task in `PARALLEL_WORK.md` before runtime implementation. Implementations must use the checked-in examples as schema and conformance fixtures.
