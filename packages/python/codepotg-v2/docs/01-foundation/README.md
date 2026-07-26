@@ -1,69 +1,38 @@
 # 01 — Foundation and polished structure
 
-## Purpose
+The v2 runtime is a clean, importable Python application with explicit public API, application, domain, port, plugin, runtime, infrastructure, and CLI boundaries.
 
-The rewrite must first repair package structure and separation of concerns. The new runtime is an importable application library with explicit domain, application, port, plugin, configuration, and infrastructure boundaries.
+## Documents
 
-## Proposed structure
+- [`01-package-architecture.md`](01-package-architecture.md) — complete source layout, responsibilities, dependency direction, distribution topology, namespace cutover, and architecture tests.
+- [`02-public-python-api.md`](02-public-python-api.md) — facade, operations, sessions, sync/async behavior, memory output, events, results, and server-safe use.
+- [`03-diagnostics-events-results.md`](03-diagnostics-events-results.md) — diagnostic codes/spans, event model, cancellation, result status, and error boundaries.
 
-```text
-codepotg-v2/
-├── README.md
-├── pyproject.toml
-├── docs/
-├── src/codepotg/
-│   ├── api/                # supported Python facade, requests, results, events
-│   ├── application/        # use cases: configure, validate, inspect, generate
-│   ├── config/             # location-aware documents, typed decoders, migrations
-│   ├── domain/
-│   │   ├── ir/             # neutral source-independent semantic model
-│   │   └── generation/     # artifacts, selections, dependencies, plans
-│   ├── plugins/            # descriptors, discovery, instance registries
-│   ├── ports/              # source, language, engine, writer, cache, command ports
-│   ├── runtime/            # immutable runtime and isolated generation sessions
-│   ├── infrastructure/     # YAML, filesystem, entry points, Git, processes
-│   └── cli/                # argument parsing and terminal presentation only
-└── tests/
-    ├── unit/
-    ├── contract/
-    ├── integration/
-    ├── architecture/
-    ├── fixtures/
-    └── helpers/
-```
+## Non-negotiable rules
 
-## Dependency direction
+- No import-time source rewriting, `compile`/`exec`, monkey patching, `sys.modules`, or CLI `sys.path` repair.
+- No process-global mutable registries or configuration.
+- No old generator imports or compatibility runtime.
+- No same-name module/package collisions.
+- No CLI business logic below the CLI layer.
+- Frozen public models contain immutable internals.
+- Every operation has an isolated session.
+- Tests are small, modular, deterministic, and independent from network/global state.
+
+## Planned core layout
 
 ```text
-CLI / MCP / HTTP / playground
-             ↓
-       public Python API
-             ↓
-     application services
-             ↓
-       domain and ports
-             ↑
- infrastructure and plugins
+src/codepotg/
+├── api/
+├── application/
+├── config/
+├── domain/ir/
+├── domain/generation/
+├── plugins/
+├── ports/
+├── runtime/
+├── infrastructure/
+└── cli/
 ```
 
-The domain must not import YAML, OpenAPI, Jinja, CLI, filesystem, subprocess, cache, Git, or framework packages. The CLI must contain no generation logic. Infrastructure implements ports and is composed at the outer boundary.
-
-## Runtime rules
-
-- No import-time source rewriting, `compile`/`exec`, monkey-patching, or `sys.modules` manipulation.
-- No process-global mutable plugin registries or configuration.
-- No module/package same-name collisions.
-- No `sys.path` repair in the CLI.
-- Every generation uses an isolated session with its own diagnostics, cancellation, plan, cache scope, and staged outputs.
-- Frozen public models must not contain mutable internals.
-- Errors and diagnostics are typed and carry source locations where applicable.
-- Public API namespaces are explicit; internal modules are private and unsupported.
-
-## Testing rules
-
-- Unit tests cover one rule, function, or small class at a time.
-- Contract suites are reused by every source adapter, language adapter, template engine, writer, and cache.
-- Integration tests use small vertical fixtures rather than repository-sized projects.
-- Architecture tests enforce dependency boundaries and public import rules.
-- Legacy characterization tests stay under compatibility tests and never dictate the new internal design.
-- Tests must not depend on network access, shell state, global environment mutation, ordering, or mutable global registries.
+Read the approved architecture before implementing any folder.
