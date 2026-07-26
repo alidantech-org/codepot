@@ -2,57 +2,37 @@
 
 ## Batteries included without hardcoding
 
-The final release model has a minimal core distribution and a normal `codepotg` distribution that installs compatible defaults. A standard installation should immediately provide OpenAPI, TypeScript, Dart, Jinja, and initial SDK packs while all components remain independently versioned and discovered through entry points.
+The final release model has:
 
-The current legacy `packages/python/codepotg` package is not changed during the rewrite. The final package cutover happens only after parity and migration gates pass.
+- `codepotg-core` — minimal application/domain/plugin contracts for embedded and custom installations;
+- `codepotg` — normal batteries-included installation with compatible OpenAPI, TypeScript, Dart, Jinja, and initial SDK packs.
 
-## Git and GitHub pack sources
+Official defaults remain independently versioned and discovered through the same entry-point system used by third parties.
 
-A project may reference a local pack, a GitHub shorthand, or a generic Git repository:
+## Git-hosted packs
 
-```yaml
-packs:
-  server:
-    use:
-      github: alidantech-org/codepotg-nestjs-pack
-      ref: v1.4.0
-      path: packs/nestjs
-```
+Projects may reference local directories, GitHub shorthand, or generic Git repositories. Git/GitHub pack resolution uses existing SSH agents, keys, credential helpers, or controlled HTTPS credentials. Tokens and credentials are never stored in project or lock files.
 
-```yaml
-packs:
-  privateSdk:
-    use:
-      git:
-        url: git@github.com:alidantech-org/private-packs.git
-        ref: v2.0.0
-        path: packs/sdk
-```
+Branches/tags resolve to immutable commits recorded with pack subdirectory and content/manifest digests in `codepotg.lock`.
 
-CodepotG uses normal Git authentication such as SSH agents, SSH keys, credential helpers, and existing HTTPS credentials. Tokens are never stored in `codepotg.yaml`. GitHub is initially a Git host, not a mandatory registry API.
-
-Tags and branches resolve to immutable commits recorded in `codepotg.lock`. Cache and command approvals include repository URL, resolved commit, pack path, manifest digest, and command digest. Moving branches warn in reproducible or production mode.
-
-A future Codepot site may index searchable public metadata and map friendly pack names to Git sources without hosting pack contents or private credentials.
+A future Codepot site may index searchable public metadata while pack bytes continue to come from Git. Private packs can remain direct Git references using the user's access.
 
 ## Python API first
 
-The supported Python facade is the primary product interface:
+The importable Python API is the primary product interface. It supports filesystem, memory, and archive generation plus sync/async operations, cancellation, structured diagnostics, events, and server-safe policies.
 
-```python
-from codepotg import CodepotG
+The CLI, configure wizard, MCP tools, HTTP services, playgrounds, and notebooks call the same application services. They do not parse each other's output or shell out to access core behavior.
 
-app = CodepotG.standard()
-result = app.generate_from_file("codepotg.yaml")
-```
+## Supported operations
 
-Programmatic requests also support in-memory sources and outputs for tests, notebooks, playgrounds, servers, and MCP. Runtime instances are reusable where immutable; every generation creates an isolated session. Synchronous and asynchronous APIs support cancellation, deadlines, structured diagnostics, and event sinks.
+- configure project/pack instances;
+- validate project and packs;
+- inspect plugins, schemas, packs, rules, plans, locks, approvals, and cache;
+- resolve/add Git packs;
+- generate to memory/archive/filesystem;
+- manage command approvals;
+- update/check lock state.
 
-## Thin frontends
+There is no v2 old-configuration migration operation. Project and pack authors re-author old files into the documented v2 schemas while the old package remains available for old projects during development.
 
-- The CLI parses arguments, calls application services, renders diagnostics, and chooses exit codes.
-- MCP tools call the Python API directly and return structured results.
-- HTTP workers and playgrounds use in-memory writers and host-controlled security policies.
-- No frontend parses CLI output or shells out to the `codepotg` command to access core behavior.
-
-Operations exposed consistently include configure, validate, migrate configuration, inspect plans, list plugins, describe packs, generate to memory, generate transactionally to disk, and inspect or clear caches under host policy.
+See the detailed distribution/Git tasks in `../tasks/06-configure-cli-git-and-distribution.md` and the clean-room release plan in `../06-rewrite`.
