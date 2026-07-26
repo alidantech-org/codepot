@@ -1,15 +1,17 @@
-# Plugin system
+# Adapter and infrastructure plugin system
 
 ## Goal
 
-CodepotG v2 discovers independently installable Python plugins through standard Python entry points. Official plugins receive no hidden privileges.
+CodepotG v2 discovers independently installable Python adapters/infrastructure packages through standard Python entry points. Official packages receive no hidden privileges.
 
-## Plugin categories
+The plugin system extends supported inputs, target validation/path behavior, template engines, pack locations, project ecosystems, writers, caches, executors, approvals, and event sinks. It does not extend application semantics.
+
+## Categories
 
 Initial categories are:
 
 - source adapters;
-- language/target-syntax adapters;
+- target/language validation and path adapters;
 - template-engine adapters;
 - pack providers;
 - ecosystem/toolchain adapters;
@@ -18,6 +20,8 @@ Initial categories are:
 - command executors;
 - approval stores;
 - event sinks.
+
+There is no facet-module, semantic-node, selector-provider, expression-root, context-provider, or generated-syntax-renderer category.
 
 ## Entry points
 
@@ -34,45 +38,46 @@ codepotg.cache_stores
 codepotg.command_executors
 ```
 
-An entry point exposes a factory, not a process-global mutable instance.
+An entry point exposes a factory/descriptor rather than a process-global mutable instance.
 
 ```toml
 [project.entry-points."codepotg.language_adapters"]
 typescript = "codepotg_language_typescript.plugin:create_plugin"
 ```
 
-## Plugin descriptor
+## Descriptor
 
-Every plugin descriptor declares:
+Every descriptor declares:
 
 - stable plugin ID;
 - package/distribution name;
-- implementation version;
+- implementation and behavior versions;
 - plugin API version;
 - supported core and IR versions;
 - aliases;
-- capabilities;
-- owned configuration schemas;
+- actual capabilities;
+- bounded owned configuration schemas;
 - factory;
 - trust classification;
 - documentation metadata.
+
+Descriptors may own configuration only for their approved category boundary. A descriptor is invalid if it claims ownership of semantic objects, schema kinds, relationships, facets, selectors, expression roots, template-context values, or generated source-code syntax.
 
 ## Discovery
 
 Discovery uses `importlib.metadata.entry_points`. Core must not scan internal directories or import every module looking for decorators.
 
-Discovery returns descriptors. Runtime instance creation happens later with an explicit immutable context.
+Discovery returns immutable descriptors. Runtime instance creation happens later with an explicit least-authority context.
 
 ## Registry
 
-Registries are normal instances owned by a runtime. They validate:
+Registries are normal instances owned by a runtime/session. They validate:
 
-- duplicate IDs;
-- alias conflicts;
-- incompatible API versions;
-- missing capabilities;
-- incompatible IR versions;
+- duplicate IDs and aliases;
+- incompatible API/core/IR/behavior versions;
+- missing/conflicting capabilities;
 - conflicting configuration ownership;
+- forbidden semantic/syntax ownership;
 - factory contract violations.
 
 No module import mutates a global registry.
@@ -82,32 +87,66 @@ No module import mutates a global registry.
 Factories receive only explicit public services needed by their category, such as:
 
 - diagnostic sink;
-- immutable options;
+- immutable typed options;
 - cancellation token;
-- source/pack access ports;
-- target syntax registry;
+- controlled source/pack access ports;
+- closed-kernel construction contract for source adapters;
+- immutable planned target/path descriptors;
 - controlled cache scope.
 
-A language adapter does not receive an artifact writer or command executor because it does not own those responsibilities.
+A target adapter does not receive an artifact writer, command executor, semantic registry, or source-code emitter. An engine does not receive destination-writing authority. A source adapter does not receive templates or output services.
+
+## Closed-kernel boundary
+
+Core alone defines and versions:
+
+```text
+semantic objects and relationships
+schema kinds and controlled roles
+known facets and attachment locations
+root-first selectors
+expression roots/properties
+template-context properties
+semantic validation
+```
+
+Adapters translate into or consume those contracts. Unknown source metadata may use bounded documented provenance/raw/extension values only; plugins cannot turn it into new semantics.
+
+The implementation may be graph-shaped internally, but plugins do not receive a generic node/edge/fact extension API.
+
+## Generated-syntax boundary
+
+Templates, macros, partials, and static files own every emitted character.
+
+Target adapters may detect suffixes, validate filenames/candidate identifiers, and calculate/validate target-aware module/path facts. They cannot emit types, literals, comments, imports, exports, annotations, validators, formatting, or framework code.
+
+Template-engine adapters render already authored text from immutable prepared contexts and cannot inject target syntax or add outputs.
 
 ## Trust
 
-Python plugins are executable dependencies and require the same trust as any installed Python package. Declarative packs are data and have a separate command approval boundary.
+Installed Python plugins are executable dependencies and require the same trust as any Python package. Declarative packs are data, with a separate approval boundary for exact commands.
 
-Inspection reports plugin source distribution, version, entry point, capabilities, API versions, and executable trust status.
+Inspection reports distribution, version, entry point, capabilities, API/behavior compatibility, configuration ownership, and executable trust status.
+
+Downloaded packs cannot install or activate Python plugins implicitly.
 
 ## Failure behavior
 
-A broken optional plugin does not corrupt the registry. Discovery reports a diagnostic identifying the distribution and entry point. Selecting that plugin fails clearly; unrelated plugins remain available.
+A broken optional plugin does not corrupt the registry. Discovery reports a diagnostic identifying the distribution and entry point. Selecting that plugin fails clearly; unrelated capabilities remain available.
+
+A plugin requesting forbidden semantic or syntax ownership fails descriptor validation before instance creation.
 
 ## Conformance suites
 
-Core publishes reusable tests for every plugin category. Official packages must run the same suite expected of third-party packages.
+Core publishes reusable tests for every category. Official packages run the same suites expected of third-party packages, including negative closed-kernel and non-rendering boundary tests.
 
 ## Non-goals
 
-- no hardcoded `if language == "typescript"` logic in core;
-- no decorator registry;
+- no hardcoded target implementation branches in core;
+- no open semantic/facet/selector extension system;
+- no graph-query plugin surface;
+- no target source-code renderer service;
+- no decorator/global registry;
 - no internal directory scanning;
 - no import-time singleton construction;
-- no plugin access to private core modules.
+- no private-core access.
