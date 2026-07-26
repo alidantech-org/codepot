@@ -23,16 +23,18 @@ PROFILE = PortableLanguageProfile(
     purpose="C# API client and service contracts",
     framework="dotnet",
     package_suffix="client",
+    package_dependencies=("System.Text.Json",),
+    package_dev_dependencies=("Microsoft.NET.Test.Sdk", "xunit"),
     diagnostics=(
-        "Run `dotnet restore` when a project file is emitted.",
-        "Run `dotnet format` after generation when configured.",
+        "Run `dotnet restore` and `dotnet test` in the generated package.",
+        "Run `dotnet format` before committing generated sources.",
     ),
 )
 
 
 @language_adapter(name=PROFILE.name, aliases=PROFILE.aliases, template_name="csharp")
 class CSharpLanguageAdapter:
-    """Expose the complete typed contract to C# templates."""
+    """Build complete C# generation contracts."""
 
     name: str
     aliases: tuple[str, ...]
