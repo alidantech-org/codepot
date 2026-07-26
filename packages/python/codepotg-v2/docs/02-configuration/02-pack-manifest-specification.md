@@ -2,198 +2,104 @@
 
 ## Purpose
 
-`CodepotgPack.yaml` is the complete authored contract for one template pack. It replaces the conceptual responsibility previously associated with `paths.yaml`, but v2 does not implement a `paths.yaml` compatibility decoder.
+`CodepotgPack.yaml` registers only pack behavior that cannot be inferred safely from the pack filesystem.
 
-The pack manifest describes how the pack discovers source files, composes their output paths, selects data, declares bindings and dependencies, applies language/engine rules, exposes setup, and performs approved lifecycle actions.
-
-A pack may create a complete runnable project, a standalone package folder, an extension to an existing project, fragments requiring user integration, or any combination of those traits.
-
-## Critical path rule
-
-The relative source path below the content root is the default output-path program.
-
-```text
-templates/{repositories}/[entity.name.kebab.s].repository.ts.jinja
-```
-
-may emit:
-
-```text
-src/repositories/order.repository.ts
-```
-
-The pack composes this through named `paths` recipes and typed `[expression]` tokens. Semantic records do not expose invented `fileName` or `directory` properties.
-
-See [`../03-generation/00-path-expressions-and-name-tokens.md`](../03-generation/00-path-expressions-and-name-tokens.md).
+The filesystem defines literal templates, static files, partials, and their relative layout. The manifest defines identity, compatibility, options, bindings, selection folders, generated dependencies, symbols, executable defaults, and exact lifecycle commands.
 
 ## Canonical shape
 
 ```yaml
 apiVersion: codepotg.dev/v2
-kind: TemplatePack
 
-metadata:
-  id: alidantech/typeorm-repositories
-  version: 1.0.0
-  description: Generates TypeORM entities and repositories.
+id: alidantech/typeorm-repositories
+version: 1.0.0
+description: Generates TypeORM entities and repositories.
 
-compatibility:
-  codepotg: ">=2.0.0 <3.0.0"
+requires:
+  codepotg: ">=2.0 <3.0"
   ir: ">=2.0 <3.0"
 
-integration:
-  createsProject: false
-  ownsFolder: false
-  contributesFiles: true
-  requiresDependencies: true
-  requiresBindings: true
-  runnableAlone: false
+include:
+  - "**/*"
 
-content:
-  root: templates
-  ignore:
-    - "_authoring/**"
-    - "**/*.draft"
-
-writePolicy:
-  defaultMode: managed
-  managedRoots: [src/generated]
-  protectedRoots: []
+exclude:
+  - _authoring/**
+  - "**/*.draft"
 
 options:
   repositoryStyle:
-    type: enum
-    values: [class, functions]
+    choices: [class, functions]
     default: class
-
-languages:
-  typescript:
-    imports:
-      strategy: relative
-      omitExtensions: true
-
-  markdown:
-    formatting:
-      lineWidth: 100
-
-templateEngines:
-  jinja:
-    undefinedBehavior: error
-    whitespace:
-      trimBlocks: true
-      leftStripBlocks: true
 
 bindings:
   baseRepository:
-    kind: import
-    target: typescript
     required: true
-    title: Base repository
-    description: Class extended by generated repositories.
-    acceptedSources: [module, projectPath, barrel]
-    suggestedSymbol: BaseRepository
-    whenMissing: placeholder
+    description: Base class imported by generated repositories.
 
 selections:
   entities:
-    from: entities
-    as: entity
-    orderBy: name
+    paths: [src, entities]
+    select: entities.each
+    symbols: [(entity.name.pascal.s)]
 
-paths:
   repositories:
-    selection:
-      use: entities
-    parts:
-      - src
-      - repositories
+    paths: [src, repositories]
+    select: entities.each
+    imports:
+      entities: entities
+    bindings: [baseRepository]
+    symbols:
+      - (entity.name.pascal.s)Repository
 
-  repositoriesRoot:
-    parts:
-      - src
-      - repositories
+  entitiesIndex:
+    paths: [src, entities]
+    exports: [entities]
 
-  projectRoot:
-    parts: []
+  repositoriesIndex:
+    paths: [src, repositories]
+    exports: [repositories]
 
-filePatterns:
-  "**/*.spec.ts.jinja":
-    profiles: [tests]
+  rootIndex:
+    paths: [src]
+    exports: [entitiesIndex, repositoriesIndex]
 
-  "_partials/**/*.jinja":
-    role: partial
-
-files:
-  "{repositories}/[entity.name.kebab.s].repository.ts.jinja":
-    id: repository
-    role: template
-    uses:
-      bindings: [baseRepository]
-    provides:
-      - repository.entity
-
-  "{repositoriesRoot}/index.ts.jinja":
-    id: repositoryIndex
-    role: barrel
-    selection:
-      scope: aggregate
-    exports:
-      include: [repository]
-
-  "_partials/license.txt.jinja":
-    id: licenseHeader
-    role: partial
-    target: plainText
-
-  "{projectRoot}/.gitignore":
-    id: generatedIgnore
-    role: static
-
-profiles:
-  modular:
-    enable: [repository, repositoryIndex, generatedIgnore]
-
-  tests:
-    enable: [repository, repositoryIndex, generatedIgnore]
-
-dependencies:
-  node:
-    runtime:
-      typeorm: "^0.3.0"
-    packageManagers:
-      supported: [npm, pnpm, yarn]
-
-setup:
-  summary: Configure repository dependencies and project bindings.
-  documentation: docs/setup.md
-  questions:
-    - binding: baseRepository
-      prompt: Select the base repository export.
-  actions:
-    before: []
-    after:
-      - id: ensure-node-dependencies
-        action: node.dependencies.ensure
-        approval: required
-  manualSteps:
-    - id: register-repositories
-      title: Register generated repositories
-      documentation: docs/register-repositories.md
+executables:
+  packageManager: pnpm
 
 commands:
   after:
-    - id: fix-unused-imports
-      action: node.eslint.fix
-      paths: ["{output.root}/src/repositories/**/*.{ts,tsx}"]
-      optional: true
+    install:
+      executable: packageManager
+      arguments: [add, typeorm@^0.3.0, reflect-metadata@^0.2.0]
 
-overridePolicy:
-  languages:
-    typescript:
-      imports:
-        strategy: allow
-        aliases: allow
-        omitExtensions: allow
+    format:
+      executable: packageManager
+      arguments: [exec, prettier, --write, src]
+      optional: true
+```
+
+## Corresponding filesystem
+
+```text
+typeorm-repositories/
+├── CodepotgPack.yaml
+├── .gitignore
+├── docs/
+└── templates/
+    ├── {entities}/
+    │   └── (entity.name.kebab.s).entity.ts.jinja
+    ├── {repositories}/
+    │   └── (entity.name.kebab.s).repository.ts.jinja
+    ├── {entitiesIndex}/
+    │   └── index.ts.jinja
+    ├── {repositoriesIndex}/
+    │   └── index.ts.jinja
+    ├── {rootIndex}/
+    │   └── index.ts.jinja
+    ├── _partials/
+    │   └── license.txt.jinja
+    ├── README.md.jinja
+    └── .gitignore.jinja
 ```
 
 ## Root fields
@@ -202,286 +108,303 @@ overridePolicy:
 
 Required typed schema version. Initial value: `codepotg.dev/v2`.
 
-### `kind`
+### `id`, `version`, `description`
 
-Required and exactly `TemplatePack`.
+Pack identity and human description live at the root. `kind` and `metadata` nesting are unnecessary because the filename and schema already identify the document.
 
-### `metadata`
+Optional documentation fields such as repository, license, homepage, authors, tags, and docs path may be added as direct metadata fields when required.
 
-Pack identity and documentation metadata:
+### `requires`
 
-- globally meaningful ID;
-- semantic version;
-- description;
-- optional authors, license, repository, homepage, tags, and documentation path.
+Compatibility requirements for CodepotG, IR, and later stable adapter contracts. Compatibility is checked before planning.
 
-### `compatibility`
+### `include` and `exclude`
 
-Compatibility with core, plugin API, IR, target adapters, engines, ecosystem adapters, and optional capabilities. Compatibility is checked before planning.
+Optional Gitignore-style discovery filters relative to `templates/`.
 
-### `integration`
+Discovery also respects the pack-root `.gitignore`. Control `.gitignore` files are not emitted. To generate a `.gitignore`, author `.gitignore.jinja` under `templates/`.
 
-Composable traits describing how the pack participates in a host project. Traits are descriptive and combinable; they are not one restrictive enum.
-
-### `content`
-
-Content roots and ignore behavior:
-
-- `root` or multiple named roots;
-- inline Gitignore-compatible `ignore` patterns;
-- optional `ignoreFile`, normally `.codepotgignore`;
-- deterministic discovery order.
-
-Pack metadata, Git internals, caches, tasks, and authoring docs are not emitted unless intentionally placed below a content root.
-
-### `writePolicy`
-
-Pack lifecycle intent:
-
-- default managed, immutable, protected, or unmanaged mode;
-- suggested managed roots;
-- protected paths;
-- ownership metadata.
-
-The project and host retain authority over destructive cleanup.
+The default content root is `templates/`; a separate `content.root` field is not required.
 
 ### `options`
 
-Public typed pack options. Supported schemas include string, integer, number, boolean, enum, path, list, typed mapping, and structured object.
+Public typed pack options. Compact common forms should stay readable:
 
-Each option may declare required state, default, validation, description, examples, and configure prompt metadata.
+```yaml
+options:
+  repositoryStyle:
+    choices: [class, functions]
+    default: class
+```
 
-### `languages`
-
-Rules for every target syntax used by the pack. This is a mapping, not one selected language.
-
-Each language adapter decodes its own typed section. A heterogeneous pack may contain TypeScript, Dart, Markdown, YAML, SQL, JSON, Dockerfiles, and other targets together.
-
-### `templateEngines`
-
-Typed engine rules for engines used by discovered templates. Security-sensitive fields remain host-controlled.
+The typed schema may support strings, numbers, booleans, choices, lists, mappings, paths, validation, descriptions, and examples without requiring every option to repeat a verbose `type` when its shape is unambiguous.
 
 ### `bindings`
 
-The public binding catalog. Each binding defines:
+Public project-provided values required by the pack.
 
-- meaning and type;
-- target when applicable;
-- required/optional state;
-- accepted project sources;
-- discovery hints;
-- missing behavior;
-- documentation and examples.
+```yaml
+bindings:
+  baseRepository:
+    required: true
+    description: Base class used by generated repositories.
+```
 
-Individual files list consumed binding IDs under `uses.bindings`.
+A selection lists the bindings it consumes:
 
-### `selections`
+```yaml
+bindings: [baseRepository]
+```
 
-Named typed selections over neutral IR or already planned artifacts. A selection declares collection, alias, filter, ordering, grouping, aggregation, or artifact projection.
+Project values are validated by the matching binding and language contracts.
 
-Selections are evaluated by the planner, never by template code.
+## Filesystem discovery
+
+### Literal templates
+
+A literal template is rendered at its literal pack-relative location and loses only the recognized engine suffix:
+
+```text
+templates/package.json.jinja -> package.json
+templates/src/config.ts.jinja -> src/config.ts
+```
+
+Literal templates do not require manifest entries.
+
+### Static and binary files
+
+Non-template files are copied unchanged at the same relative location:
+
+```text
+templates/assets/logo.png -> assets/logo.png
+templates/analysis_options.yaml -> analysis_options.yaml
+```
+
+Static and binary files do not require manifest entries.
+
+### Partials
+
+`templates/_partials/**` is available to template engines and is never emitted.
+
+### Selection folders
+
+A whole folder segment wrapped in braces references a registered selection key:
+
+```text
+templates/{repositories}/(entity.name.kebab.s).repository.ts.jinja
+```
+
+The folder itself is replaced by the selection's `paths` array.
+
+`{root}` is built in and contributes no path segments.
+
+Unknown selection-folder keys are errors. Literal folders do not use braces.
+
+## `selections`
+
+`selections` is the only explicit emission registry.
+
+```yaml
+selections:
+  selectionKey:
+    paths: [relative, output, directory]
+    select: optional.fixed.selector
+    imports:
+      localName: anotherSelectionKey
+    exports: [selectionKey]
+    bindings: [bindingKey]
+    symbols: [(typed.expression)]
+```
+
+A selection may represent:
+
+- repeated source-driven files;
+- one aggregate file;
+- one project/pack-level template;
+- a barrel exporting other selections;
+- a scoped barrel when its fixed selector supplies the scope.
 
 ### `paths`
 
-Reusable named path recipes.
-
-A recipe may declare:
-
-- optional selection or named-selection reference;
-- alias introduced by that selection;
-- zero or more typed destination parts;
-- optional lifecycle defaults;
-- optional documentation.
-
-A recipe is referenced in a source path with `{recipe}`.
+Output directory relative to the pack instance's `output` root.
 
 ```yaml
-paths:
-  resource:
-    selection:
-      each: resources
-      as: resource
-    parts:
-      - gen
-      - server
-      - "[resource.path]"
-      - "[resource.name.path.o]"
+paths: [src, repositories]
 ```
 
-A source file can compose several recipes:
+Short paths use a one-line YAML sequence. Multiline YAML sequences remain equivalent when readability requires them.
 
-```text
-{resource}/{entity}/[entity.name.kebab.s].entity.ts.jinja
-```
+### `select`
 
-Recipes are evaluated left to right. Later recipes may use aliases introduced by earlier recipes.
-
-### `filePatterns`
-
-Defaults for matching discovered source descriptors. Typical uses include:
-
-- classify `_partials/**` as partials;
-- add profile membership to test templates;
-- apply local rules or lifecycle defaults;
-- declare common bindings or requirements.
-
-`filePatterns` should not be the primary way to manufacture output roots. The source path and named `paths` recipes own normal destination composition.
-
-Pattern precedence is deterministic: broad patterns, more specific patterns, exact `files` entry.
-
-### `files`
-
-Exact configuration for discovered pack files. An entry modifies one descriptor and does not create another emission.
-
-Supported roles:
-
-- `template`;
-- `barrel`;
-- `static`;
-- `binary`;
-- `partial`;
-- `documentation`.
-
-Typical fields:
-
-- stable ID;
-- role;
-- explicit target/engine only when inference is ambiguous;
-- selection when not introduced by a path recipe;
-- binding usage;
-- includes;
-- providers and requirements;
-- local target/engine rules;
-- conditions;
-- lifecycle;
-- profile membership;
-- authored barrel export requirements;
-- exceptional output override;
-- multiple predeclared named outputs.
-
-The key is the actual content-root-relative source path, including tokens:
+Uses the fixed selector registry:
 
 ```yaml
-files:
-  "{models}/[model.name.pascal.s].model.ts.jinja":
-    id: model
-    role: template
+select: entities.each
+select: schemas.dtos.all
+select: resources.each(apiResource)
 ```
 
-### `profiles`
+`.each` repeats and exposes the known singular item. `.all` emits once with the collection. An inline alias is optional.
 
-Named sets of source descriptors and option defaults. Profiles may choose modular, grouped, monolithic, tests, examples, or framework variants. They never select one pack language.
-
-### `dependencies`
-
-Desired host or owned-manifest dependencies using typed ecosystem schemas. Dependency declarations are separate from installer execution.
-
-### `setup`
-
-Public configuration experience:
-
-- summary and documentation;
-- typed questions mapped to options and bindings;
-- discovery hints;
-- typed before/after actions;
-- manual steps;
-- readiness messages.
-
-`codepotg configure` interprets this contract and stores answers under the matching pack instance in `codepotg.yaml`.
-
-### `commands`
-
-Pack-owned commands and typed actions. They are inspectable and governed by downloaded-pack approval policy. Templates cannot invoke commands.
-
-### `overridePolicy`
-
-Restrictions on technically overridable adapter, engine, file, option, binding, and path-rule fields. A pack may tighten but never weaken adapter or host restrictions.
-
-## File discovery and destination compilation
-
-For every content root:
-
-1. walk files deterministically;
-2. apply Gitignore-compatible exclusions;
-3. create one descriptor per remaining source file;
-4. detect engine from the final registered suffix;
-5. detect target from the preceding registered suffix;
-6. classify non-template files as static text or binary by default;
-7. apply descriptor patterns;
-8. apply exact file configuration;
-9. compile file selection and path-recipe selections;
-10. parse source-path tokens;
-11. expand recipes and typed expressions;
-12. strip only the engine suffix for emitted templates;
-13. preserve static/binary bytes and target suffixes;
-14. validate destinations before rendering.
-
-## Path and name rules
-
-Stable dynamic name paths include:
+Initial fixed selectors include:
 
 ```text
-name.raw
-name.clean
-name.snake
-name.kebab
-name.camel
-name.pascal
-name.screaming
-name.constant
-name.dot
-name.path
-name.lower
-name.upper
+resources.each / resources.all
+entities.each / entities.all
+schemas.each / schemas.all
+schemas.models.each / schemas.models.all
+schemas.dtos.each / schemas.dtos.all
+schemas.enums.each / schemas.enums.all
+operations.each / operations.all
+resource.entities.each / resource.entities.all
+resource.schemas.each / resource.schemas.all
+resource.operations.each / resource.operations.all
+entity.fields.each / entity.fields.all
+schema.properties.each / schema.properties.all
+operation.parameters.each / operation.parameters.all
+operation.responses.each / operation.responses.all
+enum.members.each / enum.members.all
 ```
 
-Each exposes `o/original`, `s/singular`, `p/plural`, and `number`.
+The registry is versioned and introspectable. Packs cannot invent arbitrary `from`/`as` traversal in YAML.
 
-Examples:
+### `imports`
 
-```text
-[entity.name.kebab.s]
-[resource.name.path.o]
-[operation.name.camel.o]
-```
-
-No semantic record is required to expose a precomputed filename.
-
-## Explicit output override rule
-
-An explicit `output` is exceptional. It is used for authoring layouts that cannot express the destination naturally or for multiple named outputs.
-
-It uses the same typed grammar:
+Explicit generated dependency registry:
 
 ```yaml
-output:
-  parts:
-    - gen
-    - "[project.name.kebab.o]-sdk.ts"
+imports:
+  entities: entities
+  types: typesIndex
 ```
 
-It never evaluates Jinja or arbitrary Python.
+The mapping is `localName: selectionKey`.
 
-## Barrel rule
+Rules:
 
-A barrel is always an authored template source file. Its filename and location use the same path recipes and tokens as other files. The planner supplies exports; the template owns comments, headers, side effects, syntax, and formatting.
+- every generated cross-selection dependency must be declared;
+- undeclared required symbols are errors;
+- unknown selection keys are errors;
+- conflicting providers are errors;
+- the resolver imports only the least required symbols;
+- `.each`, `.all`, parent scope, and barrel selections determine whether resolution produces one or several modules;
+- language adapters produce final import syntax and module paths;
+- templates receive the prepared import plan under the declared local names.
 
-## Static file rule
+### `exports`
 
-Static and binary files are emitted by default. Their bytes remain unchanged, but tokenized source folders may fan them out and compose their destination.
+Ordered selection keys exported by an authored barrel or aggregate template:
 
-## Command rule
+```yaml
+exports: [enums, dtos, repositoriesIndex]
+```
 
-A pack may polish its own output with approved format, lint, unused-import repair, dependency, build-runner, validation, or typecheck actions. Ownership, phase, capabilities, and exact command digest are visible before execution.
+A selection with `exports` waits for those emissions to be planned. Its template receives each emitted path and its declared symbols and controls:
 
-## Non-goals
+- wildcard versus explicit exports;
+- type-only exports;
+- comments and formatting;
+- order within each exported group.
 
-`CodepotgPack.yaml` does not:
+A barrel may export another barrel. Missing keys and cycles are errors.
 
-- require users to list internal templates in `codepotg.yaml`;
-- select one global pack language;
-- require semantic `fileName` or `directory` fields;
-- generate barrels through a hidden root subsystem;
-- hide commands inside templates;
-- overwrite user-owned manifests through raw templates when contributions are intended;
-- parse `paths.yaml` in v2.
+### `symbols`
+
+Explicit symbols emitted by each generated file:
+
+```yaml
+symbols:
+  - (entity.name.pascal.s)Repository
+```
+
+CodepotG does not parse rendered code to guess exports. Symbols are used by imports, barrels, conflicts, and plan inspection.
+
+### `bindings`
+
+Names of public external bindings consumed by the selection.
+
+## Path and filename expressions
+
+One syntax is used for dynamic values:
+
+```text
+(entity.name.kebab.s)
+(resource.name.path.o)
+(option.clientName)
+```
+
+Double parentheses escape literal parentheses:
+
+```text
+((admin)) -> (admin)
+```
+
+Square brackets remain literal for framework paths.
+
+See [`../03-generation/00-path-expressions-and-name-tokens.md`](../03-generation/00-path-expressions-and-name-tokens.md).
+
+## `executables`
+
+Pack-provided defaults:
+
+```yaml
+executables:
+  packageManager: pnpm
+```
+
+The project may replace them globally or per pack instance. A command references the key through `executable`.
+
+## `commands`
+
+Pack-owned exact before/after commands:
+
+```yaml
+commands:
+  after:
+    install:
+      executable: packageManager
+      arguments: [add, typeorm@^0.3.0]
+```
+
+Arguments are opaque. Core does not convert dependency declarations into package-manager syntax. Packs may set themselves up through approved commands; projects may replace executable names/paths or disable/override commands through typed project configuration.
+
+Downloaded pack commands require approval by default.
+
+## Removed redundant sections
+
+The simplified contract does not require separate root sections for:
+
+```text
+kind
+metadata
+integration
+content.root
+writePolicy
+languages
+templateEngines
+paths
+filePatterns
+files
+profiles
+dependencies
+setup.actions
+overridePolicy
+```
+
+Their useful behavior is either inferred from the filesystem, owned by adapters/project policy, expressed by selections/imports/exports/bindings/commands, or deferred until a real pack proves a smaller explicit field is required.
+
+## Validation
+
+The manifest decoder rejects:
+
+- unknown selection folders;
+- unknown fixed selectors;
+- invalid aliases;
+- missing imported/exported selection keys;
+- import/export cycles;
+- duplicate/conflicting symbols;
+- unsafe output paths;
+- unsupported expressions;
+- undeclared generated dependencies;
+- command references to unknown executables;
+- attempts to add semantic `fileName`, `filePath`, or `directory` conveniences.
