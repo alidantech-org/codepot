@@ -1,236 +1,253 @@
-# Rules, overrides, and bindings
+# Typed options, restrictions, and bindings
 
 ## Core-owned protocol
 
-CodepotG core owns how rules are declared, decoded, merged, restricted, inspected, and documented. Language adapters, template-engine adapters, ecosystem adapters, and packs provide typed rule models within that protocol.
+CodepotG core owns how typed options and override patches are declared, decoded, restricted, inspected, and documented.
+
+Adapters and packs may define typed options only within their approved ownership boundaries. They cannot use options to add semantic objects, facets, selectors, expression roots, context values, or emitted syntax services.
 
 No implementation may deep-merge arbitrary dictionaries.
 
-## Rule field metadata
+## Option field metadata
 
-Every rule field declares:
+Every configurable field declares:
 
 ```text
 path
 value type
 default
-merge policy
 override capability
 security classification
 documentation
 examples
-introduced version
+introduced behavior version
 ```
 
-Supported merge policies:
+Where layered override behavior is required, supported operations are explicit and typed, for example:
 
-- `replace`;
-- `append`;
-- `prepend`;
-- `union`;
-- `mergeByKey`;
-- `remove`;
-- `resetToDefault`;
-- `notOverridable`.
+```text
+replace
+append
+prepend
+union
+mergeByKey
+remove
+resetToDefault
+notOverridable
+```
 
-A patch distinguishes:
-
-- not specified;
-- set to value;
-- remove;
-- reset to adapter default.
-
-`null` must not ambiguously mean all four states.
+A patch distinguishes absent, set, remove, and reset states. `null` must not ambiguously mean all of them.
 
 ## Deterministic precedence
 
-Effective rules are produced in this order:
+Only fields documented as layered are combined. A possible order is:
 
-1. adapter defaults;
-2. pack rules;
-3. exact template-local rules;
-4. project global target or engine overrides;
-5. project pack-instance overrides;
-6. project template-specific overrides.
+1. core/adapter defaults;
+2. pack defaults;
+3. project global allowed overrides;
+4. project pack-instance overrides.
 
-Every merge produces provenance so `codepotg inspect rules` can explain the origin of the final value.
+Template-local syntax conventions belong in template code/macros rather than a hidden global rule stack.
+
+Every merge produces provenance so inspection can explain the final value.
 
 ## Restriction hierarchy
 
 The effective permission is the strictest of:
 
 1. host policy;
-2. adapter hard restriction;
-3. pack override policy;
+2. core/adapter hard restriction;
+3. pack restriction;
 4. project request.
 
-A lower layer may tighten a rule but cannot loosen an upper restriction.
+A lower layer may tighten but cannot loosen an upper restriction.
 
-## Language rule families
+## Target adapter option families
 
-Language adapters should organize applicable fields under stable families:
+Target/language adapters may define options only for their approved detection, validation, and path responsibilities, such as:
 
 ```text
-identifiers
-naming
 files
-modules
-imports
-exports
+identifier validation
+reserved names
+modules/URIs
+path aliases
+extension/index resolution
+capability validation
+```
+
+They must not define generated-syntax families for:
+
+```text
 types
 literals
 comments
-documentation
-formatting
+documentation text
+imports/exports statements
+decorators/annotations
+validators
+formatting/quotes/semicolons
+framework conventions
 ```
 
-A language does not need to implement meaningless fields. Its descriptor states supported capabilities and fields. Unknown fields are errors.
+Those are pack/template concerns.
 
-## Template-engine rule families
+## Pack options
 
-Template-engine adapters should organize applicable fields under:
+Pack options may vary authored template behavior within one coherent product and deterministic file inventory. Examples include:
+
+- client or package name;
+- an authored transport strategy;
+- date/binary/serialization representation;
+- error/result convention;
+- an explicitly supported view/state convention.
+
+Pack options cannot expose internal selector grammar, arbitrary semantic paths, hidden file activation/profile systems, or raw dictionaries.
+
+## Template-engine option families
+
+Template-engine adapters may define typed fields for:
 
 ```text
 undefined behavior
-whitespace
-includes and inheritance
+whitespace behavior
+includes/inheritance
 sandbox
 context access
-filters and tests
+approved filters/tests
 render limits
-output blocks
 ```
 
-Security-sensitive fields such as Python builtin access, arbitrary imports, absolute filesystem access, and unrestricted attribute access are host-controlled and cannot be enabled by downloaded packs.
+Security-sensitive fields such as arbitrary imports, builtins, filesystem/network access, or unrestricted attribute/call access are host-controlled and cannot be enabled by downloaded packs.
 
 ## Bindings
 
-Bindings are pack-declared public integration points satisfied by a project pack instance.
+Bindings are pack-declared public external integration points satisfied by a project pack instance.
 
-The pack catalog defines:
+A binding declaration defines:
 
-- stable binding ID;
-- kind;
-- required or optional state;
-- target syntax when applicable;
-- expected symbol kind;
-- accepted value sources;
+- stable ID;
+- typed kind;
+- required/optional state;
+- target/path capability requirements where applicable;
+- expected symbol/value shape;
+- accepted sources;
 - discovery hints;
 - missing-value policy;
-- documentation and examples.
+- documentation/examples.
 
-Individual templates list the binding IDs they consume.
+Selections list the binding IDs they consume. Bindings do not add arbitrary values to every template context.
 
-## Standard binding kinds
+## Generated dependencies are not bindings
 
-### `import`
+Dependencies between files generated by the same or another planned pack selection use:
 
-Logical symbol import rendered by the target-language adapter.
+```yaml
+imports:
+  localName: providerSelection
+```
 
-### `barrel`
+and explicit provider symbols.
 
-A project module/package entry point exporting one or more logical symbols.
+The planner matches semantic identities/scopes and produces immutable provider/path descriptors. External bindings are reserved for project-supplied integration points.
+
+## Standard external binding kinds
+
+### `module`
+
+A declared module/package/URI and symbols supplied by the project.
 
 ### `projectPath`
 
-Real project file path. The language adapter calculates a correct relative or configured module path from each output artifact.
+A real project file path. Core and the target adapter calculate/validate destination-relative module/path facts from each planned consumer artifact.
 
 ### `package`
 
-Package or namespace import such as Dart `package:` or Java package paths.
+A package/module identity such as a Node package, Dart `package:` root, Python module, Java package, or other target-supported form.
 
 ### `namespace`
 
-Namespace import or language-specific module namespace.
+A target namespace/module identity used by the authored template.
 
 ### `text` and `textFile`
 
-Controlled text values or declared project files exposed as immutable content.
+Controlled immutable text or explicitly declared project-file content.
 
 ### `value`
 
-Typed scalar or structured configuration value.
+A typed scalar or structured configuration value whose schema is declared by the pack.
 
 ### `packageName`
 
-Project package identity used for package imports or manifests.
+Project package identity used for URI/module paths or authored manifests.
 
 ### `artifact`
 
-Reference to a generated artifact or capability provided by another template or pack.
+Reference to a planned generated artifact/capability from another pack when the project explicitly connects them.
 
-## Import sources
-
-A TypeScript import binding may be configured as:
+## Module/path binding example
 
 ```yaml
-symbol: BaseRepository
-from:
-  module: "@modules/common/base"
+bindings:
+  baseRepository:
+    from:
+      projectPath: src/database/base.repository.ts
+    symbols: [BaseRepository]
 ```
 
-or:
+The planner and target adapter may expose:
 
-```yaml
-symbol: BaseRepository
-from:
-  projectPath: src/modules/common/base-repository.ts
+```text
+binding.baseRepository.module.specifier
+binding.baseRepository.symbols
+binding.baseRepository.providerPath
 ```
 
-or through a barrel group:
+The template authors the statement:
 
-```yaml
-from:
-  barrel: "@modules/common"
-symbols:
-  baseRepository: BaseRepository
-  logger: AppLogger
+```jinja
+import { {{ binding.baseRepository.symbols | join(", ") }} } from "{{ binding.baseRepository.module.specifier }}";
 ```
 
-The adapter owns rendering, aliasing, extension omission, relative path calculation, deduplication, collision aliases, and import ordering.
+No adapter renders, deduplicates, groups, orders, quotes, aliases, or injects that import. Packs may author reusable import macros.
 
 ## Raw escape hatch
 
-A raw import or raw text binding may be supported for unusual syntax, but it must produce a warning that CodepotG cannot safely relocate, deduplicate, or semantically validate it.
+A bounded raw module/path/text binding may be supported for unusual project integration, with explicit diagnostics that relocation and semantic validation may be limited.
 
-Raw values must never become an implicit shell or Python execution path.
+A raw binding remains immutable data supplied to a template. It must never become implicit shell/Python execution or bypass path/security rules.
 
 ## Missing binding behavior
 
-Per binding or project policy may select:
+A typed policy may select:
 
-- `prompt`;
-- `placeholder`;
-- `omit` for optional behavior;
-- `skipTemplate`;
-- `error`.
+```text
+prompt
+placeholder
+omit optional behavior
+skip affected invocation
+error
+```
 
-Placeholders must be obvious and machine-detectable. Generation results list every unresolved binding and affected artifact.
-
-Strict CI mode converts configured unresolved conditions into errors without removing flexible local generation.
+Placeholders must be obvious and machine-detectable. Plans/results list every unresolved binding and affected artifact. Strict modes convert configured unresolved states into errors.
 
 ## Discovery
 
-A pack may provide hints such as:
+A pack may provide bounded hints such as expected symbol names, module alias patterns, known manifest keys, or framework locations.
 
-- expected symbol names;
-- file patterns;
-- module alias patterns;
-- project manifest keys;
-- known framework locations.
+Configure tooling may offer detected candidates but must not silently choose among ambiguous matches. Discovery does not authorize arbitrary project scanning from templates.
 
-`codepotg configure` may offer detected candidates but must not silently choose among ambiguous matches.
+## Required tests
 
-## Tests
-
-Required contract tests cover:
-
-- each merge policy;
-- permission hierarchy;
-- provenance of effective values;
-- default barrel deduplication;
-- relative path calculation;
-- alias conflicts;
-- missing binding policies;
-- raw escape warnings;
-- exact template-to-binding dependency mapping.
+- each supported typed override operation and restriction hierarchy;
+- provenance of effective options;
+- rejection of arbitrary dictionary merge;
+- rejection of semantic/facet/selector/context extension through options;
+- rejection of target syntax-rendering options;
+- project-path, package/module, namespace, text/value, and artifact binding validation;
+- generated dependencies remaining separate from external bindings;
+- relative/module/URI path fact calculation;
+- template-authored import/export text;
+- missing binding policies and raw warnings;
+- exact selection/template consumer mapping;
+- no adapter-generated source snippets.
