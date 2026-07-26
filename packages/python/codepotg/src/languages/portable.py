@@ -1,10 +1,7 @@
-"""Shared foundation for portable language adapters.
+"""Shared foundation for production language adapters.
 
-The portable adapters intentionally reuse the complete typed debug contract as the
-language-neutral variable baseline. They replace only project/language metadata and
-post-generation guidance. This keeps every schema, operation, entity, frontend,
-dependency, raw source, extension, and file-context variable available consistently
-while target-specific type enrichers are added independently.
+Inference remains language-neutral. Adapters reuse the complete typed contract and
+attach deterministic target-language type, package, and source-layout conventions.
 """
 
 from __future__ import annotations
@@ -28,11 +25,12 @@ from contracts.template import (
     TemplateProjectLang,
 )
 from languages.debug.adapter import DebugLanguageAdapter
+from languages.portable_types import PortableTypeSystem, type_system_for
 
 
 @dataclass(frozen=True)
 class PortableLanguageProfile:
-    """Metadata and safe post-generation hints for one target language."""
+    """Complete target metadata for one production language adapter."""
 
     name: str
     format: str
@@ -41,6 +39,15 @@ class PortableLanguageProfile:
     package_suffix: str = "client"
     diagnostics: tuple[str, ...] = ()
     aliases: tuple[str, ...] = ()
+    package_dependencies: tuple[str, ...] = ()
+    package_dev_dependencies: tuple[str, ...] = ()
+    type_system: PortableTypeSystem | None = None
+
+    @property
+    def resolved_type_system(self) -> PortableTypeSystem:
+        """Return the explicit or registered type system for this target."""
+
+        return self.type_system or type_system_for(self.name)
 
 
 def build_portable_template_contract(
@@ -53,7 +60,7 @@ def build_portable_template_contract(
     frontend: str | None = None,
     progress: ProgressSink | None = None,
 ) -> TemplateContract:
-    """Build a complete typed contract without re-parsing source dictionaries."""
+    """Build a complete typed target contract without re-parsing source dictionaries."""
 
     _notify(
         progress,
@@ -73,14 +80,22 @@ def build_portable_template_contract(
     description = api.info.description.strip()
     if description == "-":
         description = ""
+
+    type_system = profile.resolved_type_system
     package_name = f"{project_name.snake.o}_{profile.package_suffix}"
     server_urls = tuple(server.url for server in api.servers if server.url)
     common_meta = {
         "api_version": api.info.api_version,
         "openapi_version": api.info.openapi_version,
         "server_urls": server_urls,
-        "adapter_family": "portable",
+        "adapter_family": "production-portable",
         "complete_variable_contract": True,
+        "type_system": type_system,
+        "scalar_types": type_system.scalar_types,
+        "format_types": type_system.format_types,
+        "file_extension": type_system.file_extension,
+        "package_file": type_system.package_file,
+        "source_root": type_system.source_root,
     }
 
     project = replace(
@@ -97,8 +112,20 @@ def build_portable_template_contract(
     )
     language = TemplateLanguage(
         name=profile.name,
-        framework=TemplateFramework(name=profile.framework),
-        package=TemplatePackage(name=package_name, version="0.1.0"),
+        framework=TemplateFramework(
+            name=profile.framework,
+            meta={
+                "source_root": type_system.source_root,
+                "file_extension": type_system.file_extension,
+            },
+        ),
+        package=TemplatePackage(
+            name=package_name,
+            version="0.1.0",
+            dependencies=profile.package_dependencies,
+            dev_dependencies=profile.package_dev_dependencies,
+            meta={"manifest": type_system.package_file},
+        ),
         features=TemplateFeatures(
             text_reports=True,
             schema_groups=True,
