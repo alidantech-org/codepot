@@ -6,15 +6,16 @@ These documents are the architecture baseline for the clean rewrite. The existin
 
 1. [`00-governance/00-approved-architecture.md`](00-governance/00-approved-architecture.md)
 2. [`00-governance/01-agent-working-rules.md`](00-governance/01-agent-working-rules.md)
-3. the design section for the assigned subsystem
-4. [`tasks/PARALLEL_WORK.md`](tasks/PARALLEL_WORK.md)
-5. the relevant core and package task ledgers
+3. [`00-governance/03-glossary-and-ownership.md`](00-governance/03-glossary-and-ownership.md)
+4. the design section for the assigned subsystem
+5. [`tasks/PARALLEL_WORK.md`](tasks/PARALLEL_WORK.md)
+6. the relevant core and package task ledgers
 
 ## Design sections
 
-1. [`00-governance`](00-governance/00-approved-architecture.md) — locked decisions, parallel-agent rules, and change policy.
+1. [`00-governance`](00-governance/00-approved-architecture.md) — locked decisions, parallel-agent rules, change policy, terminology, and ownership.
 2. [`01-foundation`](01-foundation/README.md) — package structure, dependency direction, Python API, diagnostics, events, results, and cancellation.
-3. [`02-configuration`](02-configuration/README.md) — complete `codepotg.yaml`, `CodepotgPack.yaml`, typed registry, rules, overrides, bindings, commands, toolchains, dependencies, and manifests.
+3. [`02-configuration`](02-configuration/README.md) — complete `codepotg.yaml`, `CodepotgPack.yaml`, linked full example, typed registry, rules, overrides, bindings, commands, toolchains, dependencies, and manifests.
 4. [`03-generation`](03-generation/README.md) — pack file discovery, selections, folder patterns, static files, authored barrels, planning graphs, rendering, transactions, and cache.
 5. [`04-plugins`](04-plugins/README.md) — plugin system and source, language, template-engine, pack-provider, and ecosystem adapter contracts.
 6. [`05-distribution`](05-distribution/README.md) — Python-first interfaces, minimal and batteries-included packages, Git/GitHub packs, locks, and trust.
