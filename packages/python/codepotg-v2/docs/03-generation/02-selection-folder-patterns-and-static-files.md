@@ -1,245 +1,225 @@
-# Selections, named path recipes, descriptor patterns, and static files
+# Fixed selections, selection folders, imports, barrels, and static files
 
 ## Selection is pack-owned
 
-The pack decides which normalized records or planned artifacts each source file consumes. The project does not list internal templates, path recipes, or selection rules.
+The project chooses a pack and its semantic input. The pack decides which fixed normalized records drive each registered emission selection.
 
-## Supported selection modes
+The project never lists internal template files or selection rules.
 
-### Once
+## Fixed selection registry
 
-One invocation for the project/pack context.
+Packs use documented selectors rather than arbitrary `from`/`as` definitions.
 
-```yaml
-selection:
-  scope: project
-```
-
-### Each
-
-One invocation per selected record.
-
-```yaml
-selection:
-  each: entities
-  as: entity
-```
-
-### Grouped
-
-One invocation per deterministic group.
-
-```yaml
-selection:
-  group:
-    source: operations
-    by: resource.name
-    as: operations
-```
-
-### Aggregate
-
-One invocation receives declared collections and may generate a monolithic file.
-
-```yaml
-selection:
-  scope: aggregate
-  collect:
-    entities:
-      from: entities
-      orderBy: name
-    operations:
-      from: operations
-      orderBy: operationId
-```
-
-### Artifact-derived
-
-A later template may select planned artifacts or capabilities from earlier templates, for example an authored barrel, registry, package manifest, or documentation index.
-
-## Where selection may be declared
-
-Selection can be declared in three places:
-
-1. a reusable named `selection`;
-2. a named path recipe under `paths`;
-3. an exact file descriptor.
-
-A path-recipe selection is ideal when a whole source subtree should fan out together. A file selection is ideal when only one source file needs the alias.
-
-## Named path recipes replace vague output-root patterns
-
-A named path recipe composes output parts and may own fan-out:
-
-```yaml
-paths:
-  module:
-    selection:
-      each: modules
-      as: module
-    parts:
-      - src
-      - modules
-      - "[module.name.path.o]"
-```
-
-Pack content:
+Initial examples:
 
 ```text
-templates/
-└── {module}/
-    ├── module.ts.jinja
-    ├── README.md
-    └── .gitkeep
+resources.each
+resources.all
+entities.each
+entities.all
+schemas.models.each
+schemas.models.all
+schemas.dtos.each
+schemas.dtos.all
+schemas.enums.each
+schemas.enums.all
+operations.each
+operations.all
+resource.entities.each
+resource.operations.each
 ```
 
-Result:
+`.each` creates one context per item. `.all` creates one context containing the collection.
 
-- `module.ts.jinja` renders once per module;
-- `README.md` copies once per module;
-- `.gitkeep` copies once per module;
-- every output begins with the parts emitted by `{module}`;
-- relative source structure after `{module}` remains intact;
-- no invented `module.directory` value is required.
-
-## Nested path recipes
-
-Recipes can compose nested selections:
+Default context names are inferred from the selector. Optional aliases are inline:
 
 ```yaml
-paths:
-  resource:
-    selection:
-      each: resources
-      as: resource
-    parts:
-      - src
-      - modules
-      - "[resource.name.path.o]"
-
-  entity:
-    selection:
-      each: resource.entities
-      as: entity
-    parts:
-      - entities
+select: entities.each(repositoryEntity)
 ```
 
-Source path:
+## One selection registry
+
+```yaml
+selections:
+  repositories:
+    paths: [src, repositories]
+    select: entities.each
+    imports:
+      entities: entities
+    bindings: [baseRepository]
+    symbols: [(entity.name.pascal.s)Repository]
+```
+
+The key `repositories` is both:
+
+- the manifest identity of the emission group;
+- the folder key used by `templates/{repositories}/`;
+- the dependency key referenced by `imports` or `exports`.
+
+No secondary selection aliases, root `paths`, exact `files`, or artifact namespaces are needed.
+
+## Selection folders
 
 ```text
-{resource}/{entity}/[entity.name.kebab.s].entity.ts.jinja
+templates/{repositories}/(entity.name.kebab.s).repository.ts.jinja
 ```
 
-The `entity` recipe is valid only after a context has introduced `resource`. The planner validates alias availability before creating invocations.
-
-## Descriptor patterns
-
-`filePatterns` remain useful, but their primary purpose is configuring matching source descriptors rather than inventing output directories.
-
-Examples:
+`{repositories}` is replaced by:
 
 ```yaml
-filePatterns:
-  "**/*.spec.ts.jinja":
-    profiles: [tests]
-    localRules:
-      typescript:
-        comments:
-          generatedHeader: test
-
-  "_partials/**/*.jinja":
-    role: partial
+paths: [src, repositories]
 ```
 
-Pattern precedence is deterministic:
+The file repeats according to:
 
-1. content-root defaults;
-2. broad matching `filePatterns`;
-3. more specific matching patterns;
-4. exact `files` entry;
-5. project override only when the pack explicitly exposes that field.
+```yaml
+select: entities.each
+```
 
-Conflicting values at equal specificity are errors.
+Every included descendant under the selection folder inherits the same selection context and output prefix.
 
-## Filters and ordering
+## Nested selection folders
 
-Selections use a bounded typed expression language. Supported fields and operations come from the IR/selection descriptors and are validated before invocation creation.
+```yaml
+selections:
+  resources:
+    paths: [src, modules, (resource.name.path.o)]
+    select: resources.each
 
-Templates do not query the complete source graph or perform hidden discovery. Ordering must be explicit or guaranteed by the collection contract.
-
-## Gitignore-compatible exclusions
-
-Packs may define inline patterns and/or `.codepotgignore`.
-
-Supported behavior includes:
-
-- `*` and `?` within a path segment;
-- `**` across directories;
-- leading `/` for content-root-relative matches;
-- trailing `/` for directories;
-- `!` negation;
-- comments in ignore files;
-- deterministic application order.
-
-Ignored files receive no descriptor and cannot be included by templates.
-
-## Static and binary fan-out
-
-Static or binary content can be copied:
-
-- once to its token-resolved relative destination;
-- once for each selected record;
-- once for each group;
-- below a selection-bearing path recipe;
-- into an owned standalone package or complete project.
-
-Content bytes remain unchanged. Only the destination is planned.
-
-Example:
+  resourceEntities:
+    paths: [entities]
+    select: resource.entities.each
+```
 
 ```text
-templates/{package}/.gitignore
-templates/{package}/assets/logo.png
+templates/{resources}/{resourceEntities}/(entity.name.kebab.s).entity.ts.jinja
 ```
+
+Selection folders are resolved left to right, so `resourceEntities` may use the active `resource` context.
+
+## Pack-root emission
+
+`{root}` is built in:
+
+```text
+templates/{root}/package.json.jinja -> package.json
+```
+
+It allows physical grouping without an output folder.
+
+## Imports are explicit
 
 ```yaml
-paths:
-  package:
-    selection:
-      each: packages
-      as: package
-    parts:
-      - packages
-      - "[package.name.path.o]"
+repositories:
+  paths: [src, repositories]
+  select: entities.each
+  imports:
+    entities: entities
 ```
 
-## Profiles
+The mapping is `localName: selectionKey`.
 
-Profiles choose declared source descriptors and option defaults:
+The import resolver:
+
+- accepts only declared selection providers;
+- matches required semantic dependencies to explicit symbols;
+- imports only the least required symbols;
+- respects `.each`, `.all`, global, and parent scopes;
+- rejects missing, ambiguous, duplicate, and conflicting providers;
+- supplies a language-neutral plan to the language adapter/template.
+
+A direct `.each` provider may produce several module imports. A global, `.all`, or barrel provider may produce one module import. The referenced selection determines the shape; no `outputs.*` namespace is used.
+
+## Barrels and exports
+
+A barrel is a normal template whose selection declares ordered exports:
 
 ```yaml
-profiles:
-  modular:
-    enable: [entity, operation, index]
-  monolithic:
-    enable: [completeApi]
+repositoriesIndex:
+  paths: [src, repositories]
+  exports: [repositories]
 ```
 
-Profiles cannot activate ignored files, bypass bindings, change undeclared paths, or select a global language.
+```text
+templates/{repositoriesIndex}/index.ts.jinja
+```
+
+The template receives `exports.repositories`, including emitted paths and declared symbols. It controls whether to write wildcard, explicit, or type-only exports.
+
+A barrel may export another barrel:
+
+```yaml
+rootIndex:
+  paths: [src]
+  exports: [entitiesIndex, repositoriesIndex]
+```
+
+Missing keys and export cycles are rejected before rendering.
+
+## Aggregate templates
+
+A template that selects a complete semantic collection uses `.all`:
+
+```yaml
+schemaRegistry:
+  paths: [src]
+  select: schemas.all
+  symbols: [SchemaRegistry]
+```
+
+A template that aggregates emitted files uses `exports` instead. Semantic collections and emitted artifacts are not conflated.
+
+## Literal, static, and binary content
+
+Content outside a selection folder follows its literal relative path.
+
+```text
+templates/README.md.jinja -> README.md
+templates/assets/logo.png -> assets/logo.png
+```
+
+Inside a selection folder, literal/static descendants repeat with that selection:
+
+```text
+templates/{resources}/README.md
+templates/{resources}/assets/icon.png
+```
+
+Bytes remain unchanged for static/binary files.
+
+## Ignore behavior
+
+Discovery respects:
+
+- the pack-root `.gitignore`;
+- manifest `include` patterns;
+- manifest `exclude` patterns;
+- `_partials/**` as non-emitting content.
+
+The pack's control `.gitignore` is never copied. To generate one, author:
+
+```text
+templates/.gitignore.jinja
+```
+
+## Ordering
+
+- fixed semantic collections provide deterministic order;
+- `exports` preserves the declared selection-key order;
+- individual emissions use deterministic path/scope order;
+- templates may further control textual ordering using the supplied descriptors.
 
 ## Required tests
 
-Tests cover:
-
-- once, each, grouped, aggregate, and artifact-derived selections;
-- deterministic filters and ordering;
-- structural and selection-bearing path recipes;
-- nested recipe alias scope;
-- static and binary fan-out;
-- descriptor-pattern precedence and conflicts;
-- ignore and negation semantics;
-- profile activation;
-- source-path relative structure preservation;
-- no hidden `fileName` or `directory` dependency;
-- no source graph access from templates.
+- fixed `.each` and `.all` selectors;
+- optional aliases;
+- selection-folder fan-out and nested parent scope;
+- `{root}`;
+- explicit imports and least-required symbols;
+- direct versus barrel imports;
+- barrels exporting barrels;
+- aggregate semantic templates versus emitted-file barrels;
+- static/binary fan-out;
+- ignore/include/exclude behavior;
+- deterministic ordering;
+- unknown keys, missing imports, symbol conflicts, cycles, traversal, and collisions.
