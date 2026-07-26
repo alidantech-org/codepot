@@ -1,48 +1,34 @@
 # Glossary and ownership matrix
 
-This glossary prevents agents from reusing old terms with incorrect v2 meanings.
+This glossary prevents agents from reusing old or framework-specific terms with incorrect CodepotG v2 meanings. The closed semantic contract is defined in [`04-closed-semantic-kernel.md`](04-closed-semantic-kernel.md).
 
-## Core terms
+## Project and pack terms
 
 ### Project
 
-The user's repository or configured generation workspace described by `codepotg.yaml`. A project can contain several ecosystems, units, output roots, and target syntaxes.
+The user's repository or configured generation workspace described by `codepotg.yaml`. A project may contain several pack instances, output roots, toolchains, and target syntaxes.
 
 A project is not a language and is not a template pack.
 
-### Project unit
-
-A scoped part of a repository with its own path and toolchain context, such as `backend`, `web`, or `packages/api_sdk`.
-
 ### Semantic source
 
-A named input normalized by a source adapter into neutral IR, such as an OpenAPI file. A source is not a pack and does not choose output architecture.
+A named input normalized by a source adapter into the closed neutral kernel. A source is not a pack and does not choose output architecture.
 
 ### Template pack
 
-A reusable generation product described by `CodepotgPack.yaml` and its content roots. It declares files, selections, outputs, bindings, rules, dependencies, setup, commands, and documentation.
-
-A pack may be full-project, standalone-folder, extension, fragment, or a combination of traits.
+A reusable generation product described by `CodepotgPack.yaml` and its filesystem content. It declares selections, output paths, generated dependencies, symbols, options, bindings, commands, and documentation.
 
 ### Pack instance
 
-One project-owned configuration of a pack under `codepotg.yaml` `packs.<instance>`. The same pack may have several instances using different sources, outputs, options, bindings, and commands.
-
-### Pack profile
-
-A pack-defined named set of files/defaults such as `modular`, `monolithic`, or `minimal`. A profile never means language selection.
+One project-owned configuration of a pack under `codepotg.yaml`. The same pack may have several instances using different sources, outputs, options, bindings, and commands.
 
 ### Pack file descriptor
 
-The single typed description created for one discovered pack source file after ignore rules, pattern defaults, and exact file configuration are applied.
+The typed description created for one discovered pack source file after ignore rules and target/engine detection are applied.
 
 ### Template
 
-A pack file rendered through a template-engine adapter. Its target syntax is inferred from its filename or explicitly declared only when ambiguous.
-
-### Barrel
-
-An authored template with `role: barrel` that receives planned export descriptors. It is not a special system-generated file category outside the unified file model.
+A pack-authored file rendered through a template-engine adapter. Templates, macros, partials, and static files own every emitted character.
 
 ### Partial
 
@@ -50,124 +36,221 @@ A non-emitting template fragment included through the pack template registry. It
 
 ### Static file
 
-A non-template text file copied without rendering. It is emitted by default unless ignored or classified as non-emitting documentation.
+A non-template text file copied without rendering.
 
 ### Binary file
 
 A non-template binary asset copied byte-for-byte through the same plan/writer safety model.
 
+### Barrel
+
+An authored template receiving planned export descriptors. Core does not invent barrel text.
+
+## Semantic-kernel terms
+
+### Contract
+
+One immutable normalized semantic document produced by a source adapter. Its primary root is `contract.groups`.
+
+### Group
+
+The neutral outer scope containing schemas, operations, views, storage mappings, workflows, policies, events, child groups, documentation, and known facets.
+
+A group is not inherently a REST resource, service, module, feature, namespace, package, or bounded context. Templates may generate those forms.
+
+### Schema
+
+A structural data definition. `schema.kind` is one of the kernel-defined structural kinds such as primitive, enum, object, array, map, union, or alias.
+
+`model`, `entity`, `request`, `response`, class, interface, type, struct, and record are not schema kinds.
+
+### Schema use
+
+A relation from an operation input/output or another known semantic location to a schema. Direction and use-specific facts belong to the relation, not permanently to the schema.
+
+### DTO role
+
+A controlled optional role assigned to a schema when the source explicitly identifies transport-shaped data. A DTO remains a schema and is not a separate hierarchy.
+
+### Operation
+
+Executable behavior described by inputs, outputs, failures, effects, and known facets.
+
+### Input
+
+A schema-use record describing data required by an operation.
+
+### Output
+
+A schema-use record describing a successful direct result of an operation.
+
+### Failure
+
+A declared operation or workflow failure possibility. It is not limited to HTTP status codes or exceptions.
+
+### Effect
+
+A consequence beyond a direct returned result, such as causing a declared event occurrence.
+
+### Facet
+
+A kernel-defined typed perspective attached only at documented semantic locations. Initial operation facets include HTTP, access, trigger, execution, and events.
+
+A facet is not an extension plugin. Packs and adapters cannot register new facets.
+
+### Listener
+
+An operation whose execution is initiated through a known trigger facet, such as an event or schedule trigger. Listener is a usage description, not a separate executable hierarchy.
+
+### Policy
+
+A reusable access declaration under `group.policies`. Policy application and effective inherited access facts are exposed through known access facets.
+
+### Hook
+
+A typed execution-phase relationship from one operation to another operation. Hooks may run before, around, after success, after failure, or after completion. Hook is not an open-ended executable node kind.
+
+### View
+
+A renderable or navigable interaction unit under `group.views`. It may contain parts, triggers, flows, and access facts without assuming web, mobile, desktop, page, screen, component, or widget output.
+
+### Storage mapping
+
+A relation under `group.storage.mappings` connecting a schema to store, field, key, index, relation, and constraint facts.
+
+`entity` is generated ORM vocabulary, not a neutral kernel object.
+
+### Event
+
+A declared occurrence under `group.events`. Caused occurrences appear in operation/workflow effects; event start and delivery facts appear in known trigger/event facets.
+
+### Workflow
+
+A first-class orchestration object under `group.workflows` with inputs, outputs, steps, transitions, failures, effects, and known facets.
+
+### Workflow step
+
+A typed orchestration step. An operation step references one forward operation and may optionally reference one compensation operation. Other known structures may include decision, parallel, wait, and end.
+
+### Compensation
+
+Corrective behavior invoked for a successfully completed workflow step when later workflow execution fails or another declared condition applies. Compensation is not assumed to be a perfect rollback or inverse.
+
+## Generation terms
+
 ### Target syntax
 
-The language or textual syntax produced by a template, such as TypeScript, Dart, YAML, Markdown, SQL, JSON, or Dockerfile syntax. User-facing configuration groups this under `languages`; internal descriptors may classify programming, markup, data, configuration, query, or plain-text syntax.
-
-### Template engine
-
-The syntax used to render a template source, such as Jinja. It is inferred from the final filename suffix.
+The language or textual syntax produced by a template, such as TypeScript, Dart, YAML, Markdown, SQL, JSON, or Dockerfile syntax.
 
 ### Language adapter
 
-An installable Python plugin that implements target-syntax identifiers, names, types, literals, comments, imports, exports, paths, capabilities, and typed language rules. It does not select templates or frameworks.
+An installable package that identifies target suffixes, validates target identifiers/filenames, calculates target-aware module/path facts, and publishes typed target capabilities.
+
+It does not emit types, literals, imports, exports, comments, decorators, validators, or framework code.
 
 ### Template-engine adapter
 
-An installable Python plugin that safely compiles and renders templates from immutable prepared contexts. It does not own target syntax or output planning.
+An installable package that safely compiles and renders templates from immutable prepared contexts. It does not own target syntax, destinations, or semantic meaning.
 
 ### Source adapter
 
-An installable Python plugin that loads one source format and normalizes it directly into neutral IR.
+An installable package that loads one source format and normalizes it into the known CodepotG kernel. It cannot extend the kernel.
 
 ### Ecosystem adapter
 
-A plugin that understands project manifests, dependencies, package managers, toolchain capabilities, and typed setup actions for an ecosystem such as Node or Dart.
+A package that understands known project manifests, package managers, toolchains, and setup actions. It does not add semantic concepts or render application code.
 
 ### Pack provider
 
-A plugin/service that resolves local, Git, GitHub, or installed-distribution pack locations into immutable local snapshots. It does not interpret the pack manifest.
+A service that resolves local or Git pack locations into immutable local snapshots. It does not interpret semantic sources or templates.
 
 ### Selection
 
-A typed pack-owned declaration selecting, filtering, ordering, grouping, or aggregating neutral IR or planned artifacts for a file invocation.
+A pack-owned declaration using one fixed, versioned, root-first selector to establish invocation cardinality and immutable template context.
 
 ### Template invocation
 
-One planned execution of one template descriptor with one selected context/aggregate, one target adapter, one engine adapter, effective rules, resolved bindings, dependencies, and declared outputs.
+One planned rendering of one template descriptor with one selected context/aggregate, one target descriptor, one engine, effective options/bindings, generated dependencies, and a fixed destination.
 
 ### Binding
 
-A pack-declared public integration point satisfied by a project pack instance. Examples include imports, project paths, package paths, barrels, values, text, package names, and artifact references.
+A pack-declared public integration point supplied by the project, such as a module, project path, package, value, text, or artifact reference.
 
-### Rule
+### Generated dependency
 
-A typed adapter-owned configurable convention with a field descriptor, default, merge policy, override permission, security classification, documentation, and provenance.
+An explicit selection-to-selection dependency declared under `imports` or `exports`. The planner resolves provider artifacts, semantic identity, symbols, scope, and path/module facts. Templates author the syntax.
 
-### Override
+### Symbol
 
-A typed patch applied at a permitted project or template scope. It is not a recursive dictionary merge.
-
-### Capability
-
-A precise feature or artifact fact declared/provided/required by an adapter, template, pack, ecosystem, or generated artifact.
-
-### Contribution
-
-A typed desired change to a user-owned manifest or project, such as adding a dependency, script, workspace member, export, asset, or configuration entry.
-
-### Setup action
-
-A typed operation recommended or requested by a pack, such as ensuring dependencies, formatting, linting, analyzing, or running build generation. It is separate from desired-state declarations and subject to policy/approval.
-
-### Command
-
-A visible structured executable-plus-arguments operation. It cannot be hidden in a template and is subject to ownership, capabilities, policy, digest, and approval.
-
-### Readiness action
-
-An unresolved binding, dependency, approval, or manual integration step reported to the user. It may coexist with useful fragment output in flexible mode.
+A pack-authored declaration of a name an artifact provides. CodepotG does not parse rendered source to discover symbols.
 
 ### Generation plan
 
-The complete immutable validated description of sources, packs, plugins, files, invocations, rules, bindings, graphs, outputs, contributions, commands, approvals, and readiness before rendering.
+The complete immutable validated description of normalized semantics, sources, packs, files, selections, invocations, destinations, symbols, dependencies, bindings, commands, approvals, impact, and readiness before rendering.
 
 ### Artifact
 
-One planned generated or copied output with identity, content kind, destination, lifecycle, provider facts, dependencies, and ownership.
+One planned generated or copied output with stable identity, destination, selected semantic identity, source template/static descriptor, declared symbols, dependencies, lifecycle, and ownership.
 
-### Ownership manifest
+### Impact graph
 
-Writer metadata recording which pack instance/artifact owns committed paths and content digests for safe updates and cleanup.
+The planned relation from semantic changes to affected relations, selections, invocations, and artifacts. It powers dry-run and blast-radius inspection and may later support conservative incremental generation.
+
+### Ownership/generation-state manifest
+
+Writer metadata recording generated artifact ownership, content digests, and prior generation state for safe updates, cleanup, drift reporting, and caching.
 
 ### Lock file
 
-`codepotg.lock`, which records immutable pack commits/digests and plugin/behavior versions for reproducibility. It never stores credentials or secrets.
+`codepotg.lock.yaml`, which records immutable pack/source/plugin/behavior identity for reproducibility. Generated output hashes do not belong in the dependency lock.
+
+## Naming contract
+
+Named semantic values always use:
+
+```text
+x.name.{casing}.{number}
+```
+
+For example:
+
+```text
+field.name.camel.original
+schema.name.pascal.singular
+operation.name.kebab.plural
+```
+
+Short number aliases `o`, `s`, and `p` are allowed. Do not reverse casing and number order.
 
 ## Ownership matrix
 
-| Concern | Project | Pack | Template | Core/planner | Adapter/plugin | Host |
-|---|---:|---:|---:|---:|---:|---:|
-| Source/spec path | owns | may require named source | no | resolves | source adapter loads | restricts access |
-| Pack selection | owns | identifies itself | no | resolves | provider fetches | restricts network/Git |
-| Target language | no global choice | declares per-target defaults | owns target | resolves per file | language adapter implements | may restrict plugins |
-| Template engine | no global choice | declares engine defaults | engine inferred/explicit | resolves per file | engine adapter renders | controls sandbox |
-| Internal template list | no | owns | one entry | discovers/plans | no | no |
-| Output root | owns instance root | declares relative/default intent | declares relative output | validates | writer commits | restricts filesystem |
-| Selection | no internal details | owns | consumes | compiles | no | no |
-| Binding definition | supplies value | defines/docs | declares usage | resolves | language/ecosystem renders | may restrict access |
-| Rules | requests permitted overrides | sets defaults/restrictions | may set local rules | merges/provenance | owns schema/semantics | owns hard security limits |
-| Dependencies | selects toolchain/policy | declares desired dependencies | no | aggregates | ecosystem adapter plans | controls execution/network |
-| Commands | owns project commands/policy request | owns pack commands/setup | cannot run commands | plans/validates | executor/ecosystem resolves | final authority |
-| Static files | configures output/ignore only through exposed fields | owns content/ignore | not rendered | discovers/plans | writer copies | filesystem policy |
-| Barrels | supplies bindings/overrides only | owns barrel template | authors text/exports layout | supplies planned exports | language adapter renders paths/syntax | no |
+| Concern | Project | Pack/template | Core/planner | Adapter/plugin | Host |
+|---|---:|---:|---:|---:|---:|
+| Semantic source location/options | owns | may require named input | resolves | source adapter loads/normalizes | restricts access |
+| Semantic kernel | no | consumes | owns and versions | cannot extend | no |
+| Pack source | owns instance locator | identifies itself | resolves | provider fetches | restricts network/Git |
+| Output root | owns instance root | declares relative paths | validates/plans | writer commits | restricts filesystem |
+| Selection | no internal details | owns fixed selector choice | compiles registry | cannot add grammar | no |
+| Generated text | no | owns every character | supplies facts/plans | engine renders; language validates paths | no |
+| Generated dependency | supplies external bindings | declares imports/exports/symbols | resolves semantic/provider graph | language may calculate path facts | no |
+| Target syntax | no global choice | target inferred from authored file | resolves descriptor | validates target/path capabilities | may restrict plugins |
+| Commands | owns policy and project commands | owns exact pack commands | plans/validates | executor resolves | final authority |
+| Static/binary content | configures output only | owns bytes/layout | discovers/plans | writer copies | filesystem policy |
+| Lock | requests frozen/update behavior | contributes identity | owns format and validation | providers/plugins supply versions | protects credentials |
 
-## Forbidden terminology shortcuts
+## Forbidden terminology and shortcuts
 
 Agents must not say or implement:
 
-- “the project language”;
-- “the pack language” as a singular global selection;
-- “a task chooses a template directory”;
-- “barrels are generated automatically by core”;
-- “static files need explicit emissions”;
-- “the template can write files or run commands”;
-- “language adapter means framework adapter”;
-- “migration means v2 decodes old files”;
-- “pack type” when composable integration traits are intended.
+- `resource`, `model`, or `entity` as neutral v2 kernel objects;
+- `frontend` or `ui` as top-level semantic roots;
+- class/interface/type/struct/record as schema kinds;
+- `http.groups`, `events.operations`, `access.operations`, or other reversed roots;
+- arbitrary pack-authored selector queries, traversal, `where`, or depth expressions;
+- third-party facet modules or adapter-defined semantic properties;
+- language adapters that generate imports, exports, types, literals, comments, validators, decorators, or framework syntax;
+- templates that write files or run commands;
+- root barrels generated automatically by core;
+- semantic `fileName`, `filePath`, or `directory` conveniences;
+- output hashes stored in the dependency lock;
+- migration as runtime support for old configuration.
