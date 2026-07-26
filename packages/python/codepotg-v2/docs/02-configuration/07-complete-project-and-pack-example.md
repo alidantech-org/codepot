@@ -1,6 +1,6 @@
 # Complete linked project and pack example
 
-This example shows how `codepotg.yaml` and `CodepotgPack.yaml` cooperate without exposing pack internals to the project.
+This example shows how `codepotg.yaml`, `CodepotgPack.yaml`, and tokenized pack source paths cooperate without exposing pack internals to the project.
 
 ## Project repository
 
@@ -93,33 +93,26 @@ packs:
           optional: true
 ```
 
-The project knows only:
-
-- the source;
-- the selected pack/profile;
-- output and clean scope;
-- public pack options;
-- public bindings;
-- permitted overrides;
-- project-owned commands.
-
-It does not list internal templates or select a language.
+The project knows only the source, pack/profile, output and clean scope, public options, public bindings, permitted overrides, and project-owned commands. It does not list internal templates, output filenames, path recipes, or one global language.
 
 ## Pack repository
+
+The path tokens are real pack source names:
 
 ```text
 codepotg-next-actions-pack/
 ├── CodepotgPack.yaml
 ├── templates/
-│   ├── models/
-│   │   └── model.ts.jinja
-│   ├── actions/
-│   │   └── action.ts.jinja
-│   ├── index.ts.jinja
-│   ├── all.ts.jinja
-│   ├── README.md.jinja
-│   ├── eslint.config.mjs
-│   ├── .gitignore
+│   ├── {models}/
+│   │   └── [model.name.kebab.s].model.ts.jinja
+│   ├── {actions}/
+│   │   └── [operation.name.kebab.o].action.ts.jinja
+│   ├── {generatedRoot}/
+│   │   ├── index.ts.jinja
+│   │   ├── sdk.ts.jinja
+│   │   ├── README.md.jinja
+│   │   ├── eslint.config.mjs
+│   │   └── .gitignore
 │   └── _partials/
 │       └── license.txt.jinja
 └── docs/
@@ -180,7 +173,6 @@ languages:
     naming:
       types: pascalCase
       values: camelCase
-      files: kebabCase
     imports:
       strategy: relative
       omitExtensions: true
@@ -247,82 +239,81 @@ selections:
         from: operations
         orderBy: operationId
 
-filePatterns:
-  "models/**":
-    output:
-      root: gen/models
-
-  "actions/**":
-    output:
-      root: gen/actions
-
-files:
-  "models/model.ts.jinja":
-    id: model
-    role: template
+paths:
+  models:
     selection:
       use: models
-    output:
-      path: gen/models/{model.fileName}.ts
-    provides:
-      - model.{model.id}
+    parts:
+      - gen
+      - models
 
-  "actions/action.ts.jinja":
-    id: action
-    role: template
+  actions:
     selection:
       use: operations
+    parts:
+      - gen
+      - actions
+
+  generatedRoot:
+    parts:
+      - gen
+
+filePatterns:
+  "_partials/**/*.jinja":
+    role: partial
+
+  "**/*.spec.ts.jinja":
+    profiles: [tests]
+
+files:
+  "{models}/[model.name.kebab.s].model.ts.jinja":
+    id: model
+    role: template
+    provides:
+      - model.semantic
+
+  "{actions}/[operation.name.kebab.o].action.ts.jinja":
+    id: action
+    role: template
     uses:
       bindings: [logger, tokenProvider, serverClient]
-    output:
-      path: gen/actions/{operation.fileName}.ts
     provides:
-      - action.{operation.id}
+      - action.operation
 
-  "index.ts.jinja":
+  "{generatedRoot}/index.ts.jinja":
     id: index
     role: barrel
     selection:
       scope: aggregate
     exports:
       include: [model, action]
-    output:
-      path: gen/index.ts
 
-  "all.ts.jinja":
+  "{generatedRoot}/sdk.ts.jinja":
     id: completeSdk
     role: template
     selection:
       use: completeSdk
     uses:
       bindings: [logger, tokenProvider, serverClient]
-    output:
-      path: gen/sdk.ts
 
-  "README.md.jinja":
+  "{generatedRoot}/README.md.jinja":
     id: generatedReadme
     role: template
     selection:
       scope: project
-    output:
-      path: gen/README.md
 
   "_partials/license.txt.jinja":
     id: licenseHeader
     role: partial
     target: plainText
 
-  "eslint.config.mjs":
+  "{generatedRoot}/eslint.config.mjs":
     id: eslintConfig
     role: static
-    output:
-      path: gen/eslint.config.mjs
 
-  ".gitignore":
+  "{generatedRoot}/.gitignore":
     id: generatedIgnore
     role: static
-    output:
-      path: gen/.gitignore
 
 profiles:
   modular:
@@ -380,8 +371,6 @@ overridePolicy:
         strategy: allow
         aliases: allow
         omitExtensions: allow
-      naming:
-        files: allow
   templateEngines:
     jinja:
       whitespace:
@@ -389,19 +378,39 @@ overridePolicy:
         leftStripBlocks: allow
 ```
 
-## Resolution summary
+## Destination examples
 
-During planning:
+Given selected records named `Order`, `Orders`, and `ListOrders`, the source path rules may produce:
 
-1. `serverSdk` resolves the pack and source.
-2. Every template's target is inferred from its filename.
-3. The `modular` profile activates models, actions, authored barrel, docs, and static files.
-4. Project bindings satisfy logical binding IDs; the TypeScript adapter calculates imports.
-5. Pack dependencies become typed `package.json` contributions.
-6. Pack actions/commands are shown for approval according to policy.
-7. All outputs and graph dependencies are validated before rendering.
-8. Templates/static files stage under `./_`.
-9. Approved unused-import and formatting actions run in the declared phase.
-10. The writer commits the complete validated result.
+```text
+{models}/[model.name.kebab.s].model.ts.jinja
+→ gen/models/order.model.ts
 
-The project user never needs to know the pack's internal template paths.
+{actions}/[operation.name.kebab.o].action.ts.jinja
+→ gen/actions/list-orders.action.ts
+
+{generatedRoot}/index.ts.jinja
+→ gen/index.ts
+
+{generatedRoot}/eslint.config.mjs
+→ gen/eslint.config.mjs
+```
+
+The model name is deliberately singularized through `.s`; the operation name keeps its original lexical number through `.o`.
+
+## Planning summary
+
+1. `serverSdk` resolves the pack and semantic source.
+2. The selected profile activates source descriptors.
+3. Engine and target adapters are inferred from each source filename.
+4. Named path recipes establish selections and output parts.
+5. Dynamic name tokens apply explicit case and original/singular/plural projections.
+6. Project bindings satisfy logical pack binding IDs.
+7. The TypeScript adapter plans imports but does not plan output folders.
+8. Dependencies become typed `package.json` contributions.
+9. Commands/actions are inspected and approved according to policy.
+10. Every output and graph edge is validated before rendering.
+11. Files stage beneath the project pack-instance root `./_`.
+12. The complete transaction commits only after validation succeeds.
+
+The project user never needs to know the pack's internal source paths, but pack authors have full explicit control over path composition.

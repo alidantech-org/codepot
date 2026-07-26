@@ -6,12 +6,12 @@ An implementation that conflicts with this document is incorrect even when it re
 
 ## Clean-room boundary
 
-- The existing `packages/python/codepotg` package remains the complete reference implementation for the old behavior.
+- The existing `packages/python/codepotg` package remains the complete implementation for old behavior.
 - CodepotG v2 does not import old implementation modules.
 - CodepotG v2 does not implement compatibility decoders for old `tasks` configuration or `paths.yaml`.
 - CodepotG v2 does not preserve old internal class names, dependency direction, registries, monkey patches, CLI path manipulation, or duplicate representations.
-- Existing templates and configurations may be studied to understand real generation needs, but they must be re-authored into the new contracts.
-- Migration means re-authoring projects and packs into the v2 schemas, not embedding the v1 runtime inside v2.
+- Existing templates and configurations may be studied to understand real generation needs, but they are re-authored into the new contracts.
+- Re-authoring means expressing projects and packs through v2 schemas, not embedding the old runtime inside v2.
 
 ## Two authored configuration files
 
@@ -29,202 +29,137 @@ No additional user-edited pack configuration file is required. Pack instance con
 - project identity;
 - named semantic sources and specification paths;
 - project toolchains and selected package managers;
-- host and project command policy;
+- host/project command requests;
 - global project before and after commands;
 - ordered pack instances;
-- each pack instance source, output root, options, bindings, overrides, clean scopes, and project-owned commands.
+- each pack instance source, profile, output root, options, bindings, overrides, clean scopes, and project-owned commands.
 
-The project does not select one global language. A project and a pack may contain TypeScript, Dart, YAML, Markdown, SQL, JSON, Dockerfiles, images, and other targets together.
+The project does not select one global language. A project may generate TypeScript, Dart, YAML, Markdown, SQL, JSON, Dockerfiles, images, and other targets together.
 
 ## Pack ownership
 
-`CodepotgPack.yaml` replaces the conceptual responsibilities previously placed in `paths.yaml`. It owns:
+`CodepotgPack.yaml` owns:
 
 - pack identity and compatibility;
-- content roots and Gitignore-compatible ignore rules;
-- file and folder-pattern discovery;
+- content roots and Gitignore-compatible exclusions;
+- named path recipes and typed path-token rules;
+- source-file discovery and descriptor configuration;
 - selections and invocation fan-out;
-- template, barrel, static, partial, documentation, and binary-file roles;
+- template, barrel, static, partial, documentation, and binary roles;
 - per-template bindings and dependencies;
-- pack language rules and template-engine rules;
+- pack language and template-engine rules;
 - pack options and documented setup inputs;
 - dependency and manifest contributions;
 - typed setup actions and pack-owned commands;
 - lifecycle and file-ownership policy;
 - manual setup instructions and pack documentation.
 
-There is no root-level system-owned `barrels` subsystem. A barrel is an authored template file with `role: barrel`.
+There is no root-level system-owned barrel subsystem. A barrel is an authored template source file with `role: barrel`.
 
-## Template ownership
+## Template ownership of target and destination pattern
 
-A template file is the unit that owns its target language or syntax.
+A template source file owns its target syntax and its default destination pattern.
 
-The default convention is:
+The target convention is:
 
 ```text
 file-name.{target-extension}.{template-engine-extension}
 ```
 
+The destination convention is that the content-root-relative source path is parsed as a path program:
+
+```text
+{namedPathRecipe}/[typed.expression].ts.jinja
+```
+
+The final engine suffix is removed and the target suffix remains.
+
 Examples:
 
 ```text
-user.entity.ts.jinja
-client.dart.jinja
-openapi.yaml.jinja
-README.md.jinja
+{models}/[model.name.kebab.s].model.ts.jinja
+{clients}/client.dart.jinja
+{docs}/README.md.jinja
+app/[[...slug]]/page.tsx.jinja
 ```
 
-The template engine is inferred from the final known suffix. The target syntax is inferred from the preceding known suffix using longest-known-suffix matching. Ambiguous files such as `Dockerfile.jinja` may declare an explicit target in `CodepotgPack.yaml`.
+`CodepotgPack.yaml` declares named recipes under `paths`. `{recipe}` expands configured path parts and may introduce selection fan-out. `[expression]` resolves a bounded typed path value.
 
-Language is never selected globally in `codepotg.yaml` and never assumed to be singular for a pack.
+Semantic items do not expose invented `fileName`, `filePath`, or `directory` properties. Filenames are composed from literal source-path text plus explicit typed name projections.
 
-## Unified pack file model
+## Stable name projections
 
-Every discovered pack content file receives exactly one descriptor.
+Named semantic items expose case projections:
 
-- Recognized template-engine suffix: render as a template unless configured as a partial.
-- No template-engine suffix: copy as a static text or binary file by default.
-- `role: barrel`: render an authored barrel template using planned export information.
-- `role: partial`: make available to the template engine but never emit directly.
-- Explicit file configuration modifies the discovered descriptor; it does not schedule a duplicate emission.
-- Different source descriptors may not silently produce the same output path.
+```text
+raw, clean, snake, kebab, camel, pascal,
+screaming, constant, dot, path, lower, upper
+```
 
-Static files are emitted by default because complete packs often contain `.gitignore`, `.env.example`, licenses, images, fixture data, Makefiles, Dockerfiles, and other unchanged content.
+Each projection exposes:
 
-## Selections and output granularity
+```text
+o/original, s/singular, p/plural, number
+```
 
-Templates and static files may run:
+Examples:
 
-- once;
-- once for each selected record;
-- once for each group;
-- once for an aggregate collection;
-- through folder-pattern fan-out;
-- with multiple explicitly declared named outputs.
+```text
+[entity.name.pascal.s]
+[resource.name.path.o]
+[operation.name.camel.o]
+```
 
-A single aggregate template may generate all code into one file. A pack may also offer modular and monolithic profiles.
+Naming and inflection are deterministic, behavior-versioned, testable, and included in cache/lock behavior identity.
 
-## Bindings
+## Static files
 
-Packs publish a typed binding catalog. Individual templates explicitly declare which binding IDs they consume.
+Every non-template file below an emitting content root is copied by default unless ignored or classified as non-emitting documentation.
 
-Bindings may represent:
+Static and binary files use the same tokenized source-path composition and may fan out through selection-bearing path recipes. Their bytes remain unchanged.
 
-- imports and symbols;
-- project paths;
-- package imports;
-- namespaces;
-- barrels and default barrels;
-- text and text files;
-- configuration values;
-- package names;
-- artifact references.
+## Typed configuration boundary
 
-The project supplies binding values under the configured pack instance in `codepotg.yaml`. Templates refer only to logical binding IDs.
+Raw YAML ends inside configuration infrastructure. Application and domain services receive immutable typed models. Unknown fields are errors. Generic recursive dictionary merging is forbidden.
 
-A project may bind many symbols to one barrel. Language adapters deduplicate and render the resulting imports.
+## Adapter boundary
 
-Missing bindings can prompt, use a visible placeholder, omit optional behavior, skip affected templates, or fail. Flexible local generation and strict CI readiness are separate policies.
+- Source adapters normalize one source format directly into neutral IR.
+- Language adapters implement target syntax, target filename validation, imports, exports, types, literals, comments, and locked language rules.
+- Language adapters do not select output folders and do not invent semantic filename properties.
+- Template-engine adapters render immutable planned contexts and do not plan destinations.
+- Ecosystem adapters understand package manifests, toolchains, package managers, and typed project contributions.
+- Pack providers resolve local, installed, Git, and GitHub-hosted packs.
 
-## Rules and overrides
+Official and third-party adapters use the same installable Python entry-point contracts.
 
-CodepotG core owns the rule and override protocol. Adapters do not invent arbitrary merge behavior.
+## Python API first
 
-Every configurable rule field declares:
+The importable Python application API is the primary interface. CLI, configure wizard, MCP, HTTP, playground, and notebook integrations are thin frontends over the same application services.
 
-- typed value model;
-- default value;
-- merge policy;
-- whether it can be overridden;
-- security classification;
-- documentation and schema metadata.
+## Planning and safety
 
-Supported merge operations include replace, append, prepend, union, merge-by-key, remove, reset-to-default, and not-overridable.
+Before rendering, CodepotG resolves and validates:
 
-Rule precedence is deterministic:
+- project and pack typed configuration;
+- source and pack identities;
+- template engine and target per source file;
+- path recipes, name tokens, selection aliases, and every destination;
+- bindings, dependencies, imports, providers, and artifacts;
+- output ownership and collisions;
+- setup actions, commands, capabilities, and approvals.
 
-1. adapter defaults;
-2. pack rules;
-3. template-local rules;
-4. project global overrides;
-5. project pack-instance overrides;
-6. project template-specific overrides.
-
-A pack may restrict adapter-allowed overrides further. A project may never loosen adapter, pack, user, or host restrictions.
-
-## Commands and setup
-
-Packs may contain before and after setup actions or commands so they can produce polished output, including formatting, unused-import fixes, dependency installation, validation, and code generation helpers.
-
-Commands must be declared in `CodepotgPack.yaml`; templates cannot execute hidden commands.
-
-Trust defaults:
-
-- trusted local project commands: allowed by the normal local policy;
-- downloaded pack commands: require approval by default;
-- server, playground, and MCP environments: commands denied by default;
-- host policy always wins and cannot be weakened by project or pack configuration.
-
-Approvals are tied to the exact pack source, resolved commit, manifest digest, command digest, executable, arguments, working directory, and requested capabilities.
-
-Typed actions are preferred over raw commands. Desired manifest changes are declared separately from commands that realize them.
-
-## Pack traits
-
-Packs are described by composable traits rather than one restrictive type. A pack may combine any of these characteristics:
-
-- creates a complete runnable project;
-- owns a standalone folder or package;
-- contributes files to an existing project;
-- requires dependencies;
-- requires project bindings;
-- produces fragments that need manual integration;
-- owns a package manifest;
-- contributes typed changes to a user-owned manifest.
-
-Missing host integration does not automatically invalidate fragment generation. Results can be generated with warnings and explicit remaining actions.
-
-## Plugin packages
-
-Official and third-party plugins use the same public plugin API and Python entry-point discovery.
-
-Initial independently installable packages are:
-
-- `codepotg-openapi`;
-- `codepotg-language-typescript`;
-- `codepotg-language-dart`;
-- `codepotg-template-jinja`;
-- `codepotg-pack-typescript-sdk`;
-- `codepotg-pack-dart-sdk`;
-- `codepotg-pack-flutter-sdk`.
-
-Language adapters implement target syntax, identifiers, types, literals, imports, exports, comments, naming, and typed language rules. They do not load sources, select templates, write files, run commands, or own framework architecture.
-
-Template-engine adapters implement parsing, rendering, includes, sandboxing, engine-specific rules, and immutable context handling. They do not own target-language behavior or output planning.
-
-## Python-first product interface
-
-The importable Python application API is the primary interface.
-
-The CLI, configure wizard, MCP tools, HTTP services, playgrounds, and notebooks are adapters over the same application services. Business logic must not live in CLI command handlers.
-
-The core must support filesystem and in-memory generation, structured diagnostics, progress events, cancellation, sync and async execution, and server-safe policies.
+Invalid plans never call renderers or writers. Files are staged and committed transactionally with exact content comparison.
 
 ## Distribution
 
-The normal `codepotg` distribution is batteries included and installs compatible official defaults. A minimal core distribution remains available for embedded and custom installations.
+The release model supports:
 
-Git and GitHub are the first pack distribution mechanism. Public and private repositories use the user's existing Git credentials. Resolved commits and digests are recorded in `codepotg.lock`.
+- minimal `codepotg-core`;
+- batteries-included `codepotg` installing compatible defaults;
+- independently versioned source, language, engine, ecosystem, and pack distributions;
+- local and Git/GitHub pack sources locked to immutable commits/digests.
 
-## Implementation quality
+## Agent rule
 
-- Immutable typed models at application boundaries.
-- No raw YAML dictionaries below the configuration infrastructure.
-- No mutable global registries.
-- No import-time plugin registration side effects.
-- No template source scanning to infer hidden dependencies.
-- No direct template filesystem writes or shell execution.
-- Complete planning and validation before rendering.
-- Whole-generation transactional writes.
-- Exact content comparison rather than layout-insensitive comparison.
-- Small unit tests, reusable conformance suites, and inspectable integration fixtures.
+Every agent must read this document, the relevant detailed design, the matching task ledger, and `tasks/PARALLEL_WORK.md` before implementation. Design changes require the documented change process before code is written.
