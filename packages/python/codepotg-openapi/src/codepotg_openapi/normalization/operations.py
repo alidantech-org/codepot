@@ -188,5 +188,5 @@ def _normalize_operation(
 
 
 def _fallback_operation_id(method: str, path: str) -> str:
-    normalized = _OPERATION_NAME.sub("_", path.strip("/{}" )).strip("_").lower()
+    normalized = _OPERATION_NAME.sub("_", path.strip("/{}")).strip("_").lower()
     return f"{method.lower()}_{normalized or 'root'}"
