@@ -60,7 +60,9 @@ def test_recursive_pydantic_models_compile_without_pydantic_in_ir() -> None:
     result = author.compile()
     assert result.ok
     assert result.contract is not None
-    schema = next(item for item in result.contract.groups[0].schemas if item.id.value == root.declaration_id)
+    schema = next(
+        item for item in result.contract.groups[0].schemas if item.id.value == root.declaration_id
+    )
     assert {item.name.raw.original for item in schema.fields} == {"name", "status", "children"}
     assert "pydantic" not in repr(result.contract).lower()
 
@@ -76,7 +78,9 @@ def test_semantic_builders_compile_to_public_ir() -> None:
         },
         group=group,
     )
-    create = author.project_schema(record, "CreateRecord", ProjectionStep("derive_create"), group=group)
+    create = author.project_schema(
+        record, "CreateRecord", ProjectionStep("derive_create"), group=group
+    )
     changed = author.event("RecordChanged", EventDeclaration(payload_schema=record), group=group)
     operation = author.operation(
         "CreateRecord",

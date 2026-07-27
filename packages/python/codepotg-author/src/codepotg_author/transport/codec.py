@@ -6,8 +6,6 @@ from enum import Enum
 from typing import Any
 
 import yaml
-from yaml.constructor import ConstructorError
-
 from codepotg.diagnostics import SourceIdentity, SourceKind, SourcePosition, SourceSpan
 from codepotg.ir import (
     AccessFacet,
@@ -54,6 +52,7 @@ from codepotg.ir import (
     WorkflowTransition,
     validate_contract,
 )
+from yaml.constructor import ConstructorError
 
 FORMAT = "codepotg.ir"
 VERSION = 1

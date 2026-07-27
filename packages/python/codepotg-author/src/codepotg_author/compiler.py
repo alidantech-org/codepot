@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from types import NoneType, UnionType
 from typing import Any, Union, get_args, get_origin
 
-from codepotg.diagnostics import Diagnostic, DiagnosticSeverity, Diagnostics
+from codepotg.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
 from codepotg.ir import (
     Contract,
     Event,
@@ -15,8 +15,8 @@ from codepotg.ir import (
     Name,
     Operation,
     OperationEffects,
-    OperationFailure,
     OperationFacets,
+    OperationFailure,
     OperationOutput,
     Policy,
     Schema,

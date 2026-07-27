@@ -69,7 +69,9 @@ class Author:
     options: AuthorOptions = field(default_factory=AuthorOptions)
     _author_id: str = field(default_factory=lambda: f"author-{uuid4()}", init=False, repr=False)
     _declarations: dict[str, Declaration] = field(default_factory=dict, init=False, repr=False)
-    _diagnostics: AuthorDiagnostics = field(default_factory=AuthorDiagnostics, init=False, repr=False)
+    _diagnostics: AuthorDiagnostics = field(
+        default_factory=AuthorDiagnostics, init=False, repr=False
+    )
     _frozen: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self) -> None:

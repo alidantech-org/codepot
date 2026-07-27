@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field as dc_field
+from dataclasses import dataclass
+from dataclasses import field as dc_field
 from enum import StrEnum
 from types import NoneType
 from typing import get_args, get_origin
@@ -77,7 +78,9 @@ class FieldSpec:
     options: FieldOptions = dc_field(default_factory=FieldOptions)
 
     def __post_init__(self) -> None:
-        sources = sum(value is not None for value in (self.annotation, self.property_ref, self.schema_ref))
+        sources = sum(
+            value is not None for value in (self.annotation, self.property_ref, self.schema_ref)
+        )
         if sources != 1:
             raise ValueError("field spec requires exactly one type source")
 
@@ -93,7 +96,9 @@ class FieldDeclaration:
     def __post_init__(self) -> None:
         if not self.name or self.name.strip() != self.name:
             raise ValueError("field name must be a non-empty trimmed string")
-        sources = sum(value is not None for value in (self.annotation, self.property_ref, self.schema_ref))
+        sources = sum(
+            value is not None for value in (self.annotation, self.property_ref, self.schema_ref)
+        )
         if sources != 1:
             raise ValueError("field requires exactly one type source")
 
@@ -258,7 +263,9 @@ def expand_projection(
                     item.property_ref,
                     item.schema_ref,
                     FieldOptions(
-                        required=False if not selected or item.name in selected else item.options.required,
+                        required=False
+                        if not selected or item.name in selected
+                        else item.options.required,
                         nullable=item.options.nullable,
                         readonly=item.options.readonly,
                         minimum=item.options.minimum,

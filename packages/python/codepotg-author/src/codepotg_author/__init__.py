@@ -2,7 +2,12 @@
 
 from .author import Author
 from .compiler import AuthoringResult, compile_author
-from .diagnostics import AUTHOR_CORE_UNSUPPORTED, AuthorDiagnostic, AuthorDiagnostics, AuthorDiagnosticSeverity
+from .diagnostics import (
+    AUTHOR_CORE_UNSUPPORTED,
+    AuthorDiagnostic,
+    AuthorDiagnostics,
+    AuthorDiagnosticSeverity,
+)
 from .options import AuthorOptions, UnsupportedCorePolicy
 from .pydantic import PydanticCompiler
 from .refs import (
