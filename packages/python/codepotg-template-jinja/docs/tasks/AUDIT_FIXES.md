@@ -45,6 +45,23 @@ packages/python/codepotg-v2/docs/tasks/PARALLEL_WORK.md
 
 Do not modify core implementation files.
 
+## Audit-fix execution status
+
+- [x] Used the prescribed one-slash repair branch.
+- [x] Kept `loop.cycle()` and `loop.changed()` deliberately denied.
+- [x] Added exact compatibility coverage for both denied loop callables.
+- [x] Added `JINJA_TEMPLATE_INVALID` for malformed root source values.
+- [x] Kept malformed partial source values under `JINJA_PARTIAL_INVALID`.
+- [x] Updated the README, engine contract, task plan, and progress evidence.
+- [x] Kept JINJA-008 and all missing public-contract integrations blocked.
+- [ ] Run Ruff check and format check in a synchronized real checkout.
+- [ ] Run the complete real-core and Jinja suites.
+- [ ] Build real wheel/sdist artifacts from the synchronized checkout.
+- [ ] Install the real core and Jinja wheels together and repeat entry-point/render checks.
+- [ ] Record a clean repository status from that checkout.
+
+The remaining unchecked items are release-environment gates, not hidden implementation claims. This repair branch must remain at `review` until they are reproduced.
+
 ## Completion gate
 
 The fix is complete only when:
