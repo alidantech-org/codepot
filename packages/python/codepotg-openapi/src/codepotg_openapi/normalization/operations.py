@@ -145,7 +145,14 @@ def _normalize_operation(
             options=context.options,
             diagnostics=context.diagnostics,
             raw={
-                **selected_raw(value, "deprecated", "description", "externalDocs", "summary"),
+                **selected_raw(
+                    value,
+                    "deprecated",
+                    "description",
+                    "externalDocs",
+                    "security",
+                    "summary",
+                ),
                 "http": raw_http,
             },
             extensions=(
