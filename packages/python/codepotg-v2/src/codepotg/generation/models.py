@@ -56,12 +56,17 @@ class ArtifactPlan:
     symbols: tuple[str, ...] = ()
     imports: tuple[tuple[str, ModuleCollection], ...] = ()
     exports: tuple[tuple[str, ModuleCollection], ...] = ()
+    partials: tuple[tuple[str, str], ...] = ()
     content: bytes | None = None
 
     def __post_init__(self) -> None:
         if not self.id or not self.output_path or not self.template_id:
             raise ValueError("artifact plans require ids, template ids, and output paths")
-        for label, values in (("imports", self.imports), ("exports", self.exports)):
+        for label, values in (
+            ("imports", self.imports),
+            ("exports", self.exports),
+            ("partials", self.partials),
+        ):
             keys = tuple(key for key, _ in values)
             if tuple(sorted(keys)) != keys or len(keys) != len(set(keys)):
                 raise ValueError(f"artifact {label} must be sorted by unique key")
