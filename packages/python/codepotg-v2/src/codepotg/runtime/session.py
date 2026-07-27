@@ -12,6 +12,7 @@ from codepotg.api import (
 from codepotg.config import PackManifest, ProjectConfig, load_pack_manifest
 from codepotg.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
 from codepotg.generation.context import RenderContextBuilder
+from codepotg.generation.manifest_validation import require_pack_contained
 from codepotg.generation.models import (
     GeneratedArtifact,
     GenerationData,
@@ -39,10 +40,11 @@ class GenerationSession:
         dry_run: bool = False,
     ) -> OperationResult[GenerationData]:
         token = cancellation or CancellationToken()
-        root = Path(project_root)
         diagnostics = Diagnostics()
         try:
+            root = Path(project_root).resolve(strict=True)
             token.raise_if_cancelled()
+            self._authorize_project(project, root)
             contracts, source_diagnostics = self._normalize_sources(project, root, token)
             diagnostics = diagnostics.extend(source_diagnostics)
             if diagnostics.has_errors:
@@ -105,6 +107,14 @@ class GenerationSession:
             diagnostics = diagnostics.add(_exception_diagnostic(exc))
             return self._failed(project, diagnostics)
 
+    @staticmethod
+    def _authorize_project(project: ProjectConfig, root: Path) -> None:
+        for pack in project.packs:
+            if pack.source.local is not None:
+                require_pack_contained(root / pack.source.local, root)
+        for source in project.sources:
+            _require_project_contained(root / source.file, root, "SOURCE_PATH_ESCAPE")
+
     def _normalize_sources(
         self,
         project: ProjectConfig,
@@ -116,7 +126,11 @@ class GenerationSession:
         for source in project.sources:
             cancellation.raise_if_cancelled()
             adapter = self.plugins.source(source.adapter)
-            location = (root / source.file).resolve()
+            location = _require_project_contained(
+                root / source.file,
+                root,
+                "SOURCE_PATH_ESCAPE",
+            )
             result = adapter.normalize(
                 SourceAdapterRequest(
                     source_id=source.name,
@@ -170,7 +184,10 @@ class GenerationSession:
                     )
                 )
                 continue
-            pack_root = (project_root / instance.source.local).resolve()
+            pack_root = require_pack_contained(
+                project_root / instance.source.local,
+                project_root,
+            )
             cache_key = pack_root.as_posix()
             manifest = manifest_cache.get(cache_key)
             if manifest is None:
@@ -243,6 +260,15 @@ class GenerationSession:
             data=GenerationData(plan=plan),
             diagnostics=diagnostics,
         )
+
+
+def _require_project_contained(path: Path, root: Path, code: str) -> Path:
+    canonical = path.resolve(strict=True)
+    try:
+        canonical.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"{code}: path escapes the project root") from exc
+    return canonical
 
 
 def _exception_diagnostic(exc: Exception) -> Diagnostic:
