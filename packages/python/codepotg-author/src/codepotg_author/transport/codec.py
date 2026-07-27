@@ -210,10 +210,10 @@ def _init_fields(cls: type[object]) -> tuple[Any, ...]:
 
 
 def _encode(value: object) -> object:
-    if value is None or isinstance(value, str | int | float | bool):
-        return value
     if isinstance(value, Enum):
         return {"$enum": value.__class__.__name__, "value": value.value}
+    if value is None or isinstance(value, str | int | float | bool):
+        return value
     if isinstance(value, tuple):
         return {"$tuple": [_encode(item) for item in value]}
     if is_dataclass(value) and not isinstance(value, type):
