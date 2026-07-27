@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import fnmatch
 import re
 from pathlib import Path, PurePosixPath
+
+from pathspec import PathSpec
 
 from codepotg.config import PackManifest
 from codepotg.runtime.plugins import PluginLoadError, RuntimePlugins
@@ -25,8 +26,9 @@ def discover_pack_files(
     manifest: PackManifest,
     plugins: RuntimePlugins,
 ) -> tuple[DiscoveredPackFile, ...]:
-    root = Path(pack_root)
-    templates = root / "templates"
+    root = Path(pack_root).resolve(strict=True)
+    templates = (root / "templates").resolve(strict=True)
+    _require_contained(templates, root, "PACK_TEMPLATES_ESCAPE")
     if not templates.is_dir():
         raise PackDiscoveryError(
             "PACK_TEMPLATES_MISSING",
@@ -34,17 +36,29 @@ def discover_pack_files(
             path=templates.as_posix(),
         )
 
+    include_spec = PathSpec.from_lines("gitwildmatch", manifest.include)
+    exclude_spec = PathSpec.from_lines("gitwildmatch", manifest.exclude)
+    root_ignore = _root_ignore(root)
+
     discovered: list[DiscoveredPackFile] = []
     for candidate in sorted(templates.rglob("*"), key=lambda item: item.as_posix()):
-        if not candidate.is_file():
+        if candidate.name == ".gitignore" or not candidate.is_file():
             continue
-        relative = candidate.relative_to(templates).as_posix()
-        if not _included(relative, manifest.include, manifest.exclude):
+        canonical = candidate.resolve(strict=True)
+        _require_contained(canonical, templates, "PACK_FILE_ESCAPE")
+        relative = canonical.relative_to(templates).as_posix()
+        pack_relative = canonical.relative_to(root).as_posix()
+        if not include_spec.match_file(relative):
             continue
+        if exclude_spec.match_file(relative) or (
+            root_ignore is not None and root_ignore.match_file(pack_relative)
+        ):
+            continue
+
         parts = PurePosixPath(relative).parts
         selection_key = _selection_key(parts, manifest)
         partial = bool(parts and parts[0] == "_partials")
-        content = candidate.read_bytes()
+        content = canonical.read_bytes()
 
         try:
             engine, engine_suffix = plugins.engine_for_path(relative)
@@ -113,13 +127,27 @@ def _selection_key(parts: tuple[str, ...], manifest: PackManifest) -> str | None
     return key
 
 
-def _included(path: str, include: tuple[str, ...], exclude: tuple[str, ...]) -> bool:
-    return any(_match(path, pattern) for pattern in include) and not any(
-        _match(path, pattern) for pattern in exclude
-    )
+def _root_ignore(root: Path) -> PathSpec | None:
+    ignore = root / ".gitignore"
+    if not ignore.is_file():
+        return None
+    try:
+        lines = ignore.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as exc:
+        raise PackDiscoveryError(
+            "PACK_IGNORE_READ_FAILED",
+            "pack-root .gitignore could not be read as UTF-8",
+            path=ignore.as_posix(),
+        ) from exc
+    return PathSpec.from_lines("gitwildmatch", lines)
 
 
-def _match(path: str, pattern: str) -> bool:
-    return fnmatch.fnmatchcase(path, pattern) or (
-        pattern.startswith("**/") and fnmatch.fnmatchcase(path, pattern[3:])
-    )
+def _require_contained(path: Path, root: Path, code: str) -> None:
+    try:
+        path.relative_to(root)
+    except ValueError as exc:
+        raise PackDiscoveryError(
+            code,
+            "pack discovery path escapes the authorized pack root",
+            path=path.as_posix(),
+        ) from exc
