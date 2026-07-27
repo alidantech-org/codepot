@@ -9,6 +9,7 @@ from codepotg.domain.generation import (
 from .context import RenderContextBuilder
 from .discovery import PackDiscoveryError, discover_pack_files
 from .expressions import ExpressionError, evaluate_text, resolve_expression
+from .inspection import explain_artifact, plan_to_document, plan_to_json
 from .models import (
     ArtifactPlan,
     DiscoveredPackFile,
@@ -43,5 +44,8 @@ __all__ = [
     "SelectorRegistry",
     "discover_pack_files",
     "evaluate_text",
+    "explain_artifact",
+    "plan_to_document",
+    "plan_to_json",
     "resolve_expression",
 ]
