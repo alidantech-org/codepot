@@ -1,31 +1,16 @@
 # codepotg-language-dart
 
-Installable Dart target detection, validation, and URI/path adapter for CodepotG v2.
+Pure-Python Dart target validation and URI facts for CodepotG v2.
 
-The adapter is resolved per `.dart` template. It does **not** own Dart code generation. Template packs, macros, partials, and static files author every Dart character, including types, literals, comments, imports, exports, annotations, serialization, and Flutter code.
+## Baseline
 
-Flutter remains framework/template-pack policy and must not be embedded in this target adapter.
+- Language baseline: Dart 3.12.2 identifier, keyword, privacy, and URI subset.
+- Behavior version: `1`.
+- Date verified: 2026-07-27.
+- Supported output suffix: `.dart`.
+- Identifier subset: ASCII by default; a specification-oriented Unicode-category policy is available.
+- URI forms: canonical relative URIs with `./` for same-folder paths, explicit `dart:` URIs, explicit `package:` URIs, and package URIs built only from explicit package/library-root facts.
+- Private names: a leading underscore is preserved and reported as an informational fact by default.
+- Unsupported: Flutter assumptions, hidden barrel/index rewriting, symbol combinators, import/export rendering, project configuration decoding, and diagnostics on `ModulePathFacts`.
 
-## Planned entry point
-
-```toml
-[project.entry-points."codepotg.language_adapters"]
-dart = "codepotg_language_dart.plugin:create_plugin"
-```
-
-## Responsibilities
-
-- `.dart` target detection and output filename validation;
-- Dart reserved-name and declared candidate-identifier validation;
-- relative URI, `package:` URI, project-path, export/barrel destination, and path-containment facts;
-- deterministic target/path capability descriptors and typed validation options;
-- diagnostics, introspection, compatibility, and conformance behavior.
-
-## Prohibited responsibilities
-
-- semantic-kernel/facet/selector extension;
-- Dart type, literal, comment, import, export, annotation, or formatting rendering;
-- Flutter widgets/state/layout policy;
-- template selection, output planning, pubspec changes, filesystem writes, commands, or source parsing.
-
-See [`docs/design/README.md`](docs/design/README.md) and [`docs/tasks/00-package-plan.md`](docs/tasks/00-package-plan.md).
+Templates own every emitted Dart character.
