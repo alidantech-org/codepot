@@ -67,6 +67,13 @@ target-version = "py311"
 select = ["E", "F", "I", "UP", "B", "SIM"]
 ignore = ["E501"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["codepotg", "codepotg_template_jinja"]
+section-order = ["future", "standard-library", "third-party", "first-party", "tests", "local-folder"]
+
+[tool.ruff.lint.isort.sections]
+tests = ["tests"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
