@@ -28,9 +28,9 @@ from codepotg.testing import (
     assert_template_engine_conformance,
 )
 from codepotg.versions import (
+    BehaviorVersion,
     IR_API_VERSION,
     PLUGIN_API_VERSION,
-    BehaviorVersion,
     Version,
 )
 
