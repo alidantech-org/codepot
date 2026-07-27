@@ -12,29 +12,34 @@
 | 2026-07-26 | `446d6965` | Example reconciliation and verification | complete | Re-read mixed project, lock, and TypeScript pack examples from `chatgpt/codepotx-restart`; confirmed the branch head preserved all example files. No runtime tests. | Replaced the concurrently added obsolete `use` sample with the approved direct source/input form. |
 | 2026-07-26 | `e5d23587` | Central and package task alignment | superseded | Reviewed the earlier central/package task ledgers; no runtime tests. | The previous resource/model/entity, global selector, profile, and language-renderer assumptions were replaced by DOC-007. |
 | 2026-07-26 | `59f9cb85..b10466d8` | DOC-007 closed semantic kernel alignment | complete | Reviewed and replaced the active governance, foundation, configuration, generation, plugin, distribution/toolchain, rewrite, task, example, OpenAPI, TypeScript/Dart target adapter, and TypeScript/Dart/Flutter pack documents. Updated package progress ledgers. No runtime tests because implementation had not started. | Locked a closed typed kernel, group-rooted selectors, operation inputs/outputs/failures/effects, known facets, views, storage mappings, access, events/listeners, execution hooks, workflows/compensation, template-owned syntax, explain/impact planning, and conservative incremental generation. |
-| 2026-07-27 | `bee290cc..be750d1b` | CORE foundation, PATH-001 naming, closed IR, SOURCE/target/engine public ports, fixed selectors | in_progress | Added side-by-side pytest coverage for versions, diagnostics, cancellation/results, exact naming projections, a connected contract with storage/view/event/listener/workflow/compensation, missing-reference validation, fixed selectors, plugin conflicts, source/target/engine conformance, clean-room imports, and isolated wheel build/install. Python/container execution was unavailable in this session and GitHub reported no commit checks, so no test result is claimed yet. | Added installable `codepotg-core`, one unified public diagnostic/version type system, immutable closed semantic objects, validation, root-first selector registry, plugin descriptors, adapter protocols, conformance helpers, `py.typed`, package docs, and released package-local OpenAPI/TypeScript/Dart/Jinja lanes for parallel implementation. |
+| 2026-07-27 | `bee290cc..be750d1b` | First CORE/PATH/IR/port implementation | superseded | Initial side-by-side pytest files were added, but the implementation was incorrectly concentrated in flat modules and was not executed before the checkpoint was reported. | Replaced by the organized corrective implementation below. This row remains as evidence of the rejected structure. |
+| 2026-07-27 | user verification of `537d4740` | Package/test/lint verification | failed | `pytest`: 25 passed, 1 failed. Editable install and `python -m build` failed because `license = "MIT"` was combined with the superseded MIT license classifier. Ruff reported 20 findings: import organization, `StrEnum` modernization, and `collections.abc` imports. | The logs proved the checkpoint was not release-ready and triggered the structural correction. |
+| 2026-07-27 | `8fe22aa3..96153b3f` | Organized CORE/PATH/IR/ports correction | in_progress | Removed the conflicting license classifier; reorganized source into `api`, `application`, `config`, `domain/ir`, `domain/generation`, `plugins`, `ports`, `runtime`, `infrastructure`, and `cli`; mirrored tests under unit/contracts/architecture/distribution/fixtures; removed flat module/package collisions; replaced string enums with `StrEnum`; corrected collection imports and reported import-order findings. Full command rerun remains required. | Architecture tests now explicitly reject flat source/test dumps and same-name module/package collisions. Validation was separated into semantic indexing and reference validation. No passing result is claimed yet for the reorganized tree. |
 
 ## Current stage
 
-Actual v2 implementation has started. The public foundation currently includes:
+Actual v2 implementation has started, and the first foundation is being corrected and verified. The source now follows the approved package boundaries, while tests mirror those boundaries instead of living as root-level files.
+
+Implemented foundation areas:
 
 - dependency-free `codepotg-core` package metadata;
 - versions, diagnostics, source spans, cancellation, statuses, and operation results;
 - deterministic `name.<case>.<number>` projections;
 - immutable groups, structural schemas, operations, known facets, views, storage mappings, policies, events/listeners, execution hooks, workflows, and compensation;
-- full semantic-reference validation before generation;
+- semantic identity indexing and cross-reference validation before generation;
 - fixed root-first selector contexts;
 - public source-adapter, target-adapter, and template-engine protocols;
 - plugin descriptors/registry diagnostics and reusable conformance helpers;
-- source-tree, connected-contract, architecture, and wheel-install tests.
+- organized unit, contract, architecture, fixture, and isolated-wheel tests.
 
-OpenAPI, TypeScript target, Dart target, and Jinja package-local foundation work may proceed in parallel using only the public contracts listed in `PARALLEL_WORK.md`.
+OpenAPI, TypeScript target, Dart target, and Jinja package-local foundation work may proceed only through the published public namespaces and must not import `codepotg.domain` implementation modules.
 
 ## Current risks
 
-- The new tests must be executed before foundation tasks are marked `review` or `complete`.
+- The reorganized test suite and package build must be executed before foundation tasks move to `review` or `complete`.
 - Historical progress rows and old-runtime documents contain superseded vocabulary; they are evidence/reference only and are not active v2 contracts.
-- Implementation must not restore root `paths`, explicit `files`, `filePatterns`, profiles, arbitrary selectors, registries/use, or adapter-rendered syntax.
+- Implementation must not restore flat source/test dumps, root `paths`, explicit `files`, `filePatterns`, profiles, arbitrary selectors, registries/use, or adapter-rendered syntax.
+- Public facades must remain explicit; no same-name module/package collision may return.
 - The closed selector/context list and generated semantic provider matching must remain versioned and introspectable.
 - Exact command arguments remain opaque to core; package-manager intelligence must not leak into semantic planning.
 - Git credentials remain outside project/pack/lock/state files and diagnostics.
@@ -52,4 +57,4 @@ python -m ruff check src tests
 python -m build
 ```
 
-Repair every failure in the same task slice, then move the core claim to `review`. Parallel package owners may begin only in their own package directories and must not modify claimed core files.
+Repair every remaining failure in the same task slice. Only then move the core claim to `review` and publish a stable foundation commit for the parallel packages.
