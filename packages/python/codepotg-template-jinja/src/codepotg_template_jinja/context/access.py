@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, TypeAlias
 
 SafeScalar: TypeAlias = str | int | float | bool | None
 if TYPE_CHECKING:
-    SafeValue: TypeAlias = SafeScalar | tuple["SafeValue", ...] | SafeRecord
+    SafeValue: TypeAlias = "SafeScalar | tuple[SafeValue, ...] | SafeRecord"
 else:
     SafeValue = object
 
