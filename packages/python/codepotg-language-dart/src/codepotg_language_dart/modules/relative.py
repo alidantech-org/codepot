@@ -1,0 +1,21 @@
+from __future__ import annotations
+
+from pathlib import PurePosixPath
+
+from ..validation.paths import contained_parts
+
+
+def relative_uri(current: str, provider: str) -> str:
+    current_parts = contained_parts(current)
+    provider_parts = contained_parts(provider)
+    base = current_parts[:-1]
+    common = 0
+    for left, right in zip(base, provider_parts, strict=False):
+        if left != right:
+            break
+        common += 1
+    parts = [".."] * (len(base) - common) + list(provider_parts[common:])
+    text = "/".join(parts) or PurePosixPath(provider).name
+    if not text.startswith("."):
+        text = f"./{text}"
+    return text
