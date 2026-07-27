@@ -6,11 +6,11 @@ This file coordinates implementation across conversations. Claim a task before c
 
 | Task ID | Package/subsystem | Owner/chat | Status | Expected files | Dependencies | Notes |
 |---|---|---|---|---|---|---|
-| CORE-001..CORE-006, PATH-001, IR-001..IR-010, SOURCE-001, PLUG-001 public contracts | `codepotg-v2` foundation, closed IR, and adapter ports | current ChatGPT implementation session | in_progress | `pyproject.toml`, public `src/codepotg/**` primitives/IR/plugin/port/testing modules, focused unit/contract/architecture tests, task/progress evidence | DOC-001..DOC-007 | Public foundation is implemented and under verification. No planner, writer, CLI, or compatibility runtime is included. |
+| CORE-001..CORE-006, PATH-001, IR-001..IR-010, SOURCE-001, PLUG-001 public contracts | `codepotg-v2` organized foundation, closed IR, and adapter ports | current ChatGPT implementation session | in_progress | `pyproject.toml`; `src/codepotg/api/**`; `diagnostics/**`; `domain/ir/**`; `domain/generation/**`; `plugins/**`; `ports/**`; `testing/**`; public facades; mirrored unit/contract/architecture/distribution tests; task/progress evidence | DOC-001..DOC-007 | The rejected flat implementation has been replaced by the approved package structure. Packaging, tests, lint, and build are under corrective verification. No planner, writer, CLI behavior, or compatibility runtime is included. |
 
-## Parallel package lanes now available
+## Parallel package lanes available through public contracts
 
-The following package-local tasks may now be claimed in separate conversations without editing `packages/python/codepotg-v2/src/codepotg/**`:
+The following package-local tasks may be claimed in separate conversations without editing `packages/python/codepotg-v2/src/codepotg/**`:
 
 | Package | Tasks that may begin | Public contracts available |
 |---|---|---|
@@ -19,7 +19,7 @@ The following package-local tasks may now be claimed in separate conversations w
 | `codepotg-language-dart` | DART-001 foundation through target descriptor/identifier/path validation scaffolding | same public target contracts as TypeScript |
 | `codepotg-template-jinja` | Jinja package foundation, immutable render request/result, deterministic engine scaffolding | `codepotg.ports.TemplateEngine`, `RenderRequest`, `RenderResult`, engine conformance helper |
 
-These lanes may depend only on published modules. Any missing public requirement must be recorded against the owning core task rather than importing private implementation files or redefining the kernel.
+These lanes may depend only on published modules. They must not import `codepotg.domain`, mutate the kernel, or copy private implementation classes. Until the corrective verification passes, parallel packages should pin to a specific core commit and treat API changes as possible foundation repairs rather than stable-release changes.
 
 ## Planned task lanes
 
@@ -53,7 +53,7 @@ These lanes may depend only on published modules. Any missing public requirement
 3. List expected files narrowly. Do not claim an entire package for a small task.
 4. Change status to `in_progress` in the first implementation commit.
 5. Move to `review` after implementation and tests.
-6. Mark `complete` only after acceptance criteria pass and progress files are updated.
+6. Mark `complete` only after acceptance criteria and the complete verification command set pass.
 7. Remove completed claims only after the completion record exists in `PROGRESS.md`.
 
 ## Active claim row format
@@ -73,7 +73,7 @@ Two agents must not edit the same implementation file concurrently. Closed-kerne
 - Packs use filesystem discovery, registered `{selectionKey}` folders, fixed root-first selectors, `(expression)`, explicit imports/exports/symbols, and pack-relative `paths` arrays.
 - Templates, macros, partials, and static files own every emitted character.
 - Target adapters validate targets/names and calculate module/path facts; they do not render types, literals, comments, imports, exports, validators, decorators, formatting, or framework code.
-- No implementation may restore neutral resource/model/entity/frontend/UI roots, reversed selectors, arbitrary query/traversal DSLs, profiles, or `filePatterns`.
+- No implementation may restore flat source/test dumps, neutral resource/model/entity/frontend/UI roots, reversed selectors, arbitrary query/traversal DSLs, profiles, or `filePatterns`.
 - Git provider work implements direct `source.local`/`source.git` and must not introduce registries, `use`, or GitHub-only locators.
 - Command work preserves exact opaque arguments and does not infer installation syntax from dependency metadata.
 - Output hashes/state belong to ownership/generation state, not the dependency lock.
