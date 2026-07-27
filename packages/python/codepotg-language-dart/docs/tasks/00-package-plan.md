@@ -2,122 +2,140 @@
 
 This package detects and validates Dart targets and calculates URI/path facts only. Flutter remains a template-pack concern. The adapter must not parse semantic sources, extend the kernel, render Dart syntax, select templates, plan destinations, write files, or execute commands.
 
+PR #30 implemented most behavior available through the current public `TargetAdapter` port. Implementation status is separated from release status: one typed-option repair, exact synchronized verification, and a real Dart SDK oracle remain open.
+
 ## DART-001 — Package and plugin foundation
 
-**Status:** planned
+**Status:** implemented in PR #30; final real-wheel verification remains
 
-**Dependencies:** core plugin/target adapter ports and version primitives
-
-- [ ] Add isolated package metadata, src layout, typing marker, README, and test configuration.
-- [ ] Register `dart` in `codepotg.language_adapters`.
-- [ ] Declare `.dart` target descriptor, behavior version, plugin/core/IR compatibility, and actual detection/validation/path capabilities.
-- [ ] Implement immutable adapter factory/context.
-- [ ] Add architecture tests proving no Flutter, source, engine, writer, CLI, filesystem, command, pack, private semantic-builder, or old-generator dependency.
-- [ ] Add explicit tests prohibiting semantic/facet/selector registration and emitted source snippets.
+- [x] Add isolated package metadata, src layout, typing marker, README, license, and tests.
+- [x] Register `dart` in `codepotg.language_adapters`.
+- [x] Declare the `.dart` descriptor, behavior version, compatibility, and implemented capabilities.
+- [x] Implement the immutable adapter facade.
+- [x] Add architecture tests proving no Flutter, source, engine, writer, CLI, command, pack, private core, or old-generator dependency.
+- [x] Prove no semantic/facet/selector registration or emitted source snippets.
+- [ ] Reproduce import and entry-point checks from real installed core/adapter wheels.
 
 ## DART-002 — Typed target option schema
 
-**Status:** planned
+**Status:** implemented with audit fix required; public project/pack option bridge remains blocked
 
-Define immutable options, patches only where permitted, descriptors, defaults, validation, restrictions, examples, and introspection for:
+- [x] Define immutable reserved-word, Unicode, privacy, package-name, and package-URI preference options.
+- [x] Reject unknown fields in `from_mapping()`.
+- [x] Validate decoded package names and boolean preference values.
+- [x] Expose deterministic option introspection.
+- [ ] Validate direct constructor values with the same strictness as `from_mapping()`.
+- [ ] Reject raw strings/non-enum policy values and non-string package names deterministically.
+- [ ] Add direct-constructor negative tests.
+- [ ] Decode project/pack options only after the public configuration bridge exists.
 
-### Target files
-
-- [ ] `.dart` suffix detection;
-- [ ] Dart output filename/stem validation;
-- [ ] path separator normalization;
-- [ ] invalid/reserved filename diagnostics.
-
-### Candidate identifiers
-
-- [ ] Dart reserved words and contextual keywords;
-- [ ] validation roles for types, enums, values, fields, parameters, libraries, prefixes, and file stems;
-- [ ] Unicode/invalid-character/leading-digit/private-underscore validation facts;
-- [ ] optional explicit escaping-validation facts without automatic semantic renaming.
-
-### URI and module paths
-
-- [ ] relative URI calculation;
-- [ ] `package:` URI calculation from explicit package-name/project-path facts;
-- [ ] explicit package/module URI validation;
-- [ ] authored barrel/export provider destinations;
-- [ ] containment and escaping diagnostics.
-
-**Prohibited options:** generated naming transforms, type/null-safety mapping, literals, comments, import/export directives, prefixes/combinators, annotations, serialization, formatting, or Flutter policy.
-
-**Acceptance:** introspection documents every allowed option and rejects every unknown or syntax-rendering path.
+Prohibited options remain generated naming transforms, type/nullability rendering, literals, comments, directives, prefixes/combinators, annotations, serialization, formatting, and Flutter policy.
 
 ## DART-003 — Target resolver
 
-- [ ] Implement deterministic `.dart` target detection.
-- [ ] Preserve complete output filename after engine suffix removal.
-- [ ] Produce stable target descriptor identity and diagnostics for unsupported/ambiguous suffixes.
+**Status:** implemented in PR #30
+
+- [x] Implement deterministic `.dart` target detection and validation.
+- [x] Preserve the complete output filename after engine suffix removal.
+- [x] Produce a stable target descriptor and unsupported-target diagnostics.
 
 ## DART-004 — Filename and identifier validation
 
-- [ ] Implement behavior-versioned reserved-word/contextual-keyword catalogs.
-- [ ] Validate target filenames and declared candidate identifier roles.
-- [ ] Preserve semantic-name and template/expression provenance in diagnostics.
-- [ ] Return immutable facts rather than renamed strings or source snippets.
-- [ ] Add property tests for deterministic valid/invalid boundaries.
+**Status:** implemented for the current request contract; source provenance and final SDK verification remain open
+
+- [x] Implement behavior-versioned reserved, built-in, context-sensitive, and contextual keyword catalogs.
+- [x] Validate type, enum, value, property, parameter, namespace, and file-stem candidates.
+- [x] Preserve leading-underscore privacy semantics without renaming.
+- [x] Validate `.dart` output paths, reserved names, traversal, absolutes, separators, and target mismatch.
+- [x] Return diagnostics rather than renamed candidates or source snippets.
+- [x] Add deterministic property/boundary fixtures.
+- [ ] Run representative fixtures against a real Dart SDK.
+- [ ] Attach source spans after the public validation request exposes provenance.
 
 ## DART-005 — URI and project-path resolver
 
-- [ ] Calculate relative URIs between already planned artifacts.
-- [ ] Build `package:<name>/<path>` facts from explicit package-name and actual project-path bindings.
-- [ ] Preserve and validate explicit package/URI strings.
-- [ ] Resolve authored export/barrel provider destinations.
-- [ ] Normalize separators and reject invalid/escaping paths.
-- [ ] Never inspect template contents or choose output directories.
+**Status:** implemented for the current public port
+
+- [x] Calculate relative URIs between planned artifacts.
+- [x] Build `package:<name>/<path>` only from explicit package name and `lib` root facts.
+- [x] Preserve and validate explicit `dart:`, `package:`, and relative URIs.
+- [x] Normalize separators and reject invalid/escaping/network/file URI paths.
+- [x] Preserve actual provider filenames without hidden index/barrel rewriting.
+- [x] Avoid filesystem inspection and output-directory selection.
 
 ## DART-006 — Dependency module descriptors
 
-- [ ] Consume immutable provider/consumer artifact and semantic dependency descriptors.
-- [ ] Return URI, relative/package classification, provider destination, symbols, local dependency name, and diagnostics.
-- [ ] Preserve semantic usage facts supplied by core.
-- [ ] Do not deduplicate, prefix, defer, combine, order, quote, or render import/export directives.
-- [ ] Do not return source-code snippets.
+**Status:** partial and blocked by missing public planner/module facts
+
+- [x] Return current `ModulePathFacts` for relative, package, and explicit URIs.
+- [x] Preserve current/provider artifact fields available through the public port.
+- [x] Avoid deduplication, prefixes, combinators, ordering, quoting, and directive rendering.
+- [ ] Consume symbols, local dependency names, provider export/barrel roles, target metadata, and planner-owned paths after core exposes them.
+- [ ] Return diagnostics instead of stable `ValueError` prefixes after `ModulePathFacts` gains a diagnostic channel.
 
 ## DART-007 — Adapter facade
 
-- [ ] Compose detection, validation, and URI/path services behind the public target adapter protocol.
-- [ ] Accept immutable typed construction context/options.
-- [ ] Expose target descriptors, capabilities, behavior identity, and diagnostics.
-- [ ] Keep instances session-safe and free from global caches.
-- [ ] Reject calls requesting type/literal/comment/import/export/annotation rendering.
+**Status:** implemented in PR #30
+
+- [x] Compose target, identifier, output-path, and URI services behind the public adapter protocol.
+- [x] Accept immutable typed construction options.
+- [x] Expose truthful descriptors, capabilities, and behavior identity.
+- [x] Keep instances session-safe and free from mutable global caches or syntax rendering.
 
 ## DART-008 — Conformance and negative boundaries
 
-- [ ] Pass shared target-adapter conformance for declared capabilities.
-- [ ] Add file/reserved-name/candidate-identifier validation cases.
-- [ ] Add package URI, relative URI, project-path, export-provider, escaping, and deterministic path cases.
-- [ ] Pass typed option, immutability, and session-isolation tests.
-- [ ] Prove the package contains no TypeRenderer, LiteralRenderer, CommentRenderer, ImportPlanner/Renderer, ExportRenderer, annotation renderer, or formatter.
-- [ ] Prove no Flutter widgets, state management, layout, pubspec ownership, or build-runner policy exists.
-- [ ] Prove it cannot extend the semantic kernel, selector registry, expression roots, or render context.
+**Status:** implemented in the available PR #30 harness
+
+- [x] Pass shared target-adapter conformance.
+- [x] Cover file, reserved-name, identifier, privacy, relative URI, package URI, explicit URI, and escaping cases.
+- [x] Cover deterministic options, immutability, and session isolation.
+- [x] Prove no type/literal/comment/directive/annotation/formatter renderer exists.
+- [x] Prove no Flutter, widget, state-management, Pub, build-runner, semantic-extension, selector, or context ownership.
+- [ ] Reproduce the complete suite against the synchronized real core checkout.
+- [ ] Close the real Dart SDK oracle.
 
 ## DART-009 — Integration with authored templates
 
-- [ ] Provide planned dependency/URI facts to a fixture template.
-- [ ] Have the template author Dart imports, exports, types, nullability, literals, comments, annotations, and client logic directly.
-- [ ] Validate generated filenames/URIs without modifying rendered text.
-- [ ] Assert exact output changes when templates change.
-- [ ] Prove no adapter-generated line exists in output.
+**Status:** partial; package-local authored fixture exists, official integration blocked
+
+- [x] Demonstrate that returned URI facts can be inserted into authored fixture syntax.
+- [x] Prove the adapter returns no generated source line.
+- [ ] Integrate with the official Jinja engine, planner dependency facts, and an official Dart pack after those contracts are available.
+- [ ] Assert exact output through the official generation pipeline.
 
 ## DART-010 — Documentation and release
 
-- [ ] Document all target options, descriptors, URI facts, and validation capabilities.
-- [ ] Document relative versus `package:` path examples.
-- [ ] Document strict template-owned syntax and unsupported services.
-- [ ] Build wheel/sdist and validate compatibility.
-- [ ] Publish independently from Dart and Flutter packs.
+**Status:** review
+
+- [x] Document target options, descriptor, URI facts, language baseline, and template-owned syntax boundary.
+- [x] Document relative and `package:` examples and unsupported services.
+- [x] Add benchmark, oracle, distribution, and entry-point tooling.
+- [x] Record 83 passing tests and one honest SDK-oracle skip in the implementation harness.
+- [ ] Fix strict direct option construction.
+- [ ] Make wheel/sdist inspection run after build rather than conditionally skip.
+- [ ] Run Ruff and formatting on the synchronized repository.
+- [ ] Run the complete real core and Dart suites.
+- [ ] Run the representative oracle against a real Dart SDK.
+- [ ] Build with `python -m build` and install the real wheels in a fresh environment.
+- [ ] Record exact final evidence and clean-tree status.
+
+## Audit follow-up
+
+See:
+
+- [`../audits/2026-07-27-pr-30-audit.md`](../audits/2026-07-27-pr-30-audit.md)
+- [`AUDIT_FIXES.md`](AUDIT_FIXES.md)
 
 ## Completion gate
 
-- shared target-adapter conformance passes;
-- every option/capability is typed, introspectable, and tested;
-- relative/project/package URI facts resolve from actual planned paths;
+The package is complete only when:
+
+- shared conformance passes against the synchronized real core;
+- every option/capability is typed, introspectable, and equally validated through direct and mapping construction;
+- relative, package, and explicit URI facts resolve from actual planned paths;
 - candidate validation never mutates semantic names;
+- representative behavior is verified by a real Dart SDK;
 - templates author every Dart character;
+- missing planner/symbol facts remain explicit blockers rather than private emulation;
 - no Flutter/framework/ecosystem/source/engine/writer/command/semantic-extension/syntax-rendering logic exists;
-- behavior is deterministic and all inputs remain immutable.
+- Ruff, format, full tests, build, post-build artifact inspection, real-wheel installation, and clean-tree checks pass and are recorded.
