@@ -19,12 +19,6 @@ def main() -> int:
     print(f"  targets: {target_entries}")
     print(f"  engines: {engine_entries}")
 
-    if "openapi" in source_entries:
-        raise SystemExit(
-            "codepotg-openapi is installed, but its source-adapter facade is currently incomplete; "
-            "use a clean manual-test environment without it"
-        )
-
     plugins = RuntimePlugins.discover()
     source_ids = tuple(item.plugin.id for item in plugins.source_adapters)
     target_ids = tuple(item.plugin.id for item in plugins.target_adapters)
@@ -36,16 +30,22 @@ def main() -> int:
     print(f"  engines: {engine_ids}")
 
     required = {
-        "source": "ir" in source_ids,
-        "typescript": "typescript" in target_ids,
-        "dart": "dart" in target_ids,
-        "jinja": "jinja" in engine_ids,
+        "ir source": "ir" in source_ids,
+        "OpenAPI source": "openapi" in source_ids,
+        "TypeScript target": "typescript" in target_ids,
+        "Dart target": "dart" in target_ids,
+        "Jinja engine": "jinja" in engine_ids,
     }
     missing = tuple(name for name, present in required.items() if not present)
     if missing:
         raise SystemExit(f"missing required manual-test plugins: {missing}")
 
-    print("plugin graph is ready for the connected manual project")
+    all_ids = (*source_ids, *target_ids, *engine_ids)
+    duplicates = tuple(sorted({identifier for identifier in all_ids if all_ids.count(identifier) > 1}))
+    if duplicates:
+        raise SystemExit(f"duplicate loaded plugin IDs: {duplicates}")
+
+    print("plugin graph is ready for IR, Python authoring, OpenAPI, TypeScript, and Dart tests")
     return 0
 
 
