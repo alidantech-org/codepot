@@ -65,10 +65,8 @@ class ArtifactPlan:
             keys = tuple(key for key, _ in values)
             if tuple(sorted(keys)) != keys or len(keys) != len(set(keys)):
                 raise ValueError(f"artifact {label} must be sorted by unique key")
-        if self.kind is PackFileKind.TEMPLATE and (
-            self.engine_id is None or self.target_id is None
-        ):
-            raise ValueError("template artifacts require engine and target ids")
+        if self.kind is PackFileKind.TEMPLATE and self.engine_id is None:
+            raise ValueError("template artifacts require a template engine id")
         if self.kind is PackFileKind.STATIC and self.content is None:
             raise ValueError("static artifacts require content")
 
