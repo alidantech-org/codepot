@@ -1,6 +1,7 @@
 from dataclasses import FrozenInstanceError
 
 import pytest
+
 from codepotg_language_typescript import (
     AliasBinding,
     IndexResolutionPolicy,
@@ -14,9 +15,7 @@ from codepotg_language_typescript.modules.policies import apply_path_policies
 
 
 def test_options_are_immutable_serializable_and_strict() -> None:
-    options = TypeScriptTargetOptions.from_mapping(
-        {"aliases": [{"alias": "@", "root": "src"}]}
-    )
+    options = TypeScriptTargetOptions.from_mapping({"aliases": [{"alias": "@", "root": "src"}]})
     assert options.to_dict()["aliases"] == ({"alias": "@", "root": "src"},)
     with pytest.raises(FrozenInstanceError):
         options.package_name = "x"  # type: ignore[misc]
@@ -91,9 +90,7 @@ def test_valid_direct_enum_policies_control_extension_and_index_behavior() -> No
 
 def test_alias_duplicates_rejected() -> None:
     with pytest.raises(ValueError):
-        TypeScriptTargetOptions(
-            aliases=(AliasBinding("@a", "src"), AliasBinding("@b", "src"))
-        )
+        TypeScriptTargetOptions(aliases=(AliasBinding("@a", "src"), AliasBinding("@b", "src")))
 
 
 def test_adapter_instance_is_immutable_and_rejects_invalid_options() -> None:

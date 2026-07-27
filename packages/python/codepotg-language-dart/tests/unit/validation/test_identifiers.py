@@ -1,6 +1,7 @@
 import pytest
 from codepotg.diagnostics import DiagnosticSeverity
 from codepotg.ports import IdentifierRole, IdentifierValidationRequest
+
 from codepotg_language_dart import (
     DartTargetAdapter,
     DartTargetOptions,
@@ -64,9 +65,7 @@ def test_contextual_and_builtin_identifiers_are_role_aware(
 def test_built_in_identifier_is_rejected_for_type_and_namespace_roles() -> None:
     adapter = DartTargetAdapter()
     for role in (IdentifierRole.TYPE, IdentifierRole.NAMESPACE):
-        diagnostics = adapter.validate_identifier(
-            IdentifierValidationRequest("mixin", role)
-        )
+        diagnostics = adapter.validate_identifier(IdentifierValidationRequest("mixin", role))
         assert diagnostics.has_errors
         assert {item.code for item in diagnostics} == {"DART_IDENTIFIER_CONTEXTUAL"}
 
@@ -81,9 +80,7 @@ def test_private_name_is_preserved_and_reported() -> None:
 
 def test_strict_public_name_policy_rejects_private_identifier() -> None:
     adapter = DartTargetAdapter(
-        DartTargetOptions(
-            private_identifier_policy=PrivateIdentifierPolicy.REQUIRE_PUBLIC
-        )
+        DartTargetOptions(private_identifier_policy=PrivateIdentifierPolicy.REQUIRE_PUBLIC)
     )
     diagnostics = adapter.validate_identifier(
         IdentifierValidationRequest("_user", IdentifierRole.VALUE)
@@ -93,9 +90,7 @@ def test_strict_public_name_policy_rejects_private_identifier() -> None:
 
 def test_spec_validated_unicode_subset() -> None:
     adapter = DartTargetAdapter(
-        DartTargetOptions(
-            unicode_identifier_policy=UnicodeIdentifierPolicy.SPEC_VALIDATED
-        )
+        DartTargetOptions(unicode_identifier_policy=UnicodeIdentifierPolicy.SPEC_VALIDATED)
     )
     diagnostics = adapter.validate_identifier(
         IdentifierValidationRequest("Éclair", IdentifierRole.TYPE)

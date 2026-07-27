@@ -7,9 +7,10 @@ import zipfile
 from importlib.metadata import distribution, entry_points
 from pathlib import Path
 
-import codepotg_language_typescript
 import pytest
 from codepotg.versions import Version
+
+import codepotg_language_typescript
 
 PACKAGE_ROOT = Path(__file__).parents[2]
 

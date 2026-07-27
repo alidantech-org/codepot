@@ -18,10 +18,7 @@ def apply_path_policies(value: str, options: TypeScriptTargetOptions) -> str:
     ):
         return without_suffix.rpartition("/")[0]
 
-    if (
-        suffix is not None
-        and options.extension_policy is TypeScriptExtensionPolicy.OMIT_TYPESCRIPT
-    ):
+    if suffix is not None and options.extension_policy is TypeScriptExtensionPolicy.OMIT_TYPESCRIPT:
         return without_suffix
 
     return value

@@ -1,5 +1,6 @@
 import pytest
 from codepotg.ports import IdentifierRole, IdentifierValidationRequest
+
 from codepotg_language_typescript import (
     TypeScriptTargetAdapter,
     TypeScriptTargetOptions,
@@ -45,9 +46,7 @@ def test_dollar_and_underscore_are_valid() -> None:
 
 def test_spec_validated_unicode_subset() -> None:
     adapter = TypeScriptTargetAdapter(
-        TypeScriptTargetOptions(
-            unicode_identifier_policy=UnicodeIdentifierPolicy.SPEC_VALIDATED
-        )
+        TypeScriptTargetOptions(unicode_identifier_policy=UnicodeIdentifierPolicy.SPEC_VALIDATED)
     )
     diagnostics = adapter.validate_identifier(
         IdentifierValidationRequest("Éclair", IdentifierRole.TYPE)

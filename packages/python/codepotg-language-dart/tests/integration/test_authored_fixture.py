@@ -10,9 +10,7 @@ from codepotg.ports import (
 
 def test_entry_point_and_authored_syntax_fixture() -> None:
     entry = next(
-        item
-        for item in entry_points(group="codepotg.language_adapters")
-        if item.name == "dart"
+        item for item in entry_points(group="codepotg.language_adapters") if item.name == "dart"
     )
     adapter = entry.load()()
     assert not adapter.validate_identifier(

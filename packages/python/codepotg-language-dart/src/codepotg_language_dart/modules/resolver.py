@@ -17,9 +17,7 @@ def resolve_module_path(
     if request.explicit_module is not None:
         specifier = validate_explicit(request.explicit_module, request.current_artifact)
         kind = (
-            ModulePathKind.PACKAGE
-            if specifier.startswith("package:")
-            else ModulePathKind.EXPLICIT
+            ModulePathKind.PACKAGE if specifier.startswith("package:") else ModulePathKind.EXPLICIT
         )
         return ModulePathFacts(
             kind=kind,
@@ -62,6 +60,4 @@ def resolve_module_path(
 def _validate_artifact(path: str, role: str) -> None:
     contained_parts(path)
     if not path.endswith(".dart"):
-        raise ValueError(
-            f"DART_MODULE_PATH_UNSUPPORTED: {role} artifact must end with .dart"
-        )
+        raise ValueError(f"DART_MODULE_PATH_UNSUPPORTED: {role} artifact must end with .dart")

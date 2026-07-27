@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import unicodedata
 
-from codepotg.diagnostics import DiagnosticSeverity, Diagnostics
+from codepotg.diagnostics import Diagnostics, DiagnosticSeverity
 from codepotg.ports import IdentifierRole, IdentifierValidationRequest
 
 from ..diagnostics import diagnostic
@@ -76,9 +76,7 @@ def validate_identifier(
             )
     else:
         pattern = (
-            _ASCII_FILE_STEM
-            if request.role is IdentifierRole.FILE_STEM
-            else _ASCII_IDENTIFIER
+            _ASCII_FILE_STEM if request.role is IdentifierRole.FILE_STEM else _ASCII_IDENTIFIER
         )
         if pattern.fullmatch(value) is None:
             found.append(
@@ -112,9 +110,7 @@ def validate_identifier(
 def _unicode_identifier(value: str) -> bool:
     if not value:
         return False
-    return _unicode_start(value[0]) and all(
-        _unicode_continue(character) for character in value[1:]
-    )
+    return _unicode_start(value[0]) and all(_unicode_continue(character) for character in value[1:])
 
 
 def _unicode_start(character: str) -> bool:

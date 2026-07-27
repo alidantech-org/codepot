@@ -6,6 +6,7 @@ from codepotg.ports import (
     TargetAdapter,
 )
 from codepotg.testing import assert_target_adapter_conformance
+
 from codepotg_language_typescript import TypeScriptTargetAdapter
 
 

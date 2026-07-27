@@ -20,9 +20,7 @@ def validate_lexical_path(path: str) -> tuple[str, ...]:
     errors: list[str] = []
     if not path:
         return ("empty",)
-    if "\0" in path or any(
-        ord(character) < 32 or ord(character) == 127 for character in path
-    ):
+    if "\0" in path or any(ord(character) < 32 or ord(character) == 127 for character in path):
         errors.append("control")
     if path.startswith("/") or _DRIVE.match(path) or path.startswith("//"):
         errors.append("absolute")
@@ -55,7 +53,5 @@ def contained_parts(path: str) -> tuple[str, ...]:
     errors = validate_lexical_path(path)
     if errors:
         joined = ",".join(errors)
-        raise ValueError(
-            f"DART_MODULE_PATH_INVALID: invalid planned artifact path ({joined})"
-        )
+        raise ValueError(f"DART_MODULE_PATH_INVALID: invalid planned artifact path ({joined})")
     return PurePosixPath(path).parts

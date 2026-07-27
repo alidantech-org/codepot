@@ -40,9 +40,7 @@ class TypeScriptTargetAdapter:
                 aliases=(),
                 capabilities=TYPESCRIPT_CAPABILITIES,
                 trust=PluginTrust.EXECUTABLE,
-                documentation=(
-                    "TypeScript validation and module-path facts; no source rendering."
-                ),
+                documentation=("TypeScript validation and module-path facts; no source rendering."),
             ),
         )
 

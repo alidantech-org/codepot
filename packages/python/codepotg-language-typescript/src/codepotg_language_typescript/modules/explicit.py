@@ -22,14 +22,10 @@ def validate_explicit(
         or "\\" in value
         or "//" in value
     ):
-        raise ValueError(
-            "TS_MODULE_EXPLICIT_INVALID: explicit module contains forbidden syntax"
-        )
+        raise ValueError("TS_MODULE_EXPLICIT_INVALID: explicit module contains forbidden syntax")
     words = set(value.lower().split())
     if words & {"import", "export"}:
-        raise ValueError(
-            "TS_MODULE_EXPLICIT_INVALID: source fragments are not module specifiers"
-        )
+        raise ValueError("TS_MODULE_EXPLICIT_INVALID: source fragments are not module specifiers")
     if _SCHEME.match(value):
         raise ValueError("TS_MODULE_PATH_UNSUPPORTED: URL schemes are not supported")
     if value.startswith(("./", "../")):
@@ -60,9 +56,7 @@ def _validate_relative(value: str, current: str) -> None:
             stack.pop()
             continue
         if part in {"", "."}:
-            raise ValueError(
-                "TS_MODULE_EXPLICIT_INVALID: invalid relative module segment"
-            )
+            raise ValueError("TS_MODULE_EXPLICIT_INVALID: invalid relative module segment")
         stack.append(part)
 
 

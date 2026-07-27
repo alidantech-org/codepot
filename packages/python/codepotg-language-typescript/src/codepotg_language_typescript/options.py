@@ -7,9 +7,7 @@ from enum import StrEnum
 from typing import Any
 
 _PACKAGE = re.compile(r"^(?:@[a-z0-9][a-z0-9._-]*/)?[a-z0-9][a-z0-9._-]*$")
-_ALIAS = re.compile(
-    r"^(?:@|~|@?[A-Za-z_$][A-Za-z0-9_$-]*)(?:/[A-Za-z0-9_$.-]+)*$"
-)
+_ALIAS = re.compile(r"^(?:@|~|@?[A-Za-z_$][A-Za-z0-9_$-]*)(?:/[A-Za-z0-9_$.-]+)*$")
 
 
 class ReservedWordPolicy(StrEnum):
@@ -50,12 +48,8 @@ class AliasBinding:
 @dataclass(frozen=True, slots=True)
 class TypeScriptTargetOptions:
     reserved_word_policy: ReservedWordPolicy = ReservedWordPolicy.ERROR
-    unicode_identifier_policy: UnicodeIdentifierPolicy = (
-        UnicodeIdentifierPolicy.ASCII_ONLY
-    )
-    extension_policy: TypeScriptExtensionPolicy = (
-        TypeScriptExtensionPolicy.OMIT_TYPESCRIPT
-    )
+    unicode_identifier_policy: UnicodeIdentifierPolicy = UnicodeIdentifierPolicy.ASCII_ONLY
+    extension_policy: TypeScriptExtensionPolicy = TypeScriptExtensionPolicy.OMIT_TYPESCRIPT
     index_policy: IndexResolutionPolicy = IndexResolutionPolicy.PRESERVE
     package_name: str | None = None
     aliases: tuple[AliasBinding, ...] = ()
@@ -79,13 +73,8 @@ class TypeScriptTargetOptions:
         _require_enum("index_policy", self.index_policy, IndexResolutionPolicy)
 
         if self.package_name is not None and not isinstance(self.package_name, str):
-            raise ValueError(
-                "TS_MODULE_PACKAGE_INVALID: package_name must be a string or null"
-            )
-        if (
-            self.package_name is not None
-            and _PACKAGE.fullmatch(self.package_name) is None
-        ):
+            raise ValueError("TS_MODULE_PACKAGE_INVALID: package_name must be a string or null")
+        if self.package_name is not None and _PACKAGE.fullmatch(self.package_name) is None:
             raise ValueError("TS_MODULE_PACKAGE_INVALID: invalid npm-style package name")
 
         if not isinstance(self.aliases, tuple):
@@ -104,9 +93,7 @@ class TypeScriptTargetOptions:
         if len(alias_names) != len(set(alias_names)):
             raise ValueError("TS_MODULE_ALIAS_INVALID: duplicate aliases are not allowed")
         if len(roots) != len(set(roots)):
-            raise ValueError(
-                "TS_MODULE_ALIAS_AMBIGUOUS: duplicate alias roots are ambiguous"
-            )
+            raise ValueError("TS_MODULE_ALIAS_AMBIGUOUS: duplicate alias roots are ambiguous")
 
     def to_dict(self) -> dict[str, object]:
         return {

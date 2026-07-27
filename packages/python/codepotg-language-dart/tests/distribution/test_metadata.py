@@ -7,9 +7,10 @@ import zipfile
 from importlib.metadata import distribution, entry_points
 from pathlib import Path
 
-import codepotg_language_dart
 import pytest
 from codepotg.versions import Version
+
+import codepotg_language_dart
 
 PACKAGE_ROOT = Path(__file__).parents[2]
 
@@ -47,9 +48,7 @@ def test_distribution_metadata_typing_and_entry_point() -> None:
     assert package.version == "0.1.0a1"
     assert (Path(codepotg_language_dart.__file__).parent / "py.typed").is_file()
     entry = next(
-        item
-        for item in entry_points(group="codepotg.language_adapters")
-        if item.name == "dart"
+        item for item in entry_points(group="codepotg.language_adapters") if item.name == "dart"
     )
     adapter = entry.load()()
     assert adapter.plugin.id == "dart"
