@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 from itertools import count
 from threading import Lock
-from typing import cast
+from typing import Mapping, cast
 
 from .declarations import Declaration
 from .options import AuthorOptions
@@ -23,6 +24,14 @@ from .refs import (
     ViewRef,
     WorkflowRef,
     WorkflowStepRef,
+)
+from .schemas import (
+    FieldOptions,
+    ProjectionStep,
+    PropertyDeclaration,
+    SchemaDeclaration,
+    SchemaDeclarationKind,
+    fields_from_mapping,
 )
 
 _AUTHOR_COUNTER = count(1)
@@ -78,7 +87,18 @@ class Author:
     def freeze(self) -> None:
         self._frozen = True
 
-    def declare(self, kind: RefKind, name: str, *, declaration_id: str | None = None) -> Ref[object]:
+    def declaration(self, ref: Ref[object]) -> Declaration:
+        self._require_local(ref)
+        return self._declarations[ref.declaration_id]
+
+    def declare(
+        self,
+        kind: RefKind,
+        name: str,
+        *,
+        declaration_id: str | None = None,
+        payload: object | None = None,
+    ) -> Ref[object]:
         if self._frozen:
             raise RuntimeError("author session is frozen")
         if len(self._declarations) >= self.options.max_declarations:
@@ -86,19 +106,74 @@ class Author:
         normalized_id = declaration_id or self._default_id(kind, name)
         if normalized_id in self._declarations:
             raise ValueError(f"duplicate declaration id: {normalized_id}")
-        declaration = Declaration(normalized_id, name, kind)
+        declaration = Declaration(normalized_id, name, kind, payload=payload)
         self._declarations[normalized_id] = declaration
-        ref_type = _REF_TYPES[kind]
-        return ref_type(RefIdentity(self._author_id, normalized_id, kind))
+        return _REF_TYPES[kind](RefIdentity(self._author_id, normalized_id, kind))
 
     def group(self, name: str, *, declaration_id: str | None = None) -> GroupRef:
         return cast(GroupRef, self.declare(RefKind.GROUP, name, declaration_id=declaration_id))
 
-    def schema(self, name: str, *, declaration_id: str | None = None) -> SchemaRef[object]:
-        return cast(SchemaRef[object], self.declare(RefKind.SCHEMA, name, declaration_id=declaration_id))
+    def property(
+        self,
+        name: str,
+        annotation: object,
+        *,
+        declaration_id: str | None = None,
+        **options: object,
+    ) -> PropertyRef[object]:
+        payload = PropertyDeclaration(annotation, FieldOptions(**options))  # type: ignore[arg-type]
+        return cast(
+            PropertyRef[object],
+            self.declare(RefKind.PROPERTY, name, declaration_id=declaration_id, payload=payload),
+        )
 
-    def property(self, name: str, *, declaration_id: str | None = None) -> PropertyRef[object]:
-        return cast(PropertyRef[object], self.declare(RefKind.PROPERTY, name, declaration_id=declaration_id))
+    def schema(
+        self,
+        name: str,
+        fields: Mapping[str, object] | None = None,
+        *,
+        declaration_id: str | None = None,
+    ) -> SchemaRef[object]:
+        payload = SchemaDeclaration(
+            SchemaDeclarationKind.OBJECT,
+            fields=fields_from_mapping(fields or {}),
+        )
+        return cast(
+            SchemaRef[object],
+            self.declare(RefKind.SCHEMA, name, declaration_id=declaration_id, payload=payload),
+        )
+
+    def enum_schema(
+        self,
+        name: str,
+        values: type[Enum] | tuple[str, ...],
+        *,
+        declaration_id: str | None = None,
+    ) -> SchemaRef[object]:
+        enum_values = tuple(str(item.value) for item in values) if isinstance(values, type) and issubclass(values, Enum) else tuple(values)
+        payload = SchemaDeclaration(SchemaDeclarationKind.ENUM, enum_values=enum_values)
+        return cast(
+            SchemaRef[object],
+            self.declare(RefKind.SCHEMA, name, declaration_id=declaration_id, payload=payload),
+        )
+
+    def project_schema(
+        self,
+        source: SchemaRef[object],
+        name: str,
+        *steps: ProjectionStep,
+        declaration_id: str | None = None,
+    ) -> SchemaRef[object]:
+        self._require_local(source, RefKind.SCHEMA)
+        payload = SchemaDeclaration(
+            SchemaDeclarationKind.OBJECT,
+            source_schema=source,
+            projection_steps=steps,
+        )
+        return cast(
+            SchemaRef[object],
+            self.declare(RefKind.SCHEMA, name, declaration_id=declaration_id, payload=payload),
+        )
 
     def operation(self, name: str, *, declaration_id: str | None = None) -> OperationRef[object, object]:
         return cast(OperationRef[object, object], self.declare(RefKind.OPERATION, name, declaration_id=declaration_id))
@@ -117,6 +192,14 @@ class Author:
 
     def workflow(self, name: str, *, declaration_id: str | None = None) -> WorkflowRef:
         return cast(WorkflowRef, self.declare(RefKind.WORKFLOW, name, declaration_id=declaration_id))
+
+    def _require_local(self, ref: Ref[object], kind: RefKind | None = None) -> None:
+        if ref.identity.author_id != self._author_id:
+            raise ValueError("foreign author-session ref")
+        if kind is not None and ref.kind is not kind:
+            raise TypeError(f"expected {kind.value} ref, received {ref.kind.value}")
+        if ref.declaration_id not in self._declarations:
+            raise ValueError("unknown declaration ref")
 
     def _default_id(self, kind: RefKind, name: str) -> str:
         token = "-".join(part.lower() for part in name.replace("_", " ").split())

@@ -8,6 +8,15 @@ from .diagnostics import (
     AuthorDiagnosticSeverity,
 )
 from .options import AuthorOptions, UnsupportedCorePolicy
+from .schemas import (
+    FieldDeclaration,
+    FieldOptions,
+    ProjectionStep,
+    PropertyDeclaration,
+    SchemaDeclaration,
+    SchemaDeclarationKind,
+    field,
+)
 from .refs import (
     EventRef,
     FieldRef,
@@ -38,16 +47,22 @@ __all__ = [
     "AuthorDiagnosticSeverity",
     "AuthorOptions",
     "EventRef",
+    "FieldDeclaration",
+    "FieldOptions",
     "FieldRef",
     "GroupRef",
     "OperationRef",
     "PolicyRef",
     "PresentationRef",
+    "ProjectionStep",
+    "PropertyDeclaration",
     "PropertyRef",
     "Ref",
     "RefIdentity",
     "RefKind",
     "RefUsage",
+    "SchemaDeclaration",
+    "SchemaDeclarationKind",
     "SchemaRef",
     "StorageRef",
     "UnsupportedCorePolicy",
@@ -55,5 +70,6 @@ __all__ = [
     "ViewRef",
     "WorkflowRef",
     "WorkflowStepRef",
+    "field",
     "__version__",
 ]

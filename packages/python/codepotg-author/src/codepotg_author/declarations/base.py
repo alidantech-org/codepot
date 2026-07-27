@@ -11,6 +11,7 @@ class Declaration:
     name: str
     kind: RefKind
     group_id: str | None = None
+    payload: object | None = None
 
     def __post_init__(self) -> None:
         if not self.id or not self.name:
