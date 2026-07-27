@@ -1,8 +1,86 @@
 # CodepotG v2
 
-CodepotG v2 is the clean-room rewrite of the Python generation runtime. This directory contains the approved closed semantic kernel, project/pack contracts, adapter boundaries, implementation stages, package task tracking, and the first tested public foundation.
+CodepotG v2 is the clean-room rewrite of the Python generation runtime. This directory contains the approved closed semantic kernel, project/pack contracts, adapter boundaries, implementation stages, package task tracking, and the first public implementation foundation.
 
 The existing `packages/python/codepotg` package remains untouched and serves only as a source of real requirements and representative outputs. New implementation must not import its internals or reproduce its global registries, raw YAML processing, CLI-centered logic, OpenAPI leakage, overlapping emission paths, or old configuration runtime.
+
+## Implemented source structure
+
+The implementation follows the approved package architecture instead of placing unrelated contracts in flat modules:
+
+```text
+src/codepotg/
+├── __init__.py
+├── api/
+│   ├── cancellation.py
+│   └── results.py
+├── application/
+├── config/
+├── diagnostics/
+│   ├── model.py
+│   └── source.py
+├── domain/
+│   ├── ir/
+│   │   ├── base.py
+│   │   ├── events.py
+│   │   ├── facets.py
+│   │   ├── groups.py
+│   │   ├── naming.py
+│   │   ├── operations.py
+│   │   ├── policies.py
+│   │   ├── schemas.py
+│   │   ├── storage.py
+│   │   ├── types.py
+│   │   ├── validation/
+│   │   │   ├── index.py
+│   │   │   └── validator.py
+│   │   ├── views.py
+│   │   └── workflows.py
+│   └── generation/
+│       └── selectors.py
+├── generation/
+├── infrastructure/
+├── ir/
+├── plugins/
+│   ├── descriptors.py
+│   └── registry.py
+├── ports/
+│   ├── source.py
+│   ├── target.py
+│   └── templates.py
+├── runtime/
+├── testing/
+│   └── conformance.py
+├── versions/
+│   └── model.py
+├── cli/
+└── py.typed
+```
+
+The public `codepotg.ir` and `codepotg.generation` packages are explicit facades over the internal domain packages. There are no same-name flat modules such as `ir.py`, `plugins.py`, or `ports.py` beside package directories.
+
+## Implemented test structure
+
+Tests mirror the production boundaries:
+
+```text
+tests/
+├── architecture/
+├── contracts/
+│   └── ports/
+├── distribution/
+├── fixtures/
+└── unit/
+    ├── api/
+    ├── diagnostics/
+    ├── domain/
+    │   ├── generation/
+    │   └── ir/
+    ├── plugins/
+    └── versions/
+```
+
+The architecture suite rejects flat source dumps, root-level `test_*.py` files, same-name module/package collisions, old-runtime imports, and invalid dependency direction.
 
 ## Implemented foundation
 
@@ -18,7 +96,7 @@ The initial `codepotg-core` package now provides:
 - immutable plugin descriptors and registry conflict diagnostics;
 - public source-adapter, target-adapter, and template-engine protocols;
 - reusable conformance helpers for independently developed adapter packages;
-- unit, connected-contract, conformance, import-smoke, and architecture-boundary tests.
+- unit, connected-contract, conformance, import-smoke, architecture-boundary, and isolated-wheel tests.
 
 This foundation is intentionally not a generator yet. It is the public contract that allows `codepotg-openapi`, TypeScript/Dart target adapters, and the Jinja engine to be implemented in parallel without importing private core code.
 
@@ -64,6 +142,8 @@ python -m ruff check src tests
 python -m build
 ```
 
+The first user-run verification found a setuptools license-classifier conflict, one wheel-build test failure caused by that conflict, and Ruff findings in the initial flat implementation. The classifier and reported Ruff categories have been corrected while reorganizing the source and tests. The reorganized tree remains under verification until the complete command sequence passes again.
+
 No GitHub workflow is required or added.
 
 ## Primary goals
@@ -101,4 +181,4 @@ The implementation backlog is in [`docs/tasks/00-master-plan.md`](docs/tasks/00-
 
 ## Status
 
-Foundation implementation is in progress on `chatgpt/codepotx-restart`. Configuration decoding, pack discovery, artifact planning, rendering, writing, and CLI work remain future task lanes.
+Foundation implementation and corrective verification are in progress on `chatgpt/codepotx-restart`. Configuration decoding, pack discovery, artifact planning, rendering, writing, and CLI work remain future task lanes.
