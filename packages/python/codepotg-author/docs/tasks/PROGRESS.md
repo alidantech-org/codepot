@@ -2,7 +2,9 @@
 
 | Date | Commit | Task | Status | Tests/evidence | Notes |
 |---|---|---|---|---|---|
-| 2026-07-27 | pending scaffold commit | Documentation and project scaffold | in_progress | Documentation review only; runtime implementation and tests have not started. | Added the approved idea, design boundaries, AUTHOR-001..AUTHOR-030 ledger, parallel rules, implementation prompt, package metadata, and mirrored empty source/test structure. |
+| 2026-07-27 | `e3dc8b32` | Package root | complete | Documentation/files only; runtime tests not applicable. | Added the package README and locked the one-IR, neutral-authoring, canonical-transport product boundary. |
+| 2026-07-27 | `877010b6` | Documentation and project scaffold | complete | Documentation review and repository-path verification; runtime implementation and tests have not started. | Added package metadata, approved idea, eight focused design documents, AUTHOR-001..AUTHOR-030 ledger, dependency/parallel rules, full implementation prompt, and mirrored source/test/example/benchmark directories with `.gitkeep` files. |
+| 2026-07-27 | `6cea4ad7` | Shared parallel lane | complete | Coordination-document review only. | Registered `codepotg-author` as an independent package lane and recorded that new semantics remain intentional core gates rather than author-private extensions. |
 
 ## Open design gates
 
