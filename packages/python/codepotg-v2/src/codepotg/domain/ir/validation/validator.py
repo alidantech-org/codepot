@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Collection, Mapping
 
-from codepotg.diagnostics import Diagnostic, DiagnosticSeverity, Diagnostics
+from codepotg.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
 
 from ..base import SemanticId
 from ..events import OperationEffects

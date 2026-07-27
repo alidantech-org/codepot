@@ -55,10 +55,13 @@ class Version:
     def __lt__(self, other: object) -> bool:
         if not isinstance(other, Version):
             return NotImplemented
-        release_comparison = (self.major, self.minor, self.patch), (
-            other.major,
-            other.minor,
-            other.patch,
+        release_comparison = (
+            (self.major, self.minor, self.patch),
+            (
+                other.major,
+                other.minor,
+                other.patch,
+            ),
         )
         if release_comparison[0] != release_comparison[1]:
             return release_comparison[0] < release_comparison[1]

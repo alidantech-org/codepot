@@ -8,7 +8,7 @@ from codepotg.api import (
     OperationResult,
     OperationStatus,
 )
-from codepotg.diagnostics import Diagnostic, DiagnosticSeverity, Diagnostics
+from codepotg.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
 
 
 def test_failed_results_require_error_diagnostics() -> None:

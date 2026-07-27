@@ -7,7 +7,9 @@ from typing import TypeAlias
 from codepotg.diagnostics import SourceSpan
 
 JsonScalar: TypeAlias = str | int | float | bool | None
-FrozenValue: TypeAlias = JsonScalar | tuple["FrozenValue", ...] | tuple[tuple[str, "FrozenValue"], ...]
+FrozenValue: TypeAlias = (
+    JsonScalar | tuple["FrozenValue", ...] | tuple[tuple[str, "FrozenValue"], ...]
+)
 FrozenObject: TypeAlias = tuple[tuple[str, FrozenValue], ...]
 
 _SEMANTIC_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]*$")

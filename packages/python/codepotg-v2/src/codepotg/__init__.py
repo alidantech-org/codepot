@@ -1,8 +1,8 @@
 from .api import CancellationToken, OperationCancelled, OperationResult, OperationStatus
 from .diagnostics import (
     Diagnostic,
-    DiagnosticSeverity,
     Diagnostics,
+    DiagnosticSeverity,
     SourceIdentity,
     SourceKind,
     SourcePosition,
@@ -28,14 +28,14 @@ from .ir import (
 )
 from .plugins import PluginCategory, PluginDescriptor, PluginRegistry, PluginTrust
 from .versions import (
-    ApiVersion,
-    BehaviorVersion,
-    BehaviorVersions,
     CORE_VERSION,
     DEFAULT_BEHAVIOR_VERSIONS,
     IR_API_VERSION,
     PLUGIN_API_VERSION,
     PUBLIC_API_VERSION,
+    ApiVersion,
+    BehaviorVersion,
+    BehaviorVersions,
     Version,
 )
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from codepotg.diagnostics import Diagnostic, DiagnosticSeverity, Diagnostics
+from codepotg.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
 
 from .descriptors import PluginCategory, PluginDescriptor
 

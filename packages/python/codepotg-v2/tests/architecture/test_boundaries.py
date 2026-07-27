@@ -63,7 +63,7 @@ def test_planned_package_structure_is_present_without_flat_dump_modules() -> Non
         if path.is_dir() and (path / "__init__.py").exists()
     }
 
-    assert REQUIRED_PACKAGES <= present_packages
+    assert present_packages >= REQUIRED_PACKAGES
     assert not {path.name for path in SOURCE_ROOT.iterdir()} & FORBIDDEN_FLAT_MODULES
     assert (SOURCE_ROOT / "domain" / "ir").is_dir()
     assert (SOURCE_ROOT / "domain" / "generation").is_dir()
@@ -73,7 +73,7 @@ def test_tests_mirror_subsystem_boundaries_instead_of_flat_test_files() -> None:
     present_areas = {path.name for path in TEST_ROOT.iterdir() if path.is_dir()}
     flat_tests = tuple(TEST_ROOT.glob("test_*.py"))
 
-    assert REQUIRED_TEST_AREAS <= present_areas
+    assert present_areas >= REQUIRED_TEST_AREAS
     assert flat_tests == ()
     assert (TEST_ROOT / "unit" / "domain" / "ir").is_dir()
     assert (TEST_ROOT / "unit" / "domain" / "generation").is_dir()

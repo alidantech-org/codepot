@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from codepotg.diagnostics import (
     Diagnostic,
-    DiagnosticSeverity,
     Diagnostics,
+    DiagnosticSeverity,
     SourceIdentity,
     SourceKind,
     SourcePosition,

@@ -78,7 +78,9 @@ def build_connected_contract() -> Contract:
         name=Name("CreateUser"),
         inputs=(SchemaUse(name=Name("request"), schema=user_id, required=True),),
         outputs=(OperationOutput(name=Name("user"), schema=user_id),),
-        effects=OperationEffects(events=(EventEffect(event=created_event, payload_schema=user_id),)),
+        effects=OperationEffects(
+            events=(EventEffect(event=created_event, payload_schema=user_id),)
+        ),
         facets=OperationFacets(
             access=AccessFacet(effective=(policy_id,), authenticated=True),
         ),

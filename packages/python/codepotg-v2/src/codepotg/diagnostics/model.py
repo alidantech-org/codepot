@@ -63,8 +63,7 @@ class Diagnostic:
             "message": self.message,
             "span": _span_to_dict(self.span),
             "related": tuple(
-                {"message": item.message, "span": _span_to_dict(item.span)}
-                for item in self.related
+                {"message": item.message, "span": _span_to_dict(item.span)} for item in self.related
             ),
             "details": dict(self.details),
             "suggestion": self.suggestion,

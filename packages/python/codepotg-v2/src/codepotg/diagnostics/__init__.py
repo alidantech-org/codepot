@@ -1,4 +1,4 @@
-from .model import Diagnostic, DiagnosticSeverity, Diagnostics, RelatedLocation
+from .model import Diagnostic, Diagnostics, DiagnosticSeverity, RelatedLocation
 from .source import SourceIdentity, SourceKind, SourcePosition, SourceSpan
 
 DiagnosticCollection = Diagnostics
