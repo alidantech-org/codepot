@@ -30,6 +30,18 @@ packages/python/codepotg-v2/docs/04-plugins/02-language-adapter-contract.md
 8. Run the complete synchronized core and package release commands and append exact evidence to progress.
 9. Keep TS-006 and TS-009 blockers explicit. Do not emulate missing planner/symbol/context contracts privately.
 
+## Repair status
+
+- [x] Direct option construction rejects raw strings and other non-enum policy values.
+- [x] Non-string package names fail with a stable `ValueError` before regex use.
+- [x] Direct alias collection and alias item types are validated before sorting or regex use.
+- [x] Adapter construction rejects non-`TypeScriptTargetOptions` values.
+- [x] Unit coverage proves rejection behavior and valid extension/index enum behavior.
+- [x] Distribution tests build fresh temporary wheel/sdist artifacts and cannot skip because `dist/` is empty.
+- [x] Installed distribution and semantic plugin versions are asserted exactly.
+- [ ] Exact synchronized Ruff, format, full core/package, release build, and real-wheel checks remain open.
+- [ ] TS-006 and TS-009 remain blocked on public core/planner/pack contracts.
+
 ## Allowed files
 
 ```text
