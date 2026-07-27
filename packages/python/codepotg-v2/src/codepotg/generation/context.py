@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from codepotg.config import PackManifest, ProjectConfig
 from codepotg.domain.generation import SelectionContext
@@ -27,6 +27,7 @@ SafeRecord = tuple[tuple[str, SafeRecordValue], ...]
 @dataclass(slots=True)
 class RenderContextBuilder:
     contract: Contract
+    _index: SemanticIndex = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         self._index, _ = SemanticIndex.build(self.contract)
@@ -142,10 +143,11 @@ class RenderContextBuilder:
             fields=fields,
             id=mapping.id,
             indexes=tuple(
-                tuple(self._field(field) for field in fields_) for fields_ in mapping.indexes
+                tuple(self._field(field_id) for field_id in index_fields)
+                for index_fields in mapping.indexes
             ),
             name=mapping.name,
-            primary_key=tuple(self._field(field) for field in mapping.primary_key),
+            primary_key=tuple(self._field(field_id) for field_id in mapping.primary_key),
             schema=schema,
             source=mapping.source,
         )
