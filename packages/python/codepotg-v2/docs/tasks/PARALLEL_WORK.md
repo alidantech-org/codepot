@@ -21,6 +21,7 @@ The following package-local tasks may be claimed in separate conversations witho
 | `codepotg-language-typescript` | TS-001 foundation through target descriptor/identifier/path validation scaffolding | `codepotg.plugins`, `codepotg.ports.TargetAdapter`, target/path request and result types, target conformance helper |
 | `codepotg-language-dart` | DART-001 foundation through target descriptor/identifier/path validation scaffolding | same public target contracts as TypeScript |
 | `codepotg-template-jinja` | Jinja package foundation, immutable render request/result, deterministic engine scaffolding | `codepotg.ports.TemplateEngine`, `RenderRequest`, `RenderResult`, engine conformance helper |
+| `codepotg-author` | AUTHOR-001..AUTHOR-013, AUTHOR-015..AUTHOR-020 current subset, AUTHOR-022, AUTHOR-024, AUTHOR-027..AUTHOR-030 | public `codepotg.ir`, diagnostics, naming, versions, and validation facades; missing tags/guidance/field-capability/value-source/presentation contracts remain exact core blockers |
 
 These lanes may depend only on published modules. They must not import `codepotg.domain`, mutate the kernel, or copy private implementation classes. Until the corrective verification passes, parallel packages should pin to a specific core commit and treat API changes as possible foundation repairs rather than stable-release changes.
 
@@ -43,6 +44,7 @@ These lanes may depend only on published modules. They must not import `codepotg
 | Python API/CLI | API/CLI/MCP and impact API | api/application/cli | core use cases stable |
 | Local/Git distribution | GIT/LOCK/DIST | pack provider/lock/cache | direct source and pack manifest contracts stable |
 | OpenAPI adapter | OA-001..OA-020 | `codepotg-openapi` | closed IR/source port stable |
+| Python authoring compiler | AUTHOR-001..AUTHOR-030 | `codepotg-author` | public closed IR and validation stable; each blocked semantic addition requires a separate approved kernel task |
 | TypeScript target adapter | TS-001..TS-010 | `codepotg-language-typescript` | target validation/path port and PLAN-007 stable |
 | Dart target adapter | DART-001..DART-010 | `codepotg-language-dart` | target validation/path port and PLAN-007 stable |
 | Jinja engine | JINJA tasks | `codepotg-template-jinja` | engine port/immutable context stable |
@@ -73,6 +75,8 @@ Two agents must not edit the same implementation file concurrently. Closed-kerne
 
 - Core alone owns semantic objects, relations, schema kinds/roles, known facets, root-first selectors, expression roots, template contexts, and semantic validation.
 - Source adapters normalize only into the known kernel and cannot register semantic extensions.
+- The Python authoring compiler may be expressive, but it compiles only into public core IR; Pydantic, author refs/builders, and Python callables never enter IR or template contexts.
+- Tags, categorized guidance, field capabilities, value sources, presentations, and canonical transport additions require intentional typed core contracts when they must be visible beyond authoring; they cannot be hidden in arbitrary extensions or private author IR.
 - Packs use filesystem discovery, registered `{selectionKey}` folders, fixed root-first selectors, `(expression)`, explicit imports/exports/symbols, and pack-relative `paths` arrays.
 - Templates, macros, partials, and static files own every emitted character.
 - Target adapters validate targets/names and calculate module/path facts; they do not render types, literals, comments, imports, exports, validators, decorators, formatting, or framework code.
