@@ -29,12 +29,12 @@ class SafeRecord(Mapping[str, SafeValue]):
         direct = self._direct(key)
         if direct is not _MISSING:
             return direct
-        if key in _DATA_ALIASES:
+        if self.has_data_alias(key):
             data = self._direct("data")
-            if isinstance(data, SafeRecord):
-                nested = data._direct(key)
-                if nested is not _MISSING:
-                    return nested
+            assert isinstance(data, SafeRecord)
+            nested = data._direct(key)
+            assert nested is not _MISSING
+            return nested
         raise KeyError(key)
 
     def __iter__(self) -> Iterator[str]:
@@ -76,6 +76,12 @@ class SafeRecord(Mapping[str, SafeValue]):
 
     def is_allowed_tag_attribute(self, attribute: str) -> bool:
         return self.is_tag_set and (attribute in _TAG_METHODS or attribute == "empty")
+
+    def has_data_alias(self, attribute: str) -> bool:
+        if attribute not in _DATA_ALIASES:
+            return False
+        data = self._direct("data")
+        return isinstance(data, SafeRecord) and data._direct(attribute) is not _MISSING
 
     def as_tuple(self) -> tuple[tuple[str, SafeValue], ...]:
         return self._items
