@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: Manual Connected OpenAPI
+  version: 1.0.0
+
+tags:
+  - name: accounts
+
+paths:
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [accounts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: User not found
+
+components:
+  schemas:
+    Role:
+      type: string
+      enum: [admin, customer, organiser]
+
+    User:
+      type: object
+      required: [id, email, isActive]
+      properties:
+        id:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+        isActive:
+          type: boolean
+        age:
+          type: integer
+          nullable: true
+
+    Ticket:
+      type: object
+      required: [code, priceCents]
+      properties:
+        code:
+          type: string
+        priceCents:
+          type: integer
+          minimum: 0
+        note:
+          type: string
+          nullable: true
