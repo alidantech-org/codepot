@@ -1,14 +1,4 @@
-"""Typed Python authoring compiler for the CodepotG v2 semantic IR."""
-
-from .author import Author
-from .diagnostics import (
-    AUTHOR_CORE_UNSUPPORTED,
-    AuthorDiagnostic,
-    AuthorDiagnostics,
-    AuthorDiagnosticSeverity,
-)
-from .options import AuthorOptions, UnsupportedCorePolicy
-from .refs import (
+from .base import (
     EventRef,
     FieldRef,
     GroupRef,
@@ -18,7 +8,6 @@ from .refs import (
     PropertyRef,
     Ref,
     RefIdentity,
-    RefKind,
     RefUsage,
     SchemaRef,
     StorageRef,
@@ -27,16 +16,9 @@ from .refs import (
     WorkflowRef,
     WorkflowStepRef,
 )
-
-__version__ = "0.1.0a1"
+from .kinds import RefKind
 
 __all__ = [
-    "AUTHOR_CORE_UNSUPPORTED",
-    "Author",
-    "AuthorDiagnostic",
-    "AuthorDiagnostics",
-    "AuthorDiagnosticSeverity",
-    "AuthorOptions",
     "EventRef",
     "FieldRef",
     "GroupRef",
@@ -50,10 +32,8 @@ __all__ = [
     "RefUsage",
     "SchemaRef",
     "StorageRef",
-    "UnsupportedCorePolicy",
     "ValueSourceRef",
     "ViewRef",
     "WorkflowRef",
     "WorkflowStepRef",
-    "__version__",
 ]
