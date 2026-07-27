@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import fields, is_dataclass
+from dataclasses import dataclass, field, fields, is_dataclass
 from enum import Enum
 from importlib import import_module
 from typing import Any
@@ -17,6 +17,8 @@ public_ir = import_module("codepotg.domain.ir")
 public_diagnostics = import_module("codepotg.diagnostics")
 
 _FORMAT = "codepot-ir"
+_MAX_DEPTH = 128
+_MAX_ITEMS = 500_000
 
 
 class IrCodecError(ValueError):
@@ -25,6 +27,12 @@ class IrCodecError(ValueError):
         self.code = code
         self.message = message
         self.path = path
+
+
+@dataclass(slots=True)
+class _DecodeState:
+    active: set[int] = field(default_factory=set)
+    items: int = 0
 
 
 def contract_to_document(contract: Contract) -> dict[str, object]:
@@ -75,7 +83,12 @@ def contract_from_document(document: object) -> Contract:
             "IR_CODEC_VERSION",
             f"IR transport requires version {IR_API_VERSION}",
         )
-    value = _decode(document.get("contract"), path="$.contract")
+    value = _decode(
+        document.get("contract"),
+        path="$.contract",
+        depth=0,
+        state=_DecodeState(),
+    )
     if not isinstance(value, Contract):
         raise IrCodecError("IR_CODEC_CONTRACT", "transport does not contain a Contract")
     diagnostics = validate_contract(value)
@@ -145,12 +158,9 @@ def _encode(value: object) -> object:
     if isinstance(value, tuple | list):
         return [_encode(item) for item in value]
     if isinstance(value, dict):
-        result: dict[str, object] = {}
-        for key in sorted(value):
-            if not isinstance(key, str):
-                raise IrCodecError("IR_CODEC_KEY", "object keys must be strings")
-            result[key] = _encode(value[key])
-        return result
+        if not all(isinstance(key, str) for key in value):
+            raise IrCodecError("IR_CODEC_KEY", "object keys must be strings")
+        return {key: _encode(value[key]) for key in sorted(value)}
     if is_dataclass(value):
         result = {"$type": type(value).__name__}
         for item in fields(value):
@@ -164,37 +174,84 @@ def _encode(value: object) -> object:
     )
 
 
-def _decode(value: object, *, path: str) -> object:
+def _decode(
+    value: object,
+    *,
+    path: str,
+    depth: int,
+    state: _DecodeState,
+) -> object:
+    state.items += 1
+    if state.items > _MAX_ITEMS:
+        raise IrCodecError(
+            "IR_CODEC_LIMIT",
+            f"IR transport exceeds {_MAX_ITEMS} values",
+            path=path,
+        )
+    if depth > _MAX_DEPTH:
+        raise IrCodecError(
+            "IR_CODEC_DEPTH",
+            f"IR transport exceeds depth {_MAX_DEPTH}",
+            path=path,
+        )
     if value is None or isinstance(value, (str, bool, int)):
         return value
     if isinstance(value, float):
         if not math.isfinite(value):
             raise IrCodecError("IR_CODEC_NUMBER", "non-finite numbers are not supported", path=path)
         return value
-    if isinstance(value, list):
-        return tuple(
-            _decode(item, path=f"{path}[{index}]")
-            for index, item in enumerate(value)
-        )
-    if not isinstance(value, dict):
-        raise IrCodecError(
-            "IR_CODEC_VALUE",
-            f"unsupported decoded value {type(value).__name__}",
-            path=path,
-        )
+    if isinstance(value, list | dict):
+        identity = id(value)
+        if identity in state.active:
+            raise IrCodecError(
+                "IR_CODEC_CYCLE",
+                "recursive IR transport values are not supported",
+                path=path,
+            )
+        state.active.add(identity)
+        try:
+            if isinstance(value, list):
+                return tuple(
+                    _decode(
+                        item,
+                        path=f"{path}[{index}]",
+                        depth=depth + 1,
+                        state=state,
+                    )
+                    for index, item in enumerate(value)
+                )
+            return _decode_object(value, path=path, depth=depth, state=state)
+        finally:
+            state.active.remove(identity)
+    raise IrCodecError(
+        "IR_CODEC_VALUE",
+        f"unsupported decoded value {type(value).__name__}",
+        path=path,
+    )
 
-    if "$ref" in value:
-        if set(value) != {"$ref"} or not isinstance(value["$ref"], str):
+
+def _decode_object(
+    value: dict[object, object],
+    *,
+    path: str,
+    depth: int,
+    state: _DecodeState,
+) -> object:
+    if not all(isinstance(key, str) for key in value):
+        raise IrCodecError("IR_CODEC_KEY", "object keys must be strings", path=path)
+    typed = value  # narrowed by the validation above
+    if "$ref" in typed:
+        if set(typed) != {"$ref"} or not isinstance(typed["$ref"], str):
             raise IrCodecError("IR_CODEC_REF", "invalid semantic reference", path=path)
-        return SemanticId(value["$ref"])
-    if "$name" in value:
-        if set(value) != {"$name"} or not isinstance(value["$name"], str):
+        return SemanticId(typed["$ref"])
+    if "$name" in typed:
+        if set(typed) != {"$name"} or not isinstance(typed["$name"], str):
             raise IrCodecError("IR_CODEC_NAME", "invalid semantic name", path=path)
-        return Name(value["$name"])
-    if "$enum" in value:
-        if set(value) != {"$enum", "value"}:
+        return Name(typed["$name"])
+    if "$enum" in typed:
+        if set(typed) != {"$enum", "value"}:
             raise IrCodecError("IR_CODEC_ENUM", "invalid enum document", path=path)
-        enum_name = value["$enum"]
+        enum_name = typed["$enum"]
         if not isinstance(enum_name, str):
             raise IrCodecError("IR_CODEC_ENUM", "enum type must be a string", path=path)
         enum_type = _enum_registry().get(enum_name)
@@ -205,11 +262,11 @@ def _decode(value: object, *, path: str) -> object:
                 path=path,
             )
         try:
-            return enum_type(value["value"])
+            return enum_type(typed["value"])
         except (TypeError, ValueError) as exc:
             raise IrCodecError("IR_CODEC_ENUM", "invalid enum value", path=path) from exc
-    if "$type" in value:
-        type_name = value["$type"]
+    if "$type" in typed:
+        type_name = typed["$type"]
         if not isinstance(type_name, str):
             raise IrCodecError("IR_CODEC_TYPE", "IR type must be a string", path=path)
         target = _type_registry().get(type_name)
@@ -224,7 +281,7 @@ def _decode(value: object, *, path: str) -> object:
             for item in fields(target)
             if item.init and not item.name.startswith("_")
         }
-        unknown = sorted(set(value) - allowed - {"$type"})
+        unknown = sorted(set(typed) - allowed - {"$type"})
         if unknown:
             raise IrCodecError(
                 "IR_CODEC_UNKNOWN_FIELD",
@@ -232,8 +289,13 @@ def _decode(value: object, *, path: str) -> object:
                 path=path,
             )
         kwargs = {
-            key: _decode(item, path=f"{path}.{key}")
-            for key, item in value.items()
+            key: _decode(
+                item,
+                path=f"{path}.{key}",
+                depth=depth + 1,
+                state=state,
+            )
+            for key, item in typed.items()
             if key != "$type"
         }
         try:
@@ -244,10 +306,14 @@ def _decode(value: object, *, path: str) -> object:
                 f"invalid {type_name} record",
                 path=path,
             ) from exc
-
     return {
-        key: _decode(item, path=f"{path}.{key}")
-        for key, item in sorted(value.items())
+        key: _decode(
+            typed[key],
+            path=f"{path}.{key}",
+            depth=depth + 1,
+            state=state,
+        )
+        for key in sorted(typed)
     }
 
 
