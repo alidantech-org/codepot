@@ -30,6 +30,19 @@ packages/python/codepotg-v2/docs/04-plugins/02-language-adapter-contract.md
 8. Run the complete synchronized core and package release commands and append exact evidence.
 9. Keep DART-006 and DART-009 blockers explicit; do not invent missing planner/symbol/context contracts.
 
+## Repair status
+
+- [x] Direct option construction rejects raw strings and other non-enum policy values.
+- [x] Non-string package names fail with a stable `ValueError` before regex use.
+- [x] Non-boolean package-URI preferences fail deterministically.
+- [x] Adapter construction rejects non-`DartTargetOptions` values.
+- [x] Unit coverage proves rejection behavior and valid privacy/reserved-word enum behavior.
+- [x] Distribution tests build fresh temporary wheel/sdist artifacts and cannot skip because `dist/` is empty.
+- [x] Installed distribution and semantic plugin versions are asserted exactly.
+- [ ] Exact synchronized Ruff, format, full core/package, release build, and real-wheel checks remain open.
+- [ ] The representative Dart SDK oracle remains open because no Dart SDK is available in the current environment.
+- [ ] DART-006 and DART-009 remain blocked on public core/planner/pack contracts.
+
 ## Allowed files
 
 ```text
