@@ -35,6 +35,9 @@ dev = [
   "pyright>=1.1.375",
   "pytest>=8.3",
   "ruff>=0.9",
+  "setuptools>=77",
+  "types-PyYAML>=6.0.12",
+  "wheel",
 ]
 
 [project.urls]
@@ -73,3 +76,14 @@ markers = [
   "performance: deterministic compiler or transport performance test",
   "typing: static type-checker contract test",
 ]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+show_error_codes = true
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "strict"
+include = ["src", "tests"]

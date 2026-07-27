@@ -1,4 +1,12 @@
-from codepotg_author import AuthorDiagnostic, AuthorDiagnostics, AuthorOptions
+from codepotg_author import (
+    AUTHOR_CORE_UNSUPPORTED,
+    Author,
+    AuthorDiagnostic,
+    AuthorDiagnostics,
+    AuthorDiagnosticSeverity,
+    AuthorOptions,
+    RefKind,
+)
 
 
 def test_options_reject_unknown_fields() -> None:
@@ -13,8 +21,30 @@ def test_options_reject_unknown_fields() -> None:
 def test_diagnostics_are_stably_sorted() -> None:
     values = AuthorDiagnostics.from_iterable(
         [
-            AuthorDiagnostic("AUTHOR_REF_MISSING", "missing", declaration_path="z"),
-            AuthorDiagnostic("AUTHOR_DUPLICATE_ID", "duplicate", declaration_path="a"),
+            AuthorDiagnostic(
+                code="AUTHOR_REF_MISSING",
+                severity=AuthorDiagnosticSeverity.ERROR,
+                message="missing",
+            ),
+            AuthorDiagnostic(
+                code="AUTHOR_DUPLICATE_ID",
+                severity=AuthorDiagnosticSeverity.ERROR,
+                message="duplicate",
+            ),
         ]
     )
     assert [item.code for item in values] == ["AUTHOR_DUPLICATE_ID", "AUTHOR_REF_MISSING"]
+
+
+def test_unsupported_core_kind_is_diagnostic_and_not_collected() -> None:
+    author = Author("example")
+
+    try:
+        author.declare(RefKind.VALUE_SOURCE, "request-user")
+    except ValueError as exc:
+        assert str(exc).startswith(AUTHOR_CORE_UNSUPPORTED)
+    else:
+        raise AssertionError("unsupported core kind was accepted")
+
+    assert author.declarations == ()
+    assert [item.code for item in author.diagnostics] == [AUTHOR_CORE_UNSUPPORTED]
