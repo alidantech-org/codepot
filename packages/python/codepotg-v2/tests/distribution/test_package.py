@@ -14,12 +14,15 @@ def test_wheel_builds_contains_typed_package_tree_and_imports_in_isolation(
     tmp_path: Path,
 ) -> None:
     dist = tmp_path / "dist"
-    subprocess.run(
-        [sys.executable, "-m", "build", "--wheel", "--outdir", str(dist)],
+    _run(
+        sys.executable,
+        "-m",
+        "build",
+        "--wheel",
+        "--no-isolation",
+        "--outdir",
+        str(dist),
         cwd=PACKAGE_ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
     )
     wheels = tuple(dist.glob("codepotg_core-*.whl"))
     assert len(wheels) == 1
@@ -31,15 +34,15 @@ def test_wheel_builds_contains_typed_package_tree_and_imports_in_isolation(
         "codepotg/__init__.py",
         "codepotg/api/__init__.py",
         "codepotg/diagnostics/__init__.py",
-        "codepotg/domain/ir/__init__.py",
         "codepotg/domain/generation/__init__.py",
+        "codepotg/domain/ir/__init__.py",
         "codepotg/generation/__init__.py",
         "codepotg/ir/__init__.py",
         "codepotg/plugins/__init__.py",
         "codepotg/ports/__init__.py",
+        "codepotg/py.typed",
         "codepotg/testing/__init__.py",
         "codepotg/versions/__init__.py",
-        "codepotg/py.typed",
     }
     assert expected <= names
 
@@ -47,26 +50,40 @@ def test_wheel_builds_contains_typed_package_tree_and_imports_in_isolation(
     venv.EnvBuilder(with_pip=True).create(environment)
     scripts = "Scripts" if os.name == "nt" else "bin"
     python = environment / scripts / ("python.exe" if os.name == "nt" else "python")
-    subprocess.run(
-        [str(python), "-m", "pip", "install", "--no-deps", str(wheel)],
-        check=True,
-        capture_output=True,
-        text=True,
+    _run(
+        str(python),
+        "-m",
+        "pip",
+        "install",
+        "--no-deps",
+        "--no-index",
+        str(wheel),
     )
-    completed = subprocess.run(
-        [
-            str(python),
-            "-c",
-            (
-                "import codepotg; "
-                "from codepotg.ir import Contract; "
-                "from codepotg.generation import DEFAULT_SELECTOR_REGISTRY; "
-                "from codepotg.ports import SourceAdapter, TargetAdapter, TemplateEngine; "
-                "print(codepotg.__version__)"
-            ),
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
+    completed = _run(
+        str(python),
+        "-c",
+        (
+            "import codepotg; "
+            "from codepotg.generation import DEFAULT_SELECTOR_REGISTRY; "
+            "from codepotg.ir import Contract; "
+            "from codepotg.ports import SourceAdapter, TargetAdapter, TemplateEngine; "
+            "print(codepotg.__version__)"
+        ),
     )
     assert completed.stdout.strip() == "2.0.0-alpha.1"
+
+
+def _run(*arguments: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+    completed = subprocess.run(
+        arguments,
+        cwd=cwd,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0, (
+        f"command failed ({completed.returncode}): {' '.join(arguments)}\n"
+        f"stdout:\n{completed.stdout}\n"
+        f"stderr:\n{completed.stderr}"
+    )
+    return completed
