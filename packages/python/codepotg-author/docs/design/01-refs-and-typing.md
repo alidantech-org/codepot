@@ -20,6 +20,8 @@ WorkflowRef
 WorkflowStepRef
 ```
 
+This is type-notation used by the design. The package targets Python 3.11, so implementation must use `TypeVar`, `Generic`, protocols, and overloads. Do not use Python 3.12-only PEP 695 declarations such as `class SchemaRef[T]` unless the package's minimum Python version is intentionally changed through a separate approved decision.
+
 A wrong ref kind is rejected both statically where possible and by the runtime linker.
 
 ## Identity
