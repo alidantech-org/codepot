@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from types import NoneType, UnionType
-from typing import Any, Union, get_args, get_origin
+from typing import Any, Union, cast, get_args, get_origin
 
 from codepotg.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
 from codepotg.ir import (
@@ -169,6 +169,15 @@ def _schema_dependencies(author: Any, schema: SchemaDeclaration) -> set[str]:
 def _annotation_dependencies(annotation: object) -> set[str]:
     if isinstance(annotation, SchemaRef):
         return {annotation.declaration_id}
+    if isinstance(annotation, TypeExpression):
+        result = (
+            {annotation.reference.value}
+            if annotation.reference is not None and annotation.kind is TypeKind.REFERENCE
+            else set()
+        )
+        for argument in annotation.arguments:
+            result.update(_annotation_dependencies(argument))
+        return result
     result: set[str] = set()
     for argument in get_args(annotation):
         result.update(_annotation_dependencies(argument))
@@ -190,7 +199,8 @@ def _compile_field(author: Any, schema_id: str, declaration: FieldDeclaration) -
     annotation = declaration.annotation
     options = declaration.options
     if declaration.property_ref is not None:
-        property_declaration = author.declaration(declaration.property_ref)
+        property_ref = cast(PropertyRef[object], declaration.property_ref)
+        property_declaration = author.declaration(property_ref)
         if not isinstance(property_declaration.payload, PropertyDeclaration):
             raise TypeError("property ref does not resolve to a property declaration")
         annotation = property_declaration.payload.annotation
@@ -234,29 +244,32 @@ def _merge_field_options(base: FieldOptions, override: FieldOptions) -> FieldOpt
 
 
 def _type_expression(author: Any, annotation: object | None) -> TypeExpression:
+    if isinstance(annotation, TypeExpression):
+        return annotation
     if isinstance(annotation, SchemaRef):
         author.declaration(annotation)
         return TypeExpression.reference_to(annotation.declaration_id)
     if isinstance(annotation, PropertyRef):
-        declaration = author.declaration(annotation)
+        property_ref = cast(PropertyRef[object], annotation)
+        declaration = author.declaration(property_ref)
         if isinstance(declaration.payload, PropertyDeclaration):
             return _type_expression(author, declaration.payload.annotation)
-    primitives: dict[object, str] = {
-        str: "string",
-        int: "integer",
-        float: "number",
-        bool: "boolean",
-        bytes: "bytes",
-        object: "object",
-        Any: "unknown",
-        NoneType: "null",
-    }
-    try:
-        primitive_name = primitives.get(annotation)
-    except TypeError:
-        primitive_name = None
-    if primitive_name is not None:
-        return TypeExpression.primitive(primitive_name)
+    if annotation is str:
+        return TypeExpression.primitive("string")
+    if annotation is int:
+        return TypeExpression.primitive("integer")
+    if annotation is float:
+        return TypeExpression.primitive("number")
+    if annotation is bool:
+        return TypeExpression.primitive("boolean")
+    if annotation is bytes:
+        return TypeExpression.primitive("bytes")
+    if annotation is object:
+        return TypeExpression.primitive("object")
+    if annotation is Any:
+        return TypeExpression.primitive("unknown")
+    if annotation is NoneType:
+        return TypeExpression.primitive("null")
     origin = get_origin(annotation)
     args = get_args(annotation)
     if origin in {list, set, frozenset} and args:
