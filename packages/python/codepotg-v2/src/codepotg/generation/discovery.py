@@ -32,6 +32,12 @@ def discover_pack_files(
 ) -> tuple[DiscoveredPackFile, ...]:
     validate_pack_compatibility(manifest)
     validate_selection_graph(manifest)
+    if manifest.commands:
+        raise PackDiscoveryError(
+            "CMD_APPROVAL_REQUIRED",
+            "pack-owned commands require the separate approved command runtime",
+            path="CodepotgPack.yaml#commands",
+        )
 
     root = Path(pack_root).resolve(strict=True)
     templates = (root / "templates").resolve(strict=True)
