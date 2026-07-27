@@ -6,6 +6,8 @@
 /contract.codepot.yaml
 /contract.author.codepot.json
 /contract.author.codepot.yaml
+/contract.openapi.codepot.json
+/contract.openapi.codepot.yaml
 /plan*.json
 /memory-output*.json
 /write-report*.json
