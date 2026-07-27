@@ -38,6 +38,26 @@ class DartTargetOptions:
     prefer_package_uris: bool = False
 
     def __post_init__(self) -> None:
+        _require_enum(
+            "reserved_word_policy",
+            self.reserved_word_policy,
+            ReservedWordPolicy,
+        )
+        _require_enum(
+            "unicode_identifier_policy",
+            self.unicode_identifier_policy,
+            UnicodeIdentifierPolicy,
+        )
+        _require_enum(
+            "private_identifier_policy",
+            self.private_identifier_policy,
+            PrivateIdentifierPolicy,
+        )
+
+        if self.package_name is not None and not isinstance(self.package_name, str):
+            raise ValueError(
+                "DART_MODULE_PACKAGE_INVALID: package_name must be a string or null"
+            )
         if (
             self.package_name is not None
             and _PACKAGE.fullmatch(self.package_name) is None
@@ -57,6 +77,9 @@ class DartTargetOptions:
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> DartTargetOptions:
+        if not isinstance(value, Mapping):
+            raise ValueError("Dart options must be a mapping")
+
         allowed = {
             "package_name",
             "prefer_package_uris",
@@ -95,3 +118,8 @@ class DartTargetOptions:
             package_name=package_name,
             prefer_package_uris=prefer_package_uris,
         )
+
+
+def _require_enum(field_name: str, value: object, enum_type: type[StrEnum]) -> None:
+    if not isinstance(value, enum_type):
+        raise ValueError(f"{field_name} must be a {enum_type.__name__} value")

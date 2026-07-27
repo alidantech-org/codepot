@@ -66,7 +66,7 @@ Named-output rules belong only to JINJA-008.
 
 ## JINJA-006 — Safe environment construction
 
-**Status:** implemented in PR #28
+**Status:** implemented in PR #28; callable compatibility decision completed by the audit-fix lane
 
 - [x] Use `SandboxedEnvironment` plus explicit attribute/callable guards.
 - [x] Use `StrictUndefined`.
@@ -74,10 +74,11 @@ Named-output rules belong only to JINJA-008.
 - [x] Register only approved helpers.
 - [x] Avoid process-global environment mutation.
 - [x] Prove denial through adversarial tests.
+- [x] Keep `loop.cycle()` and `loop.changed()` deliberately denied and cover the exact behavior with compatibility tests.
 
 ## JINJA-007 — Rendering and diagnostics
 
-**Status:** implemented in PR #28
+**Status:** implemented in PR #28; root-source diagnostic correction completed by the audit-fix lane
 
 - [x] Compile and render with cancellation checks and byte limits.
 - [x] Stream chunks instead of creating an unbounded complete string first.
@@ -85,6 +86,7 @@ Named-output rules belong only to JINJA-008.
 - [x] Preserve deterministic text output.
 - [x] Return no partial content on failure.
 - [x] Never write files directly.
+- [x] Report malformed root source values as `JINJA_TEMPLATE_INVALID`; keep partial-source failures under `JINJA_PARTIAL_INVALID`.
 
 ## JINJA-008 — Named output blocks
 
@@ -110,28 +112,32 @@ No author-private result type or encoded multi-file string is permitted.
 
 ## JINJA-010 — Conformance and security tests
 
-**Status:** implemented in PR #28
+**Status:** implemented in PR #28; audit compatibility and diagnostic cases added
 
 - [x] Pass shared engine conformance in the available harness.
 - [x] Add sandbox attempts for attributes, callables, imports, builtins, filesystem, environment, network, and process access.
 - [x] Add undefined, whitespace, encoding, include, inheritance, cycle, limit, cancellation, cache, and source-aware diagnostic tests.
 - [x] Prove contexts and registries remain unchanged after success/failure.
+- [x] Add exact compatibility tests for denied `loop.cycle()` and `loop.changed()` calls.
+- [x] Add a malformed-root-source diagnostic regression test.
 - [ ] Add named-output tests only after JINJA-008 is unblocked.
 
 ## JINJA-011 — Documentation and release
 
-**Status:** review; implementation documentation exists but exact release gates remain open
+**Status:** review; audit code/documentation fixes are implemented but exact release gates remain open
 
 - [x] Document current engine rules and host-only restrictions.
 - [x] Document safe request-partial/include behavior.
 - [x] Document blocked named outputs and missing integrations.
 - [x] Document helper registration.
+- [x] Document the deliberate denial of `loop.cycle()` and `loop.changed()`.
+- [x] Document root versus partial source diagnostic ownership.
 - [x] Build wheel/sdist and test isolated installation in the available implementation harness.
 - [ ] Run Ruff check and formatting against the synchronized repository.
 - [ ] Run the complete real `codepotg-v2` suite and build.
 - [ ] Re-run the complete Jinja suite against the real synchronized core.
 - [ ] Install the real core and Jinja wheels together and repeat entry-point/render checks.
-- [ ] Record exact evidence and close audit fixes.
+- [ ] Record exact synchronized release evidence and close audit fixes.
 
 ## Audit follow-up
 

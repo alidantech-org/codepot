@@ -49,6 +49,8 @@ Approved default globals: none.
 
 Attribute access is limited to public keys of immutable snapshots plus the narrow Jinja runtime attributes required for loops and imported macros. Every private or dunder attribute is denied. Calls are limited to template-owned macros/block references and explicitly registered immutable host helper wrappers. Context callables are rejected before rendering.
 
+Loop metadata such as `loop.index`, `loop.first`, and `loop.last` is readable. `loop.cycle()` and `loop.changed()` deliberately remain denied in the strict first-version profile because they are callable `LoopContext` methods and are not template-owned macros, block references, or registered host helpers. Supporting them later requires a separate audited callable-policy change and behavior-version review.
+
 ## Declared dependencies
 
 Only one static string is accepted by `include`, `extends`, `import`, and `from ... import`. Every dependency must exist in `request.partials`, use a normalized relative POSIX registry ID, remain within the include-depth limit, and participate in a cycle-free graph. Dynamic expressions, fallback lists, traversal IDs, and `ignore missing` are rejected before compilation.
@@ -67,6 +69,7 @@ Stable error codes are:
 
 - `JINJA_RULE_INVALID`
 - `JINJA_TEMPLATE_ID_INVALID`
+- `JINJA_TEMPLATE_INVALID`
 - `JINJA_TEMPLATE_TOO_LARGE`
 - `JINJA_PARTIAL_INVALID`
 - `JINJA_CONTEXT_UNSAFE`
@@ -83,6 +86,8 @@ Stable error codes are:
 - `JINJA_RENDER_LIMIT`
 - `JINJA_CANCELLED`
 - `JINJA_RUNTIME`
+
+`JINJA_TEMPLATE_INVALID` is reserved for malformed root source values. Partial source failures continue to use `JINJA_PARTIAL_INVALID`.
 
 Template locations use `SourceKind.TEMPLATE`, one-based lines, and column 1 only when a reliable Jinja line is available. Details are sorted and exclude paths, memory addresses, secrets, traceback text, and unstable exception messages.
 
