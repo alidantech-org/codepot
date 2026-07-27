@@ -2,7 +2,7 @@
 
 This package detects and validates TypeScript targets and calculates module/path facts only. It must not contain source parsing, semantic-kernel extensions, generated TypeScript syntax, Node project management, frameworks, Jinja, output writing, command execution, or pack selection.
 
-PR #30 implemented most behavior available through the current public `TargetAdapter` port. Implementation status is separated from release status: exact synchronized verification and one typed-option repair remain open.
+PR #30 implemented most behavior available through the current public `TargetAdapter` port. The audited typed-option defect and conditional artifact-inspection gap are repaired on `chatgpt/codepotx-restart-typescript-audit-fixes`; synchronized release verification remains open.
 
 ## TS-001 — Package and plugin foundation
 
@@ -17,15 +17,14 @@ PR #30 implemented most behavior available through the current public `TargetAda
 
 ## TS-002 — Typed target option schema
 
-**Status:** implemented with audit fix required; public project/pack option bridge remains blocked
+**Status:** implemented; public project/pack option bridge remains blocked
 
 - [x] Define immutable reserved-word, Unicode, extension, index, package, and alias options.
 - [x] Reject unknown fields in `from_mapping()`.
 - [x] Validate package and alias syntax, ordering, duplicates, and ambiguity for decoded values.
-- [x] Expose deterministic option introspection.
-- [ ] Validate direct constructor values with the same strictness as `from_mapping()`.
-- [ ] Reject raw strings/non-enum policy values and non-string package names deterministically.
-- [ ] Add direct-constructor negative tests.
+- [x] Validate direct constructor values with the same strictness as `from_mapping()`.
+- [x] Reject raw strings/non-enum policy values and non-string package names deterministically.
+- [x] Add direct-constructor negative tests for policy, package, alias collection, and alias item types.
 - [ ] Decode project/pack options only after the public configuration bridge exists.
 
 Prohibited options remain generated naming roles, type mapping, literals, comments, import/export syntax, quote/semicolon/formatting style, decorators, validators, and framework behavior.
@@ -109,11 +108,12 @@ Prohibited options remain generated naming roles, type mapping, literals, commen
 - [x] Document explicit unsupported services.
 - [x] Add benchmark, oracle, distribution, and combined entry-point tooling.
 - [x] Record 71 passing tests and a local TypeScript compiler oracle in the implementation harness.
-- [ ] Fix strict direct option construction.
-- [ ] Make wheel/sdist content inspection run after build rather than conditionally skip.
+- [x] Fix strict direct option construction and adapter option-object validation.
+- [x] Make wheel/sdist content inspection build fresh temporary artifacts and never conditionally skip.
+- [x] Add exact installed distribution and semantic plugin-version assertions.
 - [ ] Run Ruff and formatting on the synchronized repository.
 - [ ] Run the complete real core and TypeScript suites.
-- [ ] Build with `python -m build` and install the real wheels in a fresh environment.
+- [ ] Build with the exact release command and install the real wheels in a fresh environment.
 - [ ] Record exact final evidence and clean-tree status.
 
 ## Audit follow-up

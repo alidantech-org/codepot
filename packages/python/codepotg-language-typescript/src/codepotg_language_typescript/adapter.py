@@ -25,6 +25,8 @@ class TypeScriptTargetAdapter:
     _plugin: PluginDescriptor = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.options, TypeScriptTargetOptions):
+            raise ValueError("options must be a TypeScriptTargetOptions instance")
         object.__setattr__(
             self,
             "_plugin",
