@@ -20,7 +20,12 @@ from ..schemas import Schema, SchemaUse
 from ..storage import StorageMapping
 from ..types import TypeExpression, type_references
 from ..views import View, walk_views
-from ..workflows import Workflow, WorkflowStep, WorkflowStepKind, walk_workflow_steps
+from ..workflows import (
+    Workflow,
+    WorkflowStep,
+    WorkflowStepKind,
+    walk_workflow_steps,
+)
 from .index import SemanticIndex, owner_span
 
 
