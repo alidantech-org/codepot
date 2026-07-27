@@ -228,6 +228,7 @@ def test_unimplemented_security_is_preserved_and_diagnosed() -> None:
     document["components"]["securitySchemes"] = {
         "bearerAuth": {"type": "http", "scheme": "bearer"}
     }
+    document["paths"]["/orders/{id}"]["get"]["security"] = []
     result = OpenApiSourceAdapter().normalize(
         SourceAdapterRequest(source_id="security", content=json.dumps(document)),
         CancellationToken(),
@@ -238,3 +239,13 @@ def test_unimplemented_security_is_preserved_and_diagnosed() -> None:
     ]
     assert len(security_diagnostics) == 1
     assert not result.diagnostics.has_errors
+    contract_raw = dict(result.contract.data.raw)
+    assert "security" in contract_raw
+    assert "securitySchemes" in contract_raw
+    operation = next(
+        operation
+        for group in result.contract.groups
+        for operation in group.operations
+        if operation.name.value == "getOrder"
+    )
+    assert "security" in dict(operation.data.raw)
