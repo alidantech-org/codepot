@@ -39,9 +39,9 @@ All declarations belong to an explicit `Author` instance. Decorators may registe
 author = cp.Author(id="defytickets", name="DefyTickets", version="1.0.0")
 users = author.group("users")
 
+
 @users.schema("User")
-class UserModel(BaseModel):
-    ...
+class UserModel(BaseModel): ...
 ```
 
 There is no process-global decorator, ref, schema, or compilation registry.

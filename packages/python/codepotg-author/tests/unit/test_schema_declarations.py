@@ -1,6 +1,13 @@
 from enum import StrEnum
 
-from codepotg_author import Author, ProjectionStep, SchemaDeclaration, SchemaDeclarationKind, field
+from codepotg_author import (
+    Author,
+    FieldOptions,
+    ProjectionStep,
+    SchemaDeclaration,
+    SchemaDeclarationKind,
+    field,
+)
 
 
 class Status(StrEnum):
@@ -10,7 +17,11 @@ class Status(StrEnum):
 
 def test_property_and_object_schema_are_structural() -> None:
     author = Author("Example")
-    email = author.property("Email", str, format="email", min_length=3)
+    email = author.property(
+        "Email",
+        str,
+        options=FieldOptions(format="email", min_length=3),
+    )
     user = author.schema(
         "User",
         {

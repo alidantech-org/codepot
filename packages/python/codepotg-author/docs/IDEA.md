@@ -200,9 +200,9 @@ Authoring should support concise categorized guidance:
 
 ```python
 view.info(
-    lambda i: i
-        .explain("Main admin page for browsing apps.")
-        .implement("Render filters above the table and keep pagination in URL state.")
+    lambda i: i.explain("Main admin page for browsing apps.").implement(
+        "Render filters above the table and keep pagination in URL state."
+    )
 )
 ```
 
