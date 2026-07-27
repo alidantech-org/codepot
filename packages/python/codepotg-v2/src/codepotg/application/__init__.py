@@ -1,1 +1,3 @@
-"""Application use cases and orchestration belong here."""
+from .generate import generate
+
+__all__ = ["generate"]
