@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, TypeAlias
 
 SafeScalar: TypeAlias = str | int | float | bool | None
 if TYPE_CHECKING:
-    SafeValue: TypeAlias = SafeScalar | tuple["SafeValue", ...] | SafeRecord
+    SafeValue: TypeAlias = SafeScalar | tuple["SafeValue", ...] | SafeRecord | SafeTagSet
 else:
     SafeValue = object
 
@@ -40,3 +40,29 @@ class SafeRecord(Mapping[str, SafeValue]):
 
     def as_tuple(self) -> tuple[tuple[str, SafeValue], ...]:
         return self._items
+
+
+@dataclass(frozen=True, slots=True)
+class SafeTagSet:
+    """Narrow immutable tag query object approved for template conditionals."""
+
+    values: tuple[str, ...]
+
+    @property
+    def empty(self) -> bool:
+        return not self.values
+
+    def has(self, tag: str) -> bool:
+        return tag in self.values
+
+    def has_any(self, *tags: str) -> bool:
+        return any(tag in self.values for tag in tags)
+
+    def has_all(self, *tags: str) -> bool:
+        return all(tag in self.values for tag in tags)
+
+    def under(self, namespace: str) -> tuple[str, ...]:
+        prefix = f"{namespace}:"
+        return tuple(
+            tag for tag in self.values if tag == namespace or tag.startswith(prefix)
+        )
