@@ -38,6 +38,9 @@ dev = [
 [project.scripts]
 codepotg = "codepotg.cli.main:main"
 
+[project.entry-points."codepotg.source_adapters"]
+ir = "codepotg.infrastructure.ir_source:create_plugin"
+
 [project.urls]
 Homepage = "https://github.com/alidantech-org/codepot"
 Documentation = "https://github.com/alidantech-org/codepot/tree/chatgpt/codepotx-restart/packages/python/codepotg-v2/docs"
