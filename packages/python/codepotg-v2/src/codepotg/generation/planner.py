@@ -11,7 +11,11 @@ from codepotg.config import (
     load_pack_manifest,
 )
 from codepotg.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
-from codepotg.domain.generation import DEFAULT_SELECTOR_REGISTRY, SelectionContext, SelectorRegistry
+from codepotg.domain.generation import (
+    DEFAULT_SELECTOR_REGISTRY,
+    SelectionContext,
+    SelectorRegistry,
+)
 from codepotg.ir import Contract, validate_contract
 from codepotg.ports import ModulePathRequest, OutputPathValidationRequest
 from codepotg.runtime.plugins import PluginLoadError, RuntimePlugins
@@ -52,19 +56,20 @@ class ProjectPlanner:
 
         for instance in project.packs:
             try:
-                planned = self._plan_pack(
-                    project=project,
-                    project_root=root,
-                    instance=instance,
-                    contracts=contracts,
+                artifacts.extend(
+                    self._plan_pack(
+                        project=project,
+                        project_root=root,
+                        instance=instance,
+                        contracts=contracts,
+                    )
                 )
-                artifacts.extend(planned)
             except (ValueError, PackDiscoveryError, PluginLoadError, ExpressionError) as exc:
                 diagnostics.append(_exception_diagnostic(exc, instance.name))
 
         unique: list[ArtifactPlan] = []
         paths: dict[str, ArtifactPlan] = {}
-        ids: set[str] = set()
+        identities: set[str] = set()
         for artifact in sorted(artifacts, key=lambda item: (item.output_path, item.id)):
             previous = paths.get(artifact.output_path)
             if previous is not None:
@@ -72,13 +77,13 @@ class ProjectPlanner:
                     _error(
                         "PLAN_OUTPUT_COLLISION",
                         "several planned artifacts resolve to the same output path",
-                        path=artifact.output_path,
                         first=previous.id,
+                        path=artifact.output_path,
                         second=artifact.id,
                     )
                 )
                 continue
-            if artifact.id in ids:
+            if artifact.id in identities:
                 diagnostics.append(
                     _error(
                         "PLAN_ARTIFACT_ID_COLLISION",
@@ -88,7 +93,7 @@ class ProjectPlanner:
                 )
                 continue
             paths[artifact.output_path] = artifact
-            ids.add(artifact.id)
+            identities.add(artifact.id)
             unique.append(artifact)
 
         return GenerationPlan(
@@ -113,6 +118,7 @@ class ProjectPlanner:
         manifest = load_pack_manifest(pack_root / "CodepotgPack.yaml")
         options = manifest.resolve_options(instance.options)
         manifest.validate_bindings(instance.bindings)
+        self._validate_manifest_links(manifest)
         files = discover_pack_files(pack_root, manifest, self._plugins)
         partials = self._partials(files)
 
@@ -137,9 +143,16 @@ class ProjectPlanner:
                 if file.selection_key not in {None, "root"}
                 else None
             )
-            contexts = self._selection_contexts(selection, contract)
-            if not contexts:
+            if selection is not None and selection.select is not None:
+                contexts: tuple[SelectionContext | None, ...] = self._selection_contexts(
+                    selection,
+                    contract,
+                )
+                if not contexts:
+                    continue
+            else:
                 contexts = (None,)
+
             for context in contexts:
                 initial.append(
                     self._artifact(
@@ -157,23 +170,41 @@ class ProjectPlanner:
 
         return self._resolve_dependencies(initial, manifest)
 
+    def _validate_manifest_links(self, manifest: PackManifest) -> None:
+        selections = {item.key for item in manifest.selections}
+        bindings = {item.name for item in manifest.bindings}
+        for selection in manifest.selections:
+            if selection.select is not None and self._selectors.describe(selection.select) is None:
+                raise ValueError(
+                    f"PLAN_SELECTOR_UNKNOWN: unknown fixed selector {selection.select!r}"
+                )
+            for _, target in selection.imports:
+                if target not in selections:
+                    raise ValueError(
+                        f"PLAN_SELECTION_UNKNOWN: import references unknown selection {target!r}"
+                    )
+            for target in selection.exports:
+                if target not in selections:
+                    raise ValueError(
+                        f"PLAN_SELECTION_UNKNOWN: export references unknown selection {target!r}"
+                    )
+            for binding in selection.bindings:
+                if binding not in bindings:
+                    raise ValueError(
+                        f"PLAN_BINDING_UNKNOWN: selection references unknown binding {binding!r}"
+                    )
+
     def _selection_contexts(
         self,
-        selection: SelectionConfig | None,
+        selection: SelectionConfig,
         contract: Contract | None,
     ) -> tuple[SelectionContext, ...]:
-        if selection is None or selection.select is None:
-            return ()
+        assert selection.select is not None
         if contract is None:
             raise ValueError(
                 "PLAN_SELECTION_INPUT_REQUIRED: semantic selections require a pack input"
             )
-        try:
-            return self._selectors.select(selection.select, contract)
-        except KeyError as exc:
-            raise ValueError(
-                f"PLAN_SELECTOR_UNKNOWN: unknown fixed selector {selection.select!r}"
-            ) from exc
+        return self._selectors.select(selection.select, contract)
 
     def _artifact(
         self,
@@ -189,7 +220,11 @@ class ProjectPlanner:
         partials: tuple[tuple[str, str], ...],
     ) -> ArtifactPlan:
         semantic_id = _semantic_id(context)
-        group_id = str(context.group.id) if context is not None and context.group is not None else None
+        group_id = (
+            str(context.group.id)
+            if context is not None and context.group is not None
+            else None
+        )
         identity = ":".join(
             part
             for part in (
@@ -230,16 +265,21 @@ class ProjectPlanner:
                 bindings=instance.bindings,
             )
             if contract is not None
-            else tuple(sorted((
-                ("bindings", instance.bindings),
-                ("options", options),
-                ("pack", (("id", manifest.id), ("version", manifest.version))),
-                ("project", (("name", project.name),)),
-            )))
+            else tuple(
+                sorted(
+                    (
+                        ("bindings", instance.bindings),
+                        ("options", options),
+                        ("pack", (("id", manifest.id), ("version", manifest.version))),
+                        ("project", (("name", project.name),)),
+                    )
+                )
+            )
         )
         output_path = _output_path(instance, selection, file, render_context)
         symbols = tuple(
-            evaluate_text(symbol, render_context) for symbol in (selection.symbols if selection else ())
+            evaluate_text(symbol, render_context)
+            for symbol in (selection.symbols if selection else ())
         )
         artifact = replace(
             provisional,
@@ -254,12 +294,12 @@ class ProjectPlanner:
         artifacts: list[ArtifactPlan],
         manifest: PackManifest,
     ) -> tuple[ArtifactPlan, ...]:
-        providers: dict[str, tuple[ArtifactPlan, ...]] = {}
-        for selection in manifest.selections:
-            providers[selection.key] = tuple(
+        providers = {
+            selection.key: tuple(
                 item for item in artifacts if item.selection_key == selection.key
             )
-
+            for selection in manifest.selections
+        }
         resolved: list[ArtifactPlan] = []
         for artifact in artifacts:
             selection = (
@@ -337,10 +377,14 @@ class ProjectPlanner:
                     semantic_id=provider.semantic_id,
                 )
             )
-        return tuple(sorted(modules, key=lambda item: (item.specifier, item.artifact_path)))
+        return tuple(
+            sorted(modules, key=lambda item: (item.specifier, item.artifact_path))
+        )
 
     @staticmethod
-    def _partials(files: tuple[DiscoveredPackFile, ...]) -> tuple[tuple[str, str], ...]:
+    def _partials(
+        files: tuple[DiscoveredPackFile, ...],
+    ) -> tuple[tuple[str, str], ...]:
         partials: list[tuple[str, str]] = []
         for file in files:
             if file.kind is not PackFileKind.PARTIAL:
@@ -361,8 +405,11 @@ def _output_path(
     file: DiscoveredPackFile,
     context: tuple[tuple[str, object], ...],
 ) -> str:
-    parts = list(PurePosixPath(file.pack_path).parts)
-    parts = [part for part in parts if not (part.startswith("{") and part.endswith("}"))]
+    parts = [
+        part
+        for part in PurePosixPath(file.pack_path).parts
+        if not (part.startswith("{") and part.endswith("}"))
+    ]
     if file.engine_suffix is not None:
         parts[-1] = parts[-1][: -len(file.engine_suffix)]
     prefix = list(PurePosixPath(instance.output).parts)
