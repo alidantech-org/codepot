@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from codepotg_template_jinja import JinjaEngineRules, JinjaTemplateEngine
 
 from tests.conftest import diagnostic_code, render
@@ -12,6 +14,21 @@ def test_plain_interpolation_loop_and_conditionals(engine: JinjaTemplateEngine) 
         context=(("enabled", True), ("items", ("a", "b", "c"))),
     )
     assert result.content == "a, b, c"
+
+
+@pytest.mark.parametrize(
+    "source",
+    (
+        "{% for item in items %}{{ loop.cycle('odd', 'even') }}{% endfor %}",
+        "{% for item in items %}{{ loop.changed(item) }}{% endfor %}",
+    ),
+)
+def test_loop_state_callables_remain_deliberately_denied(
+    engine: JinjaTemplateEngine,
+    source: str,
+) -> None:
+    result = render(engine, source, context=(("items", ("a", "b")),))
+    assert diagnostic_code(result) == "JINJA_CALLABLE_DENIED"
 
 
 def test_template_defined_macro_runs(engine: JinjaTemplateEngine) -> None:
@@ -96,6 +113,13 @@ def test_missing_include_diagnostic_names_dependency(engine: JinjaTemplateEngine
     result = render(engine, '{% include "missing.jinja" %}')
     assert diagnostic_code(result) == "JINJA_INCLUDE_MISSING"
     assert dict(result.diagnostics.errors[0].details)["dependency_id"] == "missing.jinja"
+
+
+def test_root_source_type_rejection_uses_template_diagnostic(
+    engine: JinjaTemplateEngine,
+) -> None:
+    result = render(engine, object())  # type: ignore[arg-type]
+    assert diagnostic_code(result) == "JINJA_TEMPLATE_INVALID"
 
 
 def test_context_rejection_is_structured(engine: JinjaTemplateEngine) -> None:
