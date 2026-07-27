@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 
 from codepotg.ir import SemanticId
 
-
 _SLUG = re.compile(r"[^A-Za-z0-9._-]+")
 
 

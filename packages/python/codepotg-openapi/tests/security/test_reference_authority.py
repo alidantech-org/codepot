@@ -5,6 +5,7 @@ from pathlib import Path
 
 from codepotg.api import CancellationToken
 from codepotg.ports import SourceAdapterRequest
+
 from codepotg_openapi import OpenApiSourceAdapter
 
 

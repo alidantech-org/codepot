@@ -4,9 +4,9 @@ import json
 from dataclasses import FrozenInstanceError
 
 import pytest
-
 from codepotg.api import CancellationToken
 from codepotg.ports import SourceAdapterRequest
+
 from codepotg_openapi import OpenApiSourceAdapter
 
 

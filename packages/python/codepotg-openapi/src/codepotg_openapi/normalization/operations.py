@@ -15,7 +15,6 @@ from .operation_inputs import normalize_parameters, normalize_request_body
 from .operation_responses import normalize_responses
 from .provenance import extension_values, kernel_data, selected_raw
 
-
 _OPERATION_NAME = re.compile(r"[^A-Za-z0-9]+")
 
 

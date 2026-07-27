@@ -10,7 +10,6 @@ from .groups import component_group
 from .identities import stable_id
 from .schema_support import pointer_hint, referenced_group, schema_types
 
-
 PRIMITIVE_TYPES = {"boolean", "integer", "null", "number", "string"}
 
 

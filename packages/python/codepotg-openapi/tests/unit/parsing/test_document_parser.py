@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from codepotg.diagnostics import SourceIdentity, SourceKind
+
 from codepotg_openapi.diagnostics import DiagnosticBag
 from codepotg_openapi.loading.source import LoadedSource
 from codepotg_openapi.parsing.parser import DocumentParser

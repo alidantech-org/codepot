@@ -5,6 +5,7 @@ import json
 from codepotg.api import CancellationToken
 from codepotg.ports import SourceAdapter, SourceAdapterRequest
 from codepotg.testing import assert_source_adapter_conformance
+
 from codepotg_openapi import OpenApiSourceAdapter
 
 

@@ -7,7 +7,7 @@ from urllib.parse import urlsplit, urlunsplit
 from codepotg.api import CancellationToken
 
 from ..diagnostics import DiagnosticBag
-from ..loading.controlled_loader import SourceLoadingSession, SourceLoadError
+from ..loading.controlled_loader import SourceLoadError, SourceLoadingSession
 from ..options import OpenApiOptions
 from ..parsing.document import ParsedDocument
 from ..parsing.parser import DocumentParser

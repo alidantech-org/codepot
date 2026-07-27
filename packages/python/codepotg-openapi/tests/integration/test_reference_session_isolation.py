@@ -4,6 +4,7 @@ import json
 
 from codepotg.api import CancellationToken
 from codepotg.ports import SourceAdapterRequest
+
 from codepotg_openapi import OpenApiSourceAdapter
 from codepotg_openapi.loading import CallableReferenceLoader
 
