@@ -13,9 +13,7 @@ from .callables import is_allowed_callable
 
 class StrictSandboxedEnvironment(SandboxedEnvironment):
     def is_safe_attribute(self, obj: object, attr: str, value: object) -> bool:
-        if is_allowed_attribute(obj, attr, value):
-            return True
-        return False
+        return is_allowed_attribute(obj, attr, value)
 
     def is_safe_callable(self, obj: object) -> bool:
         return is_allowed_callable(obj)
