@@ -49,11 +49,21 @@ from .semantics import (
     WorkflowDeclaration,
     WorkflowStepDeclaration,
 )
+from .transport import (
+    FORMAT,
+    VERSION,
+    dumps_json,
+    dumps_yaml,
+    loads_json,
+    loads_yaml,
+)
 
 __version__ = "0.1.0a1"
 
 __all__ = [
     "AUTHOR_CORE_UNSUPPORTED",
+    "FORMAT",
+    "VERSION",
     "Author",
     "AuthorDiagnostic",
     "AuthorDiagnostics",
@@ -99,7 +109,11 @@ __all__ = [
     "WorkflowStepDeclaration",
     "WorkflowStepRef",
     "compile_author",
+    "dumps_json",
+    "dumps_yaml",
     "field",
+    "loads_json",
+    "loads_yaml",
     "schema_field",
     "__version__",
 ]

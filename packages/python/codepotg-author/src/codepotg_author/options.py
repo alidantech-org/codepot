@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Mapping
 
 
 class UnsupportedCorePolicy(StrEnum):
@@ -36,17 +36,27 @@ class AuthorOptions:
         if unknown:
             raise ValueError(f"unknown author options: {', '.join(unknown)}")
         raw_policy = value.get("unsupported_core", UnsupportedCorePolicy.DIAGNOSTIC)
-        try:
-            policy = (
-                raw_policy
-                if isinstance(raw_policy, UnsupportedCorePolicy)
-                else UnsupportedCorePolicy(raw_policy)
-            )
-        except (TypeError, ValueError) as exc:
-            raise ValueError("unsupported_core must be 'error' or 'diagnostic'") from exc
+        if isinstance(raw_policy, UnsupportedCorePolicy):
+            policy = raw_policy
+        elif isinstance(raw_policy, str):
+            try:
+                policy = UnsupportedCorePolicy(raw_policy)
+            except ValueError as exc:
+                raise ValueError("unsupported_core must be 'error' or 'diagnostic'") from exc
+        else:
+            raise TypeError("unsupported_core must be a string or UnsupportedCorePolicy")
+        strict = value.get("strict", True)
+        separator = value.get("id_separator", "/")
+        maximum = value.get("max_declarations", 10_000)
+        if type(strict) is not bool:
+            raise TypeError("strict must be bool")
+        if not isinstance(separator, str):
+            raise TypeError("id_separator must be str")
+        if type(maximum) is not int:
+            raise TypeError("max_declarations must be int")
         return cls(
-            strict=value.get("strict", True),  # type: ignore[arg-type]
-            id_separator=value.get("id_separator", "/"),  # type: ignore[arg-type]
+            strict=strict,
+            id_separator=separator,
             unsupported_core=policy,
-            max_declarations=value.get("max_declarations", 10_000),  # type: ignore[arg-type]
+            max_declarations=maximum,
         )
