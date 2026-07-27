@@ -38,7 +38,7 @@ class TemplateRegistry:
     @classmethod
     def create(cls, request: RenderRequest, rules: JinjaEngineRules) -> TemplateRegistry:
         root_id = validate_template_id(request.template_id, rules, root=True)
-        root_source = normalize_source(request.source, template_id=root_id)
+        root_source = normalize_source(request.source, template_id=root_id, root=True)
         root_bytes = len(root_source.encode("utf-8"))
         if root_bytes > rules.max_template_bytes:
             raise TemplateRegistryError(
@@ -86,7 +86,7 @@ class TemplateRegistry:
                     details=(("partial_id", validated_id),),
                 )
             seen.add(validated_id)
-            normalized = normalize_source(source, template_id=validated_id)
+            normalized = normalize_source(source, template_id=validated_id, root=False)
             partial_bytes = len(normalized.encode("utf-8"))
             if partial_bytes > rules.max_template_bytes:
                 raise TemplateRegistryError(
@@ -215,10 +215,11 @@ def validate_template_id(
     return value
 
 
-def normalize_source(source: object, *, template_id: str) -> str:
+def normalize_source(source: object, *, template_id: str, root: bool) -> str:
+    code = "JINJA_TEMPLATE_INVALID" if root else "JINJA_PARTIAL_INVALID"
     if not isinstance(source, str):
         raise TemplateRegistryError(
-            "JINJA_PARTIAL_INVALID",
+            code,
             "template source must be a string",
             template_id=template_id,
             details=(
@@ -231,7 +232,7 @@ def normalize_source(source: object, *, template_id: str) -> str:
         normalized.encode("utf-8", errors="strict")
     except UnicodeEncodeError as exc:
         raise TemplateRegistryError(
-            "JINJA_PARTIAL_INVALID",
+            code,
             "template source must be valid UTF-8",
             template_id=template_id,
             details=(("template_id", template_id),),
