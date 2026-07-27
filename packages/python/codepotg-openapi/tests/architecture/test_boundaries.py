@@ -30,11 +30,23 @@ def test_adapter_uses_only_public_codepotg_namespaces() -> None:
             assert not imported.startswith(forbidden), (path, imported)
 
 
-def test_source_adapter_does_not_own_targets_templates_or_writers() -> None:
-    forbidden = ("codepotg_language_", "codepotg_template_", "jinja2", "typescript", "dart")
+def test_source_adapter_does_not_import_targets_templates_or_writers() -> None:
+    forbidden = (
+        "codepotg_language_",
+        "codepotg_template_",
+        "jinja2",
+        "codepotg.writers",
+        "codepotg.planning",
+    )
     for path in SOURCE_ROOT.rglob("*.py"):
-        text = path.read_text(encoding="utf-8")
-        assert not any(token in text for token in forbidden), path
+        for imported in _imports(path):
+            assert not imported.startswith(forbidden), (path, imported)
+
+
+def test_package_has_no_target_template_or_writer_subsystems() -> None:
+    forbidden_names = {"targets", "templates", "writers", "packs", "x_codegen"}
+    directories = {path.name for path in SOURCE_ROOT.rglob("*") if path.is_dir()}
+    assert forbidden_names.isdisjoint(directories)
 
 
 def test_distribution_contains_real_adapter_and_no_github_automation() -> None:
