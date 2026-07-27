@@ -2,11 +2,11 @@
 
 This package detects and validates Dart targets and calculates URI/path facts only. Flutter remains a template-pack concern. The adapter must not parse semantic sources, extend the kernel, render Dart syntax, select templates, plan destinations, write files, or execute commands.
 
-PR #30 implemented most behavior available through the current public `TargetAdapter` port. The audited typed-option defect and conditional artifact-inspection gap are repaired on `chatgpt/codepotx-restart-dart-audit-fixes`; synchronized release verification and a real Dart SDK oracle remain open.
+PR #30 implemented most behavior available through the current public `TargetAdapter` port. The audited typed-option and artifact-inspection defects were repaired and the synchronized current-port release gates, including a real Dart SDK oracle, were completed on `chatgpt/codepotx-restart`. Broader planner/module and official-pack work remains explicitly blocked.
 
 ## DART-001 — Package and plugin foundation
 
-**Status:** implemented in PR #30; final real-wheel verification remains
+**Status:** complete for the current public adapter port
 
 - [x] Add isolated package metadata, src layout, typing marker, README, license, and tests.
 - [x] Register `dart` in `codepotg.language_adapters`.
@@ -14,7 +14,7 @@ PR #30 implemented most behavior available through the current public `TargetAda
 - [x] Implement the immutable adapter facade.
 - [x] Add architecture tests proving no Flutter, source, engine, writer, CLI, command, pack, private core, or old-generator dependency.
 - [x] Prove no semantic/facet/selector registration or emitted source snippets.
-- [ ] Reproduce import and entry-point checks from real installed core/adapter wheels.
+- [x] Reproduce import and entry-point checks from real installed core/adapter wheels.
 
 ## DART-002 — Typed target option schema
 
@@ -33,7 +33,7 @@ Prohibited options remain generated naming transforms, type/nullability renderin
 
 ## DART-003 — Target resolver
 
-**Status:** implemented in PR #30
+**Status:** complete for the current public adapter port
 
 - [x] Implement deterministic `.dart` target detection and validation.
 - [x] Preserve the complete output filename after engine suffix removal.
@@ -41,7 +41,7 @@ Prohibited options remain generated naming transforms, type/nullability renderin
 
 ## DART-004 — Filename and identifier validation
 
-**Status:** implemented for the current request contract; source provenance and final SDK verification remain open
+**Status:** implemented for the current request contract; source provenance remains blocked
 
 - [x] Implement behavior-versioned reserved, built-in, context-sensitive, and contextual keyword catalogs.
 - [x] Validate type, enum, value, property, parameter, namespace, and file-stem candidates.
@@ -49,12 +49,12 @@ Prohibited options remain generated naming transforms, type/nullability renderin
 - [x] Validate `.dart` output paths, reserved names, traversal, absolutes, separators, and target mismatch.
 - [x] Return diagnostics rather than renamed candidates or source snippets.
 - [x] Add deterministic property/boundary fixtures.
-- [ ] Run representative fixtures against a real Dart SDK.
+- [x] Run representative fixtures against a real Dart SDK.
 - [ ] Attach source spans after the public validation request exposes provenance.
 
 ## DART-005 — URI and project-path resolver
 
-**Status:** implemented for the current public port
+**Status:** complete for the current public adapter port
 
 - [x] Calculate relative URIs between planned artifacts.
 - [x] Build `package:<name>/<path>` only from explicit package name and `lib` root facts.
@@ -75,7 +75,7 @@ Prohibited options remain generated naming transforms, type/nullability renderin
 
 ## DART-007 — Adapter facade
 
-**Status:** implemented in PR #30
+**Status:** complete for the current public adapter port
 
 - [x] Compose target, identifier, output-path, and URI services behind the public adapter protocol.
 - [x] Accept immutable typed construction options.
@@ -84,15 +84,15 @@ Prohibited options remain generated naming transforms, type/nullability renderin
 
 ## DART-008 — Conformance and negative boundaries
 
-**Status:** implemented in the available PR #30 harness
+**Status:** complete for the current public adapter port
 
 - [x] Pass shared target-adapter conformance.
 - [x] Cover file, reserved-name, identifier, privacy, relative URI, package URI, explicit URI, and escaping cases.
 - [x] Cover deterministic options, immutability, and session isolation.
 - [x] Prove no type/literal/comment/directive/annotation/formatter renderer exists.
 - [x] Prove no Flutter, widget, state-management, Pub, build-runner, semantic-extension, selector, or context ownership.
-- [ ] Reproduce the complete suite against the synchronized real core checkout.
-- [ ] Close the real Dart SDK oracle.
+- [x] Reproduce the complete suite against the synchronized real core checkout.
+- [x] Close the real Dart SDK oracle.
 
 ## DART-009 — Integration with authored templates
 
@@ -105,20 +105,21 @@ Prohibited options remain generated naming transforms, type/nullability renderin
 
 ## DART-010 — Documentation and release
 
-**Status:** review
+**Status:** complete for the current public adapter port
 
 - [x] Document target options, descriptor, URI facts, language baseline, and template-owned syntax boundary.
 - [x] Document relative and `package:` examples and unsupported services.
 - [x] Add benchmark, oracle, distribution, and entry-point tooling.
-- [x] Record 83 passing tests and one honest SDK-oracle skip in the implementation harness.
+- [x] Record the original implementation-harness evidence.
 - [x] Fix strict direct option construction and adapter option-object validation.
 - [x] Make wheel/sdist content inspection build fresh temporary artifacts and never conditionally skip.
 - [x] Add exact installed distribution and semantic plugin-version assertions.
-- [ ] Run Ruff and formatting on the synchronized repository.
-- [ ] Run the complete real core and Dart suites.
-- [ ] Run the representative oracle against a real Dart SDK.
-- [ ] Build with the exact release command and install the real wheels in a fresh environment.
-- [ ] Record exact final evidence and clean-tree status.
+- [x] Run Ruff and formatting on the synchronized repository.
+- [x] Run the complete real core and Dart suites.
+- [x] Run the representative oracle against a real Dart SDK.
+- [x] Build with the exact release command and install the real wheels in a fresh environment.
+- [x] Require TypeScript and Dart entry points from freshly built wheels in a new `--no-index` virtual environment without a skip path.
+- [x] Record final evidence and clean-tree status in `PROGRESS.md`.
 
 ## Audit follow-up
 
@@ -129,14 +130,16 @@ See:
 
 ## Completion gate
 
-The package is complete only when:
+The current public-port release is complete because:
 
 - shared conformance passes against the synchronized real core;
-- every option/capability is typed, introspectable, and equally validated through direct and mapping construction;
+- every currently exposed option/capability is typed, introspectable, and equally validated through direct and mapping construction;
 - relative, package, and explicit URI facts resolve from actual planned paths;
 - candidate validation never mutates semantic names;
 - representative behavior is verified by a real Dart SDK;
 - templates author every Dart character;
 - missing planner/symbol facts remain explicit blockers rather than private emulation;
 - no Flutter/framework/ecosystem/source/engine/writer/command/semantic-extension/syntax-rendering logic exists;
-- Ruff, format, full tests, build, post-build artifact inspection, real-wheel installation, and clean-tree checks pass and are recorded.
+- Ruff, format, full tests, build, SDK oracle, post-build artifact inspection, real-wheel installation, isolated dual-entry-point checks, and clean-tree checks pass and are recorded.
+
+DART-006 and DART-009 are not release regressions. They are future integration tasks blocked by missing public contracts and must remain partial until those contracts exist.

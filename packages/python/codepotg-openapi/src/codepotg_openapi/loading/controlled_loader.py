@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 from urllib.parse import urljoin, urlsplit
@@ -40,7 +40,54 @@ class CallableReferenceLoader:
         return self.callback(identity, cancellation)
 
 
+@dataclass(slots=True)
+class SourceLoadingSession:
+    """One normalization call's source cache.
+
+    The authority object is reusable, but referenced bytes never outlive this
+    session. A new adapter normalization creates a new session.
+    """
+
+    loader: ControlledSourceLoader
+    _reference_cache: dict[str, LoadedSource] = field(default_factory=dict)
+
+    @property
+    def authority_id(self) -> str:
+        return self.loader.authority_id
+
+    def load_root(
+        self,
+        request: SourceAdapterRequest,
+        options: OpenApiOptions,
+        cancellation: CancellationToken,
+    ) -> LoadedSource:
+        return self.loader.load_root(request, options, cancellation)
+
+    def load_reference(
+        self,
+        *,
+        root: LoadedSource,
+        reference: str,
+        options: OpenApiOptions,
+        cancellation: CancellationToken,
+    ) -> LoadedSource:
+        key = self.loader.reference_key(root, reference)
+        cached = self._reference_cache.get(key)
+        if cached is not None:
+            return cached
+        loaded = self.loader.load_reference(
+            root=root,
+            reference=reference,
+            options=options,
+            cancellation=cancellation,
+        )
+        self._reference_cache[key] = loaded
+        return loaded
+
+
 class ControlledSourceLoader:
+    """Reusable host authority with no cross-normalization mutable state."""
+
     def __init__(
         self,
         *,
@@ -49,13 +96,15 @@ class ControlledSourceLoader:
     ) -> None:
         self._source_policy = source_policy
         self._reference_loader = reference_loader
-        self._reference_cache: dict[str, LoadedSource] = {}
 
     @property
     def authority_id(self) -> str:
         if self._reference_loader is None:
             return "local-contained"
         return f"controlled:{self._reference_loader.authority_id}"
+
+    def new_session(self) -> SourceLoadingSession:
+        return SourceLoadingSession(self)
 
     def load_root(
         self,
@@ -106,15 +155,28 @@ class ControlledSourceLoader:
         except OSError as exc:
             raise SourceLoadError("OA_SOURCE_READ_FAILED", "local source could not be read") from exc
         _check_size(content, options.max_source_bytes)
-        logical = f"file:{request.source_id}"
         return LoadedSource(
             identity=SourceIdentity(SourceKind.FILE, canonical.as_posix()),
             canonical_id=f"file:{canonical.as_posix()}",
-            logical_id=logical,
+            logical_id=f"file:{request.source_id}",
             content=content,
             path=canonical,
             authorized_root=authorized_root,
         )
+
+    def reference_key(self, root: LoadedSource, reference: str) -> str:
+        effective_reference = _effective_reference(root, reference)
+        scheme = _uri_scheme(effective_reference)
+        if scheme in {"http", "https", "ftp"}:
+            return f"controlled:{effective_reference}"
+        if scheme:
+            return f"unsupported:{effective_reference}"
+        if root.path is None or root.authorized_root is None:
+            return f"controlled:{root.canonical_id}:{effective_reference}"
+        split = urlsplit(effective_reference)
+        candidate = (root.path.parent / split.path).resolve(strict=False)
+        _require_contained(candidate, root.authorized_root)
+        return f"file:{candidate.as_posix()}"
 
     def load_reference(
         self,
@@ -125,16 +187,10 @@ class ControlledSourceLoader:
         cancellation: CancellationToken,
     ) -> LoadedSource:
         cancellation.raise_if_cancelled()
-        effective_reference = reference
-        if root.retrieval_id and "://" in root.retrieval_id and "://" not in reference:
-            effective_reference = urljoin(root.retrieval_id, reference)
+        effective_reference = _effective_reference(root, reference)
         split = urlsplit(effective_reference)
         scheme = _uri_scheme(effective_reference)
         if scheme in {"http", "https", "ftp"}:
-            cache_key = f"controlled:{effective_reference}"
-            cached = self._reference_cache.get(cache_key)
-            if cached is not None:
-                return cached
             if options.external_references is not ExternalReferencePolicy.CONTROLLED:
                 raise SourceLoadError(
                     "OA_REF_NETWORK_DENIED",
@@ -148,15 +204,13 @@ class ControlledSourceLoader:
             content = _to_bytes(self._reference_loader.load(effective_reference, cancellation))
             _check_size(content, options.max_source_bytes)
             safe_identity = _redact(effective_reference)
-            loaded = LoadedSource(
+            return LoadedSource(
                 identity=SourceIdentity(SourceKind.MEMORY, safe_identity),
                 canonical_id=f"controlled-private:{effective_reference}",
                 logical_id=f"controlled:{safe_identity}",
                 content=content,
                 retrieval_id=effective_reference,
             )
-            self._reference_cache[cache_key] = loaded
-            return loaded
         if scheme:
             raise SourceLoadError(
                 "OA_REF_SCHEME_DENIED",
@@ -166,10 +220,6 @@ class ControlledSourceLoader:
             raise SourceLoadError("OA_REF_EXTERNAL_DENIED", "external references are denied")
         if root.path is None or root.authorized_root is None:
             if options.external_references is ExternalReferencePolicy.CONTROLLED:
-                cache_key = f"controlled:{root.canonical_id}:{effective_reference}"
-                cached = self._reference_cache.get(cache_key)
-                if cached is not None:
-                    return cached
                 if self._reference_loader is None:
                     raise SourceLoadError(
                         "OA_REF_CONTROLLED_LOADER_REQUIRED",
@@ -178,15 +228,13 @@ class ControlledSourceLoader:
                 content = _to_bytes(self._reference_loader.load(effective_reference, cancellation))
                 _check_size(content, options.max_source_bytes)
                 safe_identity = _redact(effective_reference)
-                loaded = LoadedSource(
+                return LoadedSource(
                     identity=SourceIdentity(SourceKind.MEMORY, safe_identity),
-                    canonical_id=f"controlled-private:{effective_reference}",
+                    canonical_id=f"controlled-private:{root.canonical_id}:{effective_reference}",
                     logical_id=f"controlled:{safe_identity}",
                     content=content,
                     retrieval_id=effective_reference,
                 )
-                self._reference_cache[cache_key] = loaded
-                return loaded
             raise SourceLoadError(
                 "OA_REF_LOCAL_BASE_REQUIRED",
                 "memory sources require a controlled loader for external documents",
@@ -194,10 +242,6 @@ class ControlledSourceLoader:
 
         candidate = (root.path.parent / split.path).resolve(strict=False)
         _require_contained(candidate, root.authorized_root)
-        cache_key = f"file:{candidate.as_posix()}"
-        cached = self._reference_cache.get(cache_key)
-        if cached is not None:
-            return cached
         try:
             canonical = candidate.resolve(strict=True)
             if not canonical.is_file():
@@ -207,7 +251,7 @@ class ControlledSourceLoader:
             raise SourceLoadError("OA_REF_NOT_FOUND", "referenced local document was not found") from exc
         _check_size(content, options.max_source_bytes)
         relative = canonical.relative_to(root.authorized_root).as_posix()
-        loaded = LoadedSource(
+        return LoadedSource(
             identity=SourceIdentity(SourceKind.FILE, canonical.as_posix()),
             canonical_id=f"file:{canonical.as_posix()}",
             logical_id=f"local:{relative}",
@@ -215,8 +259,12 @@ class ControlledSourceLoader:
             path=canonical,
             authorized_root=root.authorized_root,
         )
-        self._reference_cache[cache_key] = loaded
-        return loaded
+
+
+def _effective_reference(root: LoadedSource, reference: str) -> str:
+    if root.retrieval_id and "://" in root.retrieval_id and "://" not in reference:
+        return urljoin(root.retrieval_id, reference)
+    return reference
 
 
 def _to_bytes(value: str | bytes) -> bytes:

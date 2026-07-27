@@ -7,14 +7,14 @@ def from_marks(source: SourceIdentity, start: object, end: object) -> SourceSpan
     return SourceSpan(
         source=source,
         start=SourcePosition(
-            line=int(getattr(start, "line")) + 1,
-            column=int(getattr(start, "column")) + 1,
-            offset=int(getattr(start, "index")),
+            line=int(start.line) + 1,
+            column=int(start.column) + 1,
+            offset=int(start.index),
         ),
         end=SourcePosition(
-            line=int(getattr(end, "line")) + 1,
-            column=int(getattr(end, "column")) + 1,
-            offset=int(getattr(end, "index")),
+            line=int(end.line) + 1,
+            column=int(end.column) + 1,
+            offset=int(end.index),
         ),
     )
 

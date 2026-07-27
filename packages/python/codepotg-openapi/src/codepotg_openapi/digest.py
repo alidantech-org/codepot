@@ -10,9 +10,9 @@ from codepotg.versions import IR_API_VERSION, PLUGIN_API_VERSION, BehaviorVersio
 from .options import OpenApiOptions
 from .version import PACKAGE_VERSION
 
-ADAPTER_BEHAVIOR_VERSION = BehaviorVersion(1)
+ADAPTER_BEHAVIOR_VERSION = BehaviorVersion(2)
 OPENAPI_VERSION_POLICY = "3.0.x|3.1.x"
-X_CODEGEN_VERSION = "2"
+X_CODEGEN_VERSION: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

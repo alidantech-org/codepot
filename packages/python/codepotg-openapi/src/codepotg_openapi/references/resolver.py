@@ -7,7 +7,7 @@ from urllib.parse import urlsplit, urlunsplit
 from codepotg.api import CancellationToken
 
 from ..diagnostics import DiagnosticBag
-from ..loading.controlled_loader import ControlledSourceLoader, SourceLoadError
+from ..loading.controlled_loader import SourceLoadError, SourceLoadingSession
 from ..options import OpenApiOptions
 from ..parsing.document import ParsedDocument
 from ..parsing.parser import DocumentParser
@@ -36,7 +36,7 @@ class ReferenceResolver:
         self,
         *,
         root: ParsedDocument,
-        loader: ControlledSourceLoader,
+        loader: SourceLoadingSession,
         parser: DocumentParser,
         options: OpenApiOptions,
         diagnostics: DiagnosticBag,
@@ -166,7 +166,12 @@ class ReferenceResolver:
                     "OA_LIMIT_DOCUMENTS",
                     f"reference graph exceeds maxDocuments ({self._options.max_documents})",
                 )
-            parsed = self._parser.parse(loaded, self._diagnostics, require_openapi=False)
+            parsed = self._parser.parse(
+                loaded,
+                self._diagnostics,
+                require_openapi=False,
+                options=self._options,
+            )
             if parsed is None:
                 raise SourceLoadError("OA_REF_PARSE_FAILED", "referenced document is invalid")
             self._documents[loaded.canonical_id] = parsed

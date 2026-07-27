@@ -20,7 +20,6 @@ from .identities import stable_id
 from .provenance import extension_values, kernel_data, selected_raw
 from .schema_support import field_constraints, pointer_hint, referenced_group, schema_types, title
 
-
 PRIMITIVE_TYPES = {"boolean", "integer", "null", "number", "string"}
 
 

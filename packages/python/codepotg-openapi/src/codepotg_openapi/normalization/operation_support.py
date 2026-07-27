@@ -10,7 +10,6 @@ from ..references.pointer import join_pointer
 from .context import NormalizationContext
 from .schemas import materialize_schema
 
-
 _OPERATION_NAME = re.compile(r"[^A-Za-z0-9]+")
 
 

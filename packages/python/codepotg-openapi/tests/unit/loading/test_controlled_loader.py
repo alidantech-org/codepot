@@ -4,9 +4,9 @@ import json
 from pathlib import Path
 
 import pytest
-
 from codepotg.api import CancellationToken
 from codepotg.ports import SourceAdapterRequest
+
 from codepotg_openapi.loading.controlled_loader import ControlledSourceLoader, SourceLoadError
 from codepotg_openapi.loading.policy import SourcePolicy
 from codepotg_openapi.options import OpenApiOptions

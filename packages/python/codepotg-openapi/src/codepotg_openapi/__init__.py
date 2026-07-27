@@ -9,7 +9,7 @@ from .version import PACKAGE_VERSION as __version__
 if TYPE_CHECKING:
     from .adapter import OpenApiSourceAdapter
 
-__all__ = ["OpenApiOptions", "OpenApiSourceAdapter", "create_plugin"]
+__all__ = ["OpenApiOptions", "OpenApiSourceAdapter", "__version__", "create_plugin"]
 
 
 def __getattr__(name: str) -> Any:

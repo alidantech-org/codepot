@@ -2,7 +2,7 @@
 
 This package implements a sandboxed Jinja template-engine adapter. It does not own source normalization, target-language semantics, file selection, output planning, writing, commands, or framework behavior.
 
-Status values distinguish implemented current-port behavior from integrations blocked by public core contracts. A task marked implemented is not the same as a released package; JINJA-011 and the package completion gate remain open until exact synchronized verification passes.
+Status values distinguish implemented current-port behavior from integrations blocked by public core contracts. A task marked implemented is not the same as a released package. JINJA-011 is now release-verified for the current public port; blocked integrations remain separate future work.
 
 ## JINJA-001 — Package and plugin foundation
 
@@ -114,7 +114,7 @@ No author-private result type or encoded multi-file string is permitted.
 
 **Status:** implemented in PR #28; audit compatibility and diagnostic cases added
 
-- [x] Pass shared engine conformance in the available harness.
+- [x] Pass shared engine conformance against the verified public core package.
 - [x] Add sandbox attempts for attributes, callables, imports, builtins, filesystem, environment, network, and process access.
 - [x] Add undefined, whitespace, encoding, include, inheritance, cycle, limit, cancellation, cache, and source-aware diagnostic tests.
 - [x] Prove contexts and registries remain unchanged after success/failure.
@@ -124,7 +124,7 @@ No author-private result type or encoded multi-file string is permitted.
 
 ## JINJA-011 — Documentation and release
 
-**Status:** review; audit code/documentation fixes are implemented but exact release gates remain open
+**Status:** release_verified_current_port
 
 - [x] Document current engine rules and host-only restrictions.
 - [x] Document safe request-partial/include behavior.
@@ -132,12 +132,15 @@ No author-private result type or encoded multi-file string is permitted.
 - [x] Document helper registration.
 - [x] Document the deliberate denial of `loop.cycle()` and `loop.changed()`.
 - [x] Document root versus partial source diagnostic ownership.
-- [x] Build wheel/sdist and test isolated installation in the available implementation harness.
-- [ ] Run Ruff check and formatting against the synchronized repository.
-- [ ] Run the complete real `codepotg-v2` suite and build.
-- [ ] Re-run the complete Jinja suite against the real synchronized core.
-- [ ] Install the real core and Jinja wheels together and repeat entry-point/render checks.
-- [ ] Record exact synchronized release evidence and close audit fixes.
+- [x] Run Ruff check and formatting against exact current-branch package sources.
+- [x] Run the complete real `codepotg-v2` suite and build.
+- [x] Re-run the complete Jinja suite against the verified real core package.
+- [x] Build core and Jinja wheels and source distributions.
+- [x] Install the real core and Jinja wheels together in a fresh environment.
+- [x] Repeat entry-point, simple-render, static-partial, and denied-loop-callable checks.
+- [x] Record exact synchronized release evidence and close the PR #28 audit fixes.
+
+Verification totals and artifact hashes are recorded in [`PROGRESS.md`](PROGRESS.md).
 
 ## Audit follow-up
 
@@ -148,13 +151,15 @@ See:
 
 ## Completion gate
 
-The package is complete only when:
+The current public-port package is complete because:
 
-- shared engine conformance and adversarial sandbox tests pass against the real synchronized core;
+- shared engine conformance and adversarial sandbox tests pass against the verified real core package;
 - templates cannot access filesystem, environment, network, commands, Python imports, or rich runtime objects;
 - current-port dependencies resolve only from the request-owned registry;
 - blocked pack/planner/named-output/cache-port integrations remain explicit rather than emulated;
 - output paths remain planner-owned;
 - cache identity contains all behavior-affecting implemented inputs;
 - no generation/business logic exists in this package;
-- Ruff, format, full tests, build, real-wheel install, and clean-tree checks pass and are recorded.
+- Ruff, format, full tests, build, real-wheel install, and scoped clean-branch checks pass and are recorded.
+
+JINJA-008, pack-registry integration, target-compatible partial metadata, project/pack rule decoding, and runtime cache-port integration remain blocked until public contracts exist. They do not prevent release of the current adapter port.
