@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from dataclasses import field as dc_field
 from enum import StrEnum
 from types import NoneType
-from typing import get_args, get_origin
+from typing import cast, get_args, get_origin
 
 from codepotg_author.refs import PropertyRef, SchemaRef
 
@@ -38,12 +38,6 @@ class FieldOptions:
     description: str | None = None
 
     def __post_init__(self) -> None:
-        if type(self.required) is not bool:
-            raise TypeError("required must be bool")
-        if type(self.nullable) is not bool:
-            raise TypeError("nullable must be bool")
-        if type(self.readonly) is not bool:
-            raise TypeError("readonly must be bool")
         if self.minimum is not None and self.maximum is not None and self.minimum > self.maximum:
             raise ValueError("minimum must not exceed maximum")
         if self.min_length is not None and self.min_length < 0:
@@ -56,12 +50,6 @@ class FieldOptions:
             and self.min_length > self.max_length
         ):
             raise ValueError("min_length must not exceed max_length")
-        if self.pattern is not None and not isinstance(self.pattern, str):
-            raise TypeError("pattern must be str or None")
-        if self.format is not None and not isinstance(self.format, str):
-            raise TypeError("format must be str or None")
-        if self.description is not None and not isinstance(self.description, str):
-            raise TypeError("description must be str or None")
 
 
 @dataclass(frozen=True, slots=True)
@@ -151,7 +139,7 @@ class SchemaDeclaration:
                 raise ValueError("enum schemas require values")
             if len(self.enum_values) != len(set(self.enum_values)):
                 raise ValueError("enum schema values must be unique")
-            if any(not isinstance(value, str) or not value for value in self.enum_values):
+            if any(not value for value in self.enum_values):
                 raise TypeError("core enum values must be non-empty strings")
         if self.kind is SchemaDeclarationKind.ALIAS and self.alias_of is None:
             raise ValueError("alias schemas require alias_of")
@@ -204,9 +192,9 @@ def schema_field(
         description=description,
     )
     if isinstance(annotation, PropertyRef):
-        return FieldSpec(property_ref=annotation, options=parsed)
+        return FieldSpec(property_ref=cast(PropertyRef[object], annotation), options=parsed)
     if isinstance(annotation, SchemaRef):
-        return FieldSpec(schema_ref=annotation, options=parsed)
+        return FieldSpec(schema_ref=cast(SchemaRef[object], annotation), options=parsed)
     return FieldSpec(annotation=annotation, options=parsed)
 
 
@@ -227,9 +215,11 @@ def fields_from_mapping(values: Mapping[str, object]) -> tuple[FieldDeclaration,
                 )
             )
         elif isinstance(value, PropertyRef):
-            result.append(FieldDeclaration(name, property_ref=value))
+            result.append(
+                FieldDeclaration(name, property_ref=cast(PropertyRef[object], value))
+            )
         elif isinstance(value, SchemaRef):
-            result.append(FieldDeclaration(name, schema_ref=value))
+            result.append(FieldDeclaration(name, schema_ref=cast(SchemaRef[object], value)))
         else:
             nullable = NoneType in get_args(value) if get_origin(value) is not None else False
             result.append(
