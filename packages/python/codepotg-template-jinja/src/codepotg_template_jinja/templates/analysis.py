@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from jinja2 import Environment, TemplateAssertionError, TemplateSyntaxError, nodes
 
 from codepotg.api import CancellationToken
-
 from codepotg_template_jinja.rules import JinjaEngineRules
 
 from .dependencies import DependencyEdge, DependencyKind
@@ -130,7 +129,6 @@ def analyze_dependencies(
                         ("template_id", template_id),
                     ),
                 )
-
             next_depth = depth + 1
             if next_depth > rules.max_include_depth:
                 raise TemplateAnalysisError(
