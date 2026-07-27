@@ -2,10 +2,13 @@ from .base import (
     Documentation,
     FrozenObject,
     FrozenValue,
+    GuidanceKind,
+    GuidanceNote,
     JsonScalar,
     KernelData,
     Provenance,
     SemanticId,
+    TagSet,
 )
 from .events import Event, EventEffect, OperationEffects
 from .facets import (
@@ -21,11 +24,26 @@ from .facets import (
     TriggerKind,
     WorkflowFacets,
 )
+from .field_behavior import (
+    FieldCapabilities,
+    FieldLifecycle,
+    FieldQuery,
+    FieldReference,
+    FieldVisibility,
+    FieldWriteMode,
+    QueryOperator,
+)
 from .groups import Contract, Group, walk_groups
 from .naming import Name, NameProjection, pluralize, singularize
 from .operations import Operation, OperationFailure, OperationOutput
 from .policies import Policy
+from .presentations import (
+    Presentation,
+    PresentationChannel,
+    PresentationEntry,
+)
 from .schemas import FieldConstraints, Schema, SchemaField, SchemaKind, SchemaUse
+from .sources import ValueSource
 from .storage import StorageFieldMapping, StorageMapping, StorageNamespace
 from .types import TypeExpression, TypeKind, type_references
 from .validation import ContractValidator, validate_contract
@@ -52,11 +70,19 @@ __all__ = [
     "ExecutionFacet",
     "ExecutionHook",
     "ExecutionPhase",
+    "FieldCapabilities",
     "FieldConstraints",
+    "FieldLifecycle",
+    "FieldQuery",
+    "FieldReference",
+    "FieldVisibility",
+    "FieldWriteMode",
     "FrozenObject",
     "FrozenValue",
     "Group",
     "GroupFacets",
+    "GuidanceKind",
+    "GuidanceNote",
     "HttpFacet",
     "JsonScalar",
     "KernelData",
@@ -68,7 +94,11 @@ __all__ = [
     "OperationFailure",
     "OperationOutput",
     "Policy",
+    "Presentation",
+    "PresentationChannel",
+    "PresentationEntry",
     "Provenance",
+    "QueryOperator",
     "Schema",
     "SchemaField",
     "SchemaKind",
@@ -77,10 +107,12 @@ __all__ = [
     "StorageFieldMapping",
     "StorageMapping",
     "StorageNamespace",
+    "TagSet",
     "TriggerFacet",
     "TriggerKind",
     "TypeExpression",
     "TypeKind",
+    "ValueSource",
     "View",
     "ViewTrigger",
     "Workflow",

@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 from .base import JsonScalar, KernelData, SemanticId
+from .field_behavior import FieldCapabilities
 from .naming import Name
 from .types import TypeExpression
 
@@ -60,6 +61,7 @@ class SchemaField:
     readonly: bool = False
     constraints: FieldConstraints = field(default_factory=FieldConstraints)
     data: KernelData = field(default_factory=KernelData)
+    capabilities: FieldCapabilities = field(default_factory=FieldCapabilities)
 
 
 @dataclass(frozen=True, slots=True)

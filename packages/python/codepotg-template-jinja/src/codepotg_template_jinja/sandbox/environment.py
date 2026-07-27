@@ -25,6 +25,8 @@ class StrictSandboxedEnvironment(SandboxedEnvironment):
             try:
                 return obj[attribute]
             except KeyError:
+                if obj.is_allowed_tag_attribute(attribute):
+                    return getattr(obj, attribute)
                 return self.undefined(obj=obj, name=attribute)
         return super().getattr(obj, attribute)
 

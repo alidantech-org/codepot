@@ -10,6 +10,7 @@ from codepotg.diagnostics import Diagnostics
 
 class OperationStatus(StrEnum):
     READY = "ready"
+    GENERATED = "generated"
     GENERATED_WITH_WARNINGS = "generated_with_warnings"
     GENERATED_WITH_ACTIONS = "generated_with_actions"
     PARTIALLY_GENERATED = "partially_generated"

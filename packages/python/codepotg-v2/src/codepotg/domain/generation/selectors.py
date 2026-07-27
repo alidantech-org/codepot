@@ -9,9 +9,12 @@ from codepotg.domain.ir import (
     Group,
     Operation,
     Policy,
+    Presentation,
+    PresentationEntry,
     Schema,
     SchemaKind,
     StorageMapping,
+    ValueSource,
     View,
     Workflow,
     walk_groups,
@@ -34,7 +37,7 @@ class SelectorDescriptor:
 @dataclass(frozen=True, slots=True)
 class SelectionContext:
     contract: Contract
-    group: Group
+    group: Group | None = None
     schema: Schema | None = None
     operation: Operation | None = None
     view: View | None = None
@@ -42,6 +45,9 @@ class SelectionContext:
     workflow: Workflow | None = None
     policy: Policy | None = None
     event: Event | None = None
+    value_source: ValueSource | None = None
+    presentation: Presentation | None = None
+    presentation_entry: PresentationEntry | None = None
 
     @property
     def selected(self) -> object:
@@ -53,9 +59,13 @@ class SelectionContext:
             self.workflow,
             self.policy,
             self.event,
+            self.value_source,
+            self.presentation_entry,
+            self.presentation,
+            self.group,
         )
         selected = tuple(value for value in candidates if value is not None)
-        return selected[0] if selected else self.group
+        return selected[0] if selected else self.contract
 
 
 class SelectorRegistry:
@@ -80,11 +90,38 @@ class SelectorRegistry:
         groups = walk_groups(contract.groups)
         if selector_id in {"groups.each", "groups.all"}:
             return tuple(SelectionContext(contract=contract, group=group) for group in groups)
+        if selector_id == "presentations.each":
+            return tuple(
+                SelectionContext(contract=contract, presentation=item)
+                for item in contract.presentations
+            )
+        if selector_id == "presentations.entries.each":
+            view_owners = _view_owners(groups)
+            contexts: list[SelectionContext] = []
+            for presentation in contract.presentations:
+                for entry in presentation.entries:
+                    contexts.append(
+                        SelectionContext(
+                            contract=contract,
+                            group=view_owners.get(entry.view),
+                            presentation=presentation,
+                            presentation_entry=entry,
+                        )
+                    )
+            return tuple(contexts)
 
         contexts: list[SelectionContext] = []
         for group in groups:
             contexts.extend(_select_from_group(selector_id, contract, group))
         return tuple(contexts)
+
+
+def _view_owners(groups: tuple[Group, ...]) -> dict[object, Group]:
+    owners: dict[object, Group] = {}
+    for group in groups:
+        for view in group.views:
+            owners[view.id] = group
+    return owners
 
 
 def _select_from_group(
@@ -121,6 +158,11 @@ def _select_from_group(
         return tuple(SelectionContext(contract, group, policy=item) for item in group.policies)
     if selector_id == "groups.events.each":
         return tuple(SelectionContext(contract, group, event=item) for item in group.events)
+    if selector_id == "groups.value_sources.each":
+        return tuple(
+            SelectionContext(contract, group, value_source=item)
+            for item in group.value_sources
+        )
     return ()
 
 
@@ -180,6 +222,12 @@ _DESCRIPTORS = (
         "One invocation for each storage mapping declared under a group.",
     ),
     SelectorDescriptor(
+        "groups.value_sources.each",
+        "value_source",
+        SelectionCardinality.EACH,
+        "One invocation for each selectable value source declared under a group.",
+    ),
+    SelectorDescriptor(
         "groups.views.each",
         "view",
         SelectionCardinality.EACH,
@@ -190,6 +238,18 @@ _DESCRIPTORS = (
         "workflow",
         SelectionCardinality.EACH,
         "One invocation for each workflow declared under a group.",
+    ),
+    SelectorDescriptor(
+        "presentations.each",
+        "presentation",
+        SelectionCardinality.EACH,
+        "One invocation for each contract-level presentation.",
+    ),
+    SelectorDescriptor(
+        "presentations.entries.each",
+        "presentation_entry",
+        SelectionCardinality.EACH,
+        "One invocation for each view placement in every presentation.",
     ),
 )
 

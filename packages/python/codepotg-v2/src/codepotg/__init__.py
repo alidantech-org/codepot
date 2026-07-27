@@ -24,6 +24,12 @@ from .ir import (
     Operation,
     Schema,
     SemanticId,
+    contract_from_document,
+    contract_from_json,
+    contract_from_yaml,
+    contract_to_document,
+    contract_to_json,
+    contract_to_yaml,
     validate_contract,
 )
 from .plugins import PluginCategory, PluginDescriptor, PluginRegistry, PluginTrust
@@ -40,6 +46,8 @@ from .versions import (
 )
 
 __version__ = str(CORE_VERSION)
+
+from .application import generate, generate_to_files
 
 __all__ = [
     "ApiVersion",
@@ -79,5 +87,13 @@ __all__ = [
     "SourcePosition",
     "SourceSpan",
     "Version",
+    "contract_from_document",
+    "contract_from_json",
+    "contract_from_yaml",
+    "contract_to_document",
+    "contract_to_json",
+    "contract_to_yaml",
+    "generate",
+    "generate_to_files",
     "validate_contract",
 ]
