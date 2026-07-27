@@ -1,0 +1,28 @@
+apiVersion: codepotg.dev/v2
+name: manual-connected-openapi
+
+sources:
+  contract:
+    adapter: openapi
+    file: openapi.yaml
+
+packs:
+  typescriptSdk:
+    source:
+      local: packs/typescript-sdk
+    input: contract
+    output: typescript
+    options:
+      banner: Generated from standard OpenAPI through codepotg-openapi
+    bindings:
+      contractSource: openapi-3.0
+
+  dartSdk:
+    source:
+      local: packs/dart-sdk
+    input: contract
+    output: dart
+    options:
+      banner: Generated from standard OpenAPI through codepotg-openapi
+    bindings:
+      contractSource: openapi-3.0
