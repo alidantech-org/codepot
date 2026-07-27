@@ -38,6 +38,8 @@ class AliasBinding:
     root: str
 
     def __post_init__(self) -> None:
+        if not isinstance(self.alias, str) or not isinstance(self.root, str):
+            raise ValueError("TS_MODULE_ALIAS_INVALID: alias and root must be strings")
         if _ALIAS.fullmatch(self.alias) is None or any(
             character in self.alias for character in ("'", '"', "\n", "\r", "\0")
         ):
@@ -59,11 +61,41 @@ class TypeScriptTargetOptions:
     aliases: tuple[AliasBinding, ...] = ()
 
     def __post_init__(self) -> None:
+        _require_enum(
+            "reserved_word_policy",
+            self.reserved_word_policy,
+            ReservedWordPolicy,
+        )
+        _require_enum(
+            "unicode_identifier_policy",
+            self.unicode_identifier_policy,
+            UnicodeIdentifierPolicy,
+        )
+        _require_enum(
+            "extension_policy",
+            self.extension_policy,
+            TypeScriptExtensionPolicy,
+        )
+        _require_enum("index_policy", self.index_policy, IndexResolutionPolicy)
+
+        if self.package_name is not None and not isinstance(self.package_name, str):
+            raise ValueError(
+                "TS_MODULE_PACKAGE_INVALID: package_name must be a string or null"
+            )
         if (
             self.package_name is not None
             and _PACKAGE.fullmatch(self.package_name) is None
         ):
             raise ValueError("TS_MODULE_PACKAGE_INVALID: invalid npm-style package name")
+
+        if not isinstance(self.aliases, tuple):
+            raise ValueError(
+                "TS_MODULE_ALIAS_INVALID: aliases must be a tuple of AliasBinding values"
+            )
+        if any(not isinstance(item, AliasBinding) for item in self.aliases):
+            raise ValueError(
+                "TS_MODULE_ALIAS_INVALID: aliases must contain only AliasBinding values"
+            )
         if tuple(sorted(self.aliases)) != self.aliases:
             raise ValueError("TS_MODULE_ALIAS_INVALID: aliases must be sorted")
 
@@ -88,6 +120,9 @@ class TypeScriptTargetOptions:
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> TypeScriptTargetOptions:
+        if not isinstance(value, Mapping):
+            raise ValueError("TypeScript options must be a mapping")
+
         allowed = {
             "aliases",
             "extension_policy",
@@ -133,6 +168,11 @@ class TypeScriptTargetOptions:
         )
 
 
+def _require_enum(field_name: str, value: object, enum_type: type[StrEnum]) -> None:
+    if not isinstance(value, enum_type):
+        raise ValueError(f"{field_name} must be a {enum_type.__name__} value")
+
+
 def _decode_alias(value: object) -> AliasBinding:
     if not isinstance(value, Mapping):
         raise ValueError("each alias binding must be a mapping")
@@ -151,6 +191,8 @@ def _decode_alias(value: object) -> AliasBinding:
 
 
 def _validate_relative_root(root: str) -> None:
+    if not isinstance(root, str):
+        raise ValueError("TS_MODULE_ALIAS_INVALID: root must be a string")
     if not root or root.startswith("/") or "\\" in root or "\0" in root:
         raise ValueError("TS_MODULE_ALIAS_INVALID: root must be a POSIX-relative path")
 
