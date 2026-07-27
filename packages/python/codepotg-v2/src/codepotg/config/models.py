@@ -1,34 +1,77 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import PurePosixPath
 from typing import TypeAlias
 
 from codepotg.ir import FrozenObject, FrozenValue
 
 ConfigScalar: TypeAlias = str | int | float | bool | None
+_MAX_VALUE_DEPTH = 64
+_MAX_VALUE_ITEMS = 100_000
+
+
+@dataclass(slots=True)
+class _FreezeState:
+    active: set[int] = field(default_factory=set)
+    items: int = 0
 
 
 def freeze_value(value: object, *, path: str = "$") -> FrozenValue:
+    return _freeze_value(value, path=path, depth=0, state=_FreezeState())
+
+
+def _freeze_value(
+    value: object,
+    *,
+    path: str,
+    depth: int,
+    state: _FreezeState,
+) -> FrozenValue:
+    state.items += 1
+    if state.items > _MAX_VALUE_ITEMS:
+        raise ValueError(f"{path}: configuration value exceeds {_MAX_VALUE_ITEMS} items")
+    if depth > _MAX_VALUE_DEPTH:
+        raise ValueError(f"{path}: configuration value exceeds depth {_MAX_VALUE_DEPTH}")
     if value is None or isinstance(value, (str, bool, int)):
         return value
     if isinstance(value, float):
         if not math.isfinite(value):
             raise ValueError(f"{path}: non-finite numbers are not supported")
         return value
-    if isinstance(value, list | tuple):
-        return tuple(
-            freeze_value(item, path=f"{path}[{index}]")
-            for index, item in enumerate(value)
-        )
-    if isinstance(value, dict):
-        pairs: list[tuple[str, FrozenValue]] = []
-        for key in sorted(value):
-            if not isinstance(key, str) or not key:
+    if isinstance(value, list | tuple | dict):
+        identity = id(value)
+        if identity in state.active:
+            raise ValueError(f"{path}: recursive configuration values are not supported")
+        state.active.add(identity)
+        try:
+            if isinstance(value, list | tuple):
+                return tuple(
+                    _freeze_value(
+                        item,
+                        path=f"{path}[{index}]",
+                        depth=depth + 1,
+                        state=state,
+                    )
+                    for index, item in enumerate(value)
+                )
+            if not all(isinstance(key, str) and key for key in value):
                 raise ValueError(f"{path}: mapping keys must be non-empty strings")
-            pairs.append((key, freeze_value(value[key], path=f"{path}.{key}")))
-        return tuple(pairs)
+            return tuple(
+                (
+                    key,
+                    _freeze_value(
+                        value[key],
+                        path=f"{path}.{key}",
+                        depth=depth + 1,
+                        state=state,
+                    ),
+                )
+                for key in sorted(value)
+            )
+        finally:
+            state.active.remove(identity)
     raise ValueError(f"{path}: unsupported configuration value {type(value).__name__}")
 
 
