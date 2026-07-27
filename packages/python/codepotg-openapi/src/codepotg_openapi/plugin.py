@@ -23,7 +23,6 @@ PLUGIN = PluginDescriptor(
         "openapi.3.0",
         "openapi.3.1",
         "references.local",
-        "x-codegen.versioned",
     ),
     trust=PluginTrust.EXECUTABLE,
     documentation="OpenAPI 3.0/3.1 source adapter for the closed CodepotG v2 kernel.",

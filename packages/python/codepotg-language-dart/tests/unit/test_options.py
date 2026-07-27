@@ -3,6 +3,7 @@ from dataclasses import FrozenInstanceError
 import pytest
 from codepotg.diagnostics import DiagnosticSeverity
 from codepotg.ports import IdentifierRole, IdentifierValidationRequest
+
 from codepotg_language_dart import (
     DartTargetAdapter,
     DartTargetOptions,
@@ -80,9 +81,7 @@ def test_valid_direct_enum_policies_preserve_privacy_and_keyword_behavior() -> N
     )
     assert not reserved_diagnostics.has_errors
     assert {item.code for item in reserved_diagnostics} == {"DART_IDENTIFIER_RESERVED"}
-    assert all(
-        item.severity is DiagnosticSeverity.WARNING for item in reserved_diagnostics
-    )
+    assert all(item.severity is DiagnosticSeverity.WARNING for item in reserved_diagnostics)
     assert options.to_dict()["private_identifier_policy"] == "requirePublic"
 
 

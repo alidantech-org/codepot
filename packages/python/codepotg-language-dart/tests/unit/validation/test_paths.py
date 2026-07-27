@@ -1,5 +1,6 @@
 import pytest
 from codepotg.ports import OutputPathValidationRequest
+
 from codepotg_language_dart import create_plugin
 
 
@@ -14,9 +15,7 @@ from codepotg_language_dart import create_plugin
     ],
 )
 def test_valid_non_framework_paths(path: str) -> None:
-    diagnostics = create_plugin().validate_output_path(
-        OutputPathValidationRequest(path, "dart")
-    )
+    diagnostics = create_plugin().validate_output_path(OutputPathValidationRequest(path, "dart"))
     assert not diagnostics.has_errors
 
 
@@ -38,7 +37,5 @@ def test_valid_non_framework_paths(path: str) -> None:
     ],
 )
 def test_rejected_paths(path: str) -> None:
-    diagnostics = create_plugin().validate_output_path(
-        OutputPathValidationRequest(path, "dart")
-    )
+    diagnostics = create_plugin().validate_output_path(OutputPathValidationRequest(path, "dart"))
     assert diagnostics.has_errors

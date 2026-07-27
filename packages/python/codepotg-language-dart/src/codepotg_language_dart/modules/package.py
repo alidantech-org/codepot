@@ -22,18 +22,13 @@ def package_uri(
         )
     provider_parts = contained_parts(provider)
     root_parts = contained_parts(project_root)
-    if (
-        provider_parts[: len(root_parts)] != root_parts
-        or len(provider_parts) == len(root_parts)
-    ):
+    if provider_parts[: len(root_parts)] != root_parts or len(provider_parts) == len(root_parts):
         raise ValueError(
             "DART_MODULE_PATH_ESCAPE: provider is outside the configured Dart library root"
         )
     subpath = "/".join(provider_parts[len(root_parts) :])
     if not subpath.endswith(".dart"):
-        raise ValueError(
-            "DART_MODULE_PACKAGE_INVALID: package provider must be a .dart file"
-        )
+        raise ValueError("DART_MODULE_PACKAGE_INVALID: package provider must be a .dart file")
     return f"package:{options.package_name}/{subpath}"
 
 

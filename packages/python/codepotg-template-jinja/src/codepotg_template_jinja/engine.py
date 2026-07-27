@@ -19,7 +19,6 @@ from codepotg.diagnostics import Diagnostic, Diagnostics
 from codepotg.plugins import PluginCategory, PluginDescriptor, PluginTrust
 from codepotg.ports import RenderRequest, RenderResult
 from codepotg.versions import IR_API_VERSION, PLUGIN_API_VERSION, Version
-
 from codepotg_template_jinja.caching import (
     BoundedCache,
     CacheStats,

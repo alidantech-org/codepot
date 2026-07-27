@@ -4,7 +4,6 @@ from ..options import MultiTagPolicy
 from ..references.pointer import join_pointer
 from .context import NormalizationContext
 
-
 HTTP_METHODS = ("delete", "get", "head", "options", "patch", "post", "put", "trace")
 
 

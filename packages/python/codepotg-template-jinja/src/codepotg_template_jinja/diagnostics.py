@@ -5,8 +5,8 @@ from collections.abc import Mapping
 
 from codepotg.diagnostics import (
     Diagnostic,
-    DiagnosticSeverity,
     Diagnostics,
+    DiagnosticSeverity,
     SourceIdentity,
     SourceKind,
     SourcePosition,

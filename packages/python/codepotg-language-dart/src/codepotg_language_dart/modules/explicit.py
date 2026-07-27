@@ -17,9 +17,7 @@ def validate_explicit(value: str, current: str) -> str:
         or any(character in value for character in _FORBIDDEN)
         or "\\" in value
     ):
-        raise ValueError(
-            "DART_MODULE_EXPLICIT_INVALID: explicit URI contains forbidden syntax"
-        )
+        raise ValueError("DART_MODULE_EXPLICIT_INVALID: explicit URI contains forbidden syntax")
 
     if value.startswith("dart:"):
         if _DART_URI.fullmatch(value) is None:
@@ -36,9 +34,7 @@ def validate_explicit(value: str, current: str) -> str:
 
     if value.startswith(("./", "../")):
         if not value.endswith(".dart"):
-            raise ValueError(
-                "DART_MODULE_EXPLICIT_INVALID: relative Dart URI must end with .dart"
-            )
+            raise ValueError("DART_MODULE_EXPLICIT_INVALID: relative Dart URI must end with .dart")
         _validate_relative(value, current)
         return value
 
@@ -58,7 +54,5 @@ def _validate_relative(value: str, current: str) -> None:
             stack.pop()
             continue
         if part in {"", "."}:
-            raise ValueError(
-                "DART_MODULE_EXPLICIT_INVALID: invalid relative URI segment"
-            )
+            raise ValueError("DART_MODULE_EXPLICIT_INVALID: invalid relative URI segment")
         stack.append(part)

@@ -23,7 +23,15 @@ def create(
 
 @pytest.mark.parametrize(
     "template_id",
-    ["/absolute.jinja", "C:/drive.jinja", "../up.jinja", "a/../b.jinja", "a\\b.jinja", "a//b.jinja", "a\x00b"],
+    [
+        "/absolute.jinja",
+        "C:/drive.jinja",
+        "../up.jinja",
+        "a/../b.jinja",
+        "a\\b.jinja",
+        "a//b.jinja",
+        "a\x00b",
+    ],
 )
 def test_root_template_ids_are_registry_identifiers_not_paths(template_id: str) -> None:
     with pytest.raises(TemplateRegistryError) as captured:

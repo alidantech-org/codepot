@@ -9,6 +9,7 @@ from codepotg.ports import (
     ModulePathRequest,
     OutputPathValidationRequest,
 )
+
 from codepotg_language_dart import DartTargetAdapter
 
 
@@ -33,9 +34,7 @@ def test_path_depth_matrix_is_stable() -> None:
     for depth in range(1, 40):
         prefix = "/".join(f"segment{index}" for index in range(depth))
         request = OutputPathValidationRequest(f"{prefix}/value.dart", "dart")
-        assert adapter.validate_output_path(request) == adapter.validate_output_path(
-            request
-        )
+        assert adapter.validate_output_path(request) == adapter.validate_output_path(request)
 
 
 def test_relative_depth_uses_only_posix_separators() -> None:
@@ -43,9 +42,7 @@ def test_relative_depth_uses_only_posix_separators() -> None:
     for depth in range(1, 30):
         current = "/".join(("lib", *(f"c{index}" for index in range(depth)), "a.dart"))
         provider = "lib/shared/user.dart"
-        facts = adapter.resolve_module_path(
-            ModulePathRequest(current, provider_artifact=provider)
-        )
+        facts = adapter.resolve_module_path(ModulePathRequest(current, provider_artifact=provider))
         assert "\\" not in facts.specifier
         assert facts.specifier.endswith("user.dart")
 

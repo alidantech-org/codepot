@@ -4,8 +4,8 @@ from dataclasses import dataclass, field
 
 from codepotg.diagnostics import (
     Diagnostic,
-    DiagnosticSeverity,
     Diagnostics,
+    DiagnosticSeverity,
     SourceSpan,
 )
 

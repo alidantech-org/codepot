@@ -6,9 +6,7 @@ from ..options import TypeScriptTargetOptions
 from ..validation.paths import contained_parts
 from .policies import apply_path_policies
 
-PACKAGE = re.compile(
-    r"^(?:@[a-z0-9][a-z0-9._-]*/)?[a-z0-9][a-z0-9._-]*(?:/[A-Za-z0-9._-]+)*$"
-)
+PACKAGE = re.compile(r"^(?:@[a-z0-9][a-z0-9._-]*/)?[a-z0-9][a-z0-9._-]*(?:/[A-Za-z0-9._-]+)*$")
 
 
 def validate_package(value: str) -> str:
@@ -29,13 +27,8 @@ def provider_package_specifier(
 
     provider_parts = contained_parts(provider)
     root_parts = contained_parts(project_root)
-    if (
-        provider_parts[: len(root_parts)] != root_parts
-        or len(provider_parts) == len(root_parts)
-    ):
-        raise ValueError(
-            "TS_MODULE_PATH_ESCAPE: provider is outside the configured project root"
-        )
+    if provider_parts[: len(root_parts)] != root_parts or len(provider_parts) == len(root_parts):
+        raise ValueError("TS_MODULE_PATH_ESCAPE: provider is outside the configured project root")
 
     subpath = "/".join(provider_parts[len(root_parts) :])
     subpath = apply_path_policies(subpath, options)

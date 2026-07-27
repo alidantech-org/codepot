@@ -66,11 +66,7 @@ def cases() -> tuple[Case, ...]:
             tuple(
                 (
                     f"level-{index}.jinja",
-                    (
-                        f"{index}>{{% include \"level-{index + 1}.jinja\" %}}"
-                        if index < 8
-                        else "8>done"
-                    ),
+                    f'{index}>{{% include "level-{index + 1}.jinja" %}}' if index < 8 else "8>done",
                 )
                 for index in range(1, 9)
             ),
@@ -88,12 +84,7 @@ def cases() -> tuple[Case, ...]:
         ),
         Case("strict_undefined_failure", "{{ missing }}", expects_error=True),
         Case("syntax_failure", "{% if %}", expects_error=True),
-        Case(
-            "warm_100",
-            "{{ left }}-{{ right }}",
-            (("left", "a"), ("right", "b")),
-            repeats=100,
-        ),
+        Case("warm_100", "{{ left }}-{{ right }}", (("left", "a"), ("right", "b")), repeats=100),
     )
 
 
@@ -114,11 +105,7 @@ def _render(engine: JinjaTemplateEngine, request: RenderRequest, repeats: int) -
     return result
 
 
-def _duration(
-    engine: JinjaTemplateEngine,
-    request: RenderRequest,
-    repeats: int,
-) -> tuple[int, Any]:
+def _duration(engine: JinjaTemplateEngine, request: RenderRequest, repeats: int) -> tuple[int, Any]:
     start = time.perf_counter_ns()
     result = _render(engine, request, repeats)
     return time.perf_counter_ns() - start, result
@@ -131,7 +118,6 @@ def run_case(case: Case) -> dict[str, object]:
         context=case.context,
         partials=case.partials,
     )
-
     _render(JinjaTemplateEngine(), request, case.repeats)
     cold_ns: list[int] = []
     cold_result = None
@@ -139,7 +125,6 @@ def run_case(case: Case) -> dict[str, object]:
         engine = JinjaTemplateEngine()
         duration, cold_result = _duration(engine, request, case.repeats)
         cold_ns.append(duration)
-
     warm_engine = JinjaTemplateEngine()
     _render(warm_engine, request, case.repeats)
     warm_ns: list[int] = []
@@ -147,7 +132,6 @@ def run_case(case: Case) -> dict[str, object]:
     for _ in range(MEASURED_ITERATIONS):
         duration, warm_result = _duration(warm_engine, request, case.repeats)
         warm_ns.append(duration)
-
     assert cold_result is not None and warm_result is not None
     assert cold_result == warm_result
     content = warm_result.content

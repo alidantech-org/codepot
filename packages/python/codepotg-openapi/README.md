@@ -1,35 +1,55 @@
 # codepotg-openapi
 
-`codepotg-openapi` is the typed OpenAPI 3.0/3.1 source adapter for CodepotG v2. It loads controlled YAML or JSON sources, resolves references within host authority, decodes typed `x-codegen` version 2 metadata, and returns the immutable closed CodepotG semantic kernel.
+`codepotg-openapi` is the OpenAPI 3.0/3.1 source adapter for CodepotG v2. Version `2.0.0a2` provides a working public `SourceAdapter`: it loads controlled JSON or YAML, resolves authorized references inside one normalization session, normalizes the supported standard OpenAPI subset into the closed CodepotG kernel, runs core validation, and returns a deterministic `SourceAdapterResult`.
 
-## Installation
+Typed `x-codegen`, security/access normalization, storage, views, events/listeners, hooks, workflows, and benchmarks are **not implemented in this release**. See [the support matrix](docs/support/README.md).
 
-```bash
-python -m pip install codepotg-core codepotg-openapi
-```
-
-The package registers:
+## Entry point
 
 ```toml
 [project.entry-points."codepotg.source_adapters"]
 openapi = "codepotg_openapi.plugin:create_plugin"
 ```
 
-## Safe default authority
+```python
+from codepotg.api import CancellationToken
+from codepotg.ports import SourceAdapterRequest
+from codepotg_openapi import OpenApiSourceAdapter
 
-`create_plugin()` permits in-memory sources and absolute local files. Local references must stay below the root document's directory. Network schemes, unsupported URI schemes, relative root paths, and path escapes are rejected. Network or virtual external documents require a host-injected controlled loader:
+adapter = OpenApiSourceAdapter()
+result = adapter.normalize(
+    SourceAdapterRequest(
+        source_id="petstore",
+        content='{"openapi":"3.1.0","info":{"title":"Pets","version":"1"},"paths":{}}',
+    ),
+    CancellationToken(),
+)
+
+assert result.contract is not None
+assert result.digest
+```
+
+`create_plugin()` and the installed `codepotg.source_adapters/openapi` entry point return the same adapter type.
+
+## Safe source authority
+
+The default adapter accepts in-memory documents and absolute local files. A local root document authorizes references only beneath its parent directory unless the host supplies a narrower `SourcePolicy.allowed_root`. Relative root paths, path escapes, unsupported schemes, and network references are denied.
+
+A host can explicitly provide controlled external content:
 
 ```python
+from pathlib import Path
+
 from codepotg_openapi import OpenApiSourceAdapter
-from codepotg_openapi.loading import SourcePolicy
+from codepotg_openapi.loading import CallableReferenceLoader, SourcePolicy
 
 adapter = OpenApiSourceAdapter(
-    reference_loader=host_loader,
-    source_policy=SourcePolicy(local_root=approved_root),
+    reference_loader=CallableReferenceLoader(host_loader, authority_id="approved-catalog-v1"),
+    source_policy=SourcePolicy(allowed_root=Path("/srv/contracts")),
 )
 ```
 
-Request options cannot grant their own host, network, or filesystem authority.
+Request options cannot grant filesystem or network authority. Reference bytes and parsed documents are cached only inside one `normalize()` call; reusing an adapter starts a fresh session.
 
 ## Options
 
@@ -40,25 +60,28 @@ Request options cannot grant their own host, network, or filesystem authority.
 | `grouping` | `tags`, `explicitThenTags` (default) |
 | `multiTagPolicy` | `first` (default), `explicitRequired` |
 | `operationIds` | `require`, `deterministicFallback` (default) |
-| `xCodegenPolicy` | `deny`, `tolerant` (default), `strict` |
+| `xCodegenPolicy` | `tolerant` (default), `strict`, `deny`; typed mapping is not implemented, so tolerant warns and strict/deny fail |
 | `maxSourceBytes` | positive integer, default `8388608` |
 | `maxReferenceDepth` | positive integer, default `64` |
 | `maxDocuments` | positive integer, default `128` |
+| `maxYamlDepth` | positive integer, default `128` |
+| `maxYamlNodes` | positive integer, default `100000` |
+| `maxYamlAliases` | positive integer, default `10000` |
 | `preserveUnknownExtensions` | boolean, default `false` |
 | `maxPreservedDepth` | positive integer, default `8` |
 | `maxPreservedItems` | positive integer, default `2048` |
 
-Unknown keys and wrong value types are errors. There are no target language, framework, template, pack, selector, output path, writer, or command options.
+Unknown keys and wrong value types are errors. No target language, framework, template, selector, output-path, writer, or command options exist.
+
+## Determinism and validation
+
+The result digest includes every loaded document's canonical semantic content, all decoded behavior options, adapter/package/plugin/IR behavior versions, OpenAPI version policy, and the host reference-authority identity. Equivalent JSON and YAML with the same `source_id` produce the same semantic contract and digest. Format-specific source spans may differ.
+
+Before success, the adapter calls `codepotg.ir.validate_contract`. Any adapter or core error returns `contract=None`, `digest=None`, and sorted diagnostics. Cancellation is returned as `OA_CANCELLED` rather than leaking an internal exception.
 
 ## Dependencies
 
-- `codepotg-core >= 2.0.0a1, < 2.1` supplies only the published source-adapter, diagnostics, plugin, version, testing, and closed-IR contracts.
-- `PyYAML >= 6.0, < 7` supplies `SafeLoader` YAML composition with node marks. The adapter converts nodes into package-private JSON-compatible values, rejects duplicate keys and unsafe tags, and never exposes PyYAML objects.
+- `codepotg-core >= 2.0.0a1, < 2.1`, through published `codepotg.*` namespaces only.
+- `PyYAML >= 6.0, < 7`, using `SafeLoader` composition followed by bounded package-private conversion.
 
-The package does not depend on CodepotG 1.0.0, Jinja, target adapters, template packs, CLI libraries, writers, or network clients.
-
-## Determinism
-
-The result digest covers canonical semantic contents of every loaded document, all decoded options, adapter/package/API/IR/behavior versions, OpenAPI policy, `x-codegen` version, and injected reference-authority identity. Equivalent JSON and YAML documents have the same semantic digest. Their raw byte hashes and format-specific provenance spans may differ.
-
-See [`docs/support/README.md`](docs/support/README.md) for the mapping and explicit public-core blockers. Benchmarks are documented in [`benchmarks/README.md`](benchmarks/README.md).
+The package does not import CodepotG v1, target-language adapters, template engines, packs, writers, CLI libraries, or network clients.
