@@ -1,0 +1,4 @@
+/* {{ options.banner }} */
+{% for module in exports.models.modules %}{% for symbol in module.symbols %}export { {{ symbol }} } from "{{ module.specifier }}";
+{% endfor %}{% endfor %}{% for module in exports.enums.modules %}{% for symbol in module.symbols %}export { {{ symbol }} } from "{{ module.specifier }}";
+{% endfor %}{% endfor %}
