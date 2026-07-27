@@ -1,0 +1,77 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codepotg-template-jinja"
+version = "2.0.0a1"
+description = "Sandboxed deterministic Jinja template engine for CodepotG v2"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+  { name = "Alidantech" },
+]
+keywords = ["codegen", "codepot", "jinja", "templates", "sandbox"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Code Generators",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
+dependencies = [
+  "codepotg-core>=2.0.0a1,<2.1",
+  "Jinja2>=3.1.4,<4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2",
+  "pytest>=8.3",
+  "ruff>=0.9",
+]
+
+[project.entry-points."codepotg.template_engines"]
+jinja = "codepotg_template_jinja.plugin:create_plugin"
+
+[project.urls]
+Homepage = "https://github.com/alidantech-org/codepot"
+Documentation = "https://github.com/alidantech-org/codepot/tree/chatgpt/codepotx-restart/packages/python/codepotg-template-jinja"
+Repository = "https://github.com/alidantech-org/codepot"
+Issues = "https://github.com/alidantech-org/codepot/issues"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["codepotg_template_jinja*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+codepotg_template_jinja = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = ["--strict-markers", "--strict-config"]
+markers = [
+  "distribution: wheel, sdist, and isolated installation checks",
+  "performance: bounded performance and benchmark-contract checks",
+]
