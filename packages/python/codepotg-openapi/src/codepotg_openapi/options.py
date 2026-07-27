@@ -60,6 +60,9 @@ class OpenApiOptions:
     max_source_bytes: int = 8 * 1024 * 1024
     max_reference_depth: int = 64
     max_documents: int = 128
+    max_yaml_depth: int = 128
+    max_yaml_nodes: int = 100_000
+    max_yaml_aliases: int = 10_000
     preserve_unknown_extensions: bool = False
     max_preserved_depth: int = 8
     max_preserved_items: int = 2048
@@ -78,6 +81,9 @@ class OpenApiOptions:
             "maxSourceBytes",
             "maxReferenceDepth",
             "maxDocuments",
+            "maxYamlDepth",
+            "maxYamlNodes",
+            "maxYamlAliases",
             "preserveUnknownExtensions",
             "maxPreservedDepth",
             "maxPreservedItems",
@@ -124,6 +130,9 @@ class OpenApiOptions:
                 defaults.max_reference_depth,
             ),
             max_documents=_positive_int(raw, "maxDocuments", defaults.max_documents),
+            max_yaml_depth=_positive_int(raw, "maxYamlDepth", defaults.max_yaml_depth),
+            max_yaml_nodes=_positive_int(raw, "maxYamlNodes", defaults.max_yaml_nodes),
+            max_yaml_aliases=_positive_int(raw, "maxYamlAliases", defaults.max_yaml_aliases),
             preserve_unknown_extensions=_bool(
                 raw,
                 "preserveUnknownExtensions",
@@ -150,6 +159,9 @@ class OpenApiOptions:
             ("maxPreservedItems", self.max_preserved_items),
             ("maxReferenceDepth", self.max_reference_depth),
             ("maxSourceBytes", self.max_source_bytes),
+            ("maxYamlAliases", self.max_yaml_aliases),
+            ("maxYamlDepth", self.max_yaml_depth),
+            ("maxYamlNodes", self.max_yaml_nodes),
             ("multiTagPolicy", self.multi_tag_policy.value),
             ("operationIds", self.operation_ids.value),
             ("preserveUnknownExtensions", self.preserve_unknown_extensions),

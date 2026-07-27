@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "codepotg-openapi"
-version = "2.0.0a1"
+version = "2.0.0a2"
 description = "Safe deterministic OpenAPI source adapter for CodepotG v2"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11"

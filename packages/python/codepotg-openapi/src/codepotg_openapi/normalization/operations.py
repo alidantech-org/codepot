@@ -44,7 +44,7 @@ def normalize_operations(context: NormalizationContext) -> None:
             context.diagnostics.error(
                 "OA_OPERATION_PATH_ITEM",
                 f"path item {path!r} must be an object",
-                span=context.root.span(path_pointer),
+                span=path_document.span(path_pointer),
             )
             continue
         path_parameters = path_item.get("parameters", [])
@@ -145,7 +145,14 @@ def _normalize_operation(
             options=context.options,
             diagnostics=context.diagnostics,
             raw={
-                **selected_raw(value, "deprecated", "description", "externalDocs", "summary"),
+                **selected_raw(
+                    value,
+                    "deprecated",
+                    "description",
+                    "externalDocs",
+                    "security",
+                    "summary",
+                ),
                 "http": raw_http,
             },
             extensions=(

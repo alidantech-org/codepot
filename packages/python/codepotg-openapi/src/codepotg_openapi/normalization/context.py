@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import Any
 
 from codepotg.api import CancellationToken
 from codepotg.ir import (
@@ -30,9 +30,6 @@ from ..parsing.document import ParsedDocument
 from ..references.resolver import ReferenceResolver
 from .identities import IdentityRegistry, stable_id
 from .provenance import kernel_data
-
-if TYPE_CHECKING:
-    from ..x_codegen.models import XCodegen
 
 
 @dataclass(slots=True)
@@ -103,7 +100,9 @@ class NormalizationContext:
     options: OpenApiOptions
     diagnostics: DiagnosticBag
     cancellation: CancellationToken
-    x_codegen: XCodegen | None
+    # Reserved for the future OA-010 typed decoder. Runtime code passes None
+    # until that decoder exists; no missing private module is imported.
+    x_codegen: Any | None = None
     identities: IdentityRegistry = field(default_factory=IdentityRegistry)
     groups: dict[str, GroupBuilder] = field(default_factory=dict)
     schema_by_ref: dict[tuple[str, str], SemanticId] = field(default_factory=dict)
@@ -140,10 +139,15 @@ class NormalizationContext:
             explicit=explicit_id,
         )
         self._register(semantic_id, pointer or f"group:{name}", doc)
+        projected_name = Name(name)
         builder = GroupBuilder(
             id=semantic_id,
-            name=Name(name),
-            path=(Name(name).kebab.original if hasattr(Name(name), "kebab") else _path_name(name),),
+            name=projected_name,
+            path=(
+                projected_name.kebab.original
+                if hasattr(projected_name, "kebab")
+                else _path_name(name),
+            ),
             data=kernel_data(
                 doc,
                 pointer,
@@ -154,7 +158,13 @@ class NormalizationContext:
         self.groups[name] = builder
         return builder
 
-    def add_schema(self, group: str, schema: Schema, document: ParsedDocument, pointer: str) -> None:
+    def add_schema(
+        self,
+        group: str,
+        schema: Schema,
+        document: ParsedDocument,
+        pointer: str,
+    ) -> None:
         self._register(schema.id, pointer, document)
         self.ensure_group(group, document=document).schemas[schema.id] = schema
         self.schema_owner[schema.id] = group
@@ -205,7 +215,11 @@ class NormalizationContext:
             candidate = SemanticId(reference)
         except ValueError:
             return None
-        return candidate if any(candidate in group.policies for group in self.groups.values()) else None
+        return (
+            candidate
+            if any(candidate in group.policies for group in self.groups.values())
+            else None
+        )
 
     def event(self, reference: str) -> SemanticId | None:
         if reference in self.event_by_name:
@@ -214,11 +228,16 @@ class NormalizationContext:
             candidate = SemanticId(reference)
         except ValueError:
             return None
-        return candidate if any(candidate in group.events for group in self.groups.values()) else None
+        return (
+            candidate
+            if any(candidate in group.events for group in self.groups.values())
+            else None
+        )
 
     def freeze_groups(self) -> tuple[Group, ...]:
         return tuple(
-            group.freeze() for group in sorted(self.groups.values(), key=lambda item: item.id.value)
+            group.freeze()
+            for group in sorted(self.groups.values(), key=lambda item: item.id.value)
         )
 
     def _register(
@@ -227,7 +246,10 @@ class NormalizationContext:
         pointer: str,
         document: ParsedDocument,
     ) -> None:
-        previous = self.identities.register(semantic_id, f"{document.source.logical_id}#{pointer}")
+        previous = self.identities.register(
+            semantic_id,
+            f"{document.source.logical_id}#{pointer}",
+        )
         if previous is not None:
             self.diagnostics.error(
                 "OA_XCODEGEN_DUPLICATE_ID",
