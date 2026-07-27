@@ -9,7 +9,7 @@ from codepotg.api import (
     OperationResult,
     OperationStatus,
 )
-from codepotg.config import ProjectConfig, load_pack_manifest
+from codepotg.config import PackManifest, ProjectConfig, load_pack_manifest
 from codepotg.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
 from codepotg.generation.context import RenderContextBuilder
 from codepotg.generation.models import (
@@ -49,13 +49,13 @@ class GenerationSession:
                 return self._failed(project, diagnostics)
 
             planner = ProjectPlanner(plugins=self.plugins)
-            plan = planner.plan(
+            planned = planner.plan(
                 project=project,
                 project_root=root,
                 contracts=contracts,
             )
-            diagnostics = diagnostics.extend(plan.diagnostics)
-            plan = GenerationPlan(project.name, plan.artifacts, diagnostics)
+            diagnostics = diagnostics.extend(planned.diagnostics)
+            plan = GenerationPlan(project.name, planned.artifacts, diagnostics)
             if diagnostics.has_errors:
                 return OperationResult(
                     status=OperationStatus.FAILED,
@@ -86,7 +86,7 @@ class GenerationSession:
             status = (
                 OperationStatus.GENERATED_WITH_WARNINGS
                 if diagnostics
-                else OperationStatus.READY
+                else OperationStatus.GENERATED
             )
             return OperationResult(
                 status=status,
@@ -142,7 +142,7 @@ class GenerationSession:
         generated: list[GeneratedArtifact] = []
         diagnostics = Diagnostics()
         instances = {item.name: item for item in project.packs}
-        manifest_cache: dict[str, object] = {}
+        manifest_cache: dict[str, PackManifest] = {}
 
         for artifact in plan.artifacts:
             cancellation.raise_if_cancelled()
@@ -176,7 +176,7 @@ class GenerationSession:
             if manifest is None:
                 manifest = load_pack_manifest(pack_root / "CodepotgPack.yaml")
                 manifest_cache[cache_key] = manifest
-            options = manifest.resolve_options(instance.options)  # type: ignore[union-attr]
+            options = manifest.resolve_options(instance.options)
             contract = contracts.get(instance.input) if instance.input is not None else None
             if contract is None:
                 diagnostics = diagnostics.add(
@@ -190,7 +190,7 @@ class GenerationSession:
             context = RenderContextBuilder(contract).build(
                 selection=artifact.context,
                 project=project,
-                manifest=manifest,  # type: ignore[arg-type]
+                manifest=manifest,
                 artifact=artifact,
                 options=options,
                 bindings=instance.bindings,
