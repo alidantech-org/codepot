@@ -1,4 +1,11 @@
 from .archive import ArchiveResult, ZipArchiveWriter
+from .ownership import (
+    GenerationState,
+    ManagedFilesystemWriter,
+    ManagedWriteChange,
+    ManagedWriteKind,
+    ManagedWriteReport,
+)
 from .writers import (
     TransactionalFilesystemWriter,
     WriteChange,
@@ -8,6 +15,11 @@ from .writers import (
 
 __all__ = [
     "ArchiveResult",
+    "GenerationState",
+    "ManagedFilesystemWriter",
+    "ManagedWriteChange",
+    "ManagedWriteKind",
+    "ManagedWriteReport",
     "TransactionalFilesystemWriter",
     "WriteChange",
     "WriteKind",
