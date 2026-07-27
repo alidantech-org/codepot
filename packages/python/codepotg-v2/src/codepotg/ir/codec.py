@@ -4,15 +4,17 @@ import json
 import math
 from dataclasses import fields, is_dataclass
 from enum import Enum
+from importlib import import_module
 from typing import Any
 
 import yaml
 
-from codepotg import diagnostics as public_diagnostics
-from codepotg import ir as public_ir
 from codepotg.diagnostics import Diagnostics
-from codepotg.ir import Contract, Name, SemanticId, validate_contract
+from codepotg.domain.ir import Contract, Name, SemanticId, validate_contract
 from codepotg.versions import IR_API_VERSION
+
+public_ir = import_module("codepotg.domain.ir")
+public_diagnostics = import_module("codepotg.diagnostics")
 
 _FORMAT = "codepot-ir"
 
@@ -217,7 +219,11 @@ def _decode(value: object, *, path: str) -> object:
                 f"unknown IR record type {type_name!r}",
                 path=path,
             )
-        allowed = {item.name for item in fields(target) if item.init and not item.name.startswith("_")}
+        allowed = {
+            item.name
+            for item in fields(target)
+            if item.init and not item.name.startswith("_")
+        }
         unknown = sorted(set(value) - allowed - {"$type"})
         if unknown:
             raise IrCodecError(
