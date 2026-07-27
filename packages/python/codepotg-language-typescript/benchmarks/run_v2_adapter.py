@@ -18,6 +18,7 @@ from codepotg.ports import (
     ModulePathRequest,
     OutputPathValidationRequest,
 )
+
 from codepotg_language_typescript import (
     AliasBinding,
     TypeScriptTargetAdapter,
@@ -45,9 +46,7 @@ def _measure(operation: Callable[[int], None]) -> dict[str, Any]:
         "minimum_seconds": min(durations),
         "operations_per_second": total_operations / sum(durations),
         "peak_rss_kib": (
-            None
-            if resource is None
-            else resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+            None if resource is None else resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         ),
         "runs": RUNS,
         "total_operations": total_operations,
@@ -55,9 +54,7 @@ def _measure(operation: Callable[[int], None]) -> dict[str, Any]:
 
 
 def main() -> int:
-    cases = json.loads(
-        Path(__file__).with_name("cases.json").read_text(encoding="utf-8")
-    )
+    cases = json.loads(Path(__file__).with_name("cases.json").read_text(encoding="utf-8"))
     adapter = TypeScriptTargetAdapter()
     alias_adapter = TypeScriptTargetAdapter(
         TypeScriptTargetOptions(
@@ -67,9 +64,7 @@ def main() -> int:
             )
         )
     )
-    package_adapter = TypeScriptTargetAdapter(
-        TypeScriptTargetOptions(package_name="example-sdk")
-    )
+    package_adapter = TypeScriptTargetAdapter(TypeScriptTargetOptions(package_name="example-sdk"))
 
     identifier_results = []
     for candidate in cases["identifiers"]:
@@ -89,15 +84,11 @@ def main() -> int:
 
     def identifiers(index: int) -> None:
         candidate = cases["identifiers"][index % len(cases["identifiers"])]
-        adapter.validate_identifier(
-            IdentifierValidationRequest(candidate, IdentifierRole.VALUE)
-        )
+        adapter.validate_identifier(IdentifierValidationRequest(candidate, IdentifierRole.VALUE))
 
     def output_paths(index: int) -> None:
         case = cases["output_paths"][index % len(cases["output_paths"])]
-        adapter.validate_output_path(
-            OutputPathValidationRequest(case["path"], case["target_id"])
-        )
+        adapter.validate_output_path(OutputPathValidationRequest(case["path"], case["target_id"]))
 
     def relative(index: int) -> None:
         case = cases["modules"][index % len(cases["modules"])]
@@ -110,9 +101,7 @@ def main() -> int:
 
     def packages(index: int) -> None:
         package = cases["packages"][index % len(cases["packages"])]
-        adapter.resolve_module_path(
-            ModulePathRequest("src/service.ts", package_name=package)
-        )
+        adapter.resolve_module_path(ModulePathRequest("src/service.ts", package_name=package))
 
     valid_explicit = tuple(
         item

@@ -1,6 +1,4 @@
-KNOWN_SUFFIXES = tuple(
-    sorted((".cts", ".d.cts", ".d.mts", ".d.ts", ".mts", ".ts", ".tsx"))
-)
+KNOWN_SUFFIXES = tuple(sorted((".cts", ".d.cts", ".d.mts", ".d.ts", ".mts", ".ts", ".tsx")))
 
 
 def match_typescript_suffix(path: str) -> str | None:

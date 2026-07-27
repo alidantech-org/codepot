@@ -34,9 +34,7 @@ def _measure(operation: Callable[[int], None]) -> dict[str, Any]:
         "minimum_seconds": min(durations),
         "operations_per_second": total_operations / sum(durations),
         "peak_rss_kib": (
-            None
-            if resource is None
-            else resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+            None if resource is None else resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         ),
         "runs": RUNS,
         "total_operations": total_operations,
@@ -59,9 +57,7 @@ def main() -> int:
         )
         return 2
 
-    cases = json.loads(
-        Path(__file__).with_name("cases.json").read_text(encoding="utf-8")
-    )
+    cases = json.loads(Path(__file__).with_name("cases.json").read_text(encoding="utf-8"))
     results = []
     for original in cases["identifiers"]:
         start = time.perf_counter_ns()
@@ -76,17 +72,13 @@ def main() -> int:
         )
 
     def identifiers(index: int) -> None:
-        safe_dart_identifier(
-            cases["identifiers"][index % len(cases["identifiers"])]
-        )
+        safe_dart_identifier(cases["identifiers"][index % len(cases["identifiers"])])
 
     print(
         json.dumps(
             {
                 "identifier_results": results,
-                "measurements": {
-                    "identifier_transformation": _measure(identifiers)
-                },
+                "measurements": {"identifier_transformation": _measure(identifiers)},
                 "non_equivalent_reason": (
                     "v1 repairs candidates and old import planning rendered "
                     "statements or rewrote some Dart providers"

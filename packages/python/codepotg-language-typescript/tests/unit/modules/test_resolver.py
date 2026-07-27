@@ -1,5 +1,6 @@
 import pytest
 from codepotg.ports import ModulePathKind, ModulePathRequest
+
 from codepotg_language_typescript import (
     AliasBinding,
     IndexResolutionPolicy,
@@ -138,9 +139,12 @@ def test_index_omission_applies_with_preserved_extensions_for_all_modes() -> Non
         aliases=(AliasBinding("@", "src"),),
     )
     adapter = TypeScriptTargetAdapter(options)
-    assert adapter.resolve_module_path(
-        ModulePathRequest("app/service.ts", provider_artifact="src/users/index.ts")
-    ).specifier == "@/users"
+    assert (
+        adapter.resolve_module_path(
+            ModulePathRequest("app/service.ts", provider_artifact="src/users/index.ts")
+        ).specifier
+        == "@/users"
+    )
     package_adapter = TypeScriptTargetAdapter(
         TypeScriptTargetOptions(
             extension_policy=TypeScriptExtensionPolicy.PRESERVE,
@@ -148,13 +152,16 @@ def test_index_omission_applies_with_preserved_extensions_for_all_modes() -> Non
             package_name="example-sdk",
         )
     )
-    assert package_adapter.resolve_module_path(
-        ModulePathRequest(
-            "src/service.ts",
-            provider_artifact="src/index.ts",
-            project_root="src",
-        )
-    ).specifier == "example-sdk"
+    assert (
+        package_adapter.resolve_module_path(
+            ModulePathRequest(
+                "src/service.ts",
+                provider_artifact="src/index.ts",
+                project_root="src",
+            )
+        ).specifier
+        == "example-sdk"
+    )
 
 
 def test_artifact_suffixes_are_required() -> None:

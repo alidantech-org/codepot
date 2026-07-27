@@ -28,12 +28,8 @@ class PrivateIdentifierPolicy(StrEnum):
 @dataclass(frozen=True, slots=True)
 class DartTargetOptions:
     reserved_word_policy: ReservedWordPolicy = ReservedWordPolicy.ERROR
-    unicode_identifier_policy: UnicodeIdentifierPolicy = (
-        UnicodeIdentifierPolicy.ASCII_ONLY
-    )
-    private_identifier_policy: PrivateIdentifierPolicy = (
-        PrivateIdentifierPolicy.ALLOW_WITH_FACT
-    )
+    unicode_identifier_policy: UnicodeIdentifierPolicy = UnicodeIdentifierPolicy.ASCII_ONLY
+    private_identifier_policy: PrivateIdentifierPolicy = PrivateIdentifierPolicy.ALLOW_WITH_FACT
     package_name: str | None = None
     prefer_package_uris: bool = False
 
@@ -55,13 +51,8 @@ class DartTargetOptions:
         )
 
         if self.package_name is not None and not isinstance(self.package_name, str):
-            raise ValueError(
-                "DART_MODULE_PACKAGE_INVALID: package_name must be a string or null"
-            )
-        if (
-            self.package_name is not None
-            and _PACKAGE.fullmatch(self.package_name) is None
-        ):
+            raise ValueError("DART_MODULE_PACKAGE_INVALID: package_name must be a string or null")
+        if self.package_name is not None and _PACKAGE.fullmatch(self.package_name) is None:
             raise ValueError("DART_MODULE_PACKAGE_INVALID: invalid Dart package name")
         if not isinstance(self.prefer_package_uris, bool):
             raise ValueError("prefer_package_uris must be a boolean")

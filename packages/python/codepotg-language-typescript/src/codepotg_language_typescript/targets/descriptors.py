@@ -34,9 +34,7 @@ TARGETS = (
     TargetDescriptor(
         id="typescript",
         aliases=("ts",),
-        extensions=tuple(
-            sorted((".cts", ".d.cts", ".d.mts", ".d.ts", ".mts", ".ts"))
-        ),
+        extensions=tuple(sorted((".cts", ".d.cts", ".d.mts", ".d.ts", ".mts", ".ts"))),
         behavior_version=BehaviorVersion(1),
         capabilities=TYPESCRIPT_CAPABILITIES,
     ),

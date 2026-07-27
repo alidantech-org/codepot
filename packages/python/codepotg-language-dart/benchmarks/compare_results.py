@@ -26,12 +26,8 @@ def main() -> int:
         )
         return 3
 
-    v1_results = {
-        item["original"]: item for item in v1.get("identifier_results", ())
-    }
-    v2_results = {
-        item["original"]: item for item in v2.get("identifier_results", ())
-    }
+    v1_results = {item["original"]: item for item in v1.get("identifier_results", ())}
+    v2_results = {item["original"]: item for item in v2.get("identifier_results", ())}
     comparisons = []
     for original in sorted(set(v1_results) & set(v2_results)):
         old = v1_results[original]
@@ -39,8 +35,7 @@ def main() -> int:
         reason = None
         if old["changed"]:
             reason = (
-                "v1 transformed the authored candidate; v2 preserved it and "
-                "returned diagnostics"
+                "v1 transformed the authored candidate; v2 preserved it and returned diagnostics"
             )
         comparisons.append(
             {

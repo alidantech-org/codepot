@@ -20,6 +20,8 @@ Recognized suffixes are `.j2`, `.jinja`, and `.jinja2`.
 
 The default engine has no filesystem loader, package loader, network client, environment-variable reader, process runner, writer, command executor, target renderer, output-path planner, or process-global Jinja environment/cache. Dynamic template dependencies are rejected. Context callables and arbitrary Python objects are rejected before compilation.
 
+Loop metadata such as `loop.index`, `loop.first`, and `loop.last` is readable. Callable loop helpers, including `loop.cycle()` and `loop.changed()`, deliberately remain unavailable in the strict first-version profile because the callable policy permits only template-owned macros/block references and explicitly registered host helpers.
+
 Autoescape is disabled because CodepotG templates author arbitrary target files rather than an assumed HTML document.
 
 ## Construction

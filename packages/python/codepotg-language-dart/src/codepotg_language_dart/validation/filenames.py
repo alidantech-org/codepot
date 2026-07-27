@@ -22,11 +22,7 @@ def validate_output_path(request: OutputPathValidationRequest) -> Diagnostics:
     found = []
     errors = validate_lexical_path(request.path)
     if errors:
-        code = (
-            "DART_FILE_RESERVED_NAME"
-            if "reserved_name" in errors
-            else "DART_FILE_PATH_INVALID"
-        )
+        code = "DART_FILE_RESERVED_NAME" if "reserved_name" in errors else "DART_FILE_PATH_INVALID"
         found.append(
             diagnostic(
                 code,

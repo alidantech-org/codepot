@@ -9,6 +9,7 @@ from codepotg.ports import (
     ModulePathRequest,
     OutputPathValidationRequest,
 )
+
 from codepotg_language_typescript import (
     AliasBinding,
     TypeScriptTargetAdapter,
@@ -40,9 +41,7 @@ def test_path_depth_and_extension_matrix_is_stable() -> None:
         for suffix in suffixes:
             target = "typescript-jsx" if suffix == ".tsx" else "typescript"
             request = OutputPathValidationRequest(f"{prefix}/value{suffix}", target)
-            assert adapter.validate_output_path(request) == adapter.validate_output_path(
-                request
-            )
+            assert adapter.validate_output_path(request) == adapter.validate_output_path(request)
 
 
 def test_alias_segment_boundaries_and_relative_depth() -> None:

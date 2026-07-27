@@ -6,6 +6,7 @@ Claim a narrow task range before changing implementation files. The package has 
 
 | Task ID | Subsystem | Owner/chat | Status | Expected files | Dependencies | Notes |
 |---|---|---|---|---|---|---|
+| AUTHOR-001..AUTHOR-013, AUTHOR-015..AUTHOR-020, AUTHOR-022, AUTHOR-024, AUTHOR-027..AUTHOR-030 | Typed Python authoring compiler, current-core semantic builders, canonical transport, verification, and documentation | GPT-5.6 Thinking / CODEPOT session 2026-07-27 | claimed | `pyproject.toml`; `README.md`; `src/codepotg_author/**`; mirrored `tests/**`; `examples/**`; `benchmarks/**`; `docs/tasks/{PARALLEL_WORK,PROGRESS}.md`; public API/support documentation | Public `codepotg.ir`, `codepotg.diagnostics`, naming, versions, and validation facades at base `82796179` | AUTHOR-014, AUTHOR-021, AUTHOR-023, AUTHOR-025, AUTHOR-026, extended AUTHOR-019, and public-codec ownership in AUTHOR-028 remain blocked on exact public core contracts. Unsupported declarations will return `AUTHOR_CORE_UNSUPPORTED` and will not enter IR/extensions/raw. |
 
 ## Available lanes
 

@@ -1,5 +1,6 @@
 import pytest
 from codepotg.ports import OutputPathValidationRequest
+
 from codepotg_language_typescript import create_plugin
 
 
@@ -17,9 +18,7 @@ from codepotg_language_typescript import create_plugin
 )
 def test_valid_paths(path: str) -> None:
     target = "typescript-jsx" if path.endswith(".tsx") else "typescript"
-    diagnostics = create_plugin().validate_output_path(
-        OutputPathValidationRequest(path, target)
-    )
+    diagnostics = create_plugin().validate_output_path(OutputPathValidationRequest(path, target))
     assert not diagnostics.has_errors
 
 
@@ -50,6 +49,4 @@ def test_declaration_requires_basename() -> None:
     diagnostics = create_plugin().validate_output_path(
         OutputPathValidationRequest("src/.d.ts", "typescript")
     )
-    assert "TS_FILE_DECLARATION_INVALID" in {
-        diagnostic.code for diagnostic in diagnostics
-    }
+    assert "TS_FILE_DECLARATION_INVALID" in {diagnostic.code for diagnostic in diagnostics}
