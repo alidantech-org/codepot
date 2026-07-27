@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from importlib.metadata import EntryPoint, entry_points
-from typing import Callable
+from typing import Callable, TypeVar, cast
 
-from codepotg.plugins import PluginCategory, PluginRegistry
+from codepotg.plugins import PluginRegistry
 from codepotg.ports import SourceAdapter, TargetAdapter, TemplateEngine
 
 
@@ -113,8 +113,11 @@ class RuntimePlugins:
         return engine, suffix
 
 
-def _load_group(group: str, protocol: type[object]) -> tuple[object, ...]:
-    loaded: list[object] = []
+T = TypeVar("T")
+
+
+def _load_group(group: str, protocol: type[T]) -> tuple[T, ...]:
+    loaded: list[T] = []
     selected = tuple(sorted(entry_points(group=group), key=lambda item: item.name))
     for entry in selected:
         factory = _load_factory(entry)
@@ -128,7 +131,7 @@ def _load_group(group: str, protocol: type[object]) -> tuple[object, ...]:
             raise PluginLoadError(
                 f"plugin {group}:{entry.name} does not implement the public protocol"
             )
-        loaded.append(instance)
+        loaded.append(cast(T, instance))
     return tuple(loaded)
 
 
