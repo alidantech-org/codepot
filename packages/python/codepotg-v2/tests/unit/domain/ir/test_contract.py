@@ -4,7 +4,15 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from codepotg.ir import Contract, OperationFacets, Schema, SchemaKind, SemanticId, TypeExpression
+from codepotg.ir import (
+    Contract,
+    Name,
+    OperationFacets,
+    Schema,
+    SchemaKind,
+    SemanticId,
+    TypeExpression,
+)
 
 
 def test_connected_application_contract_exposes_expected_relations(
@@ -31,21 +39,15 @@ def test_structural_schema_kinds_enforce_required_shape() -> None:
     with pytest.raises(ValueError, match="enum schemas require"):
         Schema(
             id=SemanticId("schema.empty_enum"),
-            name=connected_name("EmptyEnum"),
+            name=Name("EmptyEnum"),
             kind=SchemaKind.ENUM,
         )
 
     with pytest.raises(ValueError, match="array schemas require"):
         Schema(
             id=SemanticId("schema.array"),
-            name=connected_name("Users"),
+            name=Name("Users"),
             kind=SchemaKind.ARRAY,
         )
 
     assert TypeExpression.array_of(TypeExpression.primitive("string")).arguments
-
-
-def connected_name(value: str):
-    from codepotg.ir import Name
-
-    return Name(value)
