@@ -8,6 +8,10 @@ from pathspec import PathSpec
 from codepotg.config import PackManifest
 from codepotg.runtime.plugins import PluginLoadError, RuntimePlugins
 
+from .manifest_validation import (
+    validate_pack_compatibility,
+    validate_selection_graph,
+)
 from .models import DiscoveredPackFile, PackFileKind
 
 _SELECTION_FOLDER = re.compile(r"^\{([A-Za-z][A-Za-z0-9_-]*)\}$")
@@ -26,6 +30,9 @@ def discover_pack_files(
     manifest: PackManifest,
     plugins: RuntimePlugins,
 ) -> tuple[DiscoveredPackFile, ...]:
+    validate_pack_compatibility(manifest)
+    validate_selection_graph(manifest)
+
     root = Path(pack_root).resolve(strict=True)
     templates = (root / "templates").resolve(strict=True)
     _require_contained(templates, root, "PACK_TEMPLATES_ESCAPE")
