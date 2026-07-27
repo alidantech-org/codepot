@@ -31,12 +31,12 @@ class PydanticCompiler:
     def compile(self, model: type[object], *, name: str | None = None) -> SchemaRef[object]:
         if not issubclass(model, BaseModel):
             raise TypeError("pydantic_model requires a Pydantic v2 BaseModel subclass")
-        model_type = cast(type[BaseModel], model)
+        model_type = model
         existing = self._compiled.get(model_type)
         if existing is not None:
             return existing
         schema_name = name or model_type.__name__
-        ref = cast(SchemaRef[object], self._author.schema(schema_name, {}, group=self._group))
+        ref = self._author.schema(schema_name, {}, group=self._group)
         self._compiled[model_type] = ref
         hints = get_type_hints(model_type, include_extras=True)
         fields: list[FieldDeclaration] = []
@@ -54,24 +54,22 @@ class PydanticCompiler:
                 )
             else:
                 fields.append(FieldDeclaration(field_name, annotation=normalized, options=options))
-        self._author._replace_payload(
+        self._author._replace_payload(  # pyright: ignore[reportPrivateUsage]
             ref,
             SchemaDeclaration(SchemaDeclarationKind.OBJECT, fields=tuple(fields)),
         )
         return ref
 
     def _normalize_annotation(self, annotation: object) -> object:
+        original: object = annotation
         if isinstance(annotation, type) and issubclass(annotation, BaseModel):
             return self.compile(annotation)
         if isinstance(annotation, type) and issubclass(annotation, Enum):
-            enum_type = cast(type[Enum], annotation)
+            enum_type = annotation
             existing = self._enum_refs.get(enum_type)
             if existing is not None:
                 return existing
-            ref = cast(
-                SchemaRef[object],
-                self._author.enum_schema(enum_type.__name__, enum_type, group=self._group),
-            )
+            ref = self._author.enum_schema(enum_type.__name__, enum_type, group=self._group)
             self._enum_refs[enum_type] = ref
             return ref
         origin = get_origin(annotation)
@@ -91,7 +89,7 @@ class PydanticCompiler:
         if origin in {UnionType, Union} and args:
             members = tuple(self._type_expression(item) for item in args)
             return members[0] if len(members) == 1 else TypeExpression.union_of(*members)
-        return annotation
+        return original
 
     def _type_expression(self, annotation: object) -> TypeExpression:
         normalized = self._normalize_annotation(annotation)
@@ -99,22 +97,22 @@ class PydanticCompiler:
             return normalized
         if isinstance(normalized, SchemaRef):
             return TypeExpression.reference_to(normalized.declaration_id)
-        primitives: dict[object, str] = {
-            str: "string",
-            int: "integer",
-            float: "number",
-            bool: "boolean",
-            bytes: "bytes",
-            object: "object",
-            Any: "unknown",
-            NoneType: "null",
-        }
-        try:
-            primitive = primitives.get(normalized)
-        except TypeError:
-            primitive = None
-        if primitive is not None:
-            return TypeExpression.primitive(primitive)
+        if normalized is str:
+            return TypeExpression.primitive("string")
+        if normalized is int:
+            return TypeExpression.primitive("integer")
+        if normalized is float:
+            return TypeExpression.primitive("number")
+        if normalized is bool:
+            return TypeExpression.primitive("boolean")
+        if normalized is bytes:
+            return TypeExpression.primitive("bytes")
+        if normalized is object:
+            return TypeExpression.primitive("object")
+        if normalized is Any:
+            return TypeExpression.primitive("unknown")
+        if normalized is NoneType:
+            return TypeExpression.primitive("null")
         if isinstance(normalized, type):
             return TypeExpression.primitive(normalized.__name__.lower())
         return TypeExpression(TypeKind.UNKNOWN)
