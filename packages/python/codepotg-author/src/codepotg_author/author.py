@@ -3,11 +3,16 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
 
 from .declarations import Declaration
-from .diagnostics import AUTHOR_CORE_UNSUPPORTED, AuthorDiagnostic, AuthorDiagnostics
+from .diagnostics import (
+    AUTHOR_CORE_UNSUPPORTED,
+    AuthorDiagnostic,
+    AuthorDiagnostics,
+    AuthorDiagnosticSeverity,
+)
 from .options import AuthorOptions
 from .refs import (
     EventRef,
@@ -23,8 +28,25 @@ from .refs import (
     ViewRef,
     WorkflowRef,
 )
-from .schemas import FieldOptions, ProjectionStep, PropertyDeclaration, SchemaDeclaration, SchemaDeclarationKind, fields_from_mapping
-from .semantics import EventDeclaration, OperationDeclaration, PolicyDeclaration, StorageDeclaration, ViewDeclaration, WorkflowDeclaration
+from .schemas import (
+    FieldOptions,
+    ProjectionStep,
+    PropertyDeclaration,
+    SchemaDeclaration,
+    SchemaDeclarationKind,
+    fields_from_mapping,
+)
+from .semantics import (
+    EventDeclaration,
+    OperationDeclaration,
+    PolicyDeclaration,
+    StorageDeclaration,
+    ViewDeclaration,
+    WorkflowDeclaration,
+)
+
+if TYPE_CHECKING:
+    from .compiler import AuthoringResult
 
 _REF_TYPES: dict[RefKind, type[Ref[Any]]] = {
     RefKind.GROUP: GroupRef,
@@ -68,7 +90,9 @@ class Author:
 
     @property
     def declarations(self) -> tuple[Declaration, ...]:
-        return tuple(sorted(self._declarations.values(), key=lambda item: (item.kind.value, item.id)))
+        return tuple(
+            sorted(self._declarations.values(), key=lambda item: (item.kind.value, item.id))
+        )
 
     def freeze(self) -> None:
         self._frozen = True
@@ -88,8 +112,9 @@ class Author:
     ) -> Ref[Any]:
         if kind in _UNSUPPORTED_KINDS:
             diagnostic = AuthorDiagnostic(
-                AUTHOR_CORE_UNSUPPORTED,
-                f"{kind.value} is not supported by the public core IR",
+                code=AUTHOR_CORE_UNSUPPORTED,
+                severity=AuthorDiagnosticSeverity.ERROR,
+                message=f"{kind.value} is not supported by the public core IR",
                 details=(("kind", kind.value),),
             )
             self._diagnostics = self._diagnostics.add(diagnostic)
@@ -118,7 +143,11 @@ class Author:
         self._require_local(ref)
         current = self._declarations[ref.declaration_id]
         self._declarations[ref.declaration_id] = Declaration(
-            current.id, current.name, current.kind, current.group_id, payload
+            current.id,
+            current.name,
+            current.kind,
+            current.group_id,
+            payload,
         )
 
     def group(self, name: str, *, declaration_id: str | None = None) -> GroupRef:
@@ -134,7 +163,16 @@ class Author:
         group: GroupRef | None = None,
     ) -> PropertyRef[object]:
         payload = PropertyDeclaration(annotation, options or FieldOptions())
-        return cast(PropertyRef[object], self.declare(RefKind.PROPERTY, name, declaration_id=declaration_id, group=group, payload=payload))
+        return cast(
+            PropertyRef[object],
+            self.declare(
+                RefKind.PROPERTY,
+                name,
+                declaration_id=declaration_id,
+                group=group,
+                payload=payload,
+            ),
+        )
 
     def schema(
         self,
@@ -144,8 +182,20 @@ class Author:
         declaration_id: str | None = None,
         group: GroupRef | None = None,
     ) -> SchemaRef[object]:
-        payload = SchemaDeclaration(SchemaDeclarationKind.OBJECT, fields=fields_from_mapping(fields or {}))
-        return cast(SchemaRef[object], self.declare(RefKind.SCHEMA, name, declaration_id=declaration_id, group=group, payload=payload))
+        payload = SchemaDeclaration(
+            SchemaDeclarationKind.OBJECT,
+            fields=fields_from_mapping(fields or {}),
+        )
+        return cast(
+            SchemaRef[object],
+            self.declare(
+                RefKind.SCHEMA,
+                name,
+                declaration_id=declaration_id,
+                group=group,
+                payload=payload,
+            ),
+        )
 
     def enum_schema(
         self,
@@ -163,38 +213,171 @@ class Author:
         else:
             enum_values = values
         payload = SchemaDeclaration(SchemaDeclarationKind.ENUM, enum_values=enum_values)
-        return cast(SchemaRef[object], self.declare(RefKind.SCHEMA, name, declaration_id=declaration_id, group=group, payload=payload))
+        return cast(
+            SchemaRef[object],
+            self.declare(
+                RefKind.SCHEMA,
+                name,
+                declaration_id=declaration_id,
+                group=group,
+                payload=payload,
+            ),
+        )
 
-    def project_schema(self, source: SchemaRef[object], name: str, *steps: ProjectionStep, declaration_id: str | None = None, group: GroupRef | None = None) -> SchemaRef[object]:
+    def project_schema(
+        self,
+        source: SchemaRef[object],
+        name: str,
+        *steps: ProjectionStep,
+        declaration_id: str | None = None,
+        group: GroupRef | None = None,
+    ) -> SchemaRef[object]:
         self._require_local(source, RefKind.SCHEMA)
-        payload = SchemaDeclaration(SchemaDeclarationKind.OBJECT, source_schema=source, projection_steps=steps)
-        return cast(SchemaRef[object], self.declare(RefKind.SCHEMA, name, declaration_id=declaration_id, group=group, payload=payload))
+        payload = SchemaDeclaration(
+            SchemaDeclarationKind.OBJECT,
+            source_schema=source,
+            projection_steps=steps,
+        )
+        return cast(
+            SchemaRef[object],
+            self.declare(
+                RefKind.SCHEMA,
+                name,
+                declaration_id=declaration_id,
+                group=group,
+                payload=payload,
+            ),
+        )
 
-    def operation(self, name: str, declaration: OperationDeclaration | None = None, *, declaration_id: str | None = None, group: GroupRef | None = None) -> OperationRef[object, object]:
-        return cast(OperationRef[object, object], self.declare(RefKind.OPERATION, name, declaration_id=declaration_id, group=group, payload=declaration or OperationDeclaration()))
+    def operation(
+        self,
+        name: str,
+        declaration: OperationDeclaration | None = None,
+        *,
+        declaration_id: str | None = None,
+        group: GroupRef | None = None,
+    ) -> OperationRef[object, object]:
+        return cast(
+            OperationRef[object, object],
+            self.declare(
+                RefKind.OPERATION,
+                name,
+                declaration_id=declaration_id,
+                group=group,
+                payload=declaration or OperationDeclaration(),
+            ),
+        )
 
-    def event(self, name: str, declaration: EventDeclaration | None = None, *, declaration_id: str | None = None, group: GroupRef | None = None) -> EventRef[object]:
-        return cast(EventRef[object], self.declare(RefKind.EVENT, name, declaration_id=declaration_id, group=group, payload=declaration or EventDeclaration()))
+    def event(
+        self,
+        name: str,
+        declaration: EventDeclaration | None = None,
+        *,
+        declaration_id: str | None = None,
+        group: GroupRef | None = None,
+    ) -> EventRef[object]:
+        return cast(
+            EventRef[object],
+            self.declare(
+                RefKind.EVENT,
+                name,
+                declaration_id=declaration_id,
+                group=group,
+                payload=declaration or EventDeclaration(),
+            ),
+        )
 
-    def policy(self, name: str, declaration: PolicyDeclaration | None = None, *, declaration_id: str | None = None, group: GroupRef | None = None) -> PolicyRef:
-        return cast(PolicyRef, self.declare(RefKind.POLICY, name, declaration_id=declaration_id, group=group, payload=declaration or PolicyDeclaration()))
+    def policy(
+        self,
+        name: str,
+        declaration: PolicyDeclaration | None = None,
+        *,
+        declaration_id: str | None = None,
+        group: GroupRef | None = None,
+    ) -> PolicyRef:
+        return cast(
+            PolicyRef,
+            self.declare(
+                RefKind.POLICY,
+                name,
+                declaration_id=declaration_id,
+                group=group,
+                payload=declaration or PolicyDeclaration(),
+            ),
+        )
 
-    def storage(self, name: str, declaration: StorageDeclaration, *, declaration_id: str | None = None, group: GroupRef | None = None) -> StorageRef[object]:
+    def storage(
+        self,
+        name: str,
+        declaration: StorageDeclaration,
+        *,
+        declaration_id: str | None = None,
+        group: GroupRef | None = None,
+    ) -> StorageRef[object]:
         self._require_local(declaration.schema, RefKind.SCHEMA)
-        return cast(StorageRef[object], self.declare(RefKind.STORAGE, name, declaration_id=declaration_id, group=group, payload=declaration))
+        return cast(
+            StorageRef[object],
+            self.declare(
+                RefKind.STORAGE,
+                name,
+                declaration_id=declaration_id,
+                group=group,
+                payload=declaration,
+            ),
+        )
 
-    def view(self, name: str, declaration: ViewDeclaration | None = None, *, declaration_id: str | None = None, group: GroupRef | None = None) -> ViewRef:
-        return cast(ViewRef, self.declare(RefKind.VIEW, name, declaration_id=declaration_id, group=group, payload=declaration or ViewDeclaration()))
+    def view(
+        self,
+        name: str,
+        declaration: ViewDeclaration | None = None,
+        *,
+        declaration_id: str | None = None,
+        group: GroupRef | None = None,
+    ) -> ViewRef:
+        return cast(
+            ViewRef,
+            self.declare(
+                RefKind.VIEW,
+                name,
+                declaration_id=declaration_id,
+                group=group,
+                payload=declaration or ViewDeclaration(),
+            ),
+        )
 
-    def workflow(self, name: str, declaration: WorkflowDeclaration | None = None, *, declaration_id: str | None = None, group: GroupRef | None = None) -> WorkflowRef:
-        return cast(WorkflowRef, self.declare(RefKind.WORKFLOW, name, declaration_id=declaration_id, group=group, payload=declaration or WorkflowDeclaration()))
+    def workflow(
+        self,
+        name: str,
+        declaration: WorkflowDeclaration | None = None,
+        *,
+        declaration_id: str | None = None,
+        group: GroupRef | None = None,
+    ) -> WorkflowRef:
+        return cast(
+            WorkflowRef,
+            self.declare(
+                RefKind.WORKFLOW,
+                name,
+                declaration_id=declaration_id,
+                group=group,
+                payload=declaration or WorkflowDeclaration(),
+            ),
+        )
 
-    def pydantic_model(self, model: type[object], *, name: str | None = None, group: GroupRef | None = None) -> SchemaRef[object]:
+    def pydantic_model(
+        self,
+        model: type[object],
+        *,
+        name: str | None = None,
+        group: GroupRef | None = None,
+    ) -> SchemaRef[object]:
         from .pydantic import PydanticCompiler
+
         return PydanticCompiler(self, group=group).compile(model, name=name)
 
-    def compile(self) -> object:
+    def compile(self) -> AuthoringResult:
         from .compiler import compile_author
+
         return compile_author(self)
 
     def _require_local(self, ref: Ref[Any], kind: RefKind | None = None) -> None:

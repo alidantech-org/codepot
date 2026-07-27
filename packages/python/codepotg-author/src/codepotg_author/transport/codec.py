@@ -8,6 +8,7 @@ from typing import Any
 import yaml
 from yaml.constructor import ConstructorError
 
+from codepotg.diagnostics import SourceIdentity, SourceKind, SourcePosition, SourceSpan
 from codepotg.ir import (
     AccessFacet,
     Compensation,
@@ -86,6 +87,9 @@ _TYPES = {
         SchemaField,
         SchemaUse,
         SemanticId,
+        SourceIdentity,
+        SourcePosition,
+        SourceSpan,
         StorageFieldMapping,
         StorageMapping,
         TriggerFacet,
@@ -101,7 +105,14 @@ _TYPES = {
 }
 _ENUMS = {
     cls.__name__: cls
-    for cls in (ExecutionPhase, SchemaKind, TriggerKind, TypeKind, WorkflowStepKind)
+    for cls in (
+        ExecutionPhase,
+        SchemaKind,
+        SourceKind,
+        TriggerKind,
+        TypeKind,
+        WorkflowStepKind,
+    )
 }
 
 
@@ -109,7 +120,11 @@ class DuplicateSafeLoader(yaml.SafeLoader):
     pass
 
 
-def _construct_mapping(loader: DuplicateSafeLoader, node: yaml.MappingNode, deep: bool = False) -> dict[object, object]:
+def _construct_mapping(
+    loader: DuplicateSafeLoader,
+    node: yaml.MappingNode,
+    deep: bool = False,
+) -> dict[object, object]:
     loader.flatten_mapping(node)
     result: dict[object, object] = {}
     for key_node, value_node in node.value:
@@ -162,11 +177,16 @@ def from_document(document: object) -> Contract:
 
 
 def dumps_json(contract: Contract) -> str:
-    return json.dumps(to_document(contract), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return json.dumps(
+        to_document(contract),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
 
 
 def loads_json(value: str | bytes) -> Contract:
-    return from_document(json.loads(value))
+    return from_document(json.loads(value, object_pairs_hook=_unique_pairs))
 
 
 def dumps_yaml(contract: Contract) -> str:
@@ -174,8 +194,20 @@ def dumps_yaml(contract: Contract) -> str:
 
 
 def loads_yaml(value: str | bytes) -> Contract:
-    loaded = yaml.load(value, Loader=DuplicateSafeLoader)
-    return from_document(loaded)
+    return from_document(yaml.load(value, Loader=DuplicateSafeLoader))
+
+
+def _unique_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate key: {key}")
+        result[key] = value
+    return result
+
+
+def _init_fields(cls: type[object]) -> tuple[Any, ...]:
+    return tuple(item for item in fields(cls) if item.init)
 
 
 def _encode(value: object) -> object:
@@ -187,7 +219,7 @@ def _encode(value: object) -> object:
         return {"$tuple": [_encode(item) for item in value]}
     if is_dataclass(value) and not isinstance(value, type):
         result: dict[str, object] = {"$type": value.__class__.__name__}
-        for item in fields(value):
+        for item in _init_fields(value.__class__):
             result[item.name] = _encode(getattr(value, item.name))
         return result
     raise TypeError(f"unsupported IR transport value: {type(value).__name__}")
@@ -216,7 +248,7 @@ def _decode(value: object) -> object:
     if not isinstance(type_name, str) or type_name not in _TYPES:
         raise ValueError(f"unknown IR value type: {type_name!r}")
     cls = _TYPES[type_name]
-    allowed = {item.name for item in fields(cls)}
+    allowed = {item.name for item in _init_fields(cls)}
     supplied = set(value) - {"$type"}
     unknown = supplied - allowed
     if unknown:

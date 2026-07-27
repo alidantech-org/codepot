@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from codepotg_author.refs import EventRef, OperationRef, SchemaRef
 
@@ -45,6 +45,8 @@ class OperationDeclaration:
         failure_codes = tuple(item.code for item in self.failures)
         if len(failure_codes) != len(set(failure_codes)):
             raise ValueError("operation failure codes must be unique")
+        if (self.http_method is None) != (self.http_path is None):
+            raise ValueError("HTTP method and path must be supplied together")
         if self.http_method is not None:
             method = self.http_method.upper()
             if method not in {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}:
@@ -95,6 +97,8 @@ class StorageDeclaration:
         names = tuple(item.field_name for item in self.fields)
         if len(names) != len(set(names)):
             raise ValueError("storage mapped fields must be unique")
+        if len(self.primary_key) != len(set(self.primary_key)):
+            raise ValueError("storage primary-key fields must be unique")
 
 
 @dataclass(frozen=True, slots=True)

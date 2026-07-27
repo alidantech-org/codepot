@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
 from types import NoneType, UnionType
-from typing import Any, get_args, get_origin
+from typing import Any, Union, get_args, get_origin
 
 from codepotg.diagnostics import Diagnostic, DiagnosticSeverity, Diagnostics
 from codepotg.ir import (
@@ -40,9 +39,23 @@ from codepotg.ir import (
 )
 
 from .declarations import Declaration
-from .refs import PropertyRef, RefKind, SchemaRef
-from .schemas import FieldDeclaration, PropertyDeclaration, SchemaDeclaration, expand_projection
-from .semantics import EventDeclaration, OperationDeclaration, PolicyDeclaration, StorageDeclaration, ViewDeclaration, WorkflowDeclaration, WorkflowStepDeclaration
+from .refs import PropertyRef, Ref, RefKind, SchemaRef
+from .schemas import (
+    FieldDeclaration,
+    FieldOptions,
+    PropertyDeclaration,
+    SchemaDeclaration,
+    expand_projection,
+)
+from .semantics import (
+    EventDeclaration,
+    OperationDeclaration,
+    PolicyDeclaration,
+    StorageDeclaration,
+    ViewDeclaration,
+    WorkflowDeclaration,
+    WorkflowStepDeclaration,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,11 +72,15 @@ def compile_author(author: Any) -> AuthoringResult:
     try:
         author.freeze()
         declarations = author.declarations
-        schema_declarations = _expanded_schemas(author, declarations)
-        schemas = tuple(_compile_schema(author, declaration, schema_declarations) for declaration in _ordered_schema_declarations(author, declarations, schema_declarations))
-        schema_by_id = {schema.id.value: schema for schema in schemas}
-        groups = _compile_groups(author, declarations, schemas, schema_by_id)
-        contract = Contract(SemanticId(f"contract/{_slug(author.name)}"), Name(author.name), groups, version=author.version)
+        expanded = _expanded_schemas(declarations)
+        ordered = _ordered_schema_declarations(author, declarations, expanded)
+        schemas = tuple(_compile_schema(author, item, expanded[item.id]) for item in ordered)
+        contract = Contract(
+            SemanticId(f"contract/{_slug(author.name)}"),
+            Name(author.name),
+            _compile_groups(author, declarations, schemas),
+            version=author.version,
+        )
         diagnostics = validate_contract(contract)
         return AuthoringResult(None if diagnostics.has_errors else contract, diagnostics)
     except Exception as exc:
@@ -76,7 +93,7 @@ def compile_author(author: Any) -> AuthoringResult:
         return AuthoringResult(None, Diagnostics.from_iterable((diagnostic,)))
 
 
-def _expanded_schemas(author: Any, declarations: tuple[Declaration, ...]) -> dict[str, SchemaDeclaration]:
+def _expanded_schemas(declarations: tuple[Declaration, ...]) -> dict[str, SchemaDeclaration]:
     raw = {
         item.id: item.payload
         for item in declarations
@@ -100,8 +117,8 @@ def _expanded_schemas(author: Any, declarations: tuple[Declaration, ...]) -> dic
                 enum_values=declaration.enum_values,
                 alias_of=declaration.alias_of,
             )
-        result[identifier] = declaration
         visiting.remove(identifier)
+        result[identifier] = declaration
         return declaration
 
     for identifier in sorted(raw):
@@ -109,16 +126,18 @@ def _expanded_schemas(author: Any, declarations: tuple[Declaration, ...]) -> dic
     return result
 
 
-def _ordered_schema_declarations(author: Any, declarations: tuple[Declaration, ...], schemas: dict[str, SchemaDeclaration]) -> tuple[Declaration, ...]:
+def _ordered_schema_declarations(
+    author: Any,
+    declarations: tuple[Declaration, ...],
+    schemas: dict[str, SchemaDeclaration],
+) -> tuple[Declaration, ...]:
     by_id = {item.id: item for item in declarations if item.id in schemas}
     ordered: list[Declaration] = []
     permanent: set[str] = set()
     temporary: set[str] = set()
 
     def visit(identifier: str) -> None:
-        if identifier in permanent:
-            return
-        if identifier in temporary:
+        if identifier in permanent or identifier in temporary:
             return
         temporary.add(identifier)
         for dependency in sorted(_schema_dependencies(author, schemas[identifier])):
@@ -156,15 +175,12 @@ def _annotation_dependencies(annotation: object) -> set[str]:
     return result
 
 
-def _compile_schema(author: Any, declaration: Declaration, schemas: dict[str, SchemaDeclaration]) -> Schema:
-    source = schemas[declaration.id]
-    kind = SchemaKind(source.kind.value)
-    fields = tuple(_compile_field(author, declaration.id, item) for item in source.fields)
+def _compile_schema(author: Any, declaration: Declaration, source: SchemaDeclaration) -> Schema:
     return Schema(
         SemanticId(declaration.id),
         Name(declaration.name),
-        kind,
-        fields=fields,
+        SchemaKind(source.kind.value),
+        fields=tuple(_compile_field(author, declaration.id, item) for item in source.fields),
         enum_values=source.enum_values,
         alias_of=_type_expression(author, source.alias_of) if source.alias_of is not None else None,
     )
@@ -178,20 +194,9 @@ def _compile_field(author: Any, schema_id: str, declaration: FieldDeclaration) -
         if not isinstance(property_declaration.payload, PropertyDeclaration):
             raise TypeError("property ref does not resolve to a property declaration")
         annotation = property_declaration.payload.annotation
-        base = property_declaration.payload.options
-        options = type(base)(
-            required=declaration.options.required if declaration.options != type(base)() else base.required,
-            nullable=declaration.options.nullable if declaration.options != type(base)() else base.nullable,
-            readonly=declaration.options.readonly if declaration.options != type(base)() else base.readonly,
-            minimum=declaration.options.minimum if declaration.options.minimum is not None else base.minimum,
-            maximum=declaration.options.maximum if declaration.options.maximum is not None else base.maximum,
-            min_length=declaration.options.min_length if declaration.options.min_length is not None else base.min_length,
-            max_length=declaration.options.max_length if declaration.options.max_length is not None else base.max_length,
-            pattern=declaration.options.pattern or base.pattern,
-            format=declaration.options.format or base.format,
-            description=declaration.options.description or base.description,
-        )
+        options = _merge_field_options(property_declaration.payload.options, declaration.options)
     if declaration.schema_ref is not None:
+        author.declaration(declaration.schema_ref)
         annotation = declaration.schema_ref
     return SchemaField(
         SemanticId(f"{schema_id}/field/{_slug(declaration.name)}"),
@@ -211,6 +216,23 @@ def _compile_field(author: Any, schema_id: str, declaration: FieldDeclaration) -
     )
 
 
+def _merge_field_options(base: FieldOptions, override: FieldOptions) -> FieldOptions:
+    if override == FieldOptions():
+        return base
+    return FieldOptions(
+        required=override.required,
+        nullable=override.nullable,
+        readonly=override.readonly,
+        minimum=override.minimum if override.minimum is not None else base.minimum,
+        maximum=override.maximum if override.maximum is not None else base.maximum,
+        min_length=override.min_length if override.min_length is not None else base.min_length,
+        max_length=override.max_length if override.max_length is not None else base.max_length,
+        pattern=override.pattern or base.pattern,
+        format=override.format or base.format,
+        description=override.description or base.description,
+    )
+
+
 def _type_expression(author: Any, annotation: object | None) -> TypeExpression:
     if isinstance(annotation, SchemaRef):
         author.declaration(annotation)
@@ -219,20 +241,35 @@ def _type_expression(author: Any, annotation: object | None) -> TypeExpression:
         declaration = author.declaration(annotation)
         if isinstance(declaration.payload, PropertyDeclaration):
             return _type_expression(author, declaration.payload.annotation)
-    primitive = {str: "string", int: "integer", float: "number", bool: "boolean", bytes: "bytes", object: "object", Any: "unknown", NoneType: "null"}
-    if annotation in primitive:
-        return TypeExpression.primitive(primitive[annotation])
-    if isinstance(annotation, Enum):
-        return TypeExpression.literal_value(annotation.value)
+    primitives: dict[object, str] = {
+        str: "string",
+        int: "integer",
+        float: "number",
+        bool: "boolean",
+        bytes: "bytes",
+        object: "object",
+        Any: "unknown",
+        NoneType: "null",
+    }
+    try:
+        primitive_name = primitives.get(annotation)
+    except TypeError:
+        primitive_name = None
+    if primitive_name is not None:
+        return TypeExpression.primitive(primitive_name)
     origin = get_origin(annotation)
     args = get_args(annotation)
     if origin in {list, set, frozenset} and args:
         return TypeExpression.array_of(_type_expression(author, args[0]))
     if origin is dict and len(args) == 2:
-        return TypeExpression.map_of(_type_expression(author, args[0]), _type_expression(author, args[1]))
+        return TypeExpression.map_of(
+            _type_expression(author, args[0]),
+            _type_expression(author, args[1]),
+        )
     if origin is tuple and args:
-        return TypeExpression.tuple_of(*(_type_expression(author, item) for item in args if item is not Ellipsis))
-    if origin in {UnionType, getattr(__import__("typing"), "Union")} and args:
+        members = tuple(_type_expression(author, item) for item in args if item is not Ellipsis)
+        return TypeExpression.tuple_of(*members)
+    if origin in {UnionType, Union} and args:
         members = tuple(_type_expression(author, item) for item in args)
         return members[0] if len(members) == 1 else TypeExpression.union_of(*members)
     if isinstance(annotation, type):
@@ -240,68 +277,172 @@ def _type_expression(author: Any, annotation: object | None) -> TypeExpression:
     return TypeExpression(TypeKind.UNKNOWN)
 
 
-def _compile_groups(author: Any, declarations: tuple[Declaration, ...], schemas: tuple[Schema, ...], schema_by_id: dict[str, Schema]) -> tuple[Group, ...]:
-    explicit = [item for item in declarations if item.kind is RefKind.GROUP]
-    group_ids = [item.id for item in explicit] or ["group/root"]
+def _compile_groups(
+    author: Any,
+    declarations: tuple[Declaration, ...],
+    schemas: tuple[Schema, ...],
+) -> tuple[Group, ...]:
+    explicit = tuple(item for item in declarations if item.kind is RefKind.GROUP)
+    group_ids = tuple(item.id for item in explicit) or ("group/root",)
     group_names = {item.id: item.name for item in explicit} or {"group/root": author.name}
     default_group = group_ids[0]
+    declaration_by_id = {item.id: item for item in declarations}
     result: list[Group] = []
     for group_id in group_ids:
-        owned = tuple(item for item in declarations if (item.group_id or default_group) == group_id)
+        owned = tuple(
+            item
+            for item in declarations
+            if item.kind is not RefKind.GROUP and (item.group_id or default_group) == group_id
+        )
+        owned_schema_ids = {item.id for item in owned if item.kind is RefKind.SCHEMA}
         result.append(
             Group(
                 SemanticId(group_id),
                 Name(group_names[group_id]),
-                schemas=tuple(item for item in schemas if next(declaration for declaration in declarations if declaration.id == item.id.value).group_id in {None, group_id}),
-                operations=tuple(_compile_operation(author, item) for item in owned if isinstance(item.payload, OperationDeclaration)),
-                views=tuple(_compile_view(author, item) for item in owned if isinstance(item.payload, ViewDeclaration)),
-                storage_mappings=tuple(_compile_storage(author, item, schema_by_id) for item in owned if isinstance(item.payload, StorageDeclaration)),
-                workflows=tuple(_compile_workflow(author, item) for item in owned if isinstance(item.payload, WorkflowDeclaration)),
-                policies=tuple(_compile_policy(item) for item in owned if isinstance(item.payload, PolicyDeclaration)),
-                events=tuple(_compile_event(item) for item in owned if isinstance(item.payload, EventDeclaration)),
+                schemas=tuple(item for item in schemas if item.id.value in owned_schema_ids),
+                operations=tuple(
+                    _compile_operation(author, item)
+                    for item in owned
+                    if isinstance(item.payload, OperationDeclaration)
+                ),
+                views=tuple(
+                    _compile_view(author, item)
+                    for item in owned
+                    if isinstance(item.payload, ViewDeclaration)
+                ),
+                storage_mappings=tuple(
+                    _compile_storage(author, item, schemas)
+                    for item in owned
+                    if isinstance(item.payload, StorageDeclaration)
+                ),
+                workflows=tuple(
+                    _compile_workflow(author, item)
+                    for item in owned
+                    if isinstance(item.payload, WorkflowDeclaration)
+                ),
+                policies=tuple(
+                    _compile_policy(item)
+                    for item in owned
+                    if isinstance(item.payload, PolicyDeclaration)
+                ),
+                events=tuple(
+                    _compile_event(author, item)
+                    for item in owned
+                    if isinstance(item.payload, EventDeclaration)
+                ),
             )
         )
+    if set(declaration_by_id) != {item.id for item in declarations}:
+        raise AssertionError("declaration ids changed during group compilation")
     return tuple(result)
+
+
+def _sid(author: Any, ref: Ref[Any] | None) -> SemanticId | None:
+    if ref is None:
+        return None
+    author.declaration(ref)
+    return SemanticId(ref.declaration_id)
 
 
 def _compile_operation(author: Any, item: Declaration) -> Operation:
     source = item.payload
     assert isinstance(source, OperationDeclaration)
-    http = HttpFacet(source.http_method, source.http_path, source.operation_id) if source.http_method and source.http_path else None
+    http = (
+        HttpFacet(source.http_method, source.http_path, source.operation_id)
+        if source.http_method and source.http_path
+        else None
+    )
     return Operation(
-        SemanticId(item.id), Name(item.name),
-        inputs=tuple(SchemaUse(Name(value.name), SemanticId(value.schema.declaration_id), value.required, value.nullable, value.readonly) for value in source.inputs),
-        outputs=tuple(OperationOutput(Name(value.name) if value.name else None, SemanticId(value.schema.declaration_id) if value.schema else None, value.optional) for value in source.outputs),
-        failures=tuple(OperationFailure(value.code, SemanticId(value.schema.declaration_id) if value.schema else None, value.message) for value in source.failures),
-        effects=OperationEffects(tuple(EventEffect(SemanticId(value.declaration_id)) for value in source.emitted_events)),
+        SemanticId(item.id),
+        Name(item.name),
+        inputs=tuple(
+            SchemaUse(
+                Name(value.name),
+                _require_sid(author, value.schema),
+                value.required,
+                value.nullable,
+                value.readonly,
+            )
+            for value in source.inputs
+        ),
+        outputs=tuple(
+            OperationOutput(
+                Name(value.name) if value.name else None,
+                _sid(author, value.schema),
+                value.optional,
+            )
+            for value in source.outputs
+        ),
+        failures=tuple(
+            OperationFailure(value.code, _sid(author, value.schema), value.message)
+            for value in source.failures
+        ),
+        effects=OperationEffects(
+            tuple(EventEffect(_require_sid(author, value)) for value in source.emitted_events)
+        ),
         facets=OperationFacets(http=http),
     )
 
 
-def _compile_event(item: Declaration) -> Event:
+def _compile_event(author: Any, item: Declaration) -> Event:
     source = item.payload
     assert isinstance(source, EventDeclaration)
-    return Event(SemanticId(item.id), Name(item.name), SemanticId(source.payload_schema.declaration_id) if source.payload_schema else None, SemanticId(source.context_schema.declaration_id) if source.context_schema else None, source.version, source.source)
+    return Event(
+        SemanticId(item.id),
+        Name(item.name),
+        _sid(author, source.payload_schema),
+        _sid(author, source.context_schema),
+        source.version,
+        source.source,
+    )
 
 
 def _compile_policy(item: Declaration) -> Policy:
     source = item.payload
     assert isinstance(source, PolicyDeclaration)
-    return Policy(SemanticId(item.id), Name(item.name), source.roles, source.permissions, source.scopes, source.ownership, source.conditions)
+    return Policy(
+        SemanticId(item.id),
+        Name(item.name),
+        source.roles,
+        source.permissions,
+        source.scopes,
+        source.ownership,
+        source.conditions,
+    )
 
 
-def _compile_storage(author: Any, item: Declaration, schemas: dict[str, Schema]) -> StorageMapping:
+def _compile_storage(
+    author: Any,
+    item: Declaration,
+    schemas: tuple[Schema, ...],
+) -> StorageMapping:
     source = item.payload
     assert isinstance(source, StorageDeclaration)
-    schema = schemas[source.schema.declaration_id]
-    fields_by_name = {field.name.raw.original: field for field in schema.fields}
+    schema_id = _require_sid(author, source.schema)
+    schema = next(value for value in schemas if value.id == schema_id)
+    fields_by_name = {value.name.raw.original: value for value in schema.fields}
+
     def field_id(name: str) -> SemanticId:
         if name not in fields_by_name:
             raise ValueError(f"storage references unknown field: {name}")
         return fields_by_name[name].id
+
     return StorageMapping(
-        SemanticId(item.id), Name(item.name), schema.id, source.source,
-        fields=tuple(StorageFieldMapping(field_id(value.field_name), value.column, value.column_type, value.indexed, value.unique, value.nullable) for value in source.fields),
+        SemanticId(item.id),
+        Name(item.name),
+        schema.id,
+        source.source,
+        fields=tuple(
+            StorageFieldMapping(
+                field_id(value.field_name),
+                value.column,
+                value.column_type,
+                value.indexed,
+                value.unique,
+                value.nullable,
+            )
+            for value in source.fields
+        ),
         primary_key=tuple(field_id(name) for name in source.primary_key),
         indexes=tuple(tuple(field_id(name) for name in index) for index in source.indexes),
     )
@@ -311,8 +452,18 @@ def _compile_view(author: Any, item: Declaration) -> View:
     source = item.payload
     assert isinstance(source, ViewDeclaration)
     return View(
-        SemanticId(item.id), Name(item.name), SemanticId(source.schema.declaration_id) if source.schema else None,
-        triggers=tuple(ViewTrigger(Name(value.name), SemanticId(value.operation.declaration_id), value.interaction, SemanticId(value.payload_schema.declaration_id) if value.payload_schema else None) for value in source.triggers),
+        SemanticId(item.id),
+        Name(item.name),
+        _sid(author, source.schema),
+        triggers=tuple(
+            ViewTrigger(
+                Name(value.name),
+                _require_sid(author, value.operation),
+                value.interaction,
+                _sid(author, value.payload_schema),
+            )
+            for value in source.triggers
+        ),
     )
 
 
@@ -320,28 +471,56 @@ def _compile_workflow(author: Any, item: Declaration) -> Workflow:
     source = item.payload
     assert isinstance(source, WorkflowDeclaration)
     return Workflow(
-        SemanticId(item.id), Name(item.name),
-        inputs=tuple(SchemaUse(Name(value.name), SemanticId(value.schema.declaration_id), value.required, value.nullable, value.readonly) for value in source.inputs),
-        outputs=tuple(OperationOutput(Name(value.name) if value.name else None, SemanticId(value.schema.declaration_id) if value.schema else None, value.optional) for value in source.outputs),
-        steps=tuple(_compile_workflow_step(value) for value in source.steps),
+        SemanticId(item.id),
+        Name(item.name),
+        inputs=tuple(
+            SchemaUse(
+                Name(value.name),
+                _require_sid(author, value.schema),
+                value.required,
+                value.nullable,
+                value.readonly,
+            )
+            for value in source.inputs
+        ),
+        outputs=tuple(
+            OperationOutput(
+                Name(value.name) if value.name else None,
+                _sid(author, value.schema),
+                value.optional,
+            )
+            for value in source.outputs
+        ),
+        steps=tuple(_compile_workflow_step(author, value) for value in source.steps),
         transitions=tuple(WorkflowTransition(*value) for value in source.transitions),
-        failures=tuple(OperationFailure(value.code, SemanticId(value.schema.declaration_id) if value.schema else None, value.message) for value in source.failures),
-        effects=OperationEffects(tuple(EventEffect(SemanticId(value.declaration_id)) for value in source.emitted_events)),
+        failures=tuple(
+            OperationFailure(value.code, _sid(author, value.schema), value.message)
+            for value in source.failures
+        ),
+        effects=OperationEffects(
+            tuple(EventEffect(_require_sid(author, value)) for value in source.emitted_events)
+        ),
         compensation_order=source.compensation_order,
         continue_compensation_on_failure=source.continue_compensation_on_failure,
     )
 
 
-def _compile_workflow_step(source: WorkflowStepDeclaration) -> WorkflowStep:
+def _compile_workflow_step(author: Any, source: WorkflowStepDeclaration) -> WorkflowStep:
     return WorkflowStep(
         source.name,
         WorkflowStepKind(source.kind),
-        operation=SemanticId(source.operation.declaration_id) if source.operation else None,
-        nested_steps=tuple(_compile_workflow_step(item) for item in source.nested_steps),
+        operation=_sid(author, source.operation),
+        nested_steps=tuple(_compile_workflow_step(author, item) for item in source.nested_steps),
         decision_cases=tuple(WorkflowDecisionCase(*item) for item in source.decision_cases),
-        wait_event=SemanticId(source.wait_event.declaration_id) if source.wait_event else None,
+        wait_event=_sid(author, source.wait_event),
         timeout_seconds=source.timeout_seconds,
     )
+
+
+def _require_sid(author: Any, ref: Ref[Any]) -> SemanticId:
+    value = _sid(author, ref)
+    assert value is not None
+    return value
 
 
 def _slug(value: str) -> str:
