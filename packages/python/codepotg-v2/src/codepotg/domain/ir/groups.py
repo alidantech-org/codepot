@@ -8,7 +8,9 @@ from .facets import GroupFacets
 from .naming import Name
 from .operations import Operation
 from .policies import Policy
+from .presentations import Presentation
 from .schemas import Schema
+from .sources import ValueSource
 from .storage import StorageMapping, StorageNamespace
 from .views import View
 from .workflows import Workflow
@@ -29,6 +31,7 @@ class Group:
     groups: tuple[Group, ...] = ()
     facets: GroupFacets = field(default_factory=GroupFacets)
     data: KernelData = field(default_factory=KernelData)
+    value_sources: tuple[ValueSource, ...] = ()
 
     def __post_init__(self) -> None:
         if any(not part or "/" in part or "\\" in part for part in self.path):
@@ -36,6 +39,9 @@ class Group:
         child_ids = tuple(item.id for item in self.groups)
         if len(child_ids) != len(set(child_ids)):
             raise ValueError("nested group ids must be unique")
+        source_ids = tuple(item.id for item in self.value_sources)
+        if len(source_ids) != len(set(source_ids)):
+            raise ValueError("group value source ids must be unique")
 
     @property
     def storage(self) -> StorageNamespace:
@@ -49,6 +55,7 @@ class Contract:
     groups: tuple[Group, ...]
     version: str | None = None
     data: KernelData = field(default_factory=KernelData)
+    presentations: tuple[Presentation, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.groups:
@@ -56,6 +63,9 @@ class Contract:
         group_ids = tuple(item.id for item in self.groups)
         if len(group_ids) != len(set(group_ids)):
             raise ValueError("contract group ids must be unique")
+        presentation_ids = tuple(item.id for item in self.presentations)
+        if len(presentation_ids) != len(set(presentation_ids)):
+            raise ValueError("contract presentation ids must be unique")
 
 
 def walk_groups(groups: tuple[Group, ...]) -> tuple[Group, ...]:

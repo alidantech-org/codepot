@@ -24,7 +24,11 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Typing :: Typed",
 ]
-dependencies = []
+dependencies = [
+  "packaging>=24,<26",
+  "pathspec>=0.12,<1.0",
+  "PyYAML>=6.0.2,<7.0",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -32,6 +36,12 @@ dev = [
   "pytest>=8.3",
   "ruff>=0.9",
 ]
+
+[project.scripts]
+codepotg = "codepotg.cli.main:main"
+
+[project.entry-points."codepotg.source_adapters"]
+ir = "codepotg.infrastructure.ir_source:create_plugin"
 
 [project.urls]
 Homepage = "https://github.com/alidantech-org/codepot"

@@ -15,7 +15,9 @@ from ..events import Event
 from ..groups import Contract, walk_groups
 from ..operations import Operation
 from ..policies import Policy
-from ..schemas import Schema
+from ..presentations import Presentation, PresentationEntry
+from ..schemas import Schema, SchemaField
+from ..sources import ValueSource
 from ..storage import StorageMapping
 from ..views import View, walk_views
 from ..workflows import Workflow
@@ -30,12 +32,16 @@ class _Seen:
 @dataclass(slots=True)
 class SemanticIndex:
     schemas: dict[SemanticId, Schema] = field(default_factory=dict)
+    fields: dict[SemanticId, SchemaField] = field(default_factory=dict)
     operations: dict[SemanticId, Operation] = field(default_factory=dict)
     views: dict[SemanticId, View] = field(default_factory=dict)
     storage: dict[SemanticId, StorageMapping] = field(default_factory=dict)
     workflows: dict[SemanticId, Workflow] = field(default_factory=dict)
     events: dict[SemanticId, Event] = field(default_factory=dict)
     policies: dict[SemanticId, Policy] = field(default_factory=dict)
+    value_sources: dict[SemanticId, ValueSource] = field(default_factory=dict)
+    presentations: dict[SemanticId, Presentation] = field(default_factory=dict)
+    presentation_entries: dict[SemanticId, PresentationEntry] = field(default_factory=dict)
 
     @classmethod
     def build(cls, contract: Contract) -> tuple[SemanticIndex, Diagnostics]:
@@ -57,6 +63,7 @@ class SemanticIndex:
                         _owner_span(schema_field),
                         diagnostics,
                     )
+                    index.fields.setdefault(schema_field.id, schema_field)
             for operation in group.operations:
                 _register(seen, operation.id, "operation", _owner_span(operation), diagnostics)
                 index.operations.setdefault(operation.id, operation)
@@ -81,6 +88,28 @@ class SemanticIndex:
             for event in group.events:
                 _register(seen, event.id, "event", _owner_span(event), diagnostics)
                 index.events.setdefault(event.id, event)
+            for source in group.value_sources:
+                _register(seen, source.id, "value_source", _owner_span(source), diagnostics)
+                index.value_sources.setdefault(source.id, source)
+
+        for presentation in contract.presentations:
+            _register(
+                seen,
+                presentation.id,
+                "presentation",
+                _owner_span(presentation),
+                diagnostics,
+            )
+            index.presentations.setdefault(presentation.id, presentation)
+            for entry in presentation.entries:
+                _register(
+                    seen,
+                    entry.id,
+                    "presentation_entry",
+                    _owner_span(entry),
+                    diagnostics,
+                )
+                index.presentation_entries.setdefault(entry.id, entry)
 
         return index, Diagnostics.from_iterable(diagnostics)
 
