@@ -4,7 +4,8 @@
 
 ```text
 Base: chatgpt/codepotx-restart
-Fix branch: chatgpt/codepotx-restart-typescript-audit-fixes
+Historical fix branch: chatgpt/codepotx-restart-typescript-audit-fixes
+Final verified branch: chatgpt/codepotx-restart
 ```
 
 Use one slash only. Do not modify `.github/**` or core implementation files.
@@ -39,7 +40,8 @@ packages/python/codepotg-v2/docs/04-plugins/02-language-adapter-contract.md
 - [x] Unit coverage proves rejection behavior and valid extension/index enum behavior.
 - [x] Distribution tests build fresh temporary wheel/sdist artifacts and cannot skip because `dist/` is empty.
 - [x] Installed distribution and semantic plugin versions are asserted exactly.
-- [ ] Exact synchronized Ruff, format, full core/package, release build, and real-wheel checks remain open.
+- [x] Synchronized Ruff, format, full core/package, release build, TypeScript 5.9 oracle, real-wheel, and clean-tree checks passed in the user-supplied verification logs.
+- [x] Combined entry-point verification is hermetic: it builds all three wheels, installs them in a fresh virtual environment with `--no-index`, and fails if either adapter is missing or unloadable.
 - [ ] TS-006 and TS-009 remain blocked on public core/planner/pack contracts.
 
 ## Allowed files
@@ -68,14 +70,17 @@ python -m pytest -vv
 python -m build
 ```
 
-Then install the real core and TypeScript wheels in a fresh environment and run entry-point, identifier, output-path, relative, alias, package, and declaration-suffix checks.
+The distribution suite must also build and install the real core, TypeScript, and Dart wheels in a fresh environment and require both `codepotg.language_adapters` entry points. Missing sibling wheels or entry points are failures, never skips.
 
 ## Completion gate
 
 - invalid direct options are rejected deterministically;
 - all existing tests and new tests pass;
-- TypeScript compiler oracle passes or an exact environment blocker is recorded;
-- wheel/sdist contents are actually inspected after build;
+- the TypeScript compiler oracle passes;
+- wheel/sdist contents are inspected after build;
 - real-wheel isolated calls pass;
+- combined-wheel entry-point verification cannot skip;
 - task/progress statuses are truthful;
 - working tree is clean.
+
+The audit repair and TS-010 release gate are complete for the current public `TargetAdapter` port. TS-006 and TS-009 remain separate, explicit public-contract blockers.
