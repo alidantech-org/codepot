@@ -1,1 +1,3 @@
-"""Thin command-line parsing and presentation belong here."""
+from .main import main
+
+__all__ = ["main"]
