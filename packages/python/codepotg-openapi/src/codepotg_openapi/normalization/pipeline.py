@@ -8,7 +8,7 @@ from ..options import OpenApiOptions, XCodegenPolicy
 from ..parsing.document import ParsedDocument
 from ..references.resolver import ReferenceResolver
 from .context import NormalizationContext
-from .groups import prepare_groups
+from .groups import HTTP_METHODS, prepare_groups
 from .identities import stable_id
 from .operations import normalize_operations
 from .provenance import extension_values, kernel_data, selected_raw
@@ -26,6 +26,7 @@ def normalize_standard_contract(
     cancellation.raise_if_cancelled()
     if not _handle_unimplemented_x_codegen(root, options, diagnostics):
         return None
+    _diagnose_unimplemented_security(root, diagnostics)
 
     context = NormalizationContext(
         root=root,
@@ -118,3 +119,39 @@ def _handle_unimplemented_x_codegen(
         details=(("policy", options.x_codegen_policy.value), ("task", "OA-010")),
     )
     return False
+
+
+def _diagnose_unimplemented_security(
+    root: ParsedDocument,
+    diagnostics: DiagnosticBag,
+) -> None:
+    pointer = _first_security_pointer(root.value)
+    if pointer is None:
+        return
+    diagnostics.warning(
+        "OA_SECURITY_NOT_IMPLEMENTED",
+        "OpenAPI security and access normalization is not implemented; declarations were preserved only as source metadata",
+        span=root.span(pointer),
+        details=(("task", "OA-009"),),
+    )
+
+
+def _first_security_pointer(value: dict[str, object]) -> str | None:
+    if "security" in value:
+        return "/security"
+    components = value.get("components")
+    if isinstance(components, dict) and "securitySchemes" in components:
+        return "/components/securitySchemes"
+    paths = value.get("paths")
+    if not isinstance(paths, dict):
+        return None
+    for path_name in sorted(paths):
+        path_item = paths[path_name]
+        if not isinstance(path_item, dict):
+            continue
+        escaped_path = path_name.replace("~", "~0").replace("/", "~1")
+        for method in HTTP_METHODS:
+            operation = path_item.get(method)
+            if isinstance(operation, dict) and "security" in operation:
+                return f"/paths/{escaped_path}/{method}/security"
+    return None
