@@ -2,18 +2,18 @@
 
 This package detects and validates TypeScript targets and calculates module/path facts only. It must not contain source parsing, semantic-kernel extensions, generated TypeScript syntax, Node project management, frameworks, Jinja, output writing, command execution, or pack selection.
 
-PR #30 implemented most behavior available through the current public `TargetAdapter` port. The audited typed-option defect and conditional artifact-inspection gap are repaired on `chatgpt/codepotx-restart-typescript-audit-fixes`; synchronized release verification remains open.
+PR #30 implemented most behavior available through the current public `TargetAdapter` port. The audited typed-option and artifact-inspection defects were repaired and the synchronized current-port release gates were completed on `chatgpt/codepotx-restart`. Broader planner/module and official-pack work remains explicitly blocked.
 
 ## TS-001 — Package and plugin foundation
 
-**Status:** implemented in PR #30; final real-wheel release verification remains
+**Status:** complete for the current public adapter port
 
 - [x] Add isolated package metadata, src layout, typing marker, README, license, and tests.
 - [x] Register `typescript` in `codepotg.language_adapters`.
 - [x] Declare `.ts`, `.tsx`, `.mts`, `.cts`, `.d.ts`, `.d.mts`, and `.d.cts` behavior.
 - [x] Declare public plugin/API/IR compatibility and implemented capabilities.
 - [x] Add architecture tests proving public-only CodepotG usage and no syntax-rendering ownership.
-- [ ] Reproduce package import and entry-point checks from real installed core/adapter wheels.
+- [x] Reproduce package import and entry-point checks from real installed core/adapter wheels.
 
 ## TS-002 — Typed target option schema
 
@@ -31,7 +31,7 @@ Prohibited options remain generated naming roles, type mapping, literals, commen
 
 ## TS-003 — Target and extension resolver
 
-**Status:** implemented in PR #30
+**Status:** complete for the current public adapter port
 
 - [x] Implement longest-known target suffix matching.
 - [x] Preserve complete declaration suffix identity.
@@ -51,7 +51,7 @@ Prohibited options remain generated naming roles, type mapping, literals, commen
 
 ## TS-005 — Module path resolver
 
-**Status:** implemented for the current public port
+**Status:** complete for the current public adapter port
 
 - [x] Calculate relative module paths between planned artifacts.
 - [x] Resolve aliases by longest complete path-segment root.
@@ -72,7 +72,7 @@ Prohibited options remain generated naming roles, type mapping, literals, commen
 
 ## TS-007 — Capability and compatibility facade
 
-**Status:** implemented in PR #30
+**Status:** complete for the current public adapter port
 
 - [x] Compose descriptors, identifier validation, path validation, and module resolution behind the public adapter protocol.
 - [x] Accept immutable typed construction options.
@@ -81,7 +81,7 @@ Prohibited options remain generated naming roles, type mapping, literals, commen
 
 ## TS-008 — Shared conformance and negative boundaries
 
-**Status:** implemented in the available PR #30 harness
+**Status:** complete for the current public adapter port
 
 - [x] Pass public target-adapter conformance.
 - [x] Cover target, extension, declaration, filename, reserved-name, and identifier validation.
@@ -89,7 +89,7 @@ Prohibited options remain generated naming roles, type mapping, literals, commen
 - [x] Cover deterministic options, immutability, and session isolation.
 - [x] Prove no type/literal/comment/import/export/validator/decorator/framework renderer exists.
 - [x] Prove no semantic/facet/selector/context extension exists.
-- [ ] Reproduce the complete suite against the synchronized real core checkout.
+- [x] Reproduce the complete suite against the synchronized real core checkout.
 
 ## TS-009 — Integration with authored templates
 
@@ -102,19 +102,21 @@ Prohibited options remain generated naming roles, type mapping, literals, commen
 
 ## TS-010 — Documentation and release
 
-**Status:** review
+**Status:** complete for the current public adapter port
 
 - [x] Document current descriptors, options, module facts, baseline, and template-owned syntax boundary.
 - [x] Document explicit unsupported services.
 - [x] Add benchmark, oracle, distribution, and combined entry-point tooling.
-- [x] Record 71 passing tests and a local TypeScript compiler oracle in the implementation harness.
+- [x] Record the original implementation-harness evidence.
 - [x] Fix strict direct option construction and adapter option-object validation.
 - [x] Make wheel/sdist content inspection build fresh temporary artifacts and never conditionally skip.
 - [x] Add exact installed distribution and semantic plugin-version assertions.
-- [ ] Run Ruff and formatting on the synchronized repository.
-- [ ] Run the complete real core and TypeScript suites.
-- [ ] Build with the exact release command and install the real wheels in a fresh environment.
-- [ ] Record exact final evidence and clean-tree status.
+- [x] Run Ruff and formatting on the synchronized repository.
+- [x] Run the complete real core and TypeScript suites.
+- [x] Run the TypeScript compiler oracle with TypeScript 5.9-compatible Node 16 module settings.
+- [x] Build with the exact release command and install the real wheels in a fresh environment.
+- [x] Require TypeScript and Dart entry points from freshly built wheels in a new `--no-index` virtual environment without a skip path.
+- [x] Record final evidence and clean-tree status in `PROGRESS.md`.
 
 ## Audit follow-up
 
@@ -125,13 +127,15 @@ See:
 
 ## Completion gate
 
-The package is complete only when:
+The current public-port release is complete because:
 
 - it passes public conformance against the synchronized real core;
-- every option/capability is typed, introspectable, and equally validated through direct and mapping construction;
+- every currently exposed option/capability is typed, introspectable, and equally validated through direct and mapping construction;
 - relative, alias, package, explicit, index, extension, and declaration facts are correct;
 - candidate validation never mutates semantic names;
 - templates author every TypeScript character;
 - missing planner/symbol facts remain explicit blockers rather than private emulation;
 - no source, framework, engine, writer, CLI, command, semantic-extension, or syntax-rendering logic exists;
-- Ruff, format, full tests, build, post-build artifact inspection, real-wheel installation, and clean-tree checks pass and are recorded.
+- Ruff, format, full tests, build, compiler oracle, post-build artifact inspection, real-wheel installation, isolated dual-entry-point checks, and clean-tree checks pass and are recorded.
+
+TS-006 and TS-009 are not release regressions. They are future integration tasks blocked by missing public contracts and must remain partial until those contracts exist.
