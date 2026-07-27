@@ -1,31 +1,48 @@
 # Human validation: connected CodepotG v2 project
 
-This workspace is intentionally not a pytest fixture. It is a small real project that a developer can inspect, modify, generate, compile, break, and recover manually.
+This is a real, inspectable project—not a pytest fixture. It lets a developer author semantic input three ways, run the same local packs, inspect plans and generated code, compile two target languages, deliberately break generated files, and verify safe recovery.
 
-It exercises the currently connectable path:
+## What this workspace connects
 
 ```text
-Python using public codepotg.ir
-    -> canonical Codepot IR JSON and YAML
-    -> built-in ir source adapter
-    -> codepotg.yaml
-    -> two local CodepotgPack.yaml packs
-    -> fixed selectors and complete artifact planning
-    -> sandboxed Jinja rendering
-    -> TypeScript and Dart target adapters
-    -> memory output
-    -> managed transactional files
-    -> tsc and dart analyze
+A. public codepotg.ir Python objects
+B. codepotg-author -> public Contract -> core canonical codec
+C. standard OpenAPI -> codepotg-openapi -> public Contract
+                         |
+                         v
+                 CodepotG orchestrator
+                         |
+           +-------------+-------------+
+           |                           |
+   local TypeScript pack        local Dart pack
+           |                           |
+      sandboxed Jinja              sandboxed Jinja
+           |                           |
+ TypeScript target adapter       Dart target adapter
+           |                           |
+       tsc --noEmit             dart format/analyze
 ```
 
-It does not hide the two current ecosystem gaps:
+The three sources intentionally use the same pack manifests and templates. This proves that software meaning belongs to the neutral contract while emitted language/framework text belongs to packs.
 
-- `codepotg-author` can create typed declarations and refs, but does not compile a `Contract` yet.
-- `codepotg-openapi` advertises an entry point whose factory imports a missing `codepotg_openapi.adapter` module.
+## Important current boundary
 
-## 1. Use the correct branch
+`codepotg-author` now compiles a public `Contract`. However, its package-local `dumps_json()` / `dumps_yaml()` envelope is separate from the core-owned canonical transport consumed by the built-in `ir` source adapter. The working bridge is therefore:
 
-From Git Bash at the repository root:
+```text
+Author.compile()
+    -> result.contract
+    -> codepotg.ir.contract_to_json()
+    -> adapter: ir
+```
+
+The manual author bootstrap follows that route deliberately. Treat the duplicate author-package codec as an integration defect until transport ownership is unified.
+
+---
+
+## 1. Check out the synchronized manual-audit branch
+
+From Git Bash:
 
 ```bash
 git fetch origin
@@ -36,51 +53,53 @@ git branch --show-current
 git rev-parse HEAD
 ```
 
-Do not run this workspace from `chatgpt/codepotx-restart` until the orchestrator branch has been independently verified and merged.
+The branch contains the latest `chatgpt/codepotx-restart` package work plus this manual workspace. Record the exact SHA in your acceptance notes.
 
-## 2. Create a clean manual-test environment
+## 2. Create a clean editable environment with all six packages
 
 ```bash
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
+rm -rf .venv-codepotg-manual
 py -3.12 -m venv .venv-codepotg-manual
 source .venv-codepotg-manual/Scripts/activate
 
 python -m pip install --upgrade pip
-python -m pip uninstall -y codepotg-openapi
 python -m pip install \
   -e "$REPO_ROOT/packages/python/codepotg-v2" \
+  -e "$REPO_ROOT/packages/python/codepotg-author" \
+  -e "$REPO_ROOT/packages/python/codepotg-openapi" \
   -e "$REPO_ROOT/packages/python/codepotg-template-jinja" \
   -e "$REPO_ROOT/packages/python/codepotg-language-typescript" \
   -e "$REPO_ROOT/packages/python/codepotg-language-dart"
-```
 
-The OpenAPI package is deliberately excluded because its current broken factory can prevent discovery of every plugin, even when the project uses only canonical IR.
-
-Move into this project:
-
-```bash
 cd "$REPO_ROOT/packages/python/codepotg-v2/examples/manual/connected-project"
+rm -rf runs collision-output
+rm -f contract*.codepot.json contract*.codepot.yaml
 ```
 
-## 3. Verify the installed plugin graph
+## 3. Verify installed entry points and plugin loading
 
 ```bash
 python verify_plugins.py
 ```
 
-Expected loaded plugin IDs:
+Expected plugin IDs, each exactly once:
 
 ```text
-sources: ir
-targets: typescript, dart
-engines: jinja
+source adapters: ir, openapi
+target adapters: typescript, dart
+template engines: jinja
 ```
 
-The order may differ, but every required ID must appear exactly once.
+Failure here means package installation/distribution connectability is broken; do not continue by importing private factories manually.
 
-## 4. Author and inspect the neutral contract
+---
+
+# Route A — Direct public IR
+
+## 4. Author the neutral contract directly
 
 ```bash
 python bootstrap_contract.py
@@ -93,242 +112,345 @@ contract.codepot.json
 contract.codepot.yaml
 ```
 
-The script validates the contract and asserts exact JSON and YAML round trips before returning success.
+The script performs core validation and exact JSON/YAML round trips before succeeding.
 
-Human checks:
-
-```bash
-sed -n '1,120p' contract.codepot.yaml
-sed -n '1,80p' contract.codepot.json
-```
-
-Confirm that the transport contains neutral schemas, fields, tags, and guidance, but no TypeScript, Dart, framework, ORM, controller, widget, or folder-layout semantics.
-
-## 5. Inspect the complete plan before rendering
+Inspect the human-readable transport:
 
 ```bash
-codepotg plan codepotg.yaml | tee plan.json
+sed -n '1,180p' contract.codepot.yaml
 ```
 
-Expected artifact count: **12**.
+Confirm that it contains neutral schemas, fields, tags, guidance, names, IDs, and constraints—but no TypeScript, Dart, React, Flutter, NestJS, ORM, controller, widget, import, or output-directory semantics.
 
-Expected TypeScript paths:
+## 5. Plan, render in memory, and generate direct IR
+
+```bash
+codepotg plan codepotg.yaml | tee plan-direct.json
+codepotg generate codepotg.yaml --memory | tee memory-output-direct.json
+
+test ! -d runs/direct
+codepotg generate codepotg.yaml --destination runs/direct | tee write-report-direct.json
+find runs/direct -type f | sort
+```
+
+Expected direct-route artifact paths:
 
 ```text
-generated/typescript/package.json
-generated/typescript/tsconfig.json
-generated/typescript/src/models/user.ts
-generated/typescript/src/models/ticket.ts
-generated/typescript/src/enums/role.ts
-generated/typescript/src/index.ts
+runs/direct/typescript/package.json
+runs/direct/typescript/tsconfig.json
+runs/direct/typescript/src/models/user.ts
+runs/direct/typescript/src/models/ticket.ts
+runs/direct/typescript/src/enums/role.ts
+runs/direct/typescript/src/index.ts
+runs/direct/dart/pubspec.yaml
+runs/direct/dart/analysis_options.yaml
+runs/direct/dart/lib/models/user.dart
+runs/direct/dart/lib/models/ticket.dart
+runs/direct/dart/lib/enums/role.dart
+runs/direct/dart/lib/manual_sdk.dart
 ```
 
-Expected Dart paths:
+The plan should contain exactly 12 artifacts for this route.
 
-```text
-generated/dart/pubspec.yaml
-generated/dart/analysis_options.yaml
-generated/dart/lib/models/user.dart
-generated/dart/lib/models/ticket.dart
-generated/dart/lib/enums/role.dart
-generated/dart/lib/manual_sdk.dart
-```
-
-Inspect that the barrel/library artifacts are planned after their provider selections and that every rendered source file has the correct target ID.
-
-## 6. Render without writing
+Inspect representative output and ownership state:
 
 ```bash
-codepotg generate codepotg.yaml --memory | tee memory-output.json
-```
-
-Confirm that `generated` contains 12 in-memory artifacts and no project files have been created yet:
-
-```bash
-test ! -d generated
-```
-
-## 7. Generate real files
-
-```bash
-codepotg generate codepotg.yaml | tee write-report.json
-find generated -type f | sort
-```
-
-Also inspect:
-
-```bash
-find .codepotg -type f -maxdepth 2 -print
-sed -n '1,220p' .codepotg/generation-state.json
-```
-
-Human review targets:
-
-```bash
-sed -n '1,200p' generated/typescript/src/models/user.ts
-sed -n '1,200p' generated/typescript/src/index.ts
-sed -n '1,200p' generated/dart/lib/models/user.dart
-sed -n '1,200p' generated/dart/lib/manual_sdk.dart
+sed -n '1,200p' runs/direct/typescript/src/models/user.ts
+sed -n '1,120p' runs/direct/typescript/src/index.ts
+sed -n '1,200p' runs/direct/dart/lib/models/user.dart
+sed -n '1,120p' runs/direct/dart/lib/manual_sdk.dart
+sed -n '1,260p' runs/direct/.codepotg/generation-state.json
 ```
 
 Confirm:
 
-- the banner option and `contractSource` binding appear in generated comments;
-- `domain:audited` changes only the authored template comment;
-- nullable/optional field behavior differs correctly between TypeScript and Dart;
-- every import/export statement came from a template;
-- module specifiers were supplied as planned facts.
+- the banner option and `contractSource` binding are visible;
+- the `domain:audited` tag activates only pack-authored comments;
+- `readonly`, optional, and nullable facts are represented differently but correctly per target;
+- every import/export statement comes from a template;
+- module specifiers come from target-adapter planning facts.
 
-## 8. Prove deterministic regeneration
+---
 
-Run this before installing npm or Dart dependencies:
+# Route B — Typed Python authoring
 
-```bash
-find generated -type f -print0 | sort -z | xargs -0 sha256sum > before.sha256
-codepotg generate codepotg.yaml > rerun-report.json
-find generated -type f -print0 | sort -z | xargs -0 sha256sum > after.sha256
-diff -u before.sha256 after.sha256
-```
-
-Expected: no hash differences.
-
-## 9. Compile the generated TypeScript project
+## 6. Compile `codepotg-author` declarations into public IR
 
 ```bash
-cd generated/typescript
-npm install
-npm run typecheck
-cd ../..
+python bootstrap_author_contract.py
 ```
 
-Expected: `tsc --noEmit` succeeds without editing generated code.
+Expected files:
 
-## 10. Analyze the generated Dart package
+```text
+contract.author.codepot.json
+contract.author.codepot.yaml
+```
 
-A Dart 3.3+ SDK must be installed and available on `PATH`.
+The script calls `Author.compile()`, prints diagnostics, then intentionally uses the **core codec** for the orchestrator-compatible transport.
+
+Inspect it:
 
 ```bash
-cd generated/dart
-dart pub get
-dart format --output=none --set-exit-if-changed lib
-dart analyze
-cd ../..
+sed -n '1,180p' contract.author.codepot.yaml
 ```
 
-Expected: formatting and analysis succeed without editing generated code.
-
-## 11. Prove managed-file edit protection
+## 7. Plan and generate the author-compiled contract
 
 ```bash
-cp generated/typescript/src/models/user.ts /tmp/codepotg-user.ts
-printf '\n// HUMAN EDIT THAT MUST BE PROTECTED\n' >> generated/typescript/src/models/user.ts
-
-codepotg generate codepotg.yaml
-GENERATION_EXIT=$?
-echo "exit=$GENERATION_EXIT"
-tail -n 4 generated/typescript/src/models/user.ts
+codepotg plan codepotg-author.yaml | tee plan-author.json
+codepotg generate codepotg-author.yaml --memory | tee memory-output-author.json
+codepotg generate codepotg-author.yaml --destination runs/author | tee write-report-author.json
+find runs/author -type f | sort
 ```
 
-Expected:
+Expected: the same 12 target paths as Route A, under `runs/author/`, with author-specific banner/source comments.
 
-- non-zero generation exit;
+Human comparison:
+
+```bash
+diff -u \
+  runs/direct/typescript/src/models/user.ts \
+  runs/author/typescript/src/models/user.ts || true
+
+diff -u \
+  runs/direct/dart/lib/models/user.dart \
+  runs/author/dart/lib/models/user.dart || true
+```
+
+Differences should be explainable by intentionally different source metadata/tags/banner—not hidden target behavior in the authoring compiler.
+
+## 8. Record the duplicate author transport defect
+
+This is an audit probe, not the supported bridge:
+
+```bash
+python - <<'PY'
+from codepotg_author import Author, dumps_json
+from codepotg_author import field
+
+source = Author("Author Codec Probe")
+source.schema("Message", {"text": field(str)})
+result = source.compile()
+assert result.contract is not None
+print(dumps_json(result.contract)[:160])
+PY
+```
+
+You should see the author-package envelope beginning with `format: codepotg.ir` in its compact JSON representation. Do not configure that output as `adapter: ir`; the core adapter uses the core-owned transport contract.
+
+---
+
+# Route C — Standard OpenAPI
+
+## 9. Inspect the supported OpenAPI source
+
+```bash
+sed -n '1,220p' openapi.yaml
+```
+
+The fixture deliberately stays inside the currently implemented standard subset: components, schemas, tags, one path operation, parameters, responses, and local references. It does not use security semantics or `x-codegen`.
+
+## 10. Plan and generate from OpenAPI
+
+```bash
+codepotg plan codepotg-openapi.yaml | tee plan-openapi.json
+codepotg generate codepotg-openapi.yaml --memory | tee memory-output-openapi.json
+codepotg generate codepotg-openapi.yaml --destination runs/openapi | tee write-report-openapi.json
+find runs/openapi -type f | sort
+```
+
+Do not hard-code the OpenAPI artifact count before inspecting the plan: the adapter may normalize operation-owned structural schemas in addition to the named component schemas. Every artifact must still have a clear semantic cause, safe path, target, and template.
+
+Inspect diagnostics in all three JSON reports. Standard input should produce no error diagnostics.
+
+---
+
+# Real target-tool verification
+
+## 11. Compile every generated TypeScript project
+
+Run after all three routes generate:
+
+```bash
+for ROUTE in direct author openapi
+do
+  echo "== TypeScript: $ROUTE =="
+  (
+    cd "runs/$ROUTE/typescript"
+    npm install
+    npm run typecheck
+  )
+done
+```
+
+Acceptance: all three pass `tsc --noEmit` without editing generated source.
+
+## 12. Format and analyze every generated Dart package
+
+Requires Dart SDK 3.3+ on `PATH`.
+
+```bash
+for ROUTE in direct author openapi
+do
+  echo "== Dart: $ROUTE =="
+  (
+    cd "runs/$ROUTE/dart"
+    dart pub get
+    dart format --output=none --set-exit-if-changed lib
+    dart analyze
+  )
+done
+```
+
+Acceptance: all three format and analyze without editing generated source. If the Dart SDK is unavailable, record the route as blocked—never as passed.
+
+---
+
+# Determinism and writer safety
+
+## 13. Prove deterministic regeneration
+
+Do this on the direct route before npm/Dart installs add external files, or hash only managed source files:
+
+```bash
+find runs/direct/typescript/src runs/direct/dart/lib -type f -print0 \
+  | sort -z | xargs -0 sha256sum > before-direct.sha256
+
+codepotg generate codepotg.yaml --destination runs/direct > rerun-report-direct.json
+
+find runs/direct/typescript/src runs/direct/dart/lib -type f -print0 \
+  | sort -z | xargs -0 sha256sum > after-direct.sha256
+
+diff -u before-direct.sha256 after-direct.sha256
+```
+
+Expected: no differences.
+
+## 14. Prove modified managed-file protection
+
+```bash
+cp runs/direct/typescript/src/models/user.ts /tmp/codepotg-user.ts
+printf '\n// HUMAN EDIT THAT MUST BE PROTECTED\n' \
+  >> runs/direct/typescript/src/models/user.ts
+
+set +e
+codepotg generate codepotg.yaml --destination runs/direct
+EDIT_EXIT=$?
+set -e
+
+echo "exit=$EDIT_EXIT"
+tail -n 4 runs/direct/typescript/src/models/user.ts
+```
+
+Acceptance:
+
+- exit is non-zero;
 - the human edit remains present;
-- CodepotG does not overwrite the modified managed file.
+- no partial overwrite is committed.
 
 Recover:
 
 ```bash
-cp /tmp/codepotg-user.ts generated/typescript/src/models/user.ts
-codepotg generate codepotg.yaml
+cp /tmp/codepotg-user.ts runs/direct/typescript/src/models/user.ts
+codepotg generate codepotg.yaml --destination runs/direct
 ```
 
-## 12. Prove stale managed-file deletion
-
-Generate a contract without the `Ticket` schema:
+## 15. Prove unchanged stale managed-file deletion
 
 ```bash
 python bootstrap_contract.py --without-ticket
-codepotg generate codepotg.yaml
+codepotg generate codepotg.yaml --destination runs/direct
 
-test ! -f generated/typescript/src/models/ticket.ts
-test ! -f generated/dart/lib/models/ticket.dart
+test ! -f runs/direct/typescript/src/models/ticket.ts
+test ! -f runs/direct/dart/lib/models/ticket.dart
 ```
 
-Expected: both unchanged, stale, managed files are deleted.
-
-Restore the full contract:
+Restore:
 
 ```bash
 python bootstrap_contract.py
-codepotg generate codepotg.yaml
+codepotg generate codepotg.yaml --destination runs/direct
 ```
 
-## 13. Prove unmanaged collision protection
+## 16. Prove unmanaged collision protection
 
 ```bash
 rm -rf collision-output
-mkdir -p collision-output/generated/typescript/src/models
-printf 'UNMANAGED HUMAN FILE\n' > collision-output/generated/typescript/src/models/user.ts
+mkdir -p collision-output/typescript/src/models
+printf 'UNMANAGED HUMAN FILE\n' > collision-output/typescript/src/models/user.ts
 
+set +e
 codepotg generate codepotg.yaml --destination collision-output
 COLLISION_EXIT=$?
+set -e
+
 echo "exit=$COLLISION_EXIT"
-cat collision-output/generated/typescript/src/models/user.ts
+cat collision-output/typescript/src/models/user.ts
 ```
 
-Expected:
+Acceptance:
 
-- non-zero generation exit;
+- exit is non-zero;
 - the unmanaged file is unchanged;
-- no partial project is committed around the collision.
+- no surrounding partial generation is committed.
 
-## 14. Inspect the current `codepotg-author` boundary
+---
 
-Install it only for this separate probe:
+# Honest unsupported-feature probes
 
-```bash
-python -m pip install -e "$REPO_ROOT/packages/python/codepotg-author"
-python audit_authoring_gap.py
-```
+## 17. OpenAPI `x-codegen` and security boundaries
 
-Expected current result: typed declarations and refs are created, followed by an explicit message that no `Author.compile()` path exists yet.
-
-This is not the desired final authoring workflow. It records the exact present boundary so the package cannot be called complete prematurely.
-
-## 15. Reproduce the current OpenAPI blocker
-
-Do this last because installing the package intentionally poisons automatic source-adapter discovery in the current implementation:
+The current OpenAPI adapter intentionally diagnoses rather than implements typed `x-codegen` and security semantics. Test its public result directly:
 
 ```bash
-python -m pip install -e "$REPO_ROOT/packages/python/codepotg-openapi"
-python -c 'from codepotg_openapi.plugin import create_plugin; create_plugin()'
+python - <<'PY'
+from codepotg.api import CancellationToken
+from codepotg.ports import SourceAdapterRequest
+from codepotg_openapi import OpenApiSourceAdapter
+
+value = b'''openapi: 3.0.3
+info: {title: Boundary Probe, version: 1.0.0}
+security: [{bearerAuth: []}]
+paths: {}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}
+x-codegen:
+  version: "2"
+  groups: {}
+'''
+result = OpenApiSourceAdapter().normalize(
+    SourceAdapterRequest(source_id="boundary-probe", content=value),
+    CancellationToken(),
+)
+print([item.code for item in result.diagnostics])
+print("contract produced:", result.contract is not None)
+PY
 ```
 
-Expected current failure:
+Acceptance: diagnostics truthfully identify unimplemented semantics. Do not interpret preserved raw source data as typed support.
 
-```text
-ModuleNotFoundError: No module named 'codepotg_openapi.adapter'
-```
+## 18. Command and Git-pack fail-closed behavior
 
-Remove it before continuing with the working IR path:
+Project/pack commands and Git pack resolution are separate approval/locking lanes. Add either only in a temporary copied config and verify planning fails with an explicit diagnostic. They must never be silently ignored or executed during this workspace.
+
+---
+
+# Fresh-wheel rehearsal
+
+## 19. Build all six packages
+
+From the repository root in the editable environment:
 
 ```bash
-python -m pip uninstall -y codepotg-openapi
-python verify_plugins.py
-```
-
-## 16. Installed-wheel rehearsal
-
-Editable installs prove development connectability. A release rehearsal must use built wheels in another clean environment.
-
-From the repository root:
-
-```bash
-source .venv-codepotg-manual/Scripts/activate
+source "$REPO_ROOT/.venv-codepotg-manual/Scripts/activate"
 python -m pip install build
 
 for PACKAGE in \
   codepotg-v2 \
+  codepotg-author \
+  codepotg-openapi \
   codepotg-template-jinja \
   codepotg-language-typescript \
   codepotg-language-dart
@@ -339,65 +461,81 @@ do
     python -m build
   )
 done
+```
 
+## 20. Repeat from wheels only
+
+```bash
+cd "$REPO_ROOT"
+rm -rf .venv-codepotg-wheels
 py -3.12 -m venv .venv-codepotg-wheels
 source .venv-codepotg-wheels/Scripts/activate
 python -m pip install --upgrade pip
+
 python -m pip install \
   "$REPO_ROOT/packages/python/codepotg-v2/dist/"*.whl \
+  "$REPO_ROOT/packages/python/codepotg-author/dist/"*.whl \
+  "$REPO_ROOT/packages/python/codepotg-openapi/dist/"*.whl \
   "$REPO_ROOT/packages/python/codepotg-template-jinja/dist/"*.whl \
   "$REPO_ROOT/packages/python/codepotg-language-typescript/dist/"*.whl \
   "$REPO_ROOT/packages/python/codepotg-language-dart/dist/"*.whl
 
 cd "$REPO_ROOT/packages/python/codepotg-v2/examples/manual/connected-project"
-rm -rf generated .codepotg
+rm -rf runs
 python verify_plugins.py
 python bootstrap_contract.py
-codepotg plan codepotg.yaml
-codepotg generate codepotg.yaml
+python bootstrap_author_contract.py
+
+codepotg generate codepotg.yaml --destination runs/direct
+codepotg generate codepotg-author.yaml --destination runs/author
+codepotg generate codepotg-openapi.yaml --destination runs/openapi
 ```
 
-Repeat the TypeScript and Dart compiler checks. Only this phase proves installed distribution connectability.
+Repeat the TypeScript and Dart target-tool loops. This phase proves distribution connectability rather than source-tree convenience.
 
-## 17. Cleanup
+---
 
-Generated validation files are intentionally ignored by this guide, not automatically deleted:
+## Cleanup
 
 ```bash
-rm -rf \
-  generated \
-  collision-output \
-  .codepotg \
-  plan.json \
-  memory-output.json \
-  write-report.json \
-  rerun-report.json \
-  before.sha256 \
-  after.sha256 \
+rm -rf runs collision-output
+rm -f \
   contract.codepot.json \
-  contract.codepot.yaml
+  contract.codepot.yaml \
+  contract.author.codepot.json \
+  contract.author.codepot.yaml \
+  plan-*.json \
+  memory-output-*.json \
+  write-report-*.json \
+  rerun-report-*.json \
+  before-*.sha256 \
+  after-*.sha256
 ```
 
 ## Human acceptance record
 
-Record these results in the package audit before merging:
-
 ```text
-[ ] correct branch and commit recorded
-[ ] clean editable environment created
-[ ] exact plugin graph loaded
-[ ] JSON/YAML IR inspected and round-tripped
-[ ] plan contained exactly 12 expected artifacts
-[ ] memory render wrote nothing
-[ ] managed generation wrote all expected files
-[ ] deterministic rerun produced identical hashes
-[ ] TypeScript compiler passed
-[ ] Dart formatter/analyzer passed
+[ ] exact branch and SHA recorded
+[ ] six editable packages installed cleanly
+[ ] ir/openapi/typescript/dart/jinja entry points loaded exactly once
+[ ] direct IR JSON/YAML inspected and round-tripped
+[ ] direct IR plan contained the expected 12 artifacts
+[ ] direct IR memory render wrote nothing
+[ ] direct IR managed generation wrote expected files
+[ ] codepotg-author compiled a public Contract
+[ ] author Contract used the core canonical codec
+[ ] author route planned and generated both targets
+[ ] standard OpenAPI route normalized, planned, and generated
+[ ] all three TypeScript projects passed tsc
+[ ] all three Dart packages passed format/analyze, or SDK absence was recorded honestly
+[ ] deterministic rerun hashes matched
 [ ] edited managed file was protected
-[ ] unchanged stale files were deleted
+[ ] unchanged stale managed files were deleted
 [ ] unmanaged collision was protected
-[ ] codepotg-author gap reproduced
-[ ] OpenAPI blocker reproduced
-[ ] clean-wheel environment repeated the successful path
-[ ] final git status recorded
+[ ] author-package duplicate transport was recorded
+[ ] OpenAPI unsupported semantics emitted truthful diagnostics
+[ ] Git/command lanes failed closed when probed
+[ ] all six wheels built
+[ ] wheel-only environment repeated all three routes
+[ ] final git status --short recorded and reviewed
 ```
