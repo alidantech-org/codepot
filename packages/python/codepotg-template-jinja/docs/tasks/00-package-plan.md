@@ -2,145 +2,153 @@
 
 This package implements a sandboxed Jinja template-engine adapter. It does not own source normalization, target-language semantics, file selection, output planning, writing, commands, or framework behavior.
 
+Status values distinguish implemented current-port behavior from integrations blocked by public core contracts. A task marked implemented is not the same as a released package; JINJA-011 and the package completion gate remain open until exact synchronized verification passes.
+
 ## JINJA-001 — Package and plugin foundation
 
-**Status:** planned
+**Status:** implemented in PR #28
 
 **Dependencies:** core template-engine port, plugin descriptors, version primitives
 
-- [ ] Add isolated package metadata, src layout, typing marker, README, and tests.
-- [ ] Register `jinja` factory in `codepotg.template_engines`.
-- [ ] Declare recognized suffixes such as `.jinja`, `.jinja2`, and `.j2` with deterministic precedence.
-- [ ] Declare plugin/core/IR/behavior versions and actual capabilities.
-- [ ] Add architecture tests proving no source, target adapter, writer, CLI, command, or project-manifest ownership.
+- [x] Add isolated package metadata, src layout, typing marker, README, and tests.
+- [x] Register `jinja` factory in `codepotg.template_engines`.
+- [x] Declare `.j2`, `.jinja`, and `.jinja2` with deterministic ordering.
+- [x] Declare plugin/core/IR/behavior versions and actual capabilities.
+- [x] Add architecture tests proving no source, target adapter, writer, CLI, command, or project-manifest ownership.
 
 ## JINJA-002 — Typed engine rule schema
 
-**Status:** planned
+**Status:** implemented for the current public render port; project/pack rule decoding and named outputs remain blocked
 
-Define immutable rules, override patches, descriptors, defaults, merge policy, hard restrictions, examples, and introspection for:
+- [x] Strict undefined behavior.
+- [x] Typed whitespace and newline behavior.
+- [x] Static declared dependency policy and maximum include depth.
+- [x] Restricted attribute and callable policy.
+- [x] Denial of Python imports, builtins, environment, filesystem, network, and process access.
+- [x] Registered helper descriptors, conflict policy, and cache identity contribution.
+- [x] Template, partial, context, AST, output, and cache limits.
+- [x] Cooperative cancellation checkpoints.
+- [ ] Decode rules from project/pack configuration after a public configuration bridge exists.
+- [ ] Enforce target-compatible partial roles after planner/template-registry metadata exists.
 
-### Undefined behavior
-
-- [ ] strict error default;
-- [ ] optional debug/placeholder modes only when approved by the engine contract;
-- [ ] source-spanned undefined diagnostics.
-
-### Whitespace and encoding
-
-- [ ] trim blocks;
-- [ ] left-strip blocks;
-- [ ] keep trailing newline;
-- [ ] newline sequence;
-- [ ] source/output encoding policy.
-
-### Includes and inheritance
-
-- [ ] declared include policy;
-- [ ] dynamic include disabled by default;
-- [ ] maximum include depth;
-- [ ] target compatibility enforcement;
-- [ ] cycle diagnostics.
-
-### Sandbox and context access
-
-- [ ] restricted attribute policy;
-- [ ] registered-callable-only policy;
-- [ ] deny Python imports/builtins/environment/filesystem/network/process access;
-- [ ] host-only security fields that packs cannot enable.
-
-### Helpers
-
-- [ ] registered filters/tests/globals descriptors;
-- [ ] conflict policy;
-- [ ] helper behavior/version contribution to cache keys.
-
-### Limits
-
-- [ ] maximum rendered bytes;
-- [ ] maximum include depth;
-- [ ] optional iteration/context depth bounds where feasible;
-- [ ] cancellation checkpoints.
-
-### Named outputs
-
-- [ ] capability and syntax policy for declared named output blocks;
-- [ ] undeclared output rejection.
-
-**Acceptance:** unknown engine fields are errors and pack/project overrides cannot enable host-forbidden behavior.
+Named-output rules belong only to JINJA-008.
 
 ## JINJA-003 — Immutable render context adapter
 
-- [ ] Accept only core-prepared immutable mappings/sequences/scalars and narrow registered helper objects.
-- [ ] Prevent mutation of context and registries.
-- [ ] Convert unsupported rich objects into diagnostics before rendering.
-- [ ] Exclude filesystem, pack provider, runtime, writer, cache store, command executor, environment, and secret objects.
+**Status:** implemented in PR #28
 
-## JINJA-004 — Pack template loader
+- [x] Accept safe scalars, tuples, sorted tuple-pair mappings, public frozen CodepotG IR values, approved enums, and narrow helper descriptors.
+- [x] Prevent mutation of caller context and helper registries.
+- [x] Convert unsupported rich objects into structured diagnostics before rendering.
+- [x] Exclude filesystem, pack provider, runtime, writer, cache store, command executor, environment, and secret objects.
 
-- [ ] Resolve templates by descriptor ID/path through the pack template registry.
-- [ ] Enforce pack-root containment.
-- [ ] Reject ignored, documentation-only, static, and binary files as template includes.
-- [ ] Support partials and authored templates.
-- [ ] Preserve source identity and line mappings.
+## JINJA-004 — Request-owned template registry and loader
 
-## JINJA-005 — Include/inheritance planner integration
+**Status:** implemented for the current public port; full pack-registry integration blocked
 
-- [ ] Consume planner-declared include dependencies.
-- [ ] Validate same-target or neutral fragment compatibility.
-- [ ] Detect cycles and depth violations before render.
-- [ ] Reject undeclared dynamic includes by default.
-- [ ] Ensure include digests contribute to compiled cache identity.
+- [x] Resolve the root and declared partials from one immutable request-owned registry.
+- [x] Reject traversal, absolute, Windows-ambiguous, duplicate, colliding, oversized, and unsorted identifiers.
+- [x] Support authored root templates and declared partials without filesystem fallback.
+- [x] Preserve template IDs as diagnostic source identities.
+- [ ] Consume a public pack template registry when core publishes that contract.
+- [ ] Enforce pack-root ignore/static/binary roles when planner/template-registry metadata exists.
+
+## JINJA-005 — Static dependency analysis
+
+**Status:** implemented for request partials; planner-declared and target-compatible integration blocked
+
+- [x] Analyze static include, extends, import, and from-import dependencies before render.
+- [x] Detect missing dependencies, dynamic dependencies, cycles, and excessive depth.
+- [x] Reject `ignore missing` and dependency lists.
+- [x] Include all reachable dependency digests in compilation identity.
+- [ ] Consume planner-declared include metadata after the public planner contract exists.
+- [ ] Validate same-target or neutral-fragment compatibility after target-role metadata exists.
 
 ## JINJA-006 — Safe environment construction
 
-- [ ] Construct one immutable/configured environment per runtime cache scope or equivalent safe pool.
-- [ ] Use sandboxed Jinja facilities plus explicit guards.
-- [ ] Register only declared filters/tests/globals.
-- [ ] Remove unsafe defaults and prove denial through adversarial tests.
-- [ ] Avoid process-global environment mutation.
+**Status:** implemented in PR #28
+
+- [x] Use `SandboxedEnvironment` plus explicit attribute/callable guards.
+- [x] Use `StrictUndefined`.
+- [x] Clear default filters, tests, and globals.
+- [x] Register only approved helpers.
+- [x] Avoid process-global environment mutation.
+- [x] Prove denial through adversarial tests.
 
 ## JINJA-007 — Rendering and diagnostics
 
-- [ ] Compile and render with cancellation checks and size limits.
-- [ ] Convert syntax, undefined, include, helper, and runtime errors into typed diagnostics with source spans and include stack.
-- [ ] Preserve deterministic text output.
-- [ ] Never write files directly.
+**Status:** implemented in PR #28
+
+- [x] Compile and render with cancellation checks and byte limits.
+- [x] Stream chunks instead of creating an unbounded complete string first.
+- [x] Convert syntax, undefined, include, helper, sandbox, limit, cancellation, and runtime failures into typed diagnostics.
+- [x] Preserve deterministic text output.
+- [x] Return no partial content on failure.
+- [x] Never write files directly.
 
 ## JINJA-008 — Named output blocks
 
-- [ ] Implement only after core declared-output contracts are stable.
-- [ ] Map output block IDs to planner-declared outputs.
-- [ ] Reject duplicate, missing, or undeclared blocks.
-- [ ] Enforce per-output and total size limits.
-- [ ] Keep output paths outside template control.
+**Status:** blocked on a public planner-declared named-output request/result contract
+
+- [ ] Define named-output capability and syntax only after the core contract exists.
+- [ ] Map output IDs only to planner-declared outputs.
+- [ ] Reject duplicate, missing, and undeclared output blocks.
+- [ ] Enforce per-output and total limits.
+- [ ] Keep paths outside template control.
+
+No author-private result type or encoded multi-file string is permitted.
 
 ## JINJA-009 — Compiled-template cache
 
-- [ ] Key by engine behavior version, typed rule digest, template source digest, include dependency digests, and helper/filter version digest.
-- [ ] Keep cache session/runtime scoped through the cache port.
-- [ ] Avoid mutable module-level caches.
-- [ ] Test invalidation, corruption, and concurrent access.
+**Status:** implemented as a bounded engine-instance cache; runtime cache-port integration blocked
+
+- [x] Key by engine/package behavior, typed rules, Jinja version, root source, reachable partial digests, and helper versions.
+- [x] Keep cache engine-instance-owned, bounded, locked, and clearable.
+- [x] Avoid mutable module-level caches.
+- [x] Test hits, invalidation, eviction, and concurrent access.
+- [ ] Integrate with a runtime cache port after a suitable compiled-object cache contract is public.
 
 ## JINJA-010 — Conformance and security tests
 
-- [ ] Pass shared engine conformance.
-- [ ] Add sandbox escape attempts for attributes, callables, imports, builtins, filesystem, environment, network, and process access.
-- [ ] Add undefined, whitespace, encoding, include, inheritance, cycle, limit, cancellation, cache, named output, and source-span tests.
-- [ ] Prove contexts and registries remain unchanged after success/failure.
+**Status:** implemented in PR #28
+
+- [x] Pass shared engine conformance in the available harness.
+- [x] Add sandbox attempts for attributes, callables, imports, builtins, filesystem, environment, network, and process access.
+- [x] Add undefined, whitespace, encoding, include, inheritance, cycle, limit, cancellation, cache, and source-aware diagnostic tests.
+- [x] Prove contexts and registries remain unchanged after success/failure.
+- [ ] Add named-output tests only after JINJA-008 is unblocked.
 
 ## JINJA-011 — Documentation and release
 
-- [ ] Document complete engine rules and host-only restrictions.
-- [ ] Document safe partial/include patterns and named outputs.
-- [ ] Document helper registration for plugin authors.
-- [ ] Build wheel/sdist and test independent installation.
+**Status:** review; implementation documentation exists but exact release gates remain open
+
+- [x] Document current engine rules and host-only restrictions.
+- [x] Document safe request-partial/include behavior.
+- [x] Document blocked named outputs and missing integrations.
+- [x] Document helper registration.
+- [x] Build wheel/sdist and test isolated installation in the available implementation harness.
+- [ ] Run Ruff check and formatting against the synchronized repository.
+- [ ] Run the complete real `codepotg-v2` suite and build.
+- [ ] Re-run the complete Jinja suite against the real synchronized core.
+- [ ] Install the real core and Jinja wheels together and repeat entry-point/render checks.
+- [ ] Record exact evidence and close audit fixes.
+
+## Audit follow-up
+
+See:
+
+- [`../audits/2026-07-27-pr-28-audit.md`](../audits/2026-07-27-pr-28-audit.md)
+- [`AUDIT_FIXES.md`](AUDIT_FIXES.md)
 
 ## Completion gate
 
-- shared engine conformance and adversarial sandbox tests pass;
+The package is complete only when:
+
+- shared engine conformance and adversarial sandbox tests pass against the real synchronized core;
 - templates cannot access filesystem, environment, network, commands, Python imports, or rich runtime objects;
-- includes resolve only through the pack registry and target compatibility;
-- output paths are always planner-owned;
-- cache identity contains all behavior-affecting inputs;
-- no generation/business logic exists in this package.
+- current-port dependencies resolve only from the request-owned registry;
+- blocked pack/planner/named-output/cache-port integrations remain explicit rather than emulated;
+- output paths remain planner-owned;
+- cache identity contains all behavior-affecting implemented inputs;
+- no generation/business logic exists in this package;
+- Ruff, format, full tests, build, real-wheel install, and clean-tree checks pass and are recorded.
