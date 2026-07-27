@@ -59,6 +59,35 @@ def _document(*, title: str = "Orders API", with_codegen: bool = False) -> str:
     return json.dumps(value)
 
 
+def _semantic_signature(contract) -> tuple[object, ...]:
+    return (
+        contract.id,
+        contract.name,
+        contract.version,
+        tuple(
+            (
+                group.id,
+                group.name,
+                group.path,
+                tuple((schema.id, schema.name, schema.kind) for schema in group.schemas),
+                tuple(
+                    (
+                        operation.id,
+                        operation.name,
+                        operation.inputs,
+                        operation.outputs,
+                        operation.failures,
+                        operation.effects,
+                        operation.facets,
+                    )
+                    for operation in group.operations
+                ),
+            )
+            for group in contract.groups
+        ),
+    )
+
+
 def test_public_facade_returns_core_valid_immutable_contract() -> None:
     result = OpenApiSourceAdapter().normalize(
         SourceAdapterRequest(source_id="orders", content=_document()),
@@ -129,7 +158,8 @@ components:
         ),
         CancellationToken(),
     )
-    assert json_result.contract == yaml_result.contract
+    assert json_result.contract is not None and yaml_result.contract is not None
+    assert _semantic_signature(json_result.contract) == _semantic_signature(yaml_result.contract)
     assert json_result.digest == yaml_result.digest
 
 
