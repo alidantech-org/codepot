@@ -15,14 +15,16 @@
 | 2026-07-27 | local benchmark | v2 benchmark evidence | complete | 13 cases, one warm-up, seven measured cold/warm iterations; exact SHA-256 and byte counts recorded; strict undefined=`JINJA_UNDEFINED`; syntax failure=`JINJA_SYNTAX`; warm cache hits observed. | Machine timings are intentionally not committed. The v1 runner must execute separately in a v1 environment before cross-version conclusions. |
 | 2026-07-27 | documentation audit | Old baseline reading | partial | Read old package, renderer, emission engine, renderer tests, memory profiler, performance guide, and Jinja template documentation. | Missing requested baseline paths were not invented or copied. |
 | 2026-07-27 | PR #28 independent audit | Architecture and readiness audit | review | Static merged-code audit; see `docs/audits/2026-07-27-pr-28-audit.md`. | Implementation is architecturally strong and safe to keep merged. Release remains open because the PR was merged before its recorded Ruff, real-core, and real-wheel gates passed. Added `docs/tasks/AUDIT_FIXES.md`; task plan now separates implemented current-port work from blocked integrations. |
+| 2026-07-27 | `b8b24fd4`, `09970fd3` | JINJA-AUDIT-004 and JINJA-AUDIT-005 code fixes | implemented | Added exact `loop.cycle()`/`loop.changed()` denial coverage and malformed-root-source diagnostic coverage. Root sources now use `JINJA_TEMPLATE_INVALID`; partial sources remain `JINJA_PARTIAL_INVALID`. | Named outputs and missing pack/planner/config/cache-port contracts remain blocked and were not emulated. |
+| 2026-07-27 | targeted audit smoke | Audit behavior validation | passed | Installed Jinja runtime reproduced both loop calls as denied unsafe callables; root/partial source selector smoke produced `JINJA_TEMPLATE_INVALID` and `JINJA_PARTIAL_INVALID` respectively. | This was a focused behavior smoke, not the synchronized package or real-core suite. |
+| 2026-07-27 | release environment probe | Ruff/build/checkout availability | blocked | `git clone --branch chatgpt/codepotx-restart --single-branch https://github.com/alidantech-org/codepot.git /tmp/codepot` failed with `Could not resolve host: github.com`; `python -m ruff --version` failed with `No module named ruff`; `python -m build --version` failed with `No module named build`. | The GitHub connector supports scoped source edits but does not export a complete checkout for local command execution. No Ruff, full real-core, build, real-wheel, or clean-tree result is claimed. |
 
 ## Open release gates
 
-- Run `python -m ruff check src tests benchmarks` and `python -m ruff format --check src tests benchmarks` with the synchronized repository.
+- Run `python -m ruff check src tests benchmarks` and `python -m ruff format --check src tests benchmarks` from `packages/python/codepotg-template-jinja` in the synchronized repository.
 - Run the complete `codepotg-v2` verification suite and build from the real checkout.
-- Re-run the complete Jinja suite against that real core package.
+- Re-run the complete Jinja suite, now including the added loop-callable and root-source diagnostic cases, against that real core package.
 - Build/install the real core and Jinja wheels together in a fresh environment and repeat entry-point discovery and rendering.
 - Run the isolated v1 benchmark in a CodepotG 1.0.0 environment and compare neutral output hashes.
-- Decide and test/document whether `loop.cycle()` and `loop.changed()` remain deliberately denied.
-- Correct root non-string source diagnostics.
-- Record a clean scoped diff and exact command evidence before marking JINJA-011 complete.
+- Record `git status --short` from the synchronized checkout and keep it empty.
+- Keep JINJA-008 and pack-registry, target-compatible partial metadata, project/pack rule decoding, and runtime cache-port integration blocked until their public contracts exist.
