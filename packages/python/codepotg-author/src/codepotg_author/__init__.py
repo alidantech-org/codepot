@@ -1,22 +1,10 @@
 """Typed Python authoring compiler for the CodepotG v2 semantic IR."""
 
 from .author import Author
-from .diagnostics import (
-    AUTHOR_CORE_UNSUPPORTED,
-    AuthorDiagnostic,
-    AuthorDiagnostics,
-    AuthorDiagnosticSeverity,
-)
+from .compiler import AuthoringResult, compile_author
+from .diagnostics import AUTHOR_CORE_UNSUPPORTED, AuthorDiagnostic, AuthorDiagnostics, AuthorDiagnosticSeverity
 from .options import AuthorOptions, UnsupportedCorePolicy
-from .schemas import (
-    FieldDeclaration,
-    FieldOptions,
-    ProjectionStep,
-    PropertyDeclaration,
-    SchemaDeclaration,
-    SchemaDeclarationKind,
-    field,
-)
+from .pydantic import PydanticCompiler
 from .refs import (
     EventRef,
     FieldRef,
@@ -36,6 +24,31 @@ from .refs import (
     WorkflowRef,
     WorkflowStepRef,
 )
+from .schemas import (
+    FieldDeclaration,
+    FieldOptions,
+    FieldSpec,
+    ProjectionStep,
+    PropertyDeclaration,
+    SchemaDeclaration,
+    SchemaDeclarationKind,
+    field,
+    schema_field,
+)
+from .semantics import (
+    EventDeclaration,
+    OperationDeclaration,
+    OperationFailureDeclaration,
+    OperationOutputDeclaration,
+    PolicyDeclaration,
+    SchemaUseDeclaration,
+    StorageDeclaration,
+    StorageFieldDeclaration,
+    ViewDeclaration,
+    ViewTriggerDeclaration,
+    WorkflowDeclaration,
+    WorkflowStepDeclaration,
+)
 
 __version__ = "0.1.0a1"
 
@@ -46,17 +59,25 @@ __all__ = [
     "AuthorDiagnostics",
     "AuthorDiagnosticSeverity",
     "AuthorOptions",
+    "AuthoringResult",
+    "EventDeclaration",
     "EventRef",
     "FieldDeclaration",
     "FieldOptions",
     "FieldRef",
+    "FieldSpec",
     "GroupRef",
+    "OperationDeclaration",
+    "OperationFailureDeclaration",
+    "OperationOutputDeclaration",
     "OperationRef",
+    "PolicyDeclaration",
     "PolicyRef",
     "PresentationRef",
     "ProjectionStep",
     "PropertyDeclaration",
     "PropertyRef",
+    "PydanticCompiler",
     "Ref",
     "RefIdentity",
     "RefKind",
@@ -64,12 +85,21 @@ __all__ = [
     "SchemaDeclaration",
     "SchemaDeclarationKind",
     "SchemaRef",
+    "SchemaUseDeclaration",
+    "StorageDeclaration",
+    "StorageFieldDeclaration",
     "StorageRef",
     "UnsupportedCorePolicy",
     "ValueSourceRef",
+    "ViewDeclaration",
     "ViewRef",
+    "ViewTriggerDeclaration",
+    "WorkflowDeclaration",
     "WorkflowRef",
+    "WorkflowStepDeclaration",
     "WorkflowStepRef",
+    "compile_author",
     "field",
+    "schema_field",
     "__version__",
 ]
