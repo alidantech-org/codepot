@@ -1,78 +1,83 @@
-from .core import (
-    CORE_VERSION,
-    IR_VERSION,
-    NAMING_BEHAVIOR_VERSION,
-    PLANNING_BEHAVIOR_VERSION,
-    PLUGIN_API_VERSION,
-    PUBLIC_API_VERSION,
-    SELECTION_BEHAVIOR_VERSION,
-    ApiVersion,
-    BehaviorVersion,
-    CancellationToken,
+from .api import CancellationToken, OperationCancelled, OperationResult, OperationStatus
+from .diagnostics import (
     Diagnostic,
     DiagnosticSeverity,
     Diagnostics,
-    OperationCancelled,
-    OperationResult,
-    OperationStatus,
-    SemanticVersion,
     SourceIdentity,
     SourceKind,
     SourcePosition,
     SourceSpan,
 )
-from .ir import Contract, Group, Operation, Schema, SemanticId
-from .naming import Name, NameProjection
-from .plugins import PluginCategory, PluginDescriptor, PluginRegistry, PluginTrust
-from .selectors import (
+from .generation import (
     DEFAULT_SELECTOR_REGISTRY,
     SelectionCardinality,
     SelectionContext,
     SelectorDescriptor,
     SelectorRegistry,
 )
-from .validation import ContractValidator, validate_contract
+from .ir import (
+    Contract,
+    ContractValidator,
+    Group,
+    Name,
+    NameProjection,
+    Operation,
+    Schema,
+    SemanticId,
+    validate_contract,
+)
+from .plugins import PluginCategory, PluginDescriptor, PluginRegistry, PluginTrust
+from .versions import (
+    CORE_VERSION,
+    DEFAULT_BEHAVIOR_VERSIONS,
+    IR_API_VERSION,
+    PLUGIN_API_VERSION,
+    PUBLIC_API_VERSION,
+    ApiVersion,
+    BehaviorVersion,
+    BehaviorVersions,
+    Version,
+)
 
 __version__ = str(CORE_VERSION)
 
 __all__ = [
     "ApiVersion",
     "BehaviorVersion",
+    "BehaviorVersions",
     "CORE_VERSION",
     "CancellationToken",
     "Contract",
     "ContractValidator",
+    "DEFAULT_BEHAVIOR_VERSIONS",
     "DEFAULT_SELECTOR_REGISTRY",
     "Diagnostic",
     "DiagnosticSeverity",
     "Diagnostics",
     "Group",
-    "IR_VERSION",
-    "NAMING_BEHAVIOR_VERSION",
+    "IR_API_VERSION",
     "Name",
     "NameProjection",
     "Operation",
     "OperationCancelled",
     "OperationResult",
     "OperationStatus",
-    "PLANNING_BEHAVIOR_VERSION",
     "PLUGIN_API_VERSION",
     "PUBLIC_API_VERSION",
     "PluginCategory",
     "PluginDescriptor",
     "PluginRegistry",
     "PluginTrust",
-    "SELECTION_BEHAVIOR_VERSION",
     "Schema",
     "SelectionCardinality",
     "SelectionContext",
     "SelectorDescriptor",
     "SelectorRegistry",
     "SemanticId",
-    "SemanticVersion",
     "SourceIdentity",
     "SourceKind",
     "SourcePosition",
     "SourceSpan",
+    "Version",
     "validate_contract",
 ]
