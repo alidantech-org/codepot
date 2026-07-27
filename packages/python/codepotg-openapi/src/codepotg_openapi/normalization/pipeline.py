@@ -26,7 +26,7 @@ def normalize_standard_contract(
     cancellation.raise_if_cancelled()
     if not _handle_unimplemented_x_codegen(root, options, diagnostics):
         return None
-    _diagnose_unimplemented_security(root, diagnostics)
+    _diagnose_unimplemented_security(resolver.documents, diagnostics)
 
     context = NormalizationContext(
         root=root,
@@ -70,6 +70,11 @@ def normalize_standard_contract(
         )
         return None
 
+    contract_raw = {
+        "openapi": root.openapi_version,
+        **selected_raw(root.value, "externalDocs", "servers", "security", "tags"),
+        **_root_security_schemes(root.value),
+    }
     contract_id = stable_id(
         source=root.source.logical_id,
         category="contract",
@@ -86,10 +91,7 @@ def normalize_standard_contract(
             "",
             options=options,
             diagnostics=diagnostics,
-            raw={
-                "openapi": root.openapi_version,
-                **selected_raw(root.value, "externalDocs", "servers", "security", "tags"),
-            },
+            raw=contract_raw,
             extensions=(
                 extension_values(root.value) if options.preserve_unknown_extensions else {}
             ),
@@ -122,18 +124,20 @@ def _handle_unimplemented_x_codegen(
 
 
 def _diagnose_unimplemented_security(
-    root: ParsedDocument,
+    documents: tuple[ParsedDocument, ...],
     diagnostics: DiagnosticBag,
 ) -> None:
-    pointer = _first_security_pointer(root.value)
-    if pointer is None:
+    for document in documents:
+        pointer = _first_security_pointer(document.value)
+        if pointer is None:
+            continue
+        diagnostics.warning(
+            "OA_SECURITY_NOT_IMPLEMENTED",
+            "OpenAPI security and access normalization is not implemented; declarations were preserved only as bounded source metadata",
+            span=document.span(pointer),
+            details=(("task", "OA-009"),),
+        )
         return
-    diagnostics.warning(
-        "OA_SECURITY_NOT_IMPLEMENTED",
-        "OpenAPI security and access normalization is not implemented; declarations were preserved only as source metadata",
-        span=root.span(pointer),
-        details=(("task", "OA-009"),),
-    )
 
 
 def _first_security_pointer(value: dict[str, object]) -> str | None:
@@ -143,15 +147,31 @@ def _first_security_pointer(value: dict[str, object]) -> str | None:
     if isinstance(components, dict) and "securitySchemes" in components:
         return "/components/securitySchemes"
     paths = value.get("paths")
-    if not isinstance(paths, dict):
-        return None
-    for path_name in sorted(paths):
-        path_item = paths[path_name]
-        if not isinstance(path_item, dict):
-            continue
-        escaped_path = path_name.replace("~", "~0").replace("/", "~1")
-        for method in HTTP_METHODS:
-            operation = path_item.get(method)
-            if isinstance(operation, dict) and "security" in operation:
-                return f"/paths/{escaped_path}/{method}/security"
+    if isinstance(paths, dict):
+        for path_name in sorted(paths):
+            path_item = paths[path_name]
+            if not isinstance(path_item, dict):
+                continue
+            escaped_path = path_name.replace("~", "~0").replace("/", "~1")
+            pointer = _operation_security_pointer(path_item, f"/paths/{escaped_path}")
+            if pointer is not None:
+                return pointer
+    return _operation_security_pointer(value, "")
+
+
+def _operation_security_pointer(
+    path_item: dict[str, object],
+    base_pointer: str,
+) -> str | None:
+    for method in HTTP_METHODS:
+        operation = path_item.get(method)
+        if isinstance(operation, dict) and "security" in operation:
+            return f"{base_pointer}/{method}/security"
     return None
+
+
+def _root_security_schemes(value: dict[str, object]) -> dict[str, object]:
+    components = value.get("components")
+    if not isinstance(components, dict) or "securitySchemes" not in components:
+        return {}
+    return {"securitySchemes": components["securitySchemes"]}
