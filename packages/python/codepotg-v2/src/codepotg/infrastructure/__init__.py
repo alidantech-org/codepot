@@ -1,3 +1,4 @@
+from .archive import ArchiveResult, ZipArchiveWriter
 from .writers import (
     TransactionalFilesystemWriter,
     WriteChange,
@@ -6,8 +7,10 @@ from .writers import (
 )
 
 __all__ = [
+    "ArchiveResult",
     "TransactionalFilesystemWriter",
     "WriteChange",
     "WriteKind",
     "WriteReport",
+    "ZipArchiveWriter",
 ]
