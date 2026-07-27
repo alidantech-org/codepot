@@ -11,6 +11,7 @@ else:
     SafeValue = object
 
 _TAG_METHODS = frozenset({"has", "has_any", "has_all", "under"})
+_DATA_ALIASES = frozenset({"tags", "guidance", "documentation", "provenance"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,9 +26,15 @@ class SafeRecord(Mapping[str, SafeValue]):
             raise ValueError("safe record keys must be sorted and unique")
 
     def __getitem__(self, key: str) -> SafeValue:
-        for candidate, value in self._items:
-            if candidate == key:
-                return value
+        direct = self._direct(key)
+        if direct is not _MISSING:
+            return direct
+        if key in _DATA_ALIASES:
+            data = self._direct("data")
+            if isinstance(data, SafeRecord):
+                nested = data._direct(key)
+                if nested is not _MISSING:
+                    return nested
         raise KeyError(key)
 
     def __iter__(self) -> Iterator[str]:
@@ -79,3 +86,12 @@ class SafeRecord(Mapping[str, SafeValue]):
         values = self["values"]
         assert isinstance(values, tuple)
         return values
+
+    def _direct(self, key: str) -> SafeValue | object:
+        for candidate, value in self._items:
+            if candidate == key:
+                return value
+        return _MISSING
+
+
+_MISSING = object()
