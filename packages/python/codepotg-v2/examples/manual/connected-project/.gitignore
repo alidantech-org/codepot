@@ -1,0 +1,11 @@
+/.codepotg/
+/generated/
+/collision-output/
+/contract.codepot.json
+/contract.codepot.yaml
+/plan.json
+/memory-output.json
+/write-report.json
+/rerun-report.json
+/before.sha256
+/after.sha256
