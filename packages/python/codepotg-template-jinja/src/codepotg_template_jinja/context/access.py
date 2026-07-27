@@ -6,9 +6,11 @@ from typing import TYPE_CHECKING, TypeAlias
 
 SafeScalar: TypeAlias = str | int | float | bool | None
 if TYPE_CHECKING:
-    SafeValue: TypeAlias = SafeScalar | tuple["SafeValue", ...] | SafeRecord | SafeTagSet
+    SafeValue: TypeAlias = SafeScalar | tuple["SafeValue", ...] | SafeRecord
 else:
     SafeValue = object
+
+_TAG_METHODS = frozenset({"has", "has_any", "has_all", "under"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,31 +40,42 @@ class SafeRecord(Mapping[str, SafeValue]):
     def fields(self) -> tuple[str, ...]:
         return tuple(key for key, _ in self._items)
 
-    def as_tuple(self) -> tuple[tuple[str, SafeValue], ...]:
-        return self._items
-
-
-@dataclass(frozen=True, slots=True)
-class SafeTagSet:
-    """Narrow immutable tag query object approved for template conditionals."""
-
-    values: tuple[str, ...]
+    @property
+    def is_tag_set(self) -> bool:
+        if self.fields != ("values",):
+            return False
+        values = self["values"]
+        return isinstance(values, tuple) and all(isinstance(item, str) for item in values)
 
     @property
     def empty(self) -> bool:
-        return not self.values
+        return not self._tag_values()
 
     def has(self, tag: str) -> bool:
-        return tag in self.values
+        return tag in self._tag_values()
 
     def has_any(self, *tags: str) -> bool:
-        return any(tag in self.values for tag in tags)
+        values = self._tag_values()
+        return any(tag in values for tag in tags)
 
     def has_all(self, *tags: str) -> bool:
-        return all(tag in self.values for tag in tags)
+        values = self._tag_values()
+        return all(tag in values for tag in tags)
 
     def under(self, namespace: str) -> tuple[str, ...]:
+        values = self._tag_values()
         prefix = f"{namespace}:"
-        return tuple(
-            tag for tag in self.values if tag == namespace or tag.startswith(prefix)
-        )
+        return tuple(tag for tag in values if tag == namespace or tag.startswith(prefix))
+
+    def is_allowed_tag_attribute(self, attribute: str) -> bool:
+        return self.is_tag_set and (attribute in _TAG_METHODS or attribute == "empty")
+
+    def as_tuple(self) -> tuple[tuple[str, SafeValue], ...]:
+        return self._items
+
+    def _tag_values(self) -> tuple[str, ...]:
+        if not self.is_tag_set:
+            raise TypeError("tag query methods are available only on TagSet records")
+        values = self["values"]
+        assert isinstance(values, tuple)
+        return values
