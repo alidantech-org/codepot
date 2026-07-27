@@ -1,0 +1,133 @@
+{
+  "identifiers": [
+    "user",
+    "User",
+    "user_id",
+    "$user",
+    "_private",
+    "class",
+    "default",
+    "import",
+    "export",
+    "1user",
+    "user-name",
+    "user name",
+    "user.name",
+    "",
+    "éclair",
+    "user\u0001",
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "interface",
+    "namespace",
+    "keyof",
+    "infer",
+    "readonly",
+    "satisfies",
+    "await",
+    "yield"
+  ],
+  "output_paths": [
+    {
+      "path": "src/user.ts",
+      "target_id": "typescript"
+    },
+    {
+      "path": "src/user.tsx",
+      "target_id": "typescript-jsx"
+    },
+    {
+      "path": "src/user.mts",
+      "target_id": "typescript"
+    },
+    {
+      "path": "src/user.cts",
+      "target_id": "typescript"
+    },
+    {
+      "path": "src/user.d.ts",
+      "target_id": "typescript"
+    },
+    {
+      "path": "src/user.d.mts",
+      "target_id": "typescript"
+    },
+    {
+      "path": "src/user.d.cts",
+      "target_id": "typescript"
+    },
+    {
+      "path": "../user.ts",
+      "target_id": "typescript"
+    },
+    {
+      "path": "src/user.ts",
+      "target_id": "typescript-jsx"
+    }
+  ],
+  "modules": [
+    {
+      "name": "same-folder",
+      "current": "src/service.ts",
+      "provider": "src/user.ts"
+    },
+    {
+      "name": "parent-folder",
+      "current": "src/features/service.ts",
+      "provider": "src/user.ts"
+    },
+    {
+      "name": "deep-relative",
+      "current": "src/a/b/service.ts",
+      "provider": "src/c/d/user.ts"
+    },
+    {
+      "name": "tsx-provider",
+      "current": "src/service.ts",
+      "provider": "src/user.tsx"
+    },
+    {
+      "name": "mts-provider",
+      "current": "src/service.ts",
+      "provider": "src/user.mts"
+    },
+    {
+      "name": "cts-provider",
+      "current": "src/service.ts",
+      "provider": "src/user.cts"
+    },
+    {
+      "name": "d-ts-provider",
+      "current": "src/service.ts",
+      "provider": "src/user.d.ts"
+    },
+    {
+      "name": "d-mts-provider",
+      "current": "src/service.ts",
+      "provider": "src/user.d.mts"
+    },
+    {
+      "name": "d-cts-provider",
+      "current": "src/service.ts",
+      "provider": "src/user.d.cts"
+    },
+    {
+      "name": "index-file",
+      "current": "src/service.ts",
+      "provider": "src/users/index.ts"
+    }
+  ],
+  "packages": [
+    "package-name",
+    "@scope/package",
+    "package-name/subpath",
+    "@scope/package/subpath"
+  ],
+  "explicit_modules": [
+    "./relative-module",
+    "../relative-module",
+    "package-name",
+    "@scope/package/subpath",
+    "http://invalid.example/x",
+    "'quoted'"
+  ]
+}

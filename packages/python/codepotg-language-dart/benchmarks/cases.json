@@ -1,0 +1,100 @@
+{
+  "identifiers": [
+    "user",
+    "User",
+    "user_id",
+    "_private",
+    "class",
+    "default",
+    "import",
+    "export",
+    "1user",
+    "user-name",
+    "user name",
+    "user.name",
+    "",
+    "Éclair",
+    "user\u0001",
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "base",
+    "extension",
+    "sealed",
+    "mixin",
+    "required",
+    "late",
+    "show",
+    "hide",
+    "deferred"
+  ],
+  "output_paths": [
+    {
+      "path": "lib/src/user.dart",
+      "target_id": "dart"
+    },
+    {
+      "path": "bin/tool.dart",
+      "target_id": "dart"
+    },
+    {
+      "path": "test/user_test.dart",
+      "target_id": "dart"
+    },
+    {
+      "path": "../user.dart",
+      "target_id": "dart"
+    },
+    {
+      "path": "lib/user.ts",
+      "target_id": "dart"
+    },
+    {
+      "path": "lib/user.dart",
+      "target_id": "unknown"
+    }
+  ],
+  "modules": [
+    {
+      "name": "same-folder",
+      "current": "lib/src/service.dart",
+      "provider": "lib/src/user.dart"
+    },
+    {
+      "name": "parent-folder",
+      "current": "lib/src/features/service.dart",
+      "provider": "lib/src/user.dart"
+    },
+    {
+      "name": "deep-relative",
+      "current": "lib/src/a/b/service.dart",
+      "provider": "lib/src/c/d/user.dart"
+    },
+    {
+      "name": "model-provider",
+      "current": "lib/src/service.dart",
+      "provider": "lib/src/model.dart"
+    },
+    {
+      "name": "enum-provider",
+      "current": "lib/src/service.dart",
+      "provider": "lib/src/enum.dart"
+    },
+    {
+      "name": "index-provider",
+      "current": "lib/src/service.dart",
+      "provider": "lib/src/index.dart"
+    }
+  ],
+  "package_providers": [
+    "lib/user.dart",
+    "lib/src/users/user.dart",
+    "test/user.dart"
+  ],
+  "explicit_modules": [
+    "dart:async",
+    "package:example_sdk/src/user.dart",
+    "./user.dart",
+    "../shared/user.dart",
+    "https://invalid.example/user.dart",
+    "file:///tmp/user.dart"
+  ]
+}

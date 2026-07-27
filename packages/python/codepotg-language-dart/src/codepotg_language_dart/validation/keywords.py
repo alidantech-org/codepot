@@ -1,0 +1,70 @@
+# Pinned behavior version 1, verified against the Dart 3.12.2 keyword table.
+RESERVED_WORDS = frozenset(
+    {
+        "assert",
+        "break",
+        "case",
+        "catch",
+        "class",
+        "const",
+        "continue",
+        "default",
+        "do",
+        "else",
+        "enum",
+        "extends",
+        "false",
+        "final",
+        "finally",
+        "for",
+        "if",
+        "in",
+        "is",
+        "new",
+        "null",
+        "rethrow",
+        "return",
+        "super",
+        "switch",
+        "this",
+        "throw",
+        "true",
+        "try",
+        "var",
+        "void",
+        "while",
+        "with",
+    }
+)
+BUILT_IN_IDENTIFIERS = frozenset(
+    {
+        "abstract",
+        "as",
+        "covariant",
+        "deferred",
+        "dynamic",
+        "export",
+        "extension",
+        "external",
+        "factory",
+        "Function",
+        "get",
+        "implements",
+        "import",
+        "interface",
+        "late",
+        "library",
+        "mixin",
+        "operator",
+        "part",
+        "required",
+        "set",
+        "static",
+        "type",
+        "typedef",
+    }
+)
+CONTEXT_SENSITIVE_WORDS = frozenset({"await", "yield"})
+CONTEXTUAL_WORDS = frozenset(
+    {"async", "base", "hide", "of", "on", "sealed", "show", "sync", "when"}
+)

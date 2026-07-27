@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codepotg-language-dart"
+version = "0.1.0a1"
+description = "Dart target validation and URI-path adapter for CodepotG v2"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Alidantech" }]
+dependencies = ["codepotg-core>=2.0.0a1,<2.1"]
+classifiers = ["Programming Language :: Python :: 3", "Typing :: Typed"]
+
+[project.optional-dependencies]
+dev = ["build>=1.2", "pytest>=8.3", "ruff>=0.9"]
+
+[project.entry-points."codepotg.language_adapters"]
+dart = "codepotg_language_dart.plugin:create_plugin"
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["codepotg_language_dart*"]
+
+[tool.setuptools.package-data]
+codepotg_language_dart = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = ["--strict-markers", "--strict-config"]
+markers = ["oracle: optional compiler oracle", "performance: deterministic performance smoke test"]
