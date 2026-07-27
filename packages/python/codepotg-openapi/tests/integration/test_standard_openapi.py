@@ -59,6 +59,30 @@ def _document(*, title: str = "Orders API", with_codegen: bool = False) -> str:
     return json.dumps(value)
 
 
+def _schema_signature(schema) -> tuple[object, ...]:
+    return (
+        schema.id,
+        schema.name,
+        schema.kind,
+        tuple(schema.enum_values),
+        schema.literal,
+        tuple(
+            (
+                field.id,
+                field.name,
+                field.type,
+                field.required,
+                field.nullable,
+                field.readonly,
+                field.constraints,
+            )
+            for field in schema.fields
+        ),
+        schema.item_type,
+        schema.alias_of,
+    )
+
+
 def _semantic_signature(contract) -> tuple[object, ...]:
     return (
         contract.id,
@@ -69,14 +93,29 @@ def _semantic_signature(contract) -> tuple[object, ...]:
                 group.id,
                 group.name,
                 group.path,
-                tuple((schema.id, schema.name, schema.kind) for schema in group.schemas),
+                tuple(_schema_signature(schema) for schema in group.schemas),
                 tuple(
                     (
                         operation.id,
                         operation.name,
-                        operation.inputs,
-                        operation.outputs,
-                        operation.failures,
+                        tuple(
+                            (
+                                item.name,
+                                item.schema,
+                                item.required,
+                                item.nullable,
+                                item.readonly,
+                            )
+                            for item in operation.inputs
+                        ),
+                        tuple(
+                            (item.name, item.schema, item.optional)
+                            for item in operation.outputs
+                        ),
+                        tuple(
+                            (item.code, item.schema, item.message)
+                            for item in operation.failures
+                        ),
                         operation.effects,
                         operation.facets,
                     )
@@ -181,3 +220,21 @@ def test_unimplemented_codegen_is_truthful_and_policy_controlled() -> None:
     )
     assert strict.contract is None
     assert {item.code for item in strict.diagnostics} == {"OA_XCODEGEN_NOT_IMPLEMENTED"}
+
+
+def test_unimplemented_security_is_preserved_and_diagnosed() -> None:
+    document = json.loads(_document())
+    document["security"] = [{"bearerAuth": []}]
+    document["components"]["securitySchemes"] = {
+        "bearerAuth": {"type": "http", "scheme": "bearer"}
+    }
+    result = OpenApiSourceAdapter().normalize(
+        SourceAdapterRequest(source_id="security", content=json.dumps(document)),
+        CancellationToken(),
+    )
+    assert result.contract is not None
+    security_diagnostics = [
+        item for item in result.diagnostics if item.code == "OA_SECURITY_NOT_IMPLEMENTED"
+    ]
+    assert len(security_diagnostics) == 1
+    assert not result.diagnostics.has_errors
