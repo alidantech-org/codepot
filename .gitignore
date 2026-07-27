@@ -25,3 +25,4 @@ Thumbs.db
 .codepot/backups/
 .build/
 .idea/
+*.vscode/
