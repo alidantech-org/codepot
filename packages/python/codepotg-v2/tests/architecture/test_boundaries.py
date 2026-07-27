@@ -6,6 +6,7 @@ from pathlib import Path
 
 PACKAGE_ROOT = Path(__file__).parents[2]
 SOURCE_ROOT = PACKAGE_ROOT / "src" / "codepotg"
+TEST_ROOT = PACKAGE_ROOT / "tests"
 
 REQUIRED_PACKAGES = {
     "api",
@@ -22,6 +23,13 @@ REQUIRED_PACKAGES = {
     "runtime",
     "testing",
     "versions",
+}
+REQUIRED_TEST_AREAS = {
+    "architecture",
+    "contracts",
+    "distribution",
+    "fixtures",
+    "unit",
 }
 FORBIDDEN_FLAT_MODULES = {
     "api.py",
@@ -59,6 +67,17 @@ def test_planned_package_structure_is_present_without_flat_dump_modules() -> Non
     assert not {path.name for path in SOURCE_ROOT.iterdir()} & FORBIDDEN_FLAT_MODULES
     assert (SOURCE_ROOT / "domain" / "ir").is_dir()
     assert (SOURCE_ROOT / "domain" / "generation").is_dir()
+
+
+def test_tests_mirror_subsystem_boundaries_instead_of_flat_test_files() -> None:
+    present_areas = {path.name for path in TEST_ROOT.iterdir() if path.is_dir()}
+    flat_tests = tuple(TEST_ROOT.glob("test_*.py"))
+
+    assert REQUIRED_TEST_AREAS <= present_areas
+    assert flat_tests == ()
+    assert (TEST_ROOT / "unit" / "domain" / "ir").is_dir()
+    assert (TEST_ROOT / "unit" / "domain" / "generation").is_dir()
+    assert (TEST_ROOT / "contracts" / "ports").is_dir()
 
 
 def test_public_namespaces_import_without_discovery_or_optional_plugins() -> None:
