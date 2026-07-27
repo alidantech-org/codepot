@@ -18,15 +18,11 @@ class AuthorOptions:
     max_declarations: int = 10_000
 
     def __post_init__(self) -> None:
-        if type(self.strict) is not bool:
-            raise TypeError("strict must be bool")
-        if not isinstance(self.id_separator, str) or not self.id_separator:
+        if not self.id_separator:
             raise TypeError("id_separator must be a non-empty string")
         if any(char.isspace() for char in self.id_separator):
             raise ValueError("id_separator must not contain whitespace")
-        if not isinstance(self.unsupported_core, UnsupportedCorePolicy):
-            raise TypeError("unsupported_core must be UnsupportedCorePolicy")
-        if type(self.max_declarations) is not int or self.max_declarations < 1:
+        if self.max_declarations < 1:
             raise ValueError("max_declarations must be a positive integer")
 
     @classmethod
