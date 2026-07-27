@@ -25,6 +25,8 @@ class DartTargetAdapter:
     _plugin: PluginDescriptor = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.options, DartTargetOptions):
+            raise ValueError("options must be a DartTargetOptions instance")
         object.__setattr__(
             self,
             "_plugin",

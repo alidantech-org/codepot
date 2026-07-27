@@ -2,7 +2,7 @@
 
 This package detects and validates Dart targets and calculates URI/path facts only. Flutter remains a template-pack concern. The adapter must not parse semantic sources, extend the kernel, render Dart syntax, select templates, plan destinations, write files, or execute commands.
 
-PR #30 implemented most behavior available through the current public `TargetAdapter` port. Implementation status is separated from release status: one typed-option repair, exact synchronized verification, and a real Dart SDK oracle remain open.
+PR #30 implemented most behavior available through the current public `TargetAdapter` port. The audited typed-option defect and conditional artifact-inspection gap are repaired on `chatgpt/codepotx-restart-dart-audit-fixes`; synchronized release verification and a real Dart SDK oracle remain open.
 
 ## DART-001 — Package and plugin foundation
 
@@ -18,15 +18,15 @@ PR #30 implemented most behavior available through the current public `TargetAda
 
 ## DART-002 — Typed target option schema
 
-**Status:** implemented with audit fix required; public project/pack option bridge remains blocked
+**Status:** implemented; public project/pack option bridge remains blocked
 
 - [x] Define immutable reserved-word, Unicode, privacy, package-name, and package-URI preference options.
 - [x] Reject unknown fields in `from_mapping()`.
 - [x] Validate decoded package names and boolean preference values.
 - [x] Expose deterministic option introspection.
-- [ ] Validate direct constructor values with the same strictness as `from_mapping()`.
-- [ ] Reject raw strings/non-enum policy values and non-string package names deterministically.
-- [ ] Add direct-constructor negative tests.
+- [x] Validate direct constructor values with the same strictness as `from_mapping()`.
+- [x] Reject raw strings/non-enum policy values and non-string package names deterministically.
+- [x] Add direct-constructor negative tests for enum, package, boolean, and adapter option-object values.
 - [ ] Decode project/pack options only after the public configuration bridge exists.
 
 Prohibited options remain generated naming transforms, type/nullability rendering, literals, comments, directives, prefixes/combinators, annotations, serialization, formatting, and Flutter policy.
@@ -111,12 +111,13 @@ Prohibited options remain generated naming transforms, type/nullability renderin
 - [x] Document relative and `package:` examples and unsupported services.
 - [x] Add benchmark, oracle, distribution, and entry-point tooling.
 - [x] Record 83 passing tests and one honest SDK-oracle skip in the implementation harness.
-- [ ] Fix strict direct option construction.
-- [ ] Make wheel/sdist inspection run after build rather than conditionally skip.
+- [x] Fix strict direct option construction and adapter option-object validation.
+- [x] Make wheel/sdist content inspection build fresh temporary artifacts and never conditionally skip.
+- [x] Add exact installed distribution and semantic plugin-version assertions.
 - [ ] Run Ruff and formatting on the synchronized repository.
 - [ ] Run the complete real core and Dart suites.
 - [ ] Run the representative oracle against a real Dart SDK.
-- [ ] Build with `python -m build` and install the real wheels in a fresh environment.
+- [ ] Build with the exact release command and install the real wheels in a fresh environment.
 - [ ] Record exact final evidence and clean-tree status.
 
 ## Audit follow-up
