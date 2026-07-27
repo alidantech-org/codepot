@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from dataclasses import Field, fields, is_dataclass
 from enum import Enum
 from typing import Any, cast
@@ -60,6 +60,7 @@ FORMAT = "codepotg.ir"
 VERSION = 1
 
 Factory = Callable[..., object]
+Constructor = Callable[..., object]
 
 _TYPES: dict[str, Factory] = {
     cls.__name__: cast(Factory, cls)
@@ -123,6 +124,11 @@ class DuplicateSafeLoader(yaml.SafeLoader):
     pass
 
 
+def _construct_object(loader: DuplicateSafeLoader, node: Node, *, deep: bool) -> object:
+    constructor = cast(Constructor, loader.construct_object)
+    return constructor(node, deep=deep)
+
+
 def _construct_mapping(
     loader: DuplicateSafeLoader,
     node: MappingNode,
@@ -131,7 +137,7 @@ def _construct_mapping(
     loader.flatten_mapping(node)
     result: dict[object, object] = {}
     for key_node, value_node in node.value:
-        key = cast(object, loader.construct_object(cast(Node, key_node), deep=deep))
+        key = _construct_object(loader, key_node, deep=deep)
         if key in result:
             raise ConstructorError(
                 "while constructing a mapping",
@@ -139,10 +145,7 @@ def _construct_mapping(
                 f"found duplicate key {key!r}",
                 key_node.start_mark,
             )
-        result[key] = cast(
-            object,
-            loader.construct_object(cast(Node, value_node), deep=deep),
-        )
+        result[key] = _construct_object(loader, value_node, deep=deep)
     return result
 
 
@@ -198,10 +201,7 @@ def loads_json(value: str | bytes) -> Contract:
 
 
 def dumps_yaml(contract: Contract) -> str:
-    return cast(
-        str,
-        yaml.safe_dump(to_document(contract), sort_keys=True, allow_unicode=True),
-    )
+    return yaml.safe_dump(to_document(contract), sort_keys=True, allow_unicode=True)
 
 
 def loads_yaml(value: str | bytes) -> Contract:
@@ -222,10 +222,10 @@ def _init_fields(cls: type[object]) -> tuple[Field[Any], ...]:
 
 
 def _encode(value: object) -> object:
-    if value is None or isinstance(value, Enum):
-        if isinstance(value, Enum):
-            return {"$enum": value.__class__.__name__, "value": value.value}
+    if value is None:
         return None
+    if isinstance(value, Enum):
+        return {"$enum": value.__class__.__name__, "value": value.value}
     if isinstance(value, str | int | float | bool):
         return value
     if isinstance(value, tuple):
@@ -233,7 +233,8 @@ def _encode(value: object) -> object:
     if is_dataclass(value) and not isinstance(value, type):
         result: dict[str, object] = {"$type": value.__class__.__name__}
         for item in _init_fields(value.__class__):
-            result[item.name] = _encode(getattr(value, item.name))
+            field_value = cast(object, getattr(value, item.name))
+            result[item.name] = _encode(field_value)
         return result
     raise TypeError(f"unsupported IR transport value: {type(value).__name__}")
 
