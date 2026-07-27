@@ -6,7 +6,8 @@ from codepotg.api import CancellationToken, OperationResult, OperationStatus
 from codepotg.config import ConfigurationError, load_project
 from codepotg.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
 from codepotg.generation import GenerationData
-from codepotg.runtime import GenerationSession, PluginLoadError, RuntimePlugins
+from codepotg.runtime.plugins import PluginLoadError, RuntimePlugins
+from codepotg.runtime.session import GenerationSession
 
 
 def generate(
