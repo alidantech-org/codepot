@@ -62,15 +62,25 @@ _REF_TYPES: dict[RefKind, type[Ref[Any]]] = {
 _UNSUPPORTED_KINDS = {RefKind.VALUE_SOURCE, RefKind.PRESENTATION}
 
 
+def _empty_declarations() -> dict[str, Declaration]:
+    return {}
+
+
 @dataclass(slots=True)
 class Author:
     name: str
     version: str | None = None
     options: AuthorOptions = field(default_factory=AuthorOptions)
     _author_id: str = field(default_factory=lambda: f"author-{uuid4()}", init=False, repr=False)
-    _declarations: dict[str, Declaration] = field(default_factory=dict, init=False, repr=False)
+    _declarations: dict[str, Declaration] = field(
+        default_factory=_empty_declarations,
+        init=False,
+        repr=False,
+    )
     _diagnostics: AuthorDiagnostics = field(
-        default_factory=AuthorDiagnostics, init=False, repr=False
+        default_factory=AuthorDiagnostics,
+        init=False,
+        repr=False,
     )
     _frozen: bool = field(default=False, init=False, repr=False)
 
@@ -207,13 +217,13 @@ class Author:
         declaration_id: str | None = None,
         group: GroupRef | None = None,
     ) -> SchemaRef[object]:
-        if isinstance(values, type) and issubclass(values, Enum):
+        if isinstance(values, tuple):
+            enum_values = values
+        else:
             raw_values = tuple(item.value for item in values)
             if any(not isinstance(value, str) for value in raw_values):
                 raise TypeError("public core enum values must be strings")
             enum_values = cast(tuple[str, ...], raw_values)
-        else:
-            enum_values = values
         payload = SchemaDeclaration(SchemaDeclarationKind.ENUM, enum_values=enum_values)
         return cast(
             SchemaRef[object],
