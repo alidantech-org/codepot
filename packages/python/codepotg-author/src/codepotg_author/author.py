@@ -2,25 +2,28 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from itertools import count
-from threading import Lock
 from typing import Mapping, cast
+from uuid import uuid4
 
 from .declarations import Declaration
+from .diagnostics import (
+    AUTHOR_CORE_UNSUPPORTED,
+    AuthorDiagnostic,
+    AuthorDiagnostics,
+    AuthorDiagnosticSeverity,
+)
 from .options import AuthorOptions
 from .refs import (
     EventRef,
     GroupRef,
     OperationRef,
     PolicyRef,
-    PresentationRef,
     PropertyRef,
     Ref,
     RefIdentity,
     RefKind,
     SchemaRef,
     StorageRef,
-    ValueSourceRef,
     ViewRef,
     WorkflowRef,
     WorkflowStepRef,
@@ -34,13 +37,9 @@ from .schemas import (
     fields_from_mapping,
 )
 
-_AUTHOR_COUNTER = count(1)
-_AUTHOR_COUNTER_LOCK = Lock()
 
-
-def _next_author_id() -> str:
-    with _AUTHOR_COUNTER_LOCK:
-        return f"author-{next(_AUTHOR_COUNTER)}"
+def _new_author_id() -> str:
+    return f"author-{uuid4().hex}"
 
 
 _REF_TYPES: dict[RefKind, type[Ref[object]]] = {
@@ -54,9 +53,9 @@ _REF_TYPES: dict[RefKind, type[Ref[object]]] = {
     RefKind.VIEW: ViewRef,
     RefKind.WORKFLOW: WorkflowRef,
     RefKind.WORKFLOW_STEP: WorkflowStepRef,
-    RefKind.VALUE_SOURCE: ValueSourceRef,
-    RefKind.PRESENTATION: PresentationRef,
 }
+
+_UNSUPPORTED_CORE_KINDS = frozenset({RefKind.VALUE_SOURCE, RefKind.PRESENTATION})
 
 
 @dataclass(slots=True)
@@ -64,8 +63,9 @@ class Author:
     name: str
     version: str | None = None
     options: AuthorOptions = field(default_factory=AuthorOptions)
-    _author_id: str = field(default_factory=_next_author_id, init=False, repr=False)
+    _author_id: str = field(default_factory=_new_author_id, init=False, repr=False)
     _declarations: dict[str, Declaration] = field(default_factory=dict, init=False, repr=False)
+    _diagnostics: AuthorDiagnostics = field(default_factory=AuthorDiagnostics, init=False, repr=False)
     _frozen: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -79,6 +79,10 @@ class Author:
     @property
     def frozen(self) -> bool:
         return self._frozen
+
+    @property
+    def diagnostics(self) -> AuthorDiagnostics:
+        return self._diagnostics
 
     @property
     def declarations(self) -> tuple[Declaration, ...]:
@@ -101,6 +105,10 @@ class Author:
     ) -> Ref[object]:
         if self._frozen:
             raise RuntimeError("author session is frozen")
+        if kind in _UNSUPPORTED_CORE_KINDS:
+            self._reject_unsupported(kind, name)
+        if kind not in _REF_TYPES:
+            raise ValueError(f"unsupported author ref kind: {kind.value}")
         if len(self._declarations) >= self.options.max_declarations:
             raise RuntimeError("author declaration limit exceeded")
         normalized_id = declaration_id or self._default_id(kind, name)
@@ -150,7 +158,11 @@ class Author:
         *,
         declaration_id: str | None = None,
     ) -> SchemaRef[object]:
-        enum_values = tuple(str(item.value) for item in values) if isinstance(values, type) and issubclass(values, Enum) else tuple(values)
+        enum_values = (
+            tuple(str(item.value) for item in values)
+            if isinstance(values, type) and issubclass(values, Enum)
+            else tuple(values)
+        )
         payload = SchemaDeclaration(SchemaDeclarationKind.ENUM, enum_values=enum_values)
         return cast(
             SchemaRef[object],
@@ -175,8 +187,16 @@ class Author:
             self.declare(RefKind.SCHEMA, name, declaration_id=declaration_id, payload=payload),
         )
 
-    def operation(self, name: str, *, declaration_id: str | None = None) -> OperationRef[object, object]:
-        return cast(OperationRef[object, object], self.declare(RefKind.OPERATION, name, declaration_id=declaration_id))
+    def operation(
+        self,
+        name: str,
+        *,
+        declaration_id: str | None = None,
+    ) -> OperationRef[object, object]:
+        return cast(
+            OperationRef[object, object],
+            self.declare(RefKind.OPERATION, name, declaration_id=declaration_id),
+        )
 
     def event(self, name: str, *, declaration_id: str | None = None) -> EventRef[object]:
         return cast(EventRef[object], self.declare(RefKind.EVENT, name, declaration_id=declaration_id))
@@ -200,6 +220,16 @@ class Author:
             raise TypeError(f"expected {kind.value} ref, received {ref.kind.value}")
         if ref.declaration_id not in self._declarations:
             raise ValueError("unknown declaration ref")
+
+    def _reject_unsupported(self, kind: RefKind, name: str) -> None:
+        diagnostic = AuthorDiagnostic(
+            code=AUTHOR_CORE_UNSUPPORTED,
+            severity=AuthorDiagnosticSeverity.ERROR,
+            message=f"core IR does not support author declaration kind '{kind.value}'",
+            details=(("kind", kind.value), ("name", name)),
+        )
+        self._diagnostics = self._diagnostics.add(diagnostic)
+        raise ValueError(f"{AUTHOR_CORE_UNSUPPORTED}: {kind.value}")
 
     def _default_id(self, kind: RefKind, name: str) -> str:
         token = "-".join(part.lower() for part in name.replace("_", " ").split())
