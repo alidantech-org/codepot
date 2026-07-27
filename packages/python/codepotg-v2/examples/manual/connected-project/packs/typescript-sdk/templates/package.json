@@ -1,0 +1,11 @@
+{
+  "name": "codepotg-manual-typescript-sdk",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "latest"
+  }
+}

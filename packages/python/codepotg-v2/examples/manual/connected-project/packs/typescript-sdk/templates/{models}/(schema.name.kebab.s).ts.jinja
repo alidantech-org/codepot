@@ -1,0 +1,6 @@
+/* {{ options.banner }} */
+/* semantic source: {{ bindings.contractSource }} */
+{% if schema.data.tags.has("domain:audited") %}/** This schema is marked domain:audited in the neutral IR. */
+{% endif %}export interface {{ schema.name.pascal.s }} {
+{% for field in schema.fields %}  readonly {{ field.name.camel.s }}{% if not field.required %}?{% endif %}: {% if field.type.name == "string" %}string{% elif field.type.name == "boolean" %}boolean{% elif field.type.name == "integer" %}number{% elif field.type.name == "number" %}number{% else %}unknown{% endif %}{% if field.nullable %} | null{% endif %};
+{% endfor %}}

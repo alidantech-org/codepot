@@ -1,0 +1,4 @@
+// {{ options.banner }}
+{% for module in exports.models.modules %}export '{{ module.specifier }}';
+{% endfor %}{% for module in exports.enums.modules %}export '{{ module.specifier }}';
+{% endfor %}
