@@ -141,3 +141,25 @@ __all__ = [
     "walk_views",
     "walk_workflow_steps",
 ]
+
+from .codec import (
+    IrCodecError,
+    contract_from_document,
+    contract_from_json,
+    contract_from_yaml,
+    contract_to_document,
+    contract_to_json,
+    contract_to_yaml,
+    validate_transport,
+)
+
+__all__ += [
+    "IrCodecError",
+    "contract_from_document",
+    "contract_from_json",
+    "contract_from_yaml",
+    "contract_to_document",
+    "contract_to_json",
+    "contract_to_yaml",
+    "validate_transport",
+]
