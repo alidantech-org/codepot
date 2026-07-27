@@ -12,7 +12,7 @@ def is_allowed_attribute(value: object, attribute: str, resolved: object) -> boo
     if not attribute or attribute.startswith("_"):
         return False
     if isinstance(value, SafeRecord):
-        return attribute in value
+        return attribute in value or value.is_allowed_tag_attribute(attribute)
     if isinstance(value, TemplateModule):
         return isinstance(resolved, Macro)
     return isinstance(value, _SAFE_JINJA_RUNTIME_TYPES)
