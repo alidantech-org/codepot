@@ -94,9 +94,7 @@ def _run(
         text=True,
     )
     assert completed.returncode == 0, (
-        f"command failed: {command!r}\n"
-        f"stdout:\n{completed.stdout}\n"
-        f"stderr:\n{completed.stderr}"
+        f"command failed: {command!r}\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
     )
 
 
