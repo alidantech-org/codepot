@@ -44,7 +44,7 @@ def normalize_operations(context: NormalizationContext) -> None:
             context.diagnostics.error(
                 "OA_OPERATION_PATH_ITEM",
                 f"path item {path!r} must be an object",
-                span=context.root.span(path_pointer),
+                span=path_document.span(path_pointer),
             )
             continue
         path_parameters = path_item.get("parameters", [])
@@ -188,5 +188,5 @@ def _normalize_operation(
 
 
 def _fallback_operation_id(method: str, path: str) -> str:
-    normalized = _OPERATION_NAME.sub("_", path.strip("/{}")).strip("_").lower()
+    normalized = _OPERATION_NAME.sub("_", path.strip("/{}" )).strip("_").lower()
     return f"{method.lower()}_{normalized or 'root'}"
