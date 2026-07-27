@@ -24,7 +24,9 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Typing :: Typed",
 ]
-dependencies = []
+dependencies = [
+  "PyYAML>=6.0.2,<7.0",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -32,6 +34,9 @@ dev = [
   "pytest>=8.3",
   "ruff>=0.9",
 ]
+
+[project.scripts]
+codepotg = "codepotg.cli.main:main"
 
 [project.urls]
 Homepage = "https://github.com/alidantech-org/codepot"
