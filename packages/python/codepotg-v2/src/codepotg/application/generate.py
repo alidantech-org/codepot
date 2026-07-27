@@ -20,6 +20,12 @@ def generate(
     path = Path(project_file).resolve()
     try:
         project = load_project(path)
+        if project.commands or any(pack.commands for pack in project.packs):
+            raise ConfigurationError(
+                "CMD_APPROVAL_REQUIRED",
+                "project-owned commands require the separate approved command runtime",
+                path="$.commands",
+            )
         runtime_plugins = plugins or RuntimePlugins.discover()
     except (ConfigurationError, PluginLoadError, OSError, ValueError) as exc:
         code = getattr(exc, "code", "GENERATION_SETUP_FAILED")
