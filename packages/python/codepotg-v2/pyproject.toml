@@ -25,6 +25,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
+  "pathspec>=0.12,<1.0",
   "PyYAML>=6.0.2,<7.0",
 ]
 
