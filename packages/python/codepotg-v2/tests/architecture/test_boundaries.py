@@ -10,6 +10,7 @@ SOURCE_ROOT = PACKAGE_ROOT / "src" / "codepotg"
 REQUIRED_PACKAGES = {
     "api",
     "application",
+    "cli",
     "config",
     "diagnostics",
     "domain",
@@ -89,10 +90,17 @@ def test_domain_dependency_direction_and_clean_room_boundary() -> None:
             if root in FORBIDDEN_OLD_IMPORT_ROOTS:
                 violations.append(f"{relative} imports old/plugin implementation {imported}")
             if relative.parts[0] == "domain" and imported.startswith(
-                ("codepotg.application", "codepotg.infrastructure", "codepotg.runtime", "codepotg.cli")
+                (
+                    "codepotg.application",
+                    "codepotg.cli",
+                    "codepotg.infrastructure",
+                    "codepotg.runtime",
+                )
             ):
                 violations.append(f"{relative} violates domain dependency direction: {imported}")
-            if relative.parts[0] == "application" and imported.startswith("codepotg.infrastructure"):
+            if relative.parts[0] == "application" and imported.startswith(
+                "codepotg.infrastructure"
+            ):
                 violations.append(f"{relative} imports concrete infrastructure: {imported}")
 
     assert violations == []
