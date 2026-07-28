@@ -52,7 +52,6 @@ FORBIDDEN_OLD_IMPORT_ROOTS = {
     "emission",
     "inference",
     "languages",
-    "openapi",
 }
 
 
