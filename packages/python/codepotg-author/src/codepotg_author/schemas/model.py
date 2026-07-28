@@ -215,9 +215,7 @@ def fields_from_mapping(values: Mapping[str, object]) -> tuple[FieldDeclaration,
                 )
             )
         elif isinstance(value, PropertyRef):
-            result.append(
-                FieldDeclaration(name, property_ref=cast(PropertyRef[object], value))
-            )
+            result.append(FieldDeclaration(name, property_ref=cast(PropertyRef[object], value)))
         elif isinstance(value, SchemaRef):
             result.append(FieldDeclaration(name, schema_ref=cast(SchemaRef[object], value)))
         else:

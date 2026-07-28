@@ -18,7 +18,9 @@ def identity(value: object) -> object:
 
 def test_registry_is_sorted_and_has_no_default_globals() -> None:
     registry = HelperRegistry.create()
-    assert registry.descriptors == tuple(sorted(registry.descriptors, key=lambda item: item.identity()))
+    assert registry.descriptors == tuple(
+        sorted(registry.descriptors, key=lambda item: item.identity())
+    )
     assert registry.globals() == {}
     assert "attr" not in registry.filters()
     assert "map" not in registry.filters()

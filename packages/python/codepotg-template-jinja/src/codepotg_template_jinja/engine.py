@@ -120,9 +120,7 @@ class JinjaTemplateEngine:
             )
             self._helpers = HelperRegistry(())
         self._startup_diagnostic = startup
-        self._cache: BoundedCache[_CompiledTemplate] = BoundedCache(
-            self._rules.cache_entries
-        )
+        self._cache: BoundedCache[_CompiledTemplate] = BoundedCache(self._rules.cache_entries)
 
     @property
     def plugin(self) -> PluginDescriptor:

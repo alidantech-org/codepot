@@ -277,9 +277,7 @@ def _decode_object(
                 path=path,
             )
         allowed = {
-            item.name
-            for item in fields(target)
-            if item.init and not item.name.startswith("_")
+            item.name for item in fields(target) if item.init and not item.name.startswith("_")
         }
         unknown = sorted(set(typed) - allowed - {"$type"})
         if unknown:

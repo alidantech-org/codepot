@@ -5,9 +5,7 @@ from codepotg.ir import Name, SemanticId
 
 
 def test_path_expressions_resolve_only_known_scalar_properties() -> None:
-    context = (
-        ("schema", (("id", SemanticId("users.schema")), ("name", Name("UserProfile")))),
-    )
+    context = (("schema", (("id", SemanticId("users.schema")), ("name", Name("UserProfile")))),)
     assert (
         evaluate_text(
             "models/(schema.name.kebab.original)-(schema.id.value).ts",

@@ -161,9 +161,7 @@ class ProjectConfig:
         available = set(source_names)
         for pack in self.packs:
             if pack.input is not None and pack.input not in available:
-                raise ValueError(
-                    f"pack {pack.name!r} references unknown input {pack.input!r}"
-                )
+                raise ValueError(f"pack {pack.name!r} references unknown input {pack.input!r}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -176,9 +174,7 @@ class OptionDefinition:
 
     def validate(self, value: FrozenValue) -> None:
         if self.choices and value not in self.choices:
-            raise ValueError(
-                f"option {self.name!r} must be one of {self.choices!r}"
-            )
+            raise ValueError(f"option {self.name!r} must be one of {self.choices!r}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -202,9 +198,7 @@ class SelectionConfig:
         _require_id("selection key", self.key)
         for part in self.paths:
             _require_path_segment("selection path", part)
-        if self.select is not None and (
-            not self.select or self.select.strip() != self.select
-        ):
+        if self.select is not None and (not self.select or self.select.strip() != self.select):
             raise ValueError("selection selector must be a non-empty trimmed string")
         import_names = tuple(name for name, _ in self.imports)
         if tuple(sorted(import_names)) != import_names or len(import_names) != len(

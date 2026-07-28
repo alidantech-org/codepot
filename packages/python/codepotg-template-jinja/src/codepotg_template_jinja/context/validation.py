@@ -10,7 +10,6 @@ from typing import Any
 from codepotg import diagnostics as public_diagnostics
 from codepotg import ir as public_ir
 from codepotg.ir import Group, Name, NameProjection
-
 from codepotg_template_jinja.rules import JinjaEngineRules
 
 from .access import SafeRecord, SafeValue
@@ -214,9 +213,7 @@ def _freeze_tuple(
     _enter_compound(state, object_id, path, value)
     try:
         if value and all(
-            isinstance(item, tuple)
-            and len(item) == 2
-            and isinstance(item[0], str)
+            isinstance(item, tuple) and len(item) == 2 and isinstance(item[0], str)
             for item in value
         ):
             pairs = value

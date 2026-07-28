@@ -29,12 +29,8 @@ class PresentationEntry:
     data: KernelData = field(default_factory=KernelData)
 
     def __post_init__(self) -> None:
-        if self.address is not None and (
-            not self.address or self.address.strip() != self.address
-        ):
-            raise ValueError(
-                "presentation entry addresses must be non-empty trimmed strings"
-            )
+        if self.address is not None and (not self.address or self.address.strip() != self.address):
+            raise ValueError("presentation entry addresses must be non-empty trimmed strings")
 
 
 @dataclass(frozen=True, slots=True)

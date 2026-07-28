@@ -60,9 +60,13 @@ def resolve_expression(expression: str, roots: Mapping[str, object]) -> object:
 
 
 def _get(value: object, part: str, expression: str) -> object:
-    if isinstance(value, tuple) and value and all(
-        isinstance(item, tuple) and len(item) == 2 and isinstance(item[0], str)
-        for item in value
+    if (
+        isinstance(value, tuple)
+        and value
+        and all(
+            isinstance(item, tuple) and len(item) == 2 and isinstance(item[0], str)
+            for item in value
+        )
     ):
         mapping = dict(value)
         if part not in mapping:

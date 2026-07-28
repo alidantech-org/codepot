@@ -88,9 +88,7 @@ class TagSet:
 
     def under(self, namespace: str) -> tuple[str, ...]:
         prefix = f"{namespace}:"
-        return tuple(
-            tag for tag in self.values if tag == namespace or tag.startswith(prefix)
-        )
+        return tuple(tag for tag in self.values if tag == namespace or tag.startswith(prefix))
 
 
 @dataclass(frozen=True, slots=True)

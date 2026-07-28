@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from codepotg.application import generate, generate_to_files
 
@@ -71,9 +71,7 @@ def _print_result(result: object, *, report: object | None = None) -> None:
 
     payload: dict[str, object] = {
         "status": str(status),
-        "diagnostics": (
-            diagnostics.to_dict() if hasattr(diagnostics, "to_dict") else ()
-        ),
+        "diagnostics": (diagnostics.to_dict() if hasattr(diagnostics, "to_dict") else ()),
         "artifacts": tuple(
             {
                 "id": item.id,
@@ -99,8 +97,7 @@ def _print_result(result: object, *, report: object | None = None) -> None:
         )
     if report is not None:
         payload["writes"] = tuple(
-            {"kind": item.kind.value, "path": item.path}
-            for item in report.changes
+            {"kind": item.kind.value, "path": item.path} for item in report.changes
         )
     print(json.dumps(payload, indent=2, sort_keys=True))
 

@@ -4,10 +4,9 @@ from enum import Enum
 from types import NoneType, UnionType
 from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin, get_type_hints
 
+from codepotg.ir import TypeExpression, TypeKind
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
-
-from codepotg.ir import TypeExpression, TypeKind
 
 from codepotg_author.refs import GroupRef, SchemaRef
 from codepotg_author.schemas import (
@@ -82,9 +81,7 @@ class PydanticCompiler:
                 self._type_expression(args[1]),
             )
         if origin is tuple and args:
-            members = tuple(
-                self._type_expression(item) for item in args if item is not Ellipsis
-            )
+            members = tuple(self._type_expression(item) for item in args if item is not Ellipsis)
             return TypeExpression.tuple_of(*members)
         if origin in {UnionType, Union} and args:
             members = tuple(self._type_expression(item) for item in args)

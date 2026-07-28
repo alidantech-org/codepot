@@ -83,7 +83,7 @@ def test_isolated_wheels_load_entry_point_and_normalize(tmp_path: Path) -> None:
     )
     assert installed.returncode == 0, installed.stdout + installed.stderr
 
-    script = r'''
+    script = r"""
 import json
 from importlib.metadata import entry_points
 from codepotg.api import CancellationToken
@@ -107,7 +107,7 @@ assert result.contract is not None
 assert result.contract.name.value == "Isolated"
 assert result.digest and len(result.digest) == 64
 assert not result.diagnostics.has_errors
-'''
+"""
     completed = subprocess.run(
         [str(python), "-I", "-c", script],
         cwd=tmp_path,

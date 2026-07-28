@@ -221,9 +221,7 @@ class ProjectPlanner:
     ) -> ArtifactPlan:
         semantic_id = _semantic_id(context)
         group_id = (
-            str(context.group.id)
-            if context is not None and context.group is not None
-            else None
+            str(context.group.id) if context is not None and context.group is not None else None
         )
         identity = ":".join(
             part
@@ -295,9 +293,7 @@ class ProjectPlanner:
         manifest: PackManifest,
     ) -> tuple[ArtifactPlan, ...]:
         providers = {
-            selection.key: tuple(
-                item for item in artifacts if item.selection_key == selection.key
-            )
+            selection.key: tuple(item for item in artifacts if item.selection_key == selection.key)
             for selection in manifest.selections
         }
         resolved: list[ArtifactPlan] = []
@@ -359,9 +355,7 @@ class ProjectPlanner:
         modules: list[ModuleDescriptor] = []
         for provider in matched:
             if provider.target_id != consumer.target_id:
-                raise ValueError(
-                    "PLAN_TARGET_MISMATCH: generated dependencies must share a target"
-                )
+                raise ValueError("PLAN_TARGET_MISMATCH: generated dependencies must share a target")
             facts = adapter.resolve_module_path(
                 ModulePathRequest(
                     current_artifact=consumer.output_path,
@@ -377,9 +371,7 @@ class ProjectPlanner:
                     semantic_id=provider.semantic_id,
                 )
             )
-        return tuple(
-            sorted(modules, key=lambda item: (item.specifier, item.artifact_path))
-        )
+        return tuple(sorted(modules, key=lambda item: (item.specifier, item.artifact_path)))
 
     @staticmethod
     def _partials(

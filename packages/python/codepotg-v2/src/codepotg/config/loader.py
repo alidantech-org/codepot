@@ -74,7 +74,9 @@ def load_pack_manifest(path: str | Path) -> PackManifest:
 
 def decode_project(value: object) -> ProjectConfig:
     root = _object(value, "$")
-    _unknown(root, {"apiVersion", "name", "sources", "executables", "security", "packs", "commands"}, "$")
+    _unknown(
+        root, {"apiVersion", "name", "sources", "executables", "security", "packs", "commands"}, "$"
+    )
     sources_raw = _object(root.get("sources", {}), "$.sources")
     packs_raw = _object(root.get("packs", {}), "$.packs")
 
@@ -114,7 +116,9 @@ def decode_project(value: object) -> ProjectConfig:
                 output=_string(item.get("output"), f"$.packs.{name}.output"),
                 options=freeze_object(item.get("options", {}), path=f"$.packs.{name}.options"),
                 bindings=freeze_object(item.get("bindings", {}), path=f"$.packs.{name}.bindings"),
-                executables=freeze_object(item.get("executables", {}), path=f"$.packs.{name}.executables"),
+                executables=freeze_object(
+                    item.get("executables", {}), path=f"$.packs.{name}.executables"
+                ),
                 commands=freeze_object(item.get("commands", {}), path=f"$.packs.{name}.commands"),
             )
         )
@@ -187,7 +191,9 @@ def decode_pack_manifest(value: object) -> PackManifest:
             BindingDefinition(
                 name=name,
                 required=_bool(item.get("required", False), f"$.bindings.{name}.required"),
-                description=_optional_string(item.get("description"), f"$.bindings.{name}.description"),
+                description=_optional_string(
+                    item.get("description"), f"$.bindings.{name}.description"
+                ),
             )
         )
 
@@ -240,12 +246,10 @@ def decode_pack_manifest(value: object) -> PackManifest:
         version=_string(root.get("version"), "$.version"),
         description=_optional_string(root.get("description"), "$.description"),
         include=tuple(
-            _string(item, "$.include")
-            for item in _list(root.get("include", ["**/*"]), "$.include")
+            _string(item, "$.include") for item in _list(root.get("include", ["**/*"]), "$.include")
         ),
         exclude=tuple(
-            _string(item, "$.exclude")
-            for item in _list(root.get("exclude", []), "$.exclude")
+            _string(item, "$.exclude") for item in _list(root.get("exclude", []), "$.exclude")
         ),
         options=tuple(options),
         bindings=tuple(bindings),
@@ -260,7 +264,9 @@ def _load_document(path: Path) -> dict[str, object]:
     try:
         text = path.read_text(encoding="utf-8")
     except OSError as exc:
-        raise ConfigurationError("CFG_READ_FAILED", "configuration file could not be read", path=str(path)) from exc
+        raise ConfigurationError(
+            "CFG_READ_FAILED", "configuration file could not be read", path=str(path)
+        ) from exc
     try:
         if path.suffix.lower() == ".json" or text.lstrip().startswith(("{", "[")):
             value = json.loads(text, object_pairs_hook=_json_pairs)
@@ -269,7 +275,9 @@ def _load_document(path: Path) -> dict[str, object]:
     except ConfigurationError:
         raise
     except (json.JSONDecodeError, yaml.YAMLError, UnicodeError, ValueError) as exc:
-        raise ConfigurationError("CFG_PARSE_FAILED", "configuration syntax is invalid", path=str(path)) from exc
+        raise ConfigurationError(
+            "CFG_PARSE_FAILED", "configuration syntax is invalid", path=str(path)
+        ) from exc
     return _object(value, "$")
 
 
@@ -298,7 +306,9 @@ def _list(value: object, path: str) -> list[object]:
 
 def _string(value: object, path: str) -> str:
     if not isinstance(value, str) or not value or value.strip() != value:
-        raise ConfigurationError("CFG_EXPECTED_STRING", "expected a non-empty trimmed string", path=path)
+        raise ConfigurationError(
+            "CFG_EXPECTED_STRING", "expected a non-empty trimmed string", path=path
+        )
     return value
 
 

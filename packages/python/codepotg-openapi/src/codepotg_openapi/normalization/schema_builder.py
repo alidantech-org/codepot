@@ -300,9 +300,7 @@ def build_schema(
                 id=semantic_id,
                 name=Name(hint),
                 kind=SchemaKind.MAP,
-                alias_of=TypeExpression.map_of(
-                    TypeExpression.primitive("string"), value_type
-                ),
+                alias_of=TypeExpression.map_of(TypeExpression.primitive("string"), value_type),
                 data=data,
             )
         return Schema(

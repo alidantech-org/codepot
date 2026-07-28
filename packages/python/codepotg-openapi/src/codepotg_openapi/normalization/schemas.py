@@ -141,8 +141,11 @@ def schema_type(
     type_value = value.get("type")
     nullable, types = schema_types(type_value)
     del nullable
-    if "enum" in value or "const" in value or "properties" in value or any(
-        key in value for key in ("allOf", "anyOf", "oneOf", "prefixItems")
+    if (
+        "enum" in value
+        or "const" in value
+        or "properties" in value
+        or any(key in value for key in ("allOf", "anyOf", "oneOf", "prefixItems"))
     ):
         inline_id = materialize_schema(
             context,

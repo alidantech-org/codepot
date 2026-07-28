@@ -32,8 +32,7 @@ def test_only_published_codepotg_namespaces_are_imported() -> None:
                     if alias.name == "codepotg" or alias.name.startswith("codepotg.")
                 )
             elif isinstance(node, ast.ImportFrom) and (
-                (node.module or "") == "codepotg"
-                or (node.module or "").startswith("codepotg.")
+                (node.module or "") == "codepotg" or (node.module or "").startswith("codepotg.")
             ):
                 imported.add(node.module or "")
     forbidden = {

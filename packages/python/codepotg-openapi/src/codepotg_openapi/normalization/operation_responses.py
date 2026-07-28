@@ -103,8 +103,10 @@ def normalize_responses(
 
 def is_success(status: str) -> bool:
     upper = status.upper()
-    return len(upper) == 3 and upper.startswith("2") and all(
-        char.isdigit() or char == "X" for char in upper
+    return (
+        len(upper) == 3
+        and upper.startswith("2")
+        and all(char.isdigit() or char == "X" for char in upper)
     )
 
 

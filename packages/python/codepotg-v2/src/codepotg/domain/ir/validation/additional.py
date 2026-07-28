@@ -160,7 +160,10 @@ def _validate_presentation(
                         severity=DiagnosticSeverity.ERROR,
                         message="presentation addresses must be unique within one presentation",
                         span=owner_span(entry),
-                        details=(("address", entry.address), ("presentation", str(presentation.id))),
+                        details=(
+                            ("address", entry.address),
+                            ("presentation", str(presentation.id)),
+                        ),
                     )
                 )
             addresses.add(entry.address)

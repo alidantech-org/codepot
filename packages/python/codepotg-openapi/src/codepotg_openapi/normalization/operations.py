@@ -82,9 +82,7 @@ def _normalize_operation(
 ) -> None:
     operation_id_raw = value.get("operationId")
     operation_id = (
-        operation_id_raw
-        if isinstance(operation_id_raw, str) and operation_id_raw
-        else None
+        operation_id_raw if isinstance(operation_id_raw, str) and operation_id_raw else None
     )
     fallback = _fallback_operation_id(method, path)
     if operation_id is None:

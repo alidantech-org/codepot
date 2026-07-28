@@ -229,15 +229,12 @@ class NormalizationContext:
         except ValueError:
             return None
         return (
-            candidate
-            if any(candidate in group.events for group in self.groups.values())
-            else None
+            candidate if any(candidate in group.events for group in self.groups.values()) else None
         )
 
     def freeze_groups(self) -> tuple[Group, ...]:
         return tuple(
-            group.freeze()
-            for group in sorted(self.groups.values(), key=lambda item: item.id.value)
+            group.freeze() for group in sorted(self.groups.values(), key=lambda item: item.id.value)
         )
 
     def _register(

@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from types import MappingProxyType
 
 from codepotg.ports import RenderRequest
-
 from codepotg_template_jinja.rules import JinjaEngineRules
 
 _WINDOWS_DRIVE = re.compile(r"^[A-Za-z]:")

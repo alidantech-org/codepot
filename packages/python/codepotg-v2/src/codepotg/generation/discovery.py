@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import re
 from pathlib import Path, PurePosixPath
 
@@ -81,7 +82,7 @@ def discover_pack_files(
                     "PACK_PARTIAL_ENGINE_MISSING",
                     "partial files must use a recognized template-engine suffix",
                     path=relative,
-                )
+                ) from None
             discovered.append(
                 DiscoveredPackFile(
                     pack_path=relative,
@@ -95,10 +96,8 @@ def discover_pack_files(
         target_path = relative[: -len(engine_suffix)]
         target_id: str | None = None
         target_suffix: str | None = None
-        try:
+        with contextlib.suppress(PluginLoadError):
             _, target_id, target_suffix = plugins.target_for_path(target_path)
-        except PluginLoadError:
-            pass
 
         discovered.append(
             DiscoveredPackFile(
@@ -118,9 +117,7 @@ def discover_pack_files(
 
 def _selection_key(parts: tuple[str, ...], manifest: PackManifest) -> str | None:
     keys = tuple(
-        match.group(1)
-        for part in parts
-        if (match := _SELECTION_FOLDER.fullmatch(part)) is not None
+        match.group(1) for part in parts if (match := _SELECTION_FOLDER.fullmatch(part)) is not None
     )
     if len(keys) > 1:
         raise PackDiscoveryError(

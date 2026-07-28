@@ -144,11 +144,7 @@ def resolve_mapping(
 
 
 def title(value: str) -> str:
-    return "".join(
-        part[:1].upper() + part[1:]
-        for part in _OPERATION_NAME.split(value)
-        if part
-    )
+    return "".join(part[:1].upper() + part[1:] for part in _OPERATION_NAME.split(value) if part)
 
 
 def ref_hint(pointer: str, fallback: str) -> str:

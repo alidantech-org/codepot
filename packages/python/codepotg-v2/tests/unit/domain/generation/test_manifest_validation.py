@@ -38,9 +38,7 @@ def test_pack_compatibility_accepts_current_api_ranges() -> None:
 
 def test_pack_compatibility_and_selection_cycles_fail_before_planning() -> None:
     with pytest.raises(ValueError, match="PACK_REQUIREMENT_UNSATISFIED"):
-        validate_pack_compatibility(
-            _manifest(requires=(("codepotg", ">=3.0"),))
-        )
+        validate_pack_compatibility(_manifest(requires=(("codepotg", ">=3.0"),)))
 
     with pytest.raises(ValueError, match="PLAN_SELECTION_CYCLE"):
         validate_selection_graph(

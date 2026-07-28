@@ -18,9 +18,7 @@ def require_pack_contained(pack_root: Path, project_root: Path) -> Path:
     try:
         canonical_pack.relative_to(canonical_project)
     except ValueError as exc:
-        raise ValueError(
-            "PACK_SOURCE_ESCAPE: local pack source escapes the project root"
-        ) from exc
+        raise ValueError("PACK_SOURCE_ESCAPE: local pack source escapes the project root") from exc
     return canonical_pack
 
 
@@ -40,9 +38,7 @@ def validate_pack_compatibility(manifest: PackManifest) -> None:
         if requirement is None:
             continue
         if not isinstance(requirement, str) or not requirement.strip():
-            raise ValueError(
-                f"PACK_REQUIREMENT_INVALID: {name} compatibility must be a string"
-            )
+            raise ValueError(f"PACK_REQUIREMENT_INVALID: {name} compatibility must be a string")
         try:
             specifier = SpecifierSet(_normalize_specifier(requirement))
         except InvalidSpecifier as exc:
@@ -78,9 +74,7 @@ def validate_selection_graph(manifest: PackManifest) -> None:
         if node in visiting:
             start = trail.index(node)
             cycle = " -> ".join((*trail[start:], node))
-            raise ValueError(
-                f"PLAN_SELECTION_CYCLE: generated dependency cycle detected: {cycle}"
-            )
+            raise ValueError(f"PLAN_SELECTION_CYCLE: generated dependency cycle detected: {cycle}")
         visiting.add(node)
         trail.append(node)
         for target in graph.get(node, ()):

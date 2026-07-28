@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from importlib.metadata import EntryPoint, entry_points
-from typing import Callable, TypeVar, cast
+from typing import TypeVar, cast
 
 from codepotg.plugins import PluginRegistry
 from codepotg.ports import SourceAdapter, TargetAdapter, TemplateEngine
@@ -77,9 +78,7 @@ class RuntimePlugins:
         candidates = tuple(item for item in matches if item[0] == longest)
         if len(candidates) != 1:
             ids = tuple(sorted({item[1] for item in candidates}))
-            raise PluginLoadError(
-                f"target path {path!r} is ambiguous across {ids!r}"
-            )
+            raise PluginLoadError(f"target path {path!r} is ambiguous across {ids!r}")
         _, target_id, suffix, adapter = candidates[0]
         return adapter, target_id, suffix
 
@@ -106,9 +105,7 @@ class RuntimePlugins:
         candidates = tuple(item for item in matches if item[0] == longest)
         if len(candidates) != 1:
             ids = tuple(sorted({item[1] for item in candidates}))
-            raise PluginLoadError(
-                f"template path {path!r} is ambiguous across {ids!r}"
-            )
+            raise PluginLoadError(f"template path {path!r} is ambiguous across {ids!r}")
         _, _, suffix, engine = candidates[0]
         return engine, suffix
 
@@ -143,7 +140,5 @@ def _load_factory(entry: EntryPoint) -> Callable[[], object]:
             f"plugin entry point {entry.group}:{entry.name} could not be loaded"
         ) from exc
     if not callable(factory):
-        raise PluginLoadError(
-            f"plugin entry point {entry.group}:{entry.name} is not a factory"
-        )
+        raise PluginLoadError(f"plugin entry point {entry.group}:{entry.name} is not a factory")
     return factory

@@ -160,8 +160,7 @@ def _select_from_group(
         return tuple(SelectionContext(contract, group, event=item) for item in group.events)
     if selector_id == "groups.value_sources.each":
         return tuple(
-            SelectionContext(contract, group, value_source=item)
-            for item in group.value_sources
+            SelectionContext(contract, group, value_source=item) for item in group.value_sources
         )
     return ()
 

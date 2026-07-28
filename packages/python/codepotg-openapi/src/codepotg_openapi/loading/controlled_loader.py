@@ -153,7 +153,9 @@ class ControlledSourceLoader:
         try:
             content = canonical.read_bytes()
         except OSError as exc:
-            raise SourceLoadError("OA_SOURCE_READ_FAILED", "local source could not be read") from exc
+            raise SourceLoadError(
+                "OA_SOURCE_READ_FAILED", "local source could not be read"
+            ) from exc
         _check_size(content, options.max_source_bytes)
         return LoadedSource(
             identity=SourceIdentity(SourceKind.FILE, canonical.as_posix()),
@@ -248,7 +250,9 @@ class ControlledSourceLoader:
                 raise OSError("not a file")
             content = canonical.read_bytes()
         except OSError as exc:
-            raise SourceLoadError("OA_REF_NOT_FOUND", "referenced local document was not found") from exc
+            raise SourceLoadError(
+                "OA_REF_NOT_FOUND", "referenced local document was not found"
+            ) from exc
         _check_size(content, options.max_source_bytes)
         relative = canonical.relative_to(root.authorized_root).as_posix()
         return LoadedSource(

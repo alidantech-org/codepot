@@ -109,12 +109,10 @@ def _semantic_signature(contract) -> tuple[object, ...]:
                             for item in operation.inputs
                         ),
                         tuple(
-                            (item.name, item.schema, item.optional)
-                            for item in operation.outputs
+                            (item.name, item.schema, item.optional) for item in operation.outputs
                         ),
                         tuple(
-                            (item.code, item.schema, item.message)
-                            for item in operation.failures
+                            (item.code, item.schema, item.message) for item in operation.failures
                         ),
                         operation.effects,
                         operation.facets,
@@ -225,9 +223,7 @@ def test_unimplemented_codegen_is_truthful_and_policy_controlled() -> None:
 def test_unimplemented_security_is_preserved_and_diagnosed() -> None:
     document = json.loads(_document())
     document["security"] = [{"bearerAuth": []}]
-    document["components"]["securitySchemes"] = {
-        "bearerAuth": {"type": "http", "scheme": "bearer"}
-    }
+    document["components"]["securitySchemes"] = {"bearerAuth": {"type": "http", "scheme": "bearer"}}
     document["paths"]["/orders/{id}"]["get"]["security"] = []
     result = OpenApiSourceAdapter().normalize(
         SourceAdapterRequest(source_id="security", content=json.dumps(document)),

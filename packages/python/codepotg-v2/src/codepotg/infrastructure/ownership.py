@@ -58,7 +58,9 @@ class GenerationState:
             raise ValueError("generation state artifacts must be sorted by unique path")
         for path, digest in self.artifacts:
             _safe_relative(path)
-            if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
+            if len(digest) != 64 or any(
+                character not in "0123456789abcdef" for character in digest
+            ):
                 raise ValueError("generation state digests must be lowercase SHA-256 values")
 
     def digest_for(self, path: str) -> str | None:
@@ -66,14 +68,11 @@ class GenerationState:
 
     def to_json(self) -> bytes:
         document = {
-            "artifacts": [
-                {"path": path, "sha256": digest} for path, digest in self.artifacts
-            ],
+            "artifacts": [{"path": path, "sha256": digest} for path, digest in self.artifacts],
             "format": _STATE_FORMAT,
         }
         return (
-            json.dumps(document, indent=2, sort_keys=True, separators=(",", ": "))
-            + "\n"
+            json.dumps(document, indent=2, sort_keys=True, separators=(",", ": ")) + "\n"
         ).encode("utf-8")
 
     @classmethod
