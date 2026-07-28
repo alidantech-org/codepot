@@ -1,0 +1,92 @@
+# Parallel work registry
+
+This file coordinates implementation across conversations. Claim a task before changing implementation files.
+
+## Active claims
+
+| Task ID | Package/subsystem | Owner/chat | Status | Expected files | Dependencies | Notes |
+|---|---|---|---|---|---|---|
+| CORE-001..CORE-006, PATH-001, IR-001..IR-010, SOURCE-001, PLUG-001 public contracts | `dryv` organized foundation, closed IR, and adapter ports | current ChatGPT implementation session | in_progress | `pyproject.toml`; `src/dryv/api/**`; `diagnostics/**`; `domain/ir/**`; `domain/generation/**`; `plugins/**`; `ports/**`; `testing/**`; public facades; mirrored unit/contract/architecture/distribution tests; task/progress evidence | DOC-001..DOC-007 | The rejected flat implementation has been replaced by the approved package structure. Packaging, tests, lint, and build are under corrective verification. No planner, writer, CLI behavior, or compatibility runtime is included. |
+| OA-001..OA-020 | `dryv-openapi` source adapter | OpenAPI audit-fix lane (`chatgpt/codepotx-restart-openapi-audit-fixes`) | review | `packages/python/dryv-openapi/**`; coordination updates in this file only | published source-adapter, diagnostics, IR, validation, plugin, and version contracts | PR #29 critical blockers are repaired in code: real adapter/factory, composed standard pipeline, core validation/digest, session-isolated loading, bounded YAML aliases/depth/nodes, truthful capabilities/docs, and public/conformance/security/architecture/distribution tests. Local parser **5/5** and session **3/3** harnesses passed. Review remains open until synchronized Ruff, full real-core pytest, build, wheel/sdist, and isolated-install commands pass. OA-009..OA-015/OA-019 and remaining OA-020 release work are still unfinished. |
+| JINJA-001..JINJA-011 | `dryv-template-jinja` safe Jinja template-engine adapter | Jinja audit-fix/release lane (`chatgpt/codepotx-restart-jinja-release-gates`) | release_verified_current_port | `packages/python/dryv-template-jinja/**`; coordination updates in this file only | current public `TemplateEngine`, `RenderRequest`, `RenderResult`, diagnostics, cancellation, plugin/version, IR, and conformance contracts | PR #28 and PR #32 implementation/audit repairs are complete for the current port. Core **30/30** and Jinja **153/153** tests passed; Ruff check/format, core and Jinja wheel/sdist builds, fresh wheel-only entry-point/simple/static-partial rendering, and denied `loop.cycle()` verification passed. JINJA-008 plus pack-registry, target-role, project-rule, and runtime cache-port integrations remain explicit public-contract blockers. |
+| TS-001..TS-010, DART-001..DART-010 | coordinated TypeScript and Dart target-language adapters | language-adapter audit and release lane | release_verified_current_port | `packages/python/dryv-language-typescript/**`; `packages/python/dryv-language-dart/**`; coordination updates in this file only | current public `TargetAdapter` protocol | PR #33 and PR #34 repaired strict direct option construction, invalid scalar/alias handling, adapter option-object validation, exact version assertions, and fresh wheel/sdist inspection. Synchronized Ruff, formatting, complete suites, exact builds, TypeScript and Dart SDK oracles, real-wheel installation, smoke calls, and clean-tree checks passed in the user-supplied logs. Combined entry-point verification now builds all three wheels, installs them into a fresh `--no-index` virtual environment, and fails rather than skips when either adapter is missing. TS-006/DART-006 and TS-009/DART-009 remain blocked by missing planner/module/official-pack contracts. |
+| AUTHOR-001..AUTHOR-013, AUTHOR-015..AUTHOR-020, AUTHOR-022, AUTHOR-024, AUTHOR-027..AUTHOR-030 | `dryv-author` typed Python authoring compiler and canonical IR transport | CODEPOT author continuation (`chatgpt/codepotx-restart-dryv-author`) | review | `packages/python/dryv-author/**`; coordination updates in this file only | public `dryv.ir`, diagnostics, naming, versions, and validation facades | The remaining author compiler, semantic builders, Pydantic bridge, canonical JSON/YAML transport, tests, audit, and progress records are merged. Implementation is recorded complete on the feature branch, while synchronized pytest, core pytest, mypy, pyright, build, wheel inspection, isolated installation, round-trip smoke checks, and clean-diff verification remain open. AUTHOR-014, AUTHOR-021, AUTHOR-023, AUTHOR-025, AUTHOR-026, extended AUTHOR-019, and final canonical-codec ownership remain blocked on public core contracts. |
+
+## Parallel package lanes available through public contracts
+
+The following package-local tasks may be claimed in separate conversations without editing `packages/python/dryv/src/dryv/**`:
+
+| Package | Tasks that may begin | Public contracts available |
+|---|---|---|
+| `dryv-openapi` | synchronized release verification, then OA-009..OA-020 in separate reviewed batches | `dryv.ir`, `dryv.diagnostics`, `dryv.ports.SourceAdapter*`, `dryv.testing.assert_source_adapter_conformance` |
+| `dryv-language-typescript` | maintain the verified current-port release; begin TS-006/TS-009 only after the required planner/module/official-pack contracts are published | `dryv.plugins`, `dryv.ports.TargetAdapter`, target/path request and result types, target conformance helper |
+| `dryv-language-dart` | maintain the verified current-port release; begin DART-006/DART-009 only after the required planner/module/official-pack contracts are published | same public target contracts as TypeScript |
+| `dryv-template-jinja` | maintain the verified current-port release; begin named outputs or pack/planner/config/cache-port integration only after the corresponding public contracts are published | `dryv.ports.TemplateEngine`, `RenderRequest`, `RenderResult`, engine conformance helper |
+| `dryv-author` | AUTHOR-001..AUTHOR-013, AUTHOR-015..AUTHOR-020 current subset, AUTHOR-022, AUTHOR-024, AUTHOR-027..AUTHOR-030 | public `dryv.ir`, diagnostics, naming, versions, and validation facades; missing tags/guidance/field-capability/value-source/presentation contracts remain exact core blockers |
+
+These lanes may depend only on published modules. They must not import `dryv.domain`, mutate the kernel, or copy private implementation classes. Until the broader foundation is declared stable, parallel packages should pin to a specific core commit and treat API changes as possible foundation repairs rather than stable-release changes.
+
+## Planned task lanes
+
+| Lane | Task range | Primary ownership | May start when |
+|---|---|---|---|
+| Core primitives | CORE-001..CORE-006 | `dryv` | documentation accepted |
+| Semantic naming/expressions | PATH-001..PATH-003 | core naming/path contracts | core version and diagnostics available |
+| Configuration | CFG-001..CFG-006, PACKCFG-001..PACKCFG-005 | `dryv/config` | core diagnostics available |
+| Closed semantic kernel | IR-001..IR-010 | domain/IR and validators | core primitives and PATH-001 stable |
+| Root-first selectors/selection folders | PLAN-002..PLAN-004, PATH-004, PATH-006 | generation/config/IR contracts | typed config and kernel stable |
+| Filesystem discovery/path planning | PLAN-001, PLAN-003..PLAN-010, PATH-005, PATH-007..PATH-010 | generation domain/application | pack config, expressions, selectors, and IR stable |
+| Generated dependencies/path facts | BIND-002, PLAN-006..PLAN-007, PATH-008 | semantic artifact graph + target path ports | selections, artifacts, destinations, and symbols stable |
+| Explain and impact | PLAN-010..PLAN-011 | planner/inspection API | semantic and artifact plans stable |
+| Conservative incremental generation | PLAN-012 | planner/cache/state | deterministic full generation and impact analysis are proven |
+| Plugin runtime | PLUG-001..PLUG-011 | plugins/ports/runtime | public primitives and closed-kernel boundary stable |
+| Writers/cache/state | WRITE/CACHE tasks | infrastructure + ports | artifact/path plan stable |
+| Commands/setup | CFG-004..CFG-005, CMD, SETUP/CONFIGURE/ECO | application/infrastructure | config/security contracts stable |
+| Python API/CLI | API/CLI/MCP and impact API | api/application/cli | core use cases stable |
+| Local/Git distribution | GIT/LOCK/DIST | pack provider/lock/cache | direct source and pack manifest contracts stable |
+| OpenAPI adapter | OA-001..OA-020 | `dryv-openapi` | closed IR/source port stable |
+| Python authoring compiler | AUTHOR-001..AUTHOR-030 | `dryv-author` | public closed IR and validation stable; each blocked semantic addition requires a separate approved kernel task |
+| TypeScript target adapter | TS-001..TS-010 | `dryv-language-typescript` | target validation/path port and PLAN-007 stable |
+| Dart target adapter | DART-001..DART-010 | `dryv-language-dart` | target validation/path port and PLAN-007 stable |
+| Jinja engine | JINJA tasks | `dryv-template-jinja` | engine port/immutable context stable |
+| Official packs | PACK-TS/PACK-DART/PACK-FLUTTER | pack packages | simplified manifest, closed kernel, PATH/PLAN, target adapters, and engine stable |
+| Connected system fixture | PACK-SYSTEM, TEST-003..TEST-005 | cross-package integration | official adapters/packs and impact plan stable |
+
+## Claim procedure
+
+1. Select an unclaimed task whose dependencies are complete.
+2. Add a row under Active claims with status `claimed`.
+3. List expected files narrowly. Do not claim an entire package for a small task.
+4. Change status to `in_progress` in the first implementation commit.
+5. Move to `review` after implementation and tests.
+6. Mark `complete` only after acceptance criteria and the complete verification command set pass.
+7. Remove completed claims only after the completion record exists in `PROGRESS.md`.
+
+## Active claim row format
+
+| Task ID | Package/subsystem | Owner/chat | Status | Expected files | Dependencies | Notes |
+|---|---|---|---|---|---|---|
+| CORE-001 | package foundation | chat identifier | claimed | package metadata/import tests only | DOC-001..DOC-007 | Example only; remove when making a real claim. |
+
+## Conflict rule
+
+Two agents must not edit the same implementation file concurrently. Closed-kernel, selector, path/name, dependency, IR, validation, plugin, and render-context contracts require narrow ownership because adapters and packs depend on them.
+
+## Design gates
+
+- Core alone owns semantic objects, relations, schema kinds/roles, known facets, root-first selectors, expression roots, template contexts, and semantic validation.
+- Source adapters normalize only into the known kernel and cannot register semantic extensions.
+- The Python authoring compiler may be expressive, but it compiles only into public core IR; Pydantic, author refs/builders, and Python callables never enter IR or template contexts.
+- Tags, categorized guidance, field capabilities, value sources, presentations, and canonical transport additions require intentional typed core contracts when visible beyond authoring; they cannot be hidden in arbitrary extensions or private author IR.
+- Packs use filesystem discovery, registered `{selectionKey}` folders, fixed root-first selectors, `(expression)`, explicit imports/exports/symbols, and pack-relative `paths` arrays.
+- Templates, macros, partials, and static files own every emitted character.
+- Target adapters validate targets/names and calculate module/path facts; they do not render types, literals, comments, imports, exports, validators, decorators, formatting, or framework code.
+- No implementation may restore flat source/test dumps, neutral resource/model/entity/frontend/UI roots, reversed selectors, arbitrary query/traversal DSLs, profiles, or `filePatterns`.
+- Git provider work implements direct `source.local`/`source.git` and must not introduce registries, `use`, or GitHub-only locators.
+- Command work preserves exact opaque arguments and does not infer installation syntax from dependency metadata.
+- Output hashes/state belong to ownership/generation state, not the dependency lock.
+- Incremental generation begins only after deterministic full generation and impact analysis are proven.
+
+## Blockers
+
+A blocked task records the exact dependency task ID and missing contract/artifact. Generic notes such as “waiting for core” are insufficient.

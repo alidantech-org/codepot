@@ -1,0 +1,29 @@
+apiVersion: dryv.dev/v1
+
+name: local-pack-development
+
+sources:
+  api:
+    adapter: openapi
+    file: ./openapi.yaml
+
+executables:
+  packageManager: pnpm
+
+security:
+  packCommands: approve
+
+packs:
+  backendRepositories:
+    source:
+      local: ./packs/typeorm-repositories
+    input: api
+    output: apps/backend
+
+    options:
+      repositoryStyle: class
+
+    bindings:
+      baseRepository:
+        from: src/database/base.repository.ts
+        symbol: BaseRepository

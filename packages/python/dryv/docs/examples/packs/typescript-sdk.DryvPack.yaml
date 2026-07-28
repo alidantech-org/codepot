@@ -1,0 +1,69 @@
+apiVersion: dryv.dev/v1
+
+id: alidantech/typescript-sdk
+version: 2.4.1
+description: Generates a typed TypeScript API client from groups, schemas, and operations.
+
+requires:
+  dryv: ">=2.0 <3.0"
+  ir: ">=2.0 <3.0"
+
+options:
+  clientName:
+    default: ApiClient
+
+selections:
+  enums:
+    paths: [src, types, enums]
+    select: groups.schemas.enums.each
+    symbols:
+      - (schema.name.pascal.s)
+
+  schemaTypes:
+    paths: [src, types, schemas]
+    select: groups.schemas.objects.each
+    imports:
+      enums: enums
+    symbols:
+      - (schema.name.pascal.s)
+
+  typesIndex:
+    paths: [src, types]
+    exports: [enums, schemaTypes]
+
+  groupClients:
+    paths: [src, clients]
+    select: groups.each
+    imports:
+      types: typesIndex
+    symbols:
+      - (group.name.pascal.s)Client
+
+  clientsIndex:
+    paths: [src, clients]
+    exports: [groupClients]
+
+  client:
+    paths: [src]
+    imports:
+      clients: clientsIndex
+    symbols:
+      - (option.clientName)
+
+  rootIndex:
+    paths: [src]
+    exports: [typesIndex, clientsIndex, client]
+
+executables:
+  packageManager: pnpm
+
+commands:
+  after:
+    install:
+      executable: packageManager
+      arguments: [add, axios@^1.0.0]
+
+    format:
+      executable: packageManager
+      arguments: [exec, prettier, --write, src]
+      optional: true

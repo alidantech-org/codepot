@@ -1,0 +1,28 @@
+apiVersion: dryv.dev/v1
+name: manual-connected-python-authoring
+
+sources:
+  contract:
+    adapter: ir
+    file: contract.author.codepot.json
+
+packs:
+  typescriptSdk:
+    source:
+      local: packs/typescript-sdk
+    input: contract
+    output: typescript
+    options:
+      banner: Generated from dryv-author through the core IR codec
+    bindings:
+      contractSource: python-author-core-ir
+
+  dartSdk:
+    source:
+      local: packs/dart-sdk
+    input: contract
+    output: dart
+    options:
+      banner: Generated from dryv-author through the core IR codec
+    bindings:
+      contractSource: python-author-core-ir
