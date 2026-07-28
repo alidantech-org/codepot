@@ -1,27 +1,67 @@
 # Dryv
 
-Dryv is the reproducible software derivation runtime in the Codepot ecosystem.
-
-It coordinates a closed semantic contract, reusable packs, language adapters, template engines, planning, deterministic rendering, and managed output. The same semantic meaning can drive several target implementations without placing target syntax inside the semantic kernel.
+Dryv is the reusable software-derivation runtime in the Codepot ecosystem.
 
 > Define once. Derive everywhere.
 
-## Package responsibility
+The `dryv` distribution owns semantic contracts, validation, planning, plugin composition, deterministic rendering, and managed output. It intentionally contains no terminal frontend, prompts, colors, command parser, or console script.
 
-The `dryv` distribution is the runtime and orchestration library. It owns:
+## Runtime-first API
 
-- the canonical immutable IR;
-- semantic validation and diagnostics;
-- project and pack configuration contracts;
-- plugin discovery and compatibility checks;
-- selection and artifact planning;
-- template-context preparation;
-- deterministic in-memory generation;
-- transactional managed output;
-- generation ownership state and manual-edit protection;
-- optional canonical JSON and YAML transport.
+```python
+from dryv import create_runtime
 
-The runtime must remain independent of terminal formatting and interactive interfaces. Command-line behavior is moving to the separate `dryv-cli` distribution.
+runtime = create_runtime()
+
+snapshot = runtime.snapshot()
+plan_result = runtime.plan("dryv.yaml")
+memory_result = runtime.generate("dryv.yaml")
+file_result, write_report = runtime.generate_to_files(
+    "dryv.yaml",
+    destination="generated",
+)
+```
+
+A runtime instance owns one plugin graph and can be reused by a CLI, IDE, server, notebook, MCP adapter, test, or application host.
+
+For explicit dependency injection:
+
+```python
+from dryv import DryvRuntime, RuntimePlugins
+
+runtime = DryvRuntime(
+    plugins=RuntimePlugins(
+        source_adapters=(source_adapter,),
+        target_adapters=(target_adapter,),
+        template_engines=(template_engine,),
+    )
+)
+```
+
+No process-global runtime or mutable plugin registry is required.
+
+## Runtime responsibilities
+
+```text
+DryvRuntime
+├── snapshot            inspect loaded runtime capabilities
+├── plan                validate and build the complete artifact plan
+├── generate            render deterministic in-memory output
+└── generate_to_files   commit output through a managed writer
+```
+
+The runtime owns:
+
+- the closed immutable semantic IR;
+- canonical validation and diagnostics;
+- project and pack configuration;
+- source, target, and template-engine plugin composition;
+- fixed semantic selection and artifact planning;
+- immutable template contexts;
+- deterministic memory generation;
+- transactional managed filesystem output;
+- manual-edit and unmanaged-collision protection;
+- optional canonical JSON/YAML transport.
 
 ## Package family
 
@@ -44,37 +84,24 @@ dryv-language-typescript ------> dryv
 dryv-language-dart ------------> dryv
 ```
 
-The runtime does not depend on the CLI, authoring frontend, template engine, or language packages.
+The runtime does not depend on any frontend or optional plugin package.
 
-## Runtime flow
+## Terminal frontend
+
+Install `dryv-cli` for the command-line interface:
+
+```bash
+python -m pip install dryv-cli
+```
+
+The CLI consumes only the public runtime API and owns all command parsing, Rich output, Questionary prompts, spinners, trees, JSON presentation, and exit-code behavior.
 
 ```text
-Python authoring or canonical IR
-              ↓
-       immutable Contract
-              ↓
-          Dryv runtime
-              ├── loads dryv.yaml
-              ├── resolves packs
-              ├── discovers plugins
-              ├── validates the complete plan
-              ├── renders through template engines
-              └── commits managed output safely
+dryv
+├── plan
+├── generate
+└── plugins
 ```
-
-JSON and YAML are optional transport and inspection formats. They are not required intermediate files when a host provides an in-memory contract.
-
-## Public namespaces
-
-```python
-from dryv import generate, generate_to_files
-from dryv.diagnostics import Diagnostic, Diagnostics
-from dryv.ir import Contract, Group, Operation, Schema
-from dryv.ports import TargetAdapter, TemplateEngine
-from dryv.runtime import RuntimePlugins
-```
-
-The public `dryv.ir` and `dryv.generation` packages are stable facades over internal domain implementations. Plugins must depend only on published Dryv namespaces.
 
 ## Project and pack contracts
 
@@ -85,9 +112,9 @@ dryv.yaml       project-owned orchestration
 DryvPack.yaml   pack-owned generation behavior
 ```
 
-A project selects semantic input, pack instances, outputs, options, and bindings. A pack owns its templates, static files, selections, output patterns, options, bindings, and compatibility requirements.
+A project selects semantic inputs, pack instances, outputs, options, and bindings. A pack owns templates, static files, selections, paths, symbols, dependencies, options, bindings, and compatibility requirements.
 
-## Plugin families
+## Plugins
 
 The current runtime discovers:
 
@@ -97,17 +124,17 @@ dryv.language_adapters
 dryv.template_engines
 ```
 
-The built-in `ir` source adapter loads canonical Dryv contracts. TypeScript and Dart language facts and the Jinja template engine remain separately installable plugins.
+The built-in `ir` source adapter loads canonical Dryv contracts. TypeScript and Dart target facts and the Jinja engine remain independently installable.
 
 ## Managed generation
 
-Dryv plans the complete artifact set before writing files. The managed writer:
+Dryv plans the complete artifact set before writing. The managed writer:
 
-- rejects unmanaged path collisions;
-- refuses to overwrite manually changed managed files;
+- rejects unmanaged collisions;
+- refuses to overwrite manually edited managed files;
 - removes only unchanged stale managed files;
-- updates ownership state only after a successful commit;
-- leaves the destination unchanged when generation fails.
+- updates state only after a successful commit;
+- rolls back failed commits.
 
 Ownership metadata is stored under:
 
@@ -115,7 +142,7 @@ Ownership metadata is stored under:
 .dryv/generation-state.json
 ```
 
-## Local verification
+## Verification
 
 From `packages/python/dryv`:
 
@@ -127,25 +154,16 @@ python -m pytest -q
 python -m build
 ```
 
-The connected manual project is under:
-
-```text
-examples/manual/connected-project
-```
-
-It validates direct canonical IR, typed Python authoring, local TypeScript and Dart packs, Jinja rendering, compiler checks, deterministic regeneration, and managed-output protection.
+The connected manual project is under `examples/manual/connected-project`.
 
 ## Design principles
 
 - One closed, typed, versioned semantic authority.
+- One reusable runtime API for every frontend.
 - Templates own every emitted character.
-- Language plugins provide validation and path/module facts, not syntax rendering.
+- Target plugins provide validation and path/module facts, never syntax rendering.
 - Planning completes before rendering or writing.
 - Full generation remains the correctness reference for incremental work.
-- Packs and plugins are ordinary versioned Python distributions.
-- Runtime services are reusable from CLI, IDE, server, notebook, and test hosts.
-- Reproducibility and safe failure take priority over convenience shortcuts.
+- Reproducibility and safe failure take priority over shortcuts.
 
-## Documentation
-
-Start with [`docs/README.md`](docs/README.md), then read the architecture, configuration, generation, plugin, and distribution sections. A practical Dryv Cookbook will become the primary task-oriented guide as the package split stabilizes.
+Start with [`docs/README.md`](docs/README.md) for the architecture, configuration, generation, plugin, and distribution guides.
