@@ -6,7 +6,7 @@ import click
 class TreeHelpCommand(click.Command):
     def format_help(self, ctx: click.Context, formatter: click.HelpFormatter) -> None:
         _write_command_heading(self, formatter)
-        formatter.write_usage(ctx.command_path, self.collect_usage_pieces(ctx)[1:])
+        formatter.write_usage(ctx.command_path, " ".join(self.collect_usage_pieces(ctx)))
         if self.help:
             formatter.write_paragraph()
             formatter.write_text(self.help)
@@ -20,18 +20,20 @@ class TreeHelpGroup(click.Group):
         if self.help:
             formatter.write_text(self.help)
         formatter.write_paragraph()
-        formatter.write_usage(ctx.command_path, "COMMAND [OPTIONS]")
+        formatter.write_usage(ctx.command_path, "[OPTIONS] COMMAND [ARGS]...")
 
         commands = self.list_commands(ctx)
         if commands:
             formatter.write_paragraph()
             formatter.write(click.style("Commands", fg="cyan", bold=True))
             formatter.write("\n")
-            for index, name in enumerate(commands):
-                command = self.get_command(ctx, name)
-                if command is None or command.hidden:
-                    continue
-                branch = "└─" if index == len(commands) - 1 else "├─"
+            visible = tuple(
+                (name, command)
+                for name in commands
+                if (command := self.get_command(ctx, name)) is not None and not command.hidden
+            )
+            for index, (name, command) in enumerate(visible):
+                branch = "└─" if index == len(visible) - 1 else "├─"
                 label = click.style(name, fg="bright_cyan", bold=True)
                 description = command.get_short_help_str(limit=60)
                 formatter.write(f"  {branch} {label}  {description}\n")
