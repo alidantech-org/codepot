@@ -1,292 +1,231 @@
-# Implementation stages
+# Dryv implementation stages
 
-The stages below build only the approved closed-kernel architecture. Each stage must satisfy its acceptance criteria before dependent stages are marked complete.
+Each stage preserves the closed-kernel architecture and must satisfy its acceptance criteria before dependent work is considered complete.
 
-## Stage 00 — Governance and package boundaries
+## Stage 0 — Package rebrand and isolation
 
 Deliverables:
 
-- approved architecture and closed semantic kernel;
-- root-first selector and naming contracts;
-- template-owned syntax boundary;
-- detailed project/pack schemas;
-- adapter contracts;
-- clean-room policy;
-- package task ledgers and progress records.
+- `dryv`, `dryv-author`, `dryv-template-jinja`, `dryv-language-typescript`, and `dryv-language-dart` distributions;
+- renamed import namespaces, entry points, manifests, project files, API versions, and ownership state;
+- removed retired source package;
+- archived generator left untouched.
 
 Acceptance:
 
-- no v2 task asks for old config decoders, old runtime imports, open semantic/facet extension, query selectors, or adapter-rendered source syntax;
-- another agent can identify ownership and dependencies without conversation context.
+- no old names or removed-package references in the Dryv family;
+- all packages install together without namespace collisions;
+- complete lint, tests, build, wheel, and connected-project verification.
 
-## Stage 01 — Core package foundation
+## Stage 1 — Runtime package boundary
 
 Deliverables:
 
-- isolated package metadata and supported public namespace;
-- version/behavior primitives;
-- diagnostic, source-span, event, result, and cancellation primitives;
-- import-boundary and closed-kernel architecture tests.
+- canonical IR, diagnostics, configuration, plugin contracts, planning, generation coordination, and managed output in `dryv`;
+- public `DryvRuntime` facade;
+- no terminal parsing or UI presentation inside the runtime distribution.
 
 Acceptance:
 
-- install and import in a fresh environment;
-- no old package imports, global registries, or forbidden dependency direction.
+- runtime-only installation supports validation, planning, memory output, archive output, and managed writes;
+- `dryv` does not depend on `dryv-cli` or `dryv-author`.
 
-## Stage 02 — Typed document and schema registry
+## Stage 2 — Standalone CLI
 
 Deliverables:
 
-- location-aware YAML/JSON nodes;
-- document family and `apiVersion` registry;
-- structural diagnostics;
-- schema introspection;
-- stable serialization.
+- `dryv-cli` distribution and `dryv_cli` namespace;
+- `dryv` executable;
+- validate, inspect, plan, generate, IR emission, plugin, and state commands.
 
 Acceptance:
 
-- exact v2 project, pack, and lock dispatch;
-- unknown/duplicate fields include spans;
-- raw mappings do not escape configuration.
+- command handlers call only public runtime operations;
+- uninstalling the CLI removes no runtime capability;
+- structured API and CLI requests produce equivalent results.
 
-## Stage 03 — Project configuration
+## Stage 3 — Contract providers
 
 Deliverables:
 
-- project name, named semantic sources, executables, security, global commands, and ordered pack instances;
-- direct local/Git source, input, scalar output, options, bindings, executable overrides, and per-instance commands;
-- immutable typed models.
+- public contract-provider contract;
+- canonical IR file provider;
+- Python module/callable provider;
+- host-supplied in-memory contract support;
+- provider validation, provenance, cancellation, and diagnostics.
 
 Acceptance:
 
-- canonical examples decode;
-- project-level language, tasks, templateDir, registries/use, and semantic extensions are impossible;
-- no compatibility fallback.
+- `dryv-author` can feed the runtime without writing an intermediate transport file;
+- every provider result is validated as a public immutable `Contract`;
+- provider-specific objects never enter planning or templates.
 
-## Stage 04 — Pack manifest and file discovery
+## Stage 4 — Canonical IR and transport
 
 Deliverables:
 
-- root identity/compatibility, include/exclude, options, bindings, selections, executables, and exact commands;
-- one descriptor per included file under `templates/`;
-- root-first fixed selectors, generated imports/exports/symbols, and selection folders;
-- engine/target inference;
-- static/binary copy and partial descriptors;
-- authored barrel templates.
+- closed typed semantic kernel;
+- stable identities, names, refs, validation, tags, guidance, value sources, presentations, and known relationships;
+- deterministic strict JSON/YAML transport;
+- runtime-owned codec and digest.
 
 Acceptance:
 
-- heterogeneous pack fixtures validate;
-- packs cannot add semantic objects/facets/selectors/contexts or syntax-rendering language rules;
-- ignored files receive no descriptors;
-- no profiles, `filePatterns`, explicit file registry, duplicate descriptors, or special barrel subsystem.
+- all supported fixtures round-trip exactly;
+- unsupported versions and unknown fields fail safely;
+- authoring builders, Pydantic models, providers, target plugins, and runtime services never appear in transport.
 
-## Stage 05 — Closed semantic kernel and source port
+## Stage 5 — Project and pack configuration
 
 Deliverables:
 
-- provenance and semantic identity;
-- structural schemas and schema uses;
-- groups, operations, inputs, outputs, failures, effects;
-- known HTTP/access/trigger/execution/events facets;
-- views, storage mappings, policies, events, listeners, hooks, workflows, and compensation;
-- bounded extensions/raw provenance;
-- private typed relationship indexes and uniform validation;
-- source adapter protocol and conformance.
+- typed `dryv.yaml` and `DryvPack.yaml` contracts;
+- contract-provider configuration;
+- local/Git pack locators;
+- options, bindings, selectors, symbols, imports, exports, commands, and security declarations;
+- introspection for CLI, IDE, and cookbook tooling.
 
 Acceptance:
 
-- IR imports no source-specific type;
-- public contexts are typed rather than generic graph/fact bags;
-- adapters cannot extend the kernel;
-- in-memory source fixtures validate without filesystem assumptions.
+- raw mappings do not escape the configuration layer;
+- unknown fields, duplicates, unsafe paths, invalid refs, and unsupported commands fail before generation;
+- current examples decode into immutable models.
 
-## Stage 06 — Adapter discovery and registries
+## Stage 6 — Plugin system
 
 Deliverables:
 
-- descriptors and API/behavior versions;
-- Python entry-point discovery;
-- runtime-owned registries;
-- configuration/capability validation;
-- source, target, engine, provider, ecosystem, writer, cache, and executor conformance suites.
+- public descriptors, versions, capabilities, factories, and conformance helpers;
+- entry-point discovery and session-owned registries;
+- target, template-engine, provider, pack-provider, ecosystem, writer, cache, and executor ports where justified.
 
 Acceptance:
 
-- official packages can be removed independently;
-- duplicate IDs/aliases and incompatible versions fail clearly;
-- no global decorator registration;
-- no adapter claims semantic extension or emitted syntax ownership.
+- official and third-party plugins use the same contracts;
+- no plugin extends semantic objects, facets, selectors, expressions, or context roots;
+- no target plugin renders source syntax;
+- duplicate or incompatible plugins fail with stable diagnostics.
 
-## Stage 07 — Options, bindings, and generated dependencies
+## Stage 7 — Pack discovery and planning
 
 Deliverables:
 
-- typed options/patches only where needed;
-- deterministic precedence and provenance;
-- pack restrictions;
-- external binding catalog and values;
-- generated dependency matching by semantic identity/scope/selection/symbol;
-- immutable provider/module/path facts;
-- unresolved binding readiness.
+- deterministic local pack discovery;
+- fixed selectors and selection-folder expansion;
+- stable artifact identities and destinations;
+- target/engine inference;
+- generated providers, symbols, imports, exports, and module/path facts;
+- complete collision and safety checks;
+- plan explanation and impact edges.
 
 Acceptance:
 
-- no recursive dictionary merge;
-- generated dependencies and external bindings remain distinct;
-- templates author all import/export syntax;
-- project/path/package/barrel dependencies plan correctly.
+- no renderer or writer is called for an invalid plan;
+- every artifact has a stable semantic and template cause;
+- templates own all emitted text.
 
-## Stage 08 — Selection and artifact planner
+## Stage 8 — Rendering and target plugins
 
 Deliverables:
 
-- versioned root-first `.each`/`.all` selector registry;
-- nested active-parent selection-folder fan-out;
-- stable invocation/artifact identity;
-- include, semantic provider, symbol, export, output, command, and contribution graphs;
-- semantic and artifact validation;
-- deterministic plan inspection/explain;
-- semantic-to-artifact impact/blast-radius graph.
+- bounded immutable prepared contexts;
+- sandboxed Jinja engine;
+- TypeScript and Dart target validation and path facts;
+- declared partials, static files, binary files, and authored barrels.
 
 Acceptance:
 
-- no render starts on invalid semantic/artifact plan;
-- old/reversed/query selectors are rejected;
-- cycles, collisions, missing/ambiguous providers, incompatible targets, and unsafe paths are detected;
-- every artifact is explainable.
+- one contract drives valid TypeScript and Dart projects;
+- generated projects pass real compiler/analyzer checks;
+- engine and target plugins have no semantic or output ownership outside their contracts.
 
-## Stage 09 — Template-engine and target adapter integration
+## Stage 9 — Writers and ownership state
 
 Deliverables:
 
-- immutable documented render context;
-- target detection/filename/identifier/path validation per template;
-- engine adapter resolution per template;
-- include/partial compatibility;
-- authored barrels and dependency syntax;
-- static/binary staging.
+- memory output;
+- deterministic archives;
+- transactional managed filesystem output;
+- `.dryv/generation-state.json`;
+- create/change/delete/leave/protect reporting;
+- stale-file cleanup and manual-edit protection.
 
 Acceptance:
 
-- one pack renders TypeScript, Dart, YAML, and Markdown files through independent engines/target validators;
-- templates own every emitted character;
-- cross-target partial misuse and adapter-generated syntax fail conformance.
+- failure or cancellation before commit leaves destination and state unchanged;
+- generated hashes stay outside `dryv.lock.yaml`;
+- fault-injection and Windows file-lock scenarios pass.
 
-## Stage 10 — Writers, ownership state, and cache
+## Stage 10 — Git packs and trust
 
 Deliverables:
 
-- memory, transactional filesystem, and archive writers;
-- ownership/generation-state manifest;
-- dry run with semantic causes;
-- exact comparison;
-- writer rollback;
-- content-addressed cache.
+- local and generic Git providers;
+- immutable resolved commits and snapshots;
+- credential separation and redaction;
+- safe cache and `dryv.lock.yaml`;
+- command approvals tied to exact pack identity.
 
 Acceptance:
 
-- cancellation/failure before commit leaves destination unchanged;
-- output state/digests are outside the dependency lock;
-- cache changes for every behavior-affecting input.
+- public and private packs resolve without stored credentials;
+- mutable refs become exact locked commits;
+- frozen/offline integrity checks are deterministic.
 
-## Stage 11 — Commands, setup, toolchains, and project manifests
+## Stage 11 — Commands and ecosystem integration
 
 Deliverables:
 
-- security hierarchy and approval records;
-- exact opaque commands;
-- typed setup/readiness actions;
-- Node and Dart project ecosystem adapters;
-- known dependency/manifest contributions.
+- exact command plans, provenance, approvals, host policy, environment restrictions, timeouts, cancellation, and cleanup;
+- typed Node, Dart, and future ecosystem contribution plans.
 
 Acceptance:
 
 - server-safe mode denies execution;
-- pack command change invalidates approval;
-- project contributions remain distinct from application semantics and generated source;
-- owned and contributed manifests remain explicit.
+- no shell interpolation or package-manager inference;
+- command and manifest work never expands application semantics.
 
-## Stage 12 — Initial source, target, and engine packages
-
-Deliverables:
-
-- OpenAPI adapter with typed/versioned `x-codegen` mapping into the closed kernel;
-- TypeScript target detection/validation/path adapter;
-- Dart target detection/validation/path adapter;
-- sandboxed Jinja engine adapter.
-
-Acceptance:
-
-- every package passes shared conformance plus focused tests;
-- no package imports core internals;
-- source adapter cannot extend semantics;
-- target adapters contain no type/literal/import/export/comment/framework renderer.
-
-## Stage 13 — Official packs
+## Stage 12 — Explain, impact, and incremental generation
 
 Deliverables:
 
-- one modular TypeScript SDK pack;
-- one standalone modular Dart SDK pack;
-- one Flutter host-application integration pack;
-- closed-kernel root-first manifests, templates, static files, barrels, bindings, exact commands, docs, and connected fixtures.
+- semantic-to-selection and selection-to-artifact edges;
+- generated-provider, template, partial, pack, config, and command causes;
+- serializable blast-radius results;
+- conservative incremental generation.
 
 Acceptance:
 
-- no profile/file-ID machinery;
-- realistic projects build or validate with declared commands;
-- all syntax is template-authored;
-- no internal templates/selectors required in project config.
+- incremental output is byte-for-byte equal to a fresh complete generation;
+- broader safe regeneration is used whenever exact impact cannot be proven.
 
-## Stage 14 — Python API and frontends
+## Stage 13 — Packs and connected system fixtures
 
 Deliverables:
 
-- high-level facade;
-- sync/async validate, inspect, plan, impact, generate, configure, plugin, pack, cache, and approval operations;
-- thin CLI;
-- structured MCP-ready operations;
-- memory generation examples;
-- stable blast-radius data contract.
+- reusable TypeScript, Dart, Flutter, backend, workflow, event, storage, and documentation packs;
+- one realistic application-system contract;
+- exact dependency and impact assertions.
 
 Acceptance:
 
-- CLI contains no business logic;
-- equivalent requests produce equivalent API/CLI/structured plans and impact results.
+- all target syntax is template-authored;
+- pack dependencies resolve through semantic identity and declared symbols;
+- realistic outputs compile, analyze, or otherwise validate.
 
-## Stage 15 — Git distribution and locking
+## Stage 14 — Cookbook and release
 
 Deliverables:
 
-- local and generic Git pack providers;
-- private authentication through existing Git credentials;
-- immutable pack cache;
-- dependency lock with source/pack/plugin/behavior identities;
-- command approval identity tied to exact pack digest.
+- executable Dryv Cookbook;
+- public API and CLI references;
+- plugin and pack authoring guides;
+- security and reproducibility guidance;
+- release matrix and isolated-wheel evidence.
 
 Acceptance:
 
-- public/private fixtures resolve without stored credentials;
-- branch/tag resolves to locked commit;
-- drift is visible;
-- output hashes remain in ownership state rather than lock.
-
-## Stage 16 — Re-authoring, performance, and release
-
-Deliverables:
-
-- official project examples re-authored to v2;
-- old pack requirements studied and new packs authored cleanly;
-- connected application-system fixture and impact assertions;
-- deterministic full-generation benchmarks;
-- conservative incremental generation only after full output equivalence is proven;
-- batteries-included/minimal distributions and release checklist.
-
-Acceptance:
-
-- no old code/config decoder dependency;
-- no active conflicting resource/model/entity/frontend/UI/open-facet/query-selector/syntax-renderer plans;
-- official workflows work from fresh installation;
-- docs/tasks match implementation;
-- incremental output, when enabled, is byte-for-byte equivalent to full generation.
+- docs and examples match code;
+- every recipe runs against published packages;
+- no archived dependency or conflicting architecture remains;
+- complete generation is proven before incremental mode is enabled.
