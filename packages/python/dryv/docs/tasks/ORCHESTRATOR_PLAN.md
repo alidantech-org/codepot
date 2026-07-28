@@ -1,237 +1,176 @@
-# Dryv orchestrator implementation plan
+# Dryv runtime and orchestration plan
 
 ## Goal
 
-Deliver one production-grade path from typed project configuration and neutral semantic input to a complete validated artifact plan, rendered memory output, deterministic archive, and managed transactional filesystem output.
+Provide one reusable runtime path from a validated Dryv contract and typed project configuration to a complete artifact plan, deterministic memory output, and safely managed filesystem output.
 
-This plan does not restore the old Dryv runtime or make commands, Git, cache, or incremental generation implicit.
+The runtime is a library. CLI, IDE, server, notebook, and future user interfaces call the same public operations.
 
-## Branch
+## Runtime boundary
 
-```text
-chatgpt/codepotx-restart-orchestrator
+`dryv` owns:
+
+- canonical IR and transport;
+- project and pack configuration;
+- plugin discovery and validation;
+- pack loading and compatibility;
+- selection and artifact planning;
+- prepared render contexts;
+- template-engine coordination;
+- target-adapter coordination;
+- deterministic memory output;
+- archive and managed filesystem writers;
+- ownership state and manual-edit protection;
+- structured diagnostics and cancellation.
+
+`dryv` does not own terminal parsing, terminal formatting, prompts, or interactive flows.
+
+## DRYV-RUNTIME-001 — Public runtime facade
+
+**Status:** planned
+
+Create:
+
+```python
+from dryv import DryvRuntime
+
+runtime = DryvRuntime.discover()
 ```
 
-## Status vocabulary
+Initial operations:
 
-```text
-planned       no implementation accepted
-in_progress   implementation is actively changing
-implemented   code and focused tests are present; full verification is open
-review        implementation is synchronized and all required commands passed
-blocked       exact external/public contract is missing
-complete      merged to base with recorded verification and clean audit
+```python
+runtime.load_project(...)
+runtime.load_contract(...)
+runtime.validate_project(...)
+runtime.validate_pack(...)
+runtime.validate_plugin(...)
+runtime.plugins()
+runtime.plan(...)
+runtime.generate(...)
+runtime.generate_to_files(...)
+runtime.emit_contract(...)
+runtime.inspect_state(...)
 ```
 
-No task moves directly from `implemented` to `complete`.
+Every operation returns structured results and diagnostics.
 
----
+## DRYV-RUNTIME-002 — Contract providers
 
-## ORCH-001 — Core foundation verification
+**Status:** planned
 
-**Status:** review required
+Support contract providers that return an in-memory `Contract`:
 
-- verify the reorganized `dryv` package against the synchronized checkout;
-- run all unit/contract/architecture/distribution tests;
-- verify public facades and wheel contents;
-- preserve no-old-runtime and no-flat-module boundaries.
+```text
+canonical IR file
+Python module callable
+host-supplied Contract object
+```
 
-**Acceptance:** core wheel installs and imports before any adapter wheel is installed.
+The Python provider imports a configured module and callable in an isolated, explicit operation. It validates that the result is a public Dryv contract and reports import/call failures safely.
 
-## ORCH-002 — Authoring-aligned kernel additions
+No transport file is required when the provider returns an in-memory contract.
 
-**Status:** implemented
+## DRYV-RUNTIME-003 — Canonical transport
 
-Implemented typed neutral contracts for:
+**Status:** implemented; cleanup required
 
-- `TagSet`;
-- `GuidanceNote` and `GuidanceKind`;
-- `FieldCapabilities`, lifecycle, query, and field references;
-- `ValueSource`;
-- `Presentation` and `PresentationEntry`.
-
-Implemented indexing, validation, public exports, and fixed selectors.
-
-**Verification still required:** focused property tests, complete core suite, JSON/YAML round trips, selector ordering, and compatibility review with `dryv-author`.
-
-## ORCH-003 — Canonical IR transport
-
-**Status:** implemented
-
-- strict `Contract` → document/JSON/YAML;
-- exact document/JSON/YAML → `Contract`;
-- explicit type/enum/name/reference discriminators;
+- strict document/JSON/YAML encoding and decoding;
+- explicit format, IR, and behavior versions;
 - deterministic compact JSON;
-- safe YAML;
-- duplicate-key, cycle, depth, item, version, type, field, and finite-number validation;
-- core validation before encoding and after decoding.
+- safe duplicate-key-aware YAML;
+- bounded depth and item counts;
+- validation before encoding and after decoding;
+- stable canonical digest.
 
-**Acceptance:** exact round trip for every connected IR fixture and stable compact hash across processes.
+Transport remains optional and runtime-owned.
 
-## ORCH-004 — Built-in IR source adapter
+## DRYV-RUNTIME-004 — Typed project configuration
 
-**Status:** implemented
+**Status:** implemented; evolve to provider model
 
-- `ir` plugin and `codepot-ir` alias;
-- memory/file JSON/YAML;
-- 32 MiB source limit;
-- no adapter options;
-- canonical digest;
-- cancellation and structured diagnostics;
-- Python entry-point registration.
-
-**Acceptance:** independent installed-wheel discovery and source conformance pass.
-
-## ORCH-005 — Strict project configuration
-
-**Status:** implemented
-
-- safe YAML/JSON;
-- duplicate-key rejection;
-- exact `dryv.dev/v1` family;
-- typed sources and ordered pack instances;
-- local/Git locator discrimination;
-- immutable options, bindings, executables, security, and command documents;
+- exact `dryv.dev/v1` API family;
+- immutable project and pack-instance models;
+- safe YAML/JSON decoding;
 - unknown-field rejection;
-- path safety;
-- recursive/depth/item/non-finite value rejection.
+- path containment;
+- typed options and bindings;
+- commands preserved but fail-closed until an approved command runtime exists.
 
-**Open refinement:** add source spans to typed configuration diagnostics.
+Update the current source model so a project can select a contract provider instead of requiring every source to be a file adapter.
 
-## ORCH-006 — Strict pack manifest
+## DRYV-RUNTIME-005 — Pack manifest and loading
 
-**Status:** implemented
+**Status:** implemented for local packs
 
+- `DryvPack.yaml` decoding;
 - metadata and compatibility;
-- include/exclude;
-- typed option declarations and defaults;
-- binding declarations;
-- fixed selections;
-- imports, exports, paths, symbols, and binding usage;
-- executables/commands preserved for the separate command lane;
-- unknown-field rejection.
+- include/exclude rules;
+- options, bindings, selections, imports, exports, paths, and symbols;
+- deterministic discovery;
+- mandatory template root;
+- symlink and path containment;
+- template, partial, static, and binary classification.
 
-**Open refinement:** add richer option type descriptors and schema introspection for configure/IDE use.
+Git-backed pack providers remain a separate trust and distribution lane.
 
-## ORCH-007 — Plugin discovery and isolated sessions
+## DRYV-RUNTIME-006 — Plugin discovery
 
-**Status:** implemented
+**Status:** implemented; validation commands planned
 
-- discover source, target, and engine entry points;
-- load zero-argument factories;
-- enforce public protocols;
-- validate plugin conflicts;
-- longest engine suffix;
-- longest target suffix;
-- missing/ambiguous plugin diagnostics;
-- no process-global instance registry.
+Current groups:
 
-**Acceptance:** real installed core/OpenAPI/Jinja/TypeScript/Dart wheels coexist and resolve exactly once.
+```text
+dryv.source_adapters
+dryv.language_adapters
+dryv.template_engines
+```
 
-## ORCH-008 — Local pack authorization and discovery
+Required guarantees:
 
-**Status:** implemented
+- zero-argument factories;
+- public protocol enforcement;
+- deterministic ordering;
+- duplicate ID and alias rejection;
+- isolated runtime instances;
+- longest suffix matching;
+- safe factory-failure diagnostics.
 
-- local pack contained beneath project root;
-- mandatory `templates/`;
-- deterministic traversal;
-- GitWildMatch include/exclude;
-- pack-root `.gitignore`;
-- symlink containment;
-- template, partial, static, and binary classification;
-- control ignore files excluded;
-- selection-folder validation;
-- partials registered and never emitted;
-- engine and target inference.
+Add public plugin-validation and inspection operations before expanding plugin categories.
 
-**Acceptance:** adversarial symlink, ignore, duplicate, static, binary, and suffix fixtures pass on Windows and POSIX.
-
-## ORCH-009 — Pack compatibility and dependency graph
-
-**Status:** implemented
-
-- `requires.dryv` and `requires.ir` specifiers;
-- unknown compatibility keys rejected;
-- unsatisfied versions rejected;
-- unknown imported/exported selections rejected;
-- selection dependency cycles rejected before planning;
-- command declarations fail readiness until the command runtime exists.
-
-## ORCH-010 — Fixed selector execution
+## DRYV-RUNTIME-007 — Fixed selectors and path expressions
 
 **Status:** implemented current registry
 
-Implemented:
+Selectors remain core-owned, versioned, and introspectable. Packs cannot register arbitrary traversal queries.
 
-```text
-groups.all
-groups.each
-groups.schemas.each
-groups.schemas.objects.each
-groups.schemas.enums.each
-groups.operations.each
-groups.views.each
-groups.storage.mappings.each
-groups.workflows.each
-groups.policies.each
-groups.events.each
-groups.value_sources.each
-presentations.each
-presentations.entries.each
-```
+Path expressions allow only documented roots, scalar properties, naming projections, and literal segments. Calls, private attributes, runtime objects, and arbitrary graph traversal remain forbidden.
 
-Zero selected contexts emit zero artifacts.
-
-**Planned only after proven pack needs:** `.all` collection variants beyond groups, child selectors, operation input/output/failure selectors, workflow steps, view parts, and explicit global indexes.
-
-## ORCH-011 — Safe path expressions
-
-**Status:** implemented
-
-- `(expression)`;
-- `((literal))`;
-- known root/property traversal;
-- semantic naming projections;
-- scalar-only results;
-- no calls, private attributes, arbitrary graph traversal, runtime roots, or nested syntax;
-- POSIX-relative output validation.
-
-**Acceptance:** deterministic property and malformed-expression matrix passes.
-
-## ORCH-012 — Artifact identity and first-pass planning
-
-**Status:** implemented
-
-- stable invocation/artifact identity separate from destination;
-- semantic/group/selection/template cause tracking;
-- selection paths and template path composition;
-- engine suffix stripping with target suffix retained;
-- symbols evaluated before rendering;
-- target output validation;
-- path and identity collision diagnostics;
-- no renderer/writer call on invalid plan.
-
-## ORCH-013 — Generated dependency resolution
+## DRYV-RUNTIME-008 — Artifact planning
 
 **Status:** implemented first behavior version
 
-- two-pass planning;
-- imports and exports resolved after all providers exist;
-- exact semantic-ID match;
-- group-scope fallback;
-- declared selection fallback;
-- target consistency;
-- target-adapter module/path facts;
-- explicit declared symbols;
-- deterministic module ordering.
+- stable artifact identity separate from destination;
+- semantic, group, selection, template, and pack cause tracking;
+- target and template suffix handling;
+- output-path validation;
+- symbol evaluation;
+- generated dependency resolution;
+- deterministic plan ordering;
+- collision diagnostics before rendering.
 
-**Open hardening:** ambiguous several-provider diagnostics and richer planner-owned scope/provider descriptors required by official complex packs.
+Planned improvements:
 
-## ORCH-014 — Prepared render context
+- richer provider ambiguity diagnostics;
+- serializable cause graph;
+- semantic blast-radius queries;
+- plan explanation through the runtime facade.
+
+## DRYV-RUNTIME-009 — Prepared render contexts
 
 **Status:** implemented first behavior version
 
-Always active:
+Contexts contain immutable safe facts only:
 
 ```text
 project
@@ -243,250 +182,119 @@ target
 imports
 exports
 contract
+selector-specific semantic roots
 ```
 
-Selector roots include group/schema/operation/view/mapping/workflow/policy/event/value_source/presentation/entry.
+No filesystem handles, secrets, mutable registries, runtime services, authoring builders, Pydantic classes, or arbitrary callables enter templates.
 
-Relationships are resolved before rendering. Tags and guidance are available through safe aliases.
-
-**Acceptance:** context schema snapshot, strict-undefined, immutability, cycle, item/depth, and no-runtime-object tests pass.
-
-## ORCH-015 — Jinja tag queries
+## DRYV-RUNTIME-010 — Rendering
 
 **Status:** implemented
 
-Safe only on verified `TagSet` records:
+- deterministic session-owned rendering;
+- strict UTF-8 template sources;
+- declared in-memory partials;
+- sandboxed engine calls;
+- cancellation and structured diagnostics;
+- static and binary passthrough;
+- sorted `MemoryOutput`.
 
-```text
-has
-has_any
-has_all
-under
-empty
-```
+Templates, macros, partials, and static files own every emitted character.
 
-Other record callables remain denied.
+## DRYV-RUNTIME-011 — Writers and ownership state
 
-**Acceptance:** adversarial callable/alias tests and the full Jinja security suite pass.
+**Status:** implemented; fault hardening planned
 
-## ORCH-016 — Rendering runtime
+Memory writer:
 
-**Status:** implemented
+- primary generated result;
+- deterministic artifact order and bytes.
 
-- one isolated generation session;
-- source normalization;
-- semantic validation;
-- planning;
-- dry run;
-- UTF-8 template source;
-- declared partials;
-- engine rendering;
-- cancellation;
-- diagnostics aggregation;
-- static/binary passthrough;
-- deterministic sorted `MemoryOutput`.
+Archive writer:
 
-## ORCH-017 — Memory writer
-
-**Status:** implemented
-
-Memory output is the primary generated result used by tests, archives, previews, and filesystem writers.
-
-## ORCH-018 — Deterministic archive writer
-
-**Status:** implemented
-
-- ZIP;
 - sorted entries;
-- fixed timestamps and permissions;
-- fixed compression;
-- exact generated bytes;
-- atomic archive-file replacement.
+- fixed metadata;
+- atomic replacement.
 
-## ORCH-019 — Managed transactional filesystem writer
+Managed filesystem writer:
 
-**Status:** implemented
-
-- generation-state manifest;
-- exact content hashes;
+- `.dryv/generation-state.json`;
 - create/change/leave/delete/protect reporting;
 - unmanaged collision refusal;
 - manual-edit protection;
-- safe stale deletion;
-- staged replacements;
-- rollback;
-- state outside dependency lock.
+- unchanged stale-file deletion;
+- staged transactional commit;
+- rollback on failure.
 
-**Open hardening:** interruption/fault-injection matrix across every commit step and Windows file-lock behavior.
+Add fault injection for every commit phase and verify Windows file-lock behavior.
 
-## ORCH-020 — Plan inspection and explanation
+## DRYV-RUNTIME-012 — CLI extraction
 
-**Status:** implemented first behavior version
+**Status:** planned
 
-- deterministic plan document/JSON;
-- artifact ID/path lookup;
-- template, selection, semantic, group, target, symbol, import/export facts;
-- cause summary.
+Move command parsing and JSON terminal output into `dryv-cli`.
 
-**Planned:** full semantic-to-artifact impact graph and plan reload.
-
-## ORCH-021 — Python API
-
-**Status:** implemented
-
-```python
-generate(..., dry_run=True)
-generate(...)
-generate_to_files(...)
-```
-
-All return structured results. No CLI-only execution path exists.
-
-## ORCH-022 — Thin CLI
-
-**Status:** implemented
+Initial commands:
 
 ```text
 dryv plan
-dryv generate --memory
-dryv generate [--destination]
+dryv generate
+dryv validate project
+dryv validate pack
+dryv validate plugin
+dryv plugins list
+dryv plugins inspect
+dryv ir emit
+dryv state inspect
 ```
 
-CLI prints structured JSON and uses the Python services.
+The CLI contains no planning, rendering, plugin, pack, or writer logic.
 
-## ORCH-023 — Command planning, approvals, and execution
+## DRYV-RUNTIME-013 — Commands and Git providers
 
-**Status:** planned separate trust lane
+**Status:** separate future trust lanes
 
-Current behavior is fail-closed with `CMD_APPROVAL_REQUIRED`.
+Current runtime remains fail-closed for unapproved command execution and unsupported remote pack providers.
 
-Required implementation:
+Any future command runtime requires exact arguments, provenance, approvals, environment restrictions, timeouts, cancellation, contained working directories, and no shell interpolation.
 
-- typed exact command records;
-- executable resolution and replacement precedence;
-- project/pack/instance provenance;
-- before/after and staged/post-commit phases;
-- stable command digest;
-- project/host policy;
-- downloaded-pack approval default;
-- environment allowlist;
-- working-directory containment;
-- timeout and process-tree cleanup;
-- cancellation;
-- action reporting;
-- no shell interpolation;
-- no package-manager inference.
+Any future Git provider requires generic Git support, immutable resolved commits, safe contained snapshots, credential separation, integrity verification, offline reuse, and `dryv.lock.yaml`.
 
-## ORCH-024 — Git pack provider and dependency lock
+## DRYV-RUNTIME-014 — Explain, impact, and incremental generation
 
-**Status:** planned separate distribution lane
+**Status:** artifact explanation partially implemented
 
-Current behavior is fail-closed with `PACK_PROVIDER_UNSUPPORTED`.
-
-Required implementation:
-
-- generic Git, not GitHub-only;
-- existing Git credentials only;
-- requested ref and immutable resolved commit;
-- contained subdirectory snapshot;
-- safe cache;
-- `dryv.lock.yaml`;
-- no credentials in config/lock/state/diagnostics;
-- command approval tied to exact locked pack identity;
-- offline reuse and integrity verification.
-
-## ORCH-025 — Cross-operation content cache
-
-**Status:** planned after full verification
-
-- complete behavior key;
-- source/IR/config/pack/template/partial/adapter/options/bindings/path facts;
-- bounded materialization;
-- corruption recovery;
-- no generated state in dependency lock.
-
-## ORCH-026 — Explain and impact graph
-
-**Status:** partial
-
-Artifact explanation exists. Still required:
+Required before incremental generation:
 
 - semantic-to-selection edges;
 - selection-to-artifact edges;
 - generated provider edges;
-- template/include edges;
-- command/action edges;
-- changed semantic/pack/config blast radius;
-- serializable IDE/MCP contract.
+- template and partial edges;
+- configuration and pack causes;
+- serializable impact results;
+- proof that incremental output equals a fresh full generation byte-for-byte.
 
-## ORCH-027 — Conservative incremental generation
+Full deterministic generation remains the correctness reference.
 
-**Status:** blocked on ORCH-026 and deterministic full-generation proof
+## DRYV-RUNTIME-015 — Verification and release
 
-Incremental output must equal a fresh complete generation byte-for-byte.
-
-## ORCH-028 — Configure and project update API
-
-**Status:** planned
-
-- schema introspection;
-- configure/check/add-pack;
-- safe in-place YAML edits preserving unrelated content where possible;
-- readiness actions;
-- no hidden profiles or registry/use model.
-
-## ORCH-029 — Official pack vertical fixtures
-
-**Status:** blocked on adapter repair verification and official packs
-
-Required connected fixture:
-
-```text
-schemas + enums
-operations + failures + HTTP facets
-storage mappings
-views + parts + triggers
-value sources
-policies + events
-workflows
-presentations
-namespaced tags + guidance
-```
-
-Generate at least TypeScript and Dart from the same contract, compile/analyze outputs, and assert exact paths/imports/exports.
-
-## ORCH-030 — Release verification and merge
-
-**Status:** in_progress
-
-Required commands:
+Run all package suites after the rebrand and CLI extraction:
 
 ```bash
-cd packages/python/dryv
-python -m pip install -e ".[dev]"
 python -m ruff check src tests
 python -m ruff format --check src tests
-python -m pytest -vv
-rm -rf build dist
+python -m pytest -q
 python -m build
 ```
 
-Then:
+Then verify real wheels together in a fresh environment:
 
-1. build real core/OpenAPI/Jinja/TypeScript/Dart wheels;
-2. install together in a new environment;
-3. discover all entry points;
-4. run canonical IR JSON/YAML generation;
-5. run OpenAPI generation;
-6. generate official TypeScript/Dart fixtures to memory, ZIP, and managed filesystem;
-7. compile/analyze generated projects;
-8. run cancellation, collision, symlink, rollback, ownership, security, and determinism tests;
-9. inspect wheel/sdist contents;
-10. verify no `.github` files and no old runtime imports;
-11. merge only after the branch is synchronized and clean.
-
-## Completion gate
-
-The orchestrator is complete only when ORCH-001..ORCH-022 and ORCH-030 pass. ORCH-023..ORCH-029 remain independently versioned follow-on capabilities unless the release explicitly claims them.
-
-The runtime must never claim support for Git, commands, cache, impact, or incremental generation while their tasks remain open.
+- plugin entry points resolve exactly once;
+- direct IR and Python authoring routes plan and generate;
+- generated TypeScript compiles;
+- generated Dart analyzes;
+- deterministic reruns leave managed files unchanged;
+- edited managed and unmanaged files are protected;
+- stale unchanged managed files are removed safely;
+- old names and retired source references are absent;
+- the final working tree is clean.
