@@ -11,7 +11,6 @@ TEST_ROOT = PACKAGE_ROOT / "tests"
 REQUIRED_PACKAGES = {
     "api",
     "application",
-    "cli",
     "config",
     "diagnostics",
     "domain",
@@ -89,6 +88,7 @@ def test_public_namespaces_import_without_discovery_or_optional_plugins() -> Non
         "dryv.ir",
         "dryv.plugins",
         "dryv.ports",
+        "dryv.runtime",
         "dryv.testing",
         "dryv.versions",
     )
@@ -110,7 +110,6 @@ def test_domain_dependency_direction_and_clean_room_boundary() -> None:
             if relative.parts[0] == "domain" and imported.startswith(
                 (
                     "dryv.application",
-                    "dryv.cli",
                     "dryv.infrastructure",
                     "dryv.runtime",
                 )
@@ -122,6 +121,26 @@ def test_domain_dependency_direction_and_clean_room_boundary() -> None:
                 violations.append(f"{relative} imports concrete infrastructure: {imported}")
 
     assert violations == []
+
+
+def test_core_has_no_terminal_frontend_or_console_script() -> None:
+    assert not (SOURCE_ROOT / "cli").exists()
+
+    project = (PACKAGE_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert "[project.scripts]" not in project
+    assert "rich" not in project.lower()
+    assert "questionary" not in project.lower()
+    assert "typer" not in project.lower()
+
+    for path in sorted(SOURCE_ROOT.rglob("*.py")):
+        source = path.read_text(encoding="utf-8")
+        imports = _absolute_imports(path)
+        assert "argparse" not in imports
+        assert "click" not in imports
+        assert "rich" not in imports
+        assert "questionary" not in imports
+        assert "print(" not in source
+        assert "input(" not in source
 
 
 def test_no_same_name_module_and_package_collisions() -> None:
