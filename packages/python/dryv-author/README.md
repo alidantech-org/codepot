@@ -1,43 +1,84 @@
 # dryv-author
 
-`dryv-author` is the typed Python authoring compiler for Dryv.
+`dryv-author` is the typed Python authoring frontend for Dryv.
 
-It lets authors define contracts, groups, reusable properties, structural schemas, schema projections, field behavior hints, operations, known facets, storage mappings, policies, events, value sources, views, parts, workflows, presentations, guidance, and namespaced tags through a concise Python API. The package compiles those declarations into the same closed, immutable `dryv.ir.Contract` consumed by the rest of Dryv.
+It lets developers define contracts, groups, reusable properties, structural schemas, projections, operations, policies, events, storage mappings, views, workflows, guidance, and namespaced tags through a concise Python API. Compilation produces the same closed immutable `dryv.ir.Contract` consumed by the Dryv runtime.
 
-## Core promise
+## Core flow
 
 ```text
-concise typed Python authoring
-        ↓
-typed refs + multi-pass author compiler
-        ↓
-closed neutral Codepot IR
-        ↓
-canonical JSON/YAML for debugging and transport
-        ↓
-root-first planning, packs, templates, adapters, and writers
+concise typed Python declarations
+              ↓
+     typed references and compiler passes
+              ↓
+      immutable Dryv Contract
+              ↓
+     Dryv planning and generation runtime
 ```
 
-The authoring layer may be expressive and composable. The compiled IR remains finite, rigid, deterministic, portable, selector-safe, and oblivious to framework/runtime implementation details.
+The in-memory contract is the primary result. JSON and YAML emission belongs to the Dryv runtime as optional transport, debugging, review, caching, and sharing functionality.
 
-## Non-goals
+## Responsibility boundary
 
-This package does not:
+`dryv-author` owns:
+
+- typed declaration objects;
+- authoring references;
+- declaration validation;
+- deterministic compiler passes;
+- Pydantic model interpretation;
+- conversion into public Dryv IR;
+- authoring diagnostics.
+
+It does not:
 
 - create a second semantic graph;
 - replace or extend the Dryv kernel;
-- parse OpenAPI;
-- select templates or output paths;
+- select packs, templates, or output paths;
 - render target-language syntax;
-- write project files;
+- write generated project files;
+- manage generation ownership state;
 - execute commands;
-- model PostgreSQL, MongoDB, Prisma, React, Flutter, NestJS, FastAPI, or other runtime/framework APIs;
-- expose Pydantic models, Python callables, mutable registries, or authoring builders to templates;
+- own CLI behavior;
+- expose mutable authoring builders to templates;
 - use process-global decorator or reference registries.
 
-## Status
+## Example
 
-The package currently contains the approved architecture, complete implementation task ledger, parallel work rules, implementation prompt, and empty mirrored project structure. Runtime implementation has not started.
+```python
+from dryv_author import Author, field
+
+
+def build_contract():
+    author = Author("Accounts")
+    author.schema(
+        "User",
+        {
+            "id": field(str, readonly=True),
+            "email": field(str),
+            "display_name": field(str, optional=True),
+        },
+    )
+    return author.compile().require_contract()
+```
+
+A host can pass the resulting contract directly to the Dryv runtime. A project configuration may later resolve an equivalent Python callable through the runtime contract-provider interface.
+
+## Verification
+
+From `packages/python/dryv-author`:
+
+```bash
+python -m pip install -e ../dryv -e ".[dev]"
+python -m ruff check src tests
+python -m ruff format --check src tests
+python -m pytest -q
+python -m mypy src tests
+python -m pyright
+python -m build
+```
+
+## Documentation
 
 Start with:
 
@@ -45,4 +86,3 @@ Start with:
 - [`docs/README.md`](docs/README.md)
 - [`docs/design/00-authoring-architecture.md`](docs/design/00-authoring-architecture.md)
 - [`docs/tasks/00-master-plan.md`](docs/tasks/00-master-plan.md)
-- [`docs/prompts/IMPLEMENTATION_PROMPT.md`](docs/prompts/IMPLEMENTATION_PROMPT.md)
