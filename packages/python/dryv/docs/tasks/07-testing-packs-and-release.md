@@ -1,242 +1,152 @@
-# Testing, official packs, re-authoring, and release tasks
+# Testing, packs, cookbook, and release tasks
 
 ## TEST-001 — Test architecture
 
-**Status:** planned
+- [x] Unit tests focus on isolated rules and public contracts.
+- [x] Reusable plugin behavior lives in conformance suites.
+- [x] Integration tests use small connected vertical slices.
+- [x] Architecture tests enforce dependency direction, closed-kernel ownership, no global registries, and template-owned output.
+- [ ] Expand property tests for identity, paths, graph order, impact propagation, and cache keys.
+- [ ] Keep tests independent from network, shared environment mutation, and execution order.
 
-**Dependencies:** core package foundation
+## TEST-002 — Configuration fixtures
 
-- [ ] Keep unit tests focused on one rule/class/function where practical.
-- [ ] Put reusable adapter behavior in public conformance suites.
-- [ ] Keep integration tests as small vertical slices.
-- [ ] Add architecture tests for dependency direction, prohibited old imports, closed-kernel ownership, and template-only emitted syntax.
-- [ ] Add property tests for identity, naming order, path safety, graph ordering, impact propagation, and cache keys.
-- [ ] Add inspectable realistic fixtures rather than only giant snapshots.
-- [ ] Prohibit network, shared global registries, environment mutation, and test-order dependence.
+- [x] Minimal and complete project fixtures.
+- [x] Local, Git, mixed, and lock examples.
+- [x] Heterogeneous template, static, binary, barrel, and partial pack fixtures.
+- [x] Invalid fixtures for unknown fields, unsafe paths, conflicts, unsupported selectors, and command policy.
+- [ ] Add Python contract-provider configuration fixtures after the public schema is implemented.
 
-## TEST-002 — Configuration fixture matrix
+## TEST-003 — Closed-kernel connected fixture
 
-**Status:** planned
+- [x] Groups, object and enum schemas, operations, fields, tags, guidance, views, storage, policies, events, workflows, value sources, and presentations in focused variants.
+- [x] TypeScript and Dart packs consuming the same contract.
+- [x] Jinja options, bindings, selectors, imports, exports, symbols, partials, and static files.
+- [x] Deterministic memory and managed filesystem generation.
+- [ ] Expand into a realistic multi-pack application-system fixture.
 
-**Dependencies:** CFG and PACKCFG tasks
+## TEST-004 — Relationship validation
 
-- [ ] Add minimal and complete project fixtures.
-- [ ] Add local, Git, mixed, full-project, standalone-folder, and binding-fragment pack fixtures.
-- [ ] Add heterogeneous target/engine/static/binary/barrel/partial fixture.
-- [ ] Add invalid fixtures for unknown fields, conflicts, unsafe paths, command policy, facet modules, semantic extensions, selector queries, and syntax-rendering adapter rules.
-- [ ] Do not add old `tasks` or `paths.yaml` runtime fixtures.
+- [x] Missing schema and operation references.
+- [x] Invalid group ownership.
+- [x] Invalid storage, policy, event, view, value-source, and workflow relationships.
+- [x] Unknown facets and invalid attachment locations.
+- [ ] Add more related-location assertions and large connected invalid fixtures.
 
-## TEST-003 — Closed-kernel tiny fixture
+## TEST-005 — Planning and impact
 
-**Status:** planned
+- [x] Stable artifact identity separate from destination.
+- [x] Provider matching by semantic identity, group scope, selection, and symbols.
+- [x] No rendering for invalid plans.
+- [ ] Complete artifact/symbol explanation traces.
+- [ ] Add semantic blast-radius queries.
+- [ ] Prove create/change/delete/leave causes through the public runtime API.
 
-**Dependencies:** IR, planner, fake conforming adapters, memory writer
+## TEST-006 — Managed filesystem safety
 
-- [ ] Source contains one group, object schema, enum schema, input use, output use, failure, and operation.
-- [ ] Include one view trigger, storage mapping, access policy, event effect/listener, workflow, and optional compensation relation in focused variants.
-- [ ] Pack contains TypeScript, YAML, Markdown, static file, neutral partial, and authored barrel templates.
-- [ ] Exercise options, bindings, root-first selectors, aggregate template, generated dependency descriptors, and readiness action.
-- [ ] Prove all TypeScript/YAML/Markdown text is template-authored.
-- [ ] Generate deterministically to memory.
+- [x] Create/change/delete/leave reporting.
+- [x] Ownership state and manual-edit protection.
+- [x] Unmanaged collision refusal.
+- [x] Rollback-oriented transactional staging.
+- [ ] Add injected failures at every commit phase.
+- [ ] Expand Windows file-lock, interruption, and cancellation coverage.
 
-## TEST-004 — Semantic relationship validation fixtures
+## PACK-TS — TypeScript pack program
 
-**Status:** planned
+- [x] Connected manual SDK pack with schemas, enums, authored barrels, static configuration, and target validation.
+- [x] Every TypeScript type, import, export, comment, and literal is template-authored.
+- [x] Generated project passes `tsc --noEmit`.
+- [ ] Add operations, failures, clients, errors, docs, and richer dependency fixtures.
+- [ ] Package and version reusable official packs independently from the runtime.
 
-**Dependencies:** IR-010, source adapter conformance
+## PACK-DART — Dart pack program
 
-- [ ] Missing schema and operation references.
-- [ ] Invalid group ownership and reversed contexts.
-- [ ] Invalid storage field/relation targets.
-- [ ] Missing policy references and invalid effective access inheritance.
-- [ ] Missing event declarations and invalid listener/delivery references.
-- [ ] Invalid execution-hook phases, ordering, and bindings.
-- [ ] Invalid workflow transitions, waits, branches, and compensation inputs.
-- [ ] Unknown facet names and attachment locations.
+- [x] Connected manual Dart pack with schemas, enums, authored exports, and static configuration.
+- [x] Every Dart type, import, export, annotation, and literal is template-authored.
+- [x] Generated project passes Dart analysis.
+- [ ] Add operations, clients, errors, serialization, and richer dependency fixtures.
 
-## TEST-005 — Planning, explain, and impact fixtures
+## PACK-FLUTTER — Flutter integration program
 
-**Status:** planned
+- [ ] Keep Flutter policy in packs, never in the Dart target plugin.
+- [ ] Consume neutral views, presentations, operations, schemas, policies, and workflows where present.
+- [ ] Author all widgets, navigation, state, serialization, and validation syntax in templates.
+- [ ] Declare assets, bindings, manual steps, and exact commands without adding UI framework roots to IR.
 
-**Dependencies:** PLAN-004..PLAN-011
+## PACK-SYSTEM — Application-system fixture
 
-- [ ] Prove stable artifact identity separate from destination.
-- [ ] Prove semantic provider matching by group scope and selected identity.
-- [ ] Prove artifact/symbol explain traces.
-- [ ] Prove schema, operation, storage, view, policy, event, and workflow blast-radius queries.
-- [ ] Prove dry-run create/change/delete/leave causes.
-- [ ] Prove no renderer runs for invalid semantic or artifact plans.
-
-## TEST-006 — Filesystem and command fixture
-
-**Status:** planned
-
-**Dependencies:** writers, commands, security
-
-- [ ] Generate into a controlled temporary project.
-- [ ] Exercise create/change/delete/leave, ownership, protected files, writer rollback, dry run, approved formatter, denied command, and post-commit validation.
-- [ ] Verify no mutation on failed/cancelled pre-commit operation.
-- [ ] Distinguish writer rollback from workflow compensation in diagnostics and docs.
-
-## PACK-TS — TypeScript SDK pack program
-
-**Status:** planned
-
-**Dependencies:** TypeScript target adapter, Jinja engine, pack planner
-
-- [ ] Complete the aligned package-specific task ledger.
-- [ ] Author `DryvPack.yaml` from the v2 schema with group-rooted selectors.
-- [ ] Include schema types, enums, operation inputs/outputs/failures, clients, errors, docs/config, authored barrels, static files, bindings, and exact optional commands.
-- [ ] Author every type, import, export, comment, literal, and operation statement in templates/macros.
-- [ ] Avoid neutral `model`, `resource`, and `entity` contexts.
-- [ ] Generate a realistic inspectable SDK and run authored validation commands.
-
-## PACK-DART — Dart SDK pack program
-
-**Status:** planned
-
-**Dependencies:** Dart target adapter, Jinja engine, pack planner
-
-- [ ] Complete the aligned package-specific task ledger.
-- [ ] Author standalone or contributed output through project/pack configuration rather than removed profile machinery.
-- [ ] Include schema types, enums, operation uses, clients, errors, authored exports, static assets, bindings, and exact optional commands.
-- [ ] Author every Dart type/import/export/annotation/serialization statement in templates/macros.
-- [ ] Generate a realistic inspectable Dart package and run format/analyze when available.
-
-## PACK-FLUTTER — Flutter integration pack program
-
-**Status:** planned
-
-**Dependencies:** Dart target adapter, Jinja engine, Flutter pack design
-
-- [ ] Keep Flutter as pack/framework policy, not a language-adapter alias.
-- [ ] Use `group.views`, view triggers, schemas, operations, access facts, and workflow facts only when present in the kernel input.
-- [ ] Author all widget, navigation, state, client, serialization, and validation syntax in templates.
-- [ ] Declare project requirements, bindings, assets, manual steps, and exact commands without adding frontend/UI semantic roots.
-- [ ] Generate a realistic inspectable Flutter integration fixture.
-
-## PACK-SYSTEM — Connected application-system fixture program
-
-**Status:** planned
-
-**Dependencies:** IR-006..IR-010, PLAN-011, official adapters/engine
-
-- [ ] Build one inspectable contract connecting groups, schemas, operations, views, storage mappings, policies, events, listeners, execution hooks, workflows, and compensation.
-- [ ] Generate backend, SDK, mobile/view, storage, workflow, event, and documentation artifacts through separate authored packs.
-- [ ] Verify all generated dependencies resolve by semantic identity and declared symbols.
-- [ ] Change one schema/operation/policy/event and assert exact blast radius.
-- [ ] Prove no source adapter or pack extends the kernel.
-
-## REAUTHOR-001 — Project configuration re-authoring guide
-
-**Status:** planned
-
-**Dependencies:** stable project schema
-
-- [ ] Document how a v1 task becomes a named semantic source plus direct pack instance, output, bindings, options, and commands.
-- [ ] Explain command ownership relocation.
-- [ ] Remove global language/template-directory assumptions.
-- [ ] Provide before/after examples as documentation only.
-- [ ] Do not implement a v1 decoder.
-
-## REAUTHOR-002 — Pack re-authoring guide
-
-**Status:** planned
-
-**Dependencies:** stable pack schema and semantic kernel
-
-- [ ] Inventory real old pack needs.
-- [ ] Replace `resource`, `model`, `entity`, frontend/UI, and global-first selections with documented group-rooted kernel contexts.
-- [ ] Re-author selections, folder fan-out, templates, static files, barrels, imports, bindings, commands, and output paths into v2.
-- [ ] Move all type/import/export/framework syntax into templates/macros/partials.
-- [ ] Classify intentional semantic/output differences and avoid preserving unsafe implementation quirks.
-- [ ] Do not implement a `paths.yaml` parser.
+- [ ] Connect several groups, schemas, operations, storage mappings, policies, events, workflows, views, value sources, and presentations.
+- [ ] Generate backend, SDK, mobile, workflow, storage, event, and documentation artifacts through separate packs.
+- [ ] Verify generated dependencies through semantic identity and declared symbols.
+- [ ] Change one semantic object and assert the exact impact graph.
 
 ## PERF-001 — Scale and bounds
 
-**Status:** planned
-
-**Dependencies:** functional runtime
-
-- [ ] Test large OpenAPI normalization without repeated parsing or duplicate full semantic graphs.
-- [ ] Test large group/schema/operation/view/storage/workflow/event relationship indexes with bounded memory.
-- [ ] Test large pack discovery, artifact planning, and impact queries.
-- [ ] Test streaming/cache behavior for large artifacts.
-- [ ] Test cancellation latency.
-- [ ] Publish reproducible fixtures and commands.
+- [ ] Test large Dryv contracts and relationship indexes with bounded memory.
+- [ ] Test large pack discovery, artifact planning, render contexts, and impact queries.
+- [ ] Test large artifacts, cache materialization, and cancellation latency.
+- [ ] Publish reproducible fixture generators and commands.
 
 ## PERF-002 — Incremental equivalence
 
-**Status:** planned_after_full_generation
-
-**Dependencies:** deterministic full generation, PLAN-012, ownership/generation state
-
-- [ ] Compare complete and incremental output byte-for-byte.
-- [ ] Test conservative fallback when template context dependencies cannot be proven.
-- [ ] Test semantic, template, option, binding, target, engine, and provider changes.
-- [ ] Prove no output digest/state is written into `dryv.lock.yaml`.
+- [ ] Compare full and incremental output byte-for-byte.
+- [ ] Use conservative fallback when context dependencies cannot be proven.
+- [ ] Cover semantic, template, option, binding, target, engine, and provider changes.
+- [ ] Keep generated output state outside `dryv.lock.yaml`.
 
 ## SEC-001 — Security review
 
-**Status:** planned
+- [ ] Plugin trust and kernel-extension denial.
+- [ ] Jinja sandbox and immutable context authority.
+- [ ] Git credential redaction and repository containment.
+- [ ] Command approvals, environment, secrets, shell, network, and lifecycle scripts.
+- [ ] Path traversal, symlinks, protected files, archives, cache, and state permissions.
+- [ ] Regression tests for every accepted finding.
 
-**Dependencies:** adapters, engines, pack providers, commands, writers
+## COOKBOOK-001 — Practical documentation
 
-- [ ] Review adapter trust messaging and kernel-extension denial.
-- [ ] Review Jinja sandbox and immutable context authority.
-- [ ] Review Git credential redaction and repository containment.
-- [ ] Review command approvals, environment, secrets, shell, network, and lifecycle scripts.
-- [ ] Review path traversal, symlink, cleanup, protected files, archive traversal, and cache/state permissions.
-- [ ] Add regression tests for every accepted finding.
+Create executable recipes for:
+
+- installation and first project;
+- typed Python authoring;
+- canonical IR inspection;
+- local packs and `DryvPack.yaml`;
+- Jinja templates and partials;
+- TypeScript and Dart generation;
+- options, bindings, selectors, imports, exports, and generated dependencies;
+- plugin development and validation;
+- managed output protection;
+- deterministic and reproducible builds.
+
+Each recipe includes goal, structure, files, commands, expected output, explanation, common failures, and the next recipe.
 
 ## REL-001 — Documentation conflict audit
 
-**Status:** planned
+- [ ] Search all Dryv source, tests, metadata, examples, and docs for archived names, removed packages, invalid selectors, duplicated transport ownership, and CLI logic in the runtime.
+- [ ] Verify every active configuration field has a current example.
+- [ ] Remove or clearly archive superseded prompts, audits, and progress records.
+- [ ] Keep package task ledgers synchronized with actual implementation.
 
-- [ ] Verify code implements approved architecture and closed-kernel docs.
-- [ ] Search all v2/package docs/tasks/examples for conflicting active uses of `resource`, `model`, `entity`, frontend/UI, reversed selectors, open facets, query DSLs, or adapter-rendered syntax.
-- [ ] Treat historical progress/old-runtime docs as evidence only and label them clearly where linked.
-- [ ] Verify all public schema/config fields have examples and introspection metadata.
-- [ ] Verify package task ledgers match actual versions and tests.
-- [ ] Verify progress logs and decisions are complete.
+## REL-002 — Package matrix
 
-## REL-002 — Package/release matrix
-
-**Status:** planned
-
-**Dependencies:** all official packages
-
-- [ ] Build wheel/sdist for core, bundle, adapters, engine, and packs.
-- [ ] Test supported Python versions and operating systems available to the project.
-- [ ] Test minimal and batteries-included installs.
+- [ ] Build wheel/sdist for runtime, CLI, authoring, Jinja, TypeScript, and Dart packages.
+- [ ] Test supported Python versions and available operating systems.
+- [ ] Test runtime-only and full development installations.
 - [ ] Test local, public Git, and controlled private Git pack resolution.
-- [ ] Test CLI and Python examples from a clean directory.
+- [ ] Test CLI and Python examples from clean directories.
 - [ ] Lock compatible dependency ranges.
 
-## REL-003 — Cutover
-
-**Status:** planned
-
-**Dependencies:** REL-001, REL-002, SEC-001, PERF-001
-
-- [ ] Select final distribution/import namespace cutover.
-- [ ] Replace old published runtime with v2 package set.
-- [ ] Keep old source as reference/archive without importing it.
-- [ ] Publish re-authoring documentation and release notes.
-- [ ] Verify default installation lists OpenAPI, TypeScript target validation, Dart target validation, Jinja, and official packs.
-
-## Acceptance gate
+## REL-003 — Release gate
 
 Release is blocked unless:
 
-- no v2 code imports the old generator;
-- no v2 decoder understands old tasks/paths files;
+- archived packages remain isolated;
+- no compatibility decoder or removed package dependency remains;
+- runtime and CLI responsibilities are separated;
+- authoring feeds the runtime through an in-memory contract;
 - the semantic kernel is closed and typed;
-- no adapter or pack can add facets/selectors/contexts;
 - templates own every emitted character;
-- root-first selectors and connected semantic fixtures pass;
-- official realistic generated projects validate;
-- planning/explain/blast-radius output is deterministic;
-- full generation is proven before incremental mode is enabled;
-- Python API and CLI use the same services;
-- documentation and progress evidence are current.
+- realistic generated TypeScript and Dart projects validate;
+- planning and impact output is deterministic;
+- full generation is proven before incremental generation;
+- documentation, cookbook, tests, and progress evidence match the released code.
