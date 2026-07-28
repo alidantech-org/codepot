@@ -42,8 +42,8 @@ packs:
     contentDigest: sha256:6666666666666666666666666666666666666666666666666666666666666666
 
 plugins:
-  source.openapi:
-    package: dryv-openapi
+  source.ir:
+    package: dryv
     version: 2.0.0
     behavior: 1
   language.typescript:
