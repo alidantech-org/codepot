@@ -1,53 +1,59 @@
-# Canonical Codepot IR JSON/YAML transport
+# Canonical Dryv IR JSON/YAML transport
 
 ## Goal
 
-`dryv-author` must compile to an immutable core contract and support readable JSON/YAML for debugging, review, caching, transport, and reuse as a direct semantic input.
+`dryv-author` compiles to an immutable core contract. The Dryv runtime may serialize that contract as readable JSON or YAML for debugging, review, caching, transport, signing, fixtures, and direct semantic reuse.
 
 ## Distinction
 
 ```text
-Authoring refs/builders/Pydantic models
+Authoring refs, builders, and Pydantic models
     → compiler-only values
 
-Core IR document
-    → portable semantic contract
+Dryv Contract
+    → primary in-memory semantic representation
+
+Canonical IR document
+    → optional portable representation
 ```
 
 Transport must never serialize authoring state.
 
 ## Envelope
 
-A canonical document includes:
+A canonical document includes an explicit format, IR version, behavior versions, and contract payload:
 
 ```json
 {
-  "format": "codepot-ir",
+  "format": "dryv.ir",
   "irVersion": "...",
   "behaviorVersions": {},
   "contract": {}
 }
 ```
 
-Relations are encoded as explicit semantic `$ref` objects where a portable reference is clearer than a raw string.
+Relations use explicit semantic references where a portable reference is clearer than a raw string.
 
-## API
-
-Planned API:
+## Runtime API
 
 ```python
-result = author.compile()
-result.to_document()
-result.to_json(pretty=True)
-result.to_yaml()
+from dryv.ir import (
+    contract_from_document,
+    contract_from_json,
+    contract_from_yaml,
+    contract_to_document,
+    contract_to_json,
+    contract_to_yaml,
+)
 
-contract_to_document(contract)
-contract_to_json(contract)
-contract_to_yaml(contract)
-contract_from_document(document)
-contract_from_json(text)
-contract_from_yaml(text)
+result = author.compile()
+contract = result.require_contract()
+
+json_text = contract_to_json(contract)
+yaml_text = contract_to_yaml(contract)
 ```
+
+The author package returns a `Contract`; it does not own a second transport codec.
 
 ## Guarantees
 
@@ -58,7 +64,7 @@ contract_from_yaml(text)
 - duplicate-key-safe YAML parsing;
 - safe YAML loading without arbitrary object construction;
 - strict unknown-field diagnostics;
-- no class/module/callable/object-address values;
+- no class, module, callable, or object-address values;
 - round-trip equality;
 - JSON/YAML semantic parity;
 - core validation after decoding;
@@ -68,16 +74,16 @@ contract_from_yaml(text)
 
 ## Input role
 
-A Codepot IR JSON/YAML document is already normalized semantics:
+A canonical document already contains normalized Dryv semantics:
 
 ```text
 IR document → strict decode → immutable Contract → core validation
 ```
 
-It does not repeat OpenAPI inference or authoring compilation.
+It does not repeat authoring compilation.
 
 ## Ownership
 
-The canonical codec ideally becomes a public core facility because every source and runtime may use it. The author package may implement the first codec only if it uses public IR contracts, is fully round-trippable, and is documented as the canonical Codepot IR format rather than an author-specific document.
+The canonical codec is a public Dryv runtime facility shared by authoring tools, hosts, fixtures, caches, and the built-in IR loader. `dryv-author` delegates to that facility and must not maintain a package-local schema registry.
 
-No generic `dataclasses.asdict()` dump qualifies as canonical transport.
+A generic `dataclasses.asdict()` dump does not qualify as canonical transport.
