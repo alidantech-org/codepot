@@ -4,8 +4,8 @@ from pathlib import Path
 
 from codepotg.api import CancellationToken, OperationResult, OperationStatus
 from codepotg.diagnostics import Diagnostic, DiagnosticSeverity
-from codepotg.generation import GenerationData
-from codepotg.infrastructure import ManagedFilesystemWriter, ManagedWriteReport
+from codepotg.generation.models import GenerationData
+from codepotg.ports import ManagedOutputWriter, ManagedWriteReport
 from codepotg.runtime.plugins import RuntimePlugins
 
 from .generate import generate
@@ -14,6 +14,7 @@ from .generate import generate
 def generate_to_files(
     project_file: str | Path = "codepotg.yaml",
     *,
+    writer: ManagedOutputWriter,
     destination: str | Path | None = None,
     plugins: RuntimePlugins | None = None,
     cancellation: CancellationToken | None = None,
@@ -30,7 +31,7 @@ def generate_to_files(
     project_path = Path(project_file).resolve()
     root = Path(destination).resolve() if destination is not None else project_path.parent
     try:
-        report = ManagedFilesystemWriter().write(result.data.output, root)
+        report = writer.write(result.data.output, root)
     except (OSError, ValueError) as exc:
         diagnostic = Diagnostic(
             code="WRITE_FAILED",

@@ -10,10 +10,20 @@ from .target import (
     TargetDescriptor,
 )
 from .templates import RenderRequest, RenderResult, TemplateEngine
+from .writers import (
+    ManagedOutputWriter,
+    ManagedWriteChange,
+    ManagedWriteKind,
+    ManagedWriteReport,
+)
 
 __all__ = [
     "IdentifierRole",
     "IdentifierValidationRequest",
+    "ManagedOutputWriter",
+    "ManagedWriteChange",
+    "ManagedWriteKind",
+    "ManagedWriteReport",
     "ModulePathFacts",
     "ModulePathKind",
     "ModulePathRequest",

@@ -6,46 +6,17 @@ import os
 import shutil
 import tempfile
 from dataclasses import dataclass
-from enum import StrEnum
 from pathlib import Path, PurePosixPath
 
-from codepotg.generation import MemoryOutput
+from codepotg.generation.models import MemoryOutput
+from codepotg.ports.writers import (
+    ManagedWriteChange,
+    ManagedWriteKind,
+    ManagedWriteReport,
+)
 
 _STATE_PATH = ".codepotg/generation-state.json"
 _STATE_FORMAT = "codepotg-generation-state/v1"
-
-
-class ManagedWriteKind(StrEnum):
-    CREATE = "create"
-    CHANGE = "change"
-    DELETE = "delete"
-    LEAVE = "leave"
-    PROTECT = "protect"
-
-
-@dataclass(frozen=True, slots=True)
-class ManagedWriteChange:
-    path: str
-    kind: ManagedWriteKind
-    reason: str | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class ManagedWriteReport:
-    changes: tuple[ManagedWriteChange, ...]
-    state_path: str = _STATE_PATH
-
-    @property
-    def changed(self) -> bool:
-        return any(
-            item.kind
-            in {
-                ManagedWriteKind.CREATE,
-                ManagedWriteKind.CHANGE,
-                ManagedWriteKind.DELETE,
-            }
-            for item in self.changes
-        )
 
 
 @dataclass(frozen=True, slots=True)

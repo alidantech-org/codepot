@@ -5,7 +5,8 @@ import json
 from collections.abc import Sequence
 from pathlib import Path
 
-from codepotg.application import generate, generate_to_files
+from codepotg.application import generate
+from codepotg.runtime.composition import generate_to_files
 
 
 def main(argv: Sequence[str] | None = None) -> int:
