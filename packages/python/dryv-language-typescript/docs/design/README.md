@@ -104,7 +104,7 @@ No type renderer, literal renderer, comment renderer, import renderer, or export
 
 This package contains no:
 
-- OpenAPI or other source parsing;
+- semantic source parsing;
 - semantic object/facet/selector registration;
 - generated type/literal/comment/import/export/decorator/validator syntax;
 - Node package-manager or `package.json` modification;
