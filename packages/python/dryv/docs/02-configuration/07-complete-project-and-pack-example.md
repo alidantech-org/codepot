@@ -1,6 +1,6 @@
 # Complete project, pack, and lock example
 
-This example links one project to three independently authored packs using the closed semantic kernel and simplified filesystem-driven design.
+This example connects one canonical Dryv contract to three independently authored packs.
 
 ## Project files
 
@@ -8,7 +8,7 @@ This example links one project to three independently authored packs using the c
 defytickets/
 ├── dryv.yaml
 ├── dryv.lock.yaml
-├── openapi.yaml
+├── contract.dryv.yaml
 ├── packs/
 │   └── typeorm-repositories/
 └── apps/
@@ -24,9 +24,9 @@ apiVersion: dryv.dev/v1
 name: defytickets-generated
 
 sources:
-  api:
-    adapter: openapi
-    file: ./openapi.yaml
+  contract:
+    adapter: ir
+    file: ./contract.dryv.yaml
 
 executables:
   packageManager: pnpm
@@ -40,7 +40,7 @@ packs:
   backendRepositories:
     source:
       local: ./packs/typeorm-repositories
-    input: api
+    input: contract
     output: apps/backend
     options:
       repositoryStyle: class
@@ -54,7 +54,7 @@ packs:
       git: https://github.com/alidantech-org/dryv-packs.git
       ref: typescript-sdk/v2.4.1
       path: packs/typescript-sdk
-    input: api
+    input: contract
     output: packages/typescript-sdk
     options:
       clientName: DefyTicketsClient
@@ -63,7 +63,7 @@ packs:
     source:
       git: https://github.com/alidantech-org/dryv-pack-flutter-sdk.git
       ref: v1.4.2
-    input: api
+    input: contract
     output: apps/mobile
     options:
       clientName: DefyTicketsClient
@@ -76,25 +76,26 @@ commands:
       optional: true
 ```
 
-The project declares each pack source directly. `input` references semantic data; `output` is the pack emission root. The project cannot add semantic concepts, facets, or selectors.
+The project declares every pack source directly. `input` references semantic data; `output` is the pack's destination root. The project cannot add semantic concepts, facets, selectors, or template-context roots.
 
-## OpenAPI normalization used by all packs
-
-The OpenAPI adapter normalizes the source into the known kernel:
+## Canonical contract used by every pack
 
 ```text
-contract.groups
+Contract
 └── group: orders
     ├── schemas
     ├── operations
-    ├── storage.mappings       when typed x-codegen metadata declares them
-    ├── views                  when typed x-codegen metadata declares them
-    ├── workflows              when typed x-codegen metadata declares them
+    ├── storage mappings
+    ├── views
     ├── policies
-    └── events
+    ├── events
+    ├── value sources
+    └── workflows
 ```
 
-HTTP paths and methods become `operation.facets.http`; operation data remains under inputs, outputs, failures, and effects. The three packs consume the same semantic identities but author different output text.
+The contract may be authored through `dryv-author`, a future native Codepot language, or another host that returns a public `Contract`. JSON/YAML is optional transport; every route reaches the same immutable semantic representation.
+
+The packs consume shared semantic identities while authoring different output text.
 
 ## TypeORM pack manifest
 
@@ -103,7 +104,7 @@ apiVersion: dryv.dev/v1
 
 id: alidantech/typeorm-repositories
 version: 1.0.0
-description: Generates TypeORM persistence classes and repositories from storage mappings.
+description: Generates TypeORM persistence classes and repositories.
 
 requires:
   dryv: ">=2.0 <3.0"
@@ -157,35 +158,23 @@ commands:
       arguments: [add, typeorm@^0.3.0, reflect-metadata@^0.2.0]
 ```
 
-Pack filesystem:
+Pack tree:
 
 ```text
 templates/
-├── {persistenceTypes}/
-│   └── (mapping.schema.name.kebab.s).entity.ts.jinja
-├── {repositories}/
-│   └── (mapping.schema.name.kebab.s).repository.ts.jinja
-├── {persistenceIndex}/
-│   └── index.ts.jinja
-├── {repositoriesIndex}/
-│   └── index.ts.jinja
-├── {rootIndex}/
-│   └── index.ts.jinja
-├── _partials/
-│   └── license.txt.jinja
+├── {persistenceTypes}/(mapping.schema.name.kebab.s).entity.ts.jinja
+├── {repositories}/(mapping.schema.name.kebab.s).repository.ts.jinja
+├── {persistenceIndex}/index.ts.jinja
+├── {repositoriesIndex}/index.ts.jinja
+├── {rootIndex}/index.ts.jinja
+├── _partials/license.txt.jinja
 ├── README.md.jinja
 └── .gitignore.jinja
 ```
 
-For a mapping whose schema is `OrderItem`, the repository template may emit:
+`Entity` and `Repository` are pack-owned output vocabulary. The selected neutral object is `mapping`.
 
-```text
-src/repositories/order-item.repository.ts
-```
-
-`Entity` is authored TypeORM output vocabulary. The neutral selected object is `mapping`.
-
-The `repositories` dependency says that the corresponding generated persistence type comes from `persistenceTypes`. Dryv matches artifacts through the same mapping/schema semantic identity, resolves symbols and path/module facts, and passes descriptors to the repository template. The template writes the TypeScript import and class code.
+The runtime matches the repository artifact to its generated persistence type through semantic identity and selection declarations, resolves module/path facts through the TypeScript plugin, and supplies immutable descriptors to the template. The template writes the import and class text.
 
 ## TypeScript SDK pack summary
 
@@ -194,16 +183,14 @@ selections:
   enums:
     paths: [src, types, enums]
     select: groups.schemas.enums.each
-    symbols:
-      - (schema.name.pascal.s)
+    symbols: [(schema.name.pascal.s)]
 
   schemaTypes:
     paths: [src, types, schemas]
     select: groups.schemas.objects.each
     imports:
       enums: enums
-    symbols:
-      - (schema.name.pascal.s)
+    symbols: [(schema.name.pascal.s)]
 
   typesIndex:
     paths: [src, types]
@@ -214,8 +201,7 @@ selections:
     select: groups.each
     imports:
       types: typesIndex
-    symbols:
-      - (group.name.pascal.s)Client
+    symbols: [(group.name.pascal.s)Client]
 
   clientsIndex:
     paths: [src, clients]
@@ -225,35 +211,32 @@ selections:
     paths: [src]
     imports:
       clients: clientsIndex
-    symbols:
-      - (option.clientName)
+    symbols: [(option.clientName)]
 
   rootIndex:
     paths: [src]
     exports: [typesIndex, clientsIndex, client]
 ```
 
-A `groupClients` template receives `group` and traverses `group.operations`. Each operation exposes inputs, outputs, failures, effects, and known facets. The pack decides whether to generate a class, functions, method groups, request types, or documentation.
+A group-client template receives `group` and its documented relationships. The pack decides whether to generate classes, functions, clients, request helpers, or documentation.
 
-The TypeScript target adapter validates output names and resolves target-aware module-specifier facts. The templates author all TypeScript imports, exports, types, comments, literals, and client logic.
+The TypeScript target plugin validates paths and module specifiers. Templates author every TypeScript type, import, export, comment, literal, and client statement.
 
-## Flutter SDK pack summary
+## Dart/Flutter pack summary
 
 ```yaml
 selections:
   enums:
     paths: [lib, src, types, enums]
     select: groups.schemas.enums.each
-    symbols:
-      - (schema.name.pascal.s)
+    symbols: [(schema.name.pascal.s)]
 
   schemaTypes:
     paths: [lib, src, types, schemas]
     select: groups.schemas.objects.each
     imports:
       enums: enums
-    symbols:
-      - (schema.name.pascal.s)
+    symbols: [(schema.name.pascal.s)]
 
   typesIndex:
     paths: [lib, src, types]
@@ -264,8 +247,7 @@ selections:
     select: groups.each
     imports:
       types: typesIndex
-    symbols:
-      - (group.name.pascal.s)Client
+    symbols: [(group.name.pascal.s)Client]
 
   clientsIndex:
     paths: [lib, src, clients]
@@ -275,35 +257,32 @@ selections:
     paths: [lib, src]
     imports:
       clients: clientsIndex
-    symbols:
-      - (option.clientName)
+    symbols: [(option.clientName)]
 
   packageIndex:
     paths: [lib]
     exports: [typesIndex, clientsIndex, client]
 ```
 
-Flutter uses `lib` because all pack `paths` values are relative to the configured pack output root. The Dart/Flutter templates author every class, import, export, annotation, serialization expression, and client call.
-
-A separate Flutter application pack may select `groups.views.each` when the semantic input actually contains known view declarations. The SDK pack does not invent views from HTTP operations.
+Flutter policy remains pack-owned. The Dart target plugin supplies validation and URI facts only. Templates author every class, import, export, annotation, serialization expression, widget, navigation rule, and client call.
 
 ## Connected-generation behavior
 
-All three packs can depend on one semantic schema identity without sharing filenames or target syntax:
+One semantic identity may drive many artifacts without sharing filenames or target syntax:
 
 ```text
 schema: Order
-├── TypeScript type artifact
-├── Dart type artifact
-├── storage mapping artifact
-├── repository artifact
+├── TypeScript type
+├── Dart type
+├── storage type
+├── repository
 ├── group client methods
-└── documentation artifacts
+└── documentation
 ```
 
-Changing `Order.email` or an operation that uses `Order` lets the planner report the affected selections and artifacts before writing. The dependency graph is semantic, while all generated text remains pack-authored.
+Changing a schema or operation lets the planner report affected selectors and artifacts before writing. The dependency graph is semantic; all generated text remains pack-authored.
 
-## Generated lock excerpt
+## Lock excerpt
 
 ```yaml
 apiVersion: dryv.dev/lock/v1
@@ -335,11 +314,17 @@ packs:
       id: alidantech/typescript-sdk
       version: 2.4.1
     contentDigest: sha256:4444444444444444444444444444444444444444444444444444444444444444
+
+plugins:
+  source.ir:
+    package: dryv
+    version: 2.0.0
+    behavior: 1
 ```
 
-The lock keeps requested Git refs, exact resolved commits, pack/plugin versions, and behavior identity. It stores no credentials and no generated output hashes. Output digests belong to the ownership/generation-state manifest.
+The lock stores requested refs, exact resolved commits, pack/plugin versions, and behavior identity. It stores no credentials and no generated output hashes. Output hashes belong to `.dryv/generation-state.json`.
 
-## Full standalone example files
+## Standalone examples
 
 - [`../examples/project/dryv.local.yaml`](../examples/project/dryv.local.yaml)
 - [`../examples/project/dryv.git.yaml`](../examples/project/dryv.git.yaml)
