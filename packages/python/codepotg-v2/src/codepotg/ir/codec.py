@@ -143,6 +143,8 @@ def validate_transport(document: object) -> Diagnostics:
 
 
 def _encode(value: object) -> object:
+    if isinstance(value, Enum):
+        return {"$enum": type(value).__name__, "value": value.value}
     if value is None or isinstance(value, (str, bool, int)):
         return value
     if isinstance(value, float):
@@ -153,8 +155,6 @@ def _encode(value: object) -> object:
         return {"$ref": value.value}
     if isinstance(value, Name):
         return {"$name": value.value}
-    if isinstance(value, Enum):
-        return {"$enum": type(value).__name__, "value": value.value}
     if isinstance(value, tuple | list):
         return [_encode(item) for item in value]
     if isinstance(value, dict):
