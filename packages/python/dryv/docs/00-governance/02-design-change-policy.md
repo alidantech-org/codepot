@@ -1,71 +1,66 @@
 # Design change policy
 
-Dryv is being implemented across several packages and parallel conversations. Architectural drift is therefore a correctness defect.
+Dryv spans several packages and workflows. Architectural drift is therefore a correctness defect.
 
 ## Decision levels
 
 ### Locked decisions
 
-Locked decisions are recorded in `00-approved-architecture.md` and `04-closed-semantic-kernel.md`. They require explicit user approval to change.
+Locked decisions are recorded in the approved architecture and closed-kernel documents. They require explicit user approval to change.
 
 Examples:
 
-- the closed typed semantic kernel owned only by core;
-- growth through deliberate kernel changes rather than plugin-defined facets/objects/selectors;
-- outer-to-inner semantic paths and root-first fixed selectors;
-- groups, structural schemas, operation inputs/outputs/failures/effects, known facets, views, storage mappings, policies, events, workflows, and compensation;
-- no neutral resource/model/entity/frontend/UI roots;
-- templates/macros/partials/static files owning every emitted character;
-- target adapters limited to detection, validation, and module/path facts;
-- the two-file project and pack model;
-- no compatibility implementation inside v2;
-- `DryvPack.yaml` as the pack contract;
-- Python-first application API;
-- authored barrel templates and static files copied by default;
-- complete planning/validation before rendering;
-- command trust, Git lock, ownership-state, and incremental-generation boundaries.
+- one closed typed semantic kernel owned by Dryv core;
+- growth through deliberate kernel changes rather than plugin-defined objects, facets, selectors, or context roots;
+- root-first fixed selectors and public naming projections;
+- groups, structural schemas, operations, known facets, views, storage mappings, policies, events, value sources, workflows, presentations, and typed relationships;
+- no neutral resource/model/entity/frontend/UI framework roots;
+- templates, macros, partials, and static files own every emitted character;
+- target plugins are limited to detection, validation, and module/path facts;
+- `dryv.yaml` and `DryvPack.yaml` own project and pack configuration;
+- no archived compatibility implementation;
+- Python-first reusable runtime API;
+- standalone CLI interface;
+- complete planning and validation before rendering;
+- explicit command trust, Git lock, ownership state, and incremental-generation boundaries.
 
 ### Package decisions
 
-Package decisions refine locked contracts without changing them. They may be recorded in package design documents and task acceptance criteria.
+Package decisions refine locked contracts without changing them. They may define:
 
-Examples:
+- exact language filename, identifier, or module-path diagnostics;
+- exact template-engine limits or undefined behavior;
+- exact contract-provider loading diagnostics;
+- target capability descriptors;
+- templates, macros, and static files for one pack product.
 
-- exact TypeScript filename or module-path validation diagnostics;
-- exact Jinja undefined-behavior enum names;
-- exact OpenAPI grouping behavior within the approved group contract;
-- exact typed `x-codegen` source schema for a known kernel concept;
-- exact templates/macros used by one pack product.
-
-A package decision cannot create a new facet, selector, semantic context, syntax renderer, or hidden product/profile mechanism.
+A package decision cannot create a new semantic object, facet, selector, context root, syntax renderer, hidden product profile, or runtime bypass.
 
 ### Implementation details
 
-Implementation details may change freely when they preserve public contracts, dependency rules, tests, determinism, and documented behavior.
+Private data structures, algorithms, cache strategies, and module organization may change when they preserve public contracts, dependency direction, tests, determinism, security, and documented behavior.
 
-Examples include private typed graph/index structures, algorithm choices, caching structures, and module organization.
+## Architecture decision records
 
-## Required architecture decision record
-
-A change proposal must create:
+A change proposal creates:
 
 ```text
 docs/00-governance/decisions/NNNN-title.md
 ```
 
-It must contain:
+It records:
 
-- status: proposed, approved, rejected, or superseded;
+- status;
 - context and real use cases;
 - decision and alternatives;
-- classification as semantic object, relation, facet, value, selector, context, adapter service, or pack behavior;
-- public IR/template-context impact;
-- configuration/selector/expression impact;
-- plugin/adapter boundary impact;
-- generated-syntax ownership impact;
-- security/determinism/locking/cache/impact-analysis consequences;
-- re-authoring impact;
-- task, fixture, conformance, documentation, and behavior-version updates.
+- precise concept classification;
+- public IR and context impact;
+- configuration, selector, and expression impact;
+- plugin and package-boundary impact;
+- generated-text ownership impact;
+- security, determinism, locking, caching, and impact-analysis consequences;
+- migration/re-authoring impact;
+- tasks, fixtures, tests, docs, and behavior-version changes.
 
 No implementation or pack may depend on a proposed decision as though it were approved.
 
@@ -76,42 +71,43 @@ A new semantic capability is accepted only when the same approved change:
 1. defines one framework-neutral meaning;
 2. classifies the concept precisely;
 3. adds immutable typed models and provenance;
-4. defines valid containment/attachment locations;
-5. defines source normalization;
-6. defines semantic validation and diagnostics;
-7. adds root-first fixed selectors where needed;
-8. defines immutable template-context exposure;
-9. defines deterministic serialization/hashing/ordering;
-10. adds realistic source and pack simulations;
-11. updates IR/naming/selection/planning behavior versions and compatibility.
+4. defines valid ownership and relationships;
+5. defines authoring/provider mapping where needed;
+6. defines validation and diagnostics;
+7. adds fixed selectors only when justified;
+8. defines immutable prepared-context exposure;
+9. defines deterministic transport, hashing, and ordering;
+10. adds realistic contract and pack fixtures;
+11. updates relevant API and behavior versions.
 
-Adding an adapter package or arbitrary namespaced key is not a substitute for this process.
+Installing a plugin or adding an arbitrary namespaced value is not a substitute for this process.
 
-## Schema and behavior change rules
+## Schema and behavior changes
 
-- Project, pack, lock, kernel IR, selector, expression, and public adapter contracts are versioned.
-- During the initial v2 build, corrections are allowed before stable release, but all active docs/tasks/examples/conformance fixtures must change together.
-- After stable release, incompatible document changes require a new `apiVersion`; incompatible kernel/selector behavior requires a new IR or behavior version.
-- V2 does not add v1 compatibility decoders.
-- Unknown fields/facets/selectors/context properties are errors.
-- Bounded documented `extensions`/`raw` values preserve source metadata only; they cannot add semantics or behavior.
+- Project, pack, lock, IR, selector, expression, runtime, and plugin contracts are versioned.
+- Before stable release, corrections may be made, but code, tests, docs, examples, fixtures, and task plans change together.
+- After stable release, incompatible document changes require a new `apiVersion`; incompatible semantic/planning behavior requires a new behavior version.
+- Dryv does not add archived compatibility decoders.
+- Unknown fields, facets, selectors, and context properties are errors.
+- Bounded documented extension/raw values preserve provenance only; they cannot add behavior.
 
-## Public Python API change rules
+## Public Python API changes
 
 - Supported imports are documented explicitly.
-- Internal graph indexes/builders and implementation modules are private.
-- Adapters import only their minimum public contracts.
-- No public generic semantic node/edge/fact registration API exists.
-- A public protocol change updates conformance suites in the same approved change.
+- Private indexes, builders, and implementation modules remain private.
+- Plugins import only their minimum public contracts.
+- No public generic semantic-node/edge/fact registration API exists.
+- Protocol changes update conformance suites in the same approved change.
+- Runtime and CLI interfaces remain separate packages.
 
-## Task synchronization
+## Synchronization
 
 Every approved decision updates:
 
-1. affected governing and detailed design documents;
-2. the master task plan;
-3. affected central/package task files;
-4. conformance and negative-boundary acceptance criteria;
+1. governing and detailed design documents;
+2. the master plan;
+3. affected package task files;
+4. conformance and negative-boundary tests;
 5. examples and realistic fixtures;
-6. package README/design references;
-7. progress evidence.
+6. package READMEs and cookbook recipes;
+7. progress and release evidence.
