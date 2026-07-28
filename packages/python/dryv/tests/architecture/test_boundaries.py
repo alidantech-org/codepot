@@ -133,14 +133,12 @@ def test_core_has_no_terminal_frontend_or_console_script() -> None:
     assert "typer" not in project.lower()
 
     for path in sorted(SOURCE_ROOT.rglob("*.py")):
-        source = path.read_text(encoding="utf-8")
         imports = _absolute_imports(path)
         assert "argparse" not in imports
         assert "click" not in imports
         assert "rich" not in imports
         assert "questionary" not in imports
-        assert "print(" not in source
-        assert "input(" not in source
+        assert not ({"print", "input"} & _direct_call_names(path))
 
 
 def test_no_same_name_module_and_package_collisions() -> None:
@@ -165,3 +163,12 @@ def _absolute_imports(path: Path) -> tuple[str, ...]:
         elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
             imports.append(node.module)
     return tuple(imports)
+
+
+def _direct_call_names(path: Path) -> set[str]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    return {
+        node.func.id
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+    }
