@@ -1,91 +1,91 @@
-# Clean-room rewrite policy
+# Clean-room Dryv policy
 
 ## Purpose
 
-The v2 implementation is a new architecture, not a refactor of the existing `packages/python/dryv` internals.
+Dryv is a new runtime architecture in the Codepot ecosystem. It does not rename, import, or wrap the archived generator implementation.
 
-The existing package remains available for old projects while v2 is built and validated. V2 does not include old configuration decoders or old execution paths.
+The archived package retains its original name, history, behavior, and release line. Dryv uses distinct distributions and namespaces.
 
-## Allowed use of the old package
+## Allowed historical reference
 
-Agents may inspect the old package to identify:
+Developers may inspect archived projects to identify:
 
-- real normalized source data required by packs;
-- representative generated outputs;
+- real semantic needs and reusable intent;
+- representative outputs;
 - template capabilities users rely on;
 - performance and scale requirements;
-- diagnostics users need;
-- safety bugs that v2 must avoid;
-- realistic fixtures for new acceptance tests.
+- useful diagnostics;
+- safety failures to avoid;
+- realistic acceptance fixtures.
+
+Historical observation does not authorize importing or copying old runtime architecture.
 
 ## Prohibited reuse
 
-Agents must not copy or import:
+Dryv must not copy or restore:
 
 - import-time rewriting or monkey patching;
 - same-name module/package collisions;
-- CLI `sys.path` or `sys.modules` manipulation;
+- CLI manipulation of `sys.path` or `sys.modules`;
 - global decorator plugin registries;
 - internal directory plugin scanning;
-- OpenAPI-specific data leaked into target adapters;
-- duplicate generation representations;
-- template source scanning as hidden dependency planning;
-- unsandboxed rich template contexts;
+- provider-specific data in target plugins or template contexts;
+- duplicate semantic or generation representations;
+- template-source scanning as hidden dependency planning;
+- unsandboxed template contexts;
 - shell-string command execution defaults;
-- per-file-only transactions presented as whole-generation safety;
-- layout-insensitive comparisons;
+- per-file transactions presented as whole-generation safety;
 - overwritten duplicate output maps;
-- mutable internals inside frozen containers.
+- mutable internals hidden in frozen containers.
 
 ## No compatibility runtime
 
-V2 does not implement:
+Dryv does not implement:
 
-- a decoder for old `dryv.yaml` `tasks`;
-- project-level `language`;
-- `templateDir`;
-- a `paths.yaml` parser;
-- a fallback to the old generator;
-- adapter wrappers around old language implementations;
-- import aliases pointing to old modules.
+- archived task/configuration decoders;
+- project-level target-language switching;
+- `templateDir` or `paths.yaml` fallbacks;
+- old generator execution paths;
+- wrappers around archived language implementations;
+- import aliases pointing to archived modules.
 
-This prevents old separation-of-concern problems from becoming permanent v2 dependencies.
+This prevents old separation-of-concern failures from becoming permanent Dryv dependencies.
 
 ## Re-authoring approach
 
-Project migration is explicit re-authoring:
+Migration is explicit re-authoring:
 
-- old task input becomes a named v2 source;
-- old task template directory becomes a configured pack instance;
-- old output/clean/commands become pack-instance or project lifecycle fields;
-- global language is removed;
-- pack templates infer their own targets;
-- old pack paths/emissions/folders are redesigned as `DryvPack.yaml` content, selections, patterns, files, bindings, and profiles.
+- semantic meaning becomes a public Dryv contract;
+- orchestration becomes `dryv.yaml`;
+- reusable generation behavior becomes `DryvPack.yaml` plus pack files;
+- each pack owns templates, partials, static files, selectors, options, bindings, and declared commands;
+- targets are inferred per planned artifact;
+- command execution remains explicit and separately trusted.
 
-The repository may contain documentation or standalone analysis tools that help authors understand old files, but the v2 runtime and package dependency graph remain clean.
+Dryv may provide documentation and analysis tools that help users understand archived files, but the runtime dependency graph stays clean.
 
-## Output parity
+## Output comparison
 
-Parity testing does not require architectural compatibility.
+Behavioral comparison does not require architectural compatibility.
 
 For each re-authored pack:
 
-1. create a small inspectable v2 fixture;
-2. create a realistic v2 fixture;
-3. compare behavior and generated intent with the old pack;
-4. classify differences as intentional v2 improvements or defects;
-5. fix accidental differences in the new implementation;
-6. never add an old runtime path solely to preserve an implementation quirk.
+1. create a small inspectable Dryv fixture;
+2. create a realistic fixture;
+3. compare intended behavior and outputs;
+4. classify differences as intentional improvements or defects;
+5. repair accidental differences in the new implementation;
+6. never add an archived execution path solely to preserve an implementation quirk.
 
-## Release cutover
+## Release gate
 
-The final release replaces the old user distribution after:
+Dryv releases only after:
 
-- core architecture and security tests pass;
-- official adapters pass conformance suites;
-- official packs generate realistic projects;
-- Python, CLI, configure, Git pack, memory, and filesystem workflows pass;
-- re-authoring guides are complete;
-- release packaging installs batteries-included defaults.
-
-The old source remains in repository history and may remain archived for reference, but it is not imported by the released v2 runtime.
+- architecture and security tests pass;
+- authoring and plugin packages pass public contracts;
+- realistic packs generate valid projects;
+- runtime and standalone CLI workflows pass;
+- direct IR and in-memory Python authoring are verified;
+- Git/lock and command trust lanes are safe when enabled;
+- cookbook and migration guidance are current;
+- isolated package installation proves no namespace collision with the archived line.
