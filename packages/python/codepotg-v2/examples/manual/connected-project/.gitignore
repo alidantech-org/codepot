@@ -14,3 +14,21 @@
 /rerun-report*.json
 /before*.sha256
 /after*.sha256
+
+# ChatGPTX generated files
+.chatgptx/sessions/
+.chatgptx/browser-profile/
+.chatgptx/artifacts/
+.chatgptx/attachments/
+.chatgptx/logs/
+.chatgptx/backups/
+.chatgptx/patch-backups/
+.chatgptx/tmp/
+.agent/sessions/
+.agent/browser-profile/
+.agent/artifacts/
+.agent/attachments/
+.agent/logs/
+.agent/backups/
+.agent/patch-backups/
+.agent/tmp/
