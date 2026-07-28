@@ -1,111 +1,103 @@
-# Language and target-syntax adapter contract
+# Language and target adapter contract
 
 ## Responsibility
 
-A language adapter describes and validates one target syntax for already authored template files. It is resolved independently for every template from the detected target suffix.
+A target adapter describes and validates one target syntax for already planned template artifacts. It is resolved independently from the detected target suffix.
 
-A project and pack may use many target adapters in one generation run.
+A project and pack may use several targets in one run.
 
-A language adapter is not a code renderer. Templates, macros, partials, and static files own every emitted character.
+A target adapter is not a code renderer. Templates, macros, partials, and static files own every emitted character.
 
 ## Installable package
 
-A language adapter is an ordinary independently versioned Python distribution, for example:
+Examples:
 
 ```text
 dryv-language-typescript
 dryv-language-dart
-dryv-language-python
+acme-dryv-language-csharp
 ```
 
-It registers a factory through `dryv.language_adapters`.
+Each package registers a factory through `dryv.language_adapters`.
 
-## Target descriptor
+## Target descriptors
 
-The adapter declares one or more target descriptors:
+A plugin declares one or more descriptors containing:
 
 ```text
 id
 aliases
 file extensions
 syntax category
-filename/reserved-name validation behavior
-module/path capability facts
+filename and reserved-name validation behavior
+module/path capabilities
 supported validation capabilities
 behavior version
 ```
 
-Syntax categories may include programming language, markup, data, configuration, query language, and plain text.
+Extension resolution uses longest-known matching. Removing an engine suffix never removes the intended target suffix.
 
-Extension resolution uses longest-known matching. Removing the engine suffix never changes the intended output suffix.
+## Allowed services
 
-## Required services
+A target adapter may provide:
 
-A target adapter may implement applicable services for:
-
-- target extension registration and inference;
-- target filename/stem validation;
+- extension registration and inference;
+- filename/stem validation;
 - reserved filename and identifier diagnostics;
-- optional validation/escaping facts for explicitly supplied candidate identifiers;
+- validation facts for explicitly supplied candidate identifiers;
 - destination-relative module/path normalization;
-- target-specific module specifier validation;
-- index/module extension conventions needed to calculate path facts;
-- package/module/namespace path validation for project bindings;
-- target capability reporting;
-- deterministic validation and behavior introspection.
+- module specifier validation;
+- index and extension conventions needed for path facts;
+- package/module/namespace validation for project bindings;
+- deterministic capability reporting.
 
-The adapter returns typed facts and diagnostics. It does not return source-code snippets or statements.
+It returns typed immutable facts and diagnostics, never target-source snippets.
 
 ## Prohibited syntax services
 
-A language adapter must not render or inject:
+A target adapter must not render or inject:
 
 - primitive or composite type syntax;
-- optional/nullable syntax;
+- optional or nullable syntax;
 - generics, unions, intersections, functions, records, arrays, or maps;
 - enum declarations;
-- literals or escaping syntax for emitted source;
+- emitted literals or escaping;
 - comments or documentation comments;
-- import statements;
-- export statements;
-- decorators, annotations, attributes, validators, modifiers, or framework calls;
+- imports or exports;
+- decorators, annotations, validators, modifiers, or framework calls;
 - class, interface, type, struct, record, trait, repository, controller, widget, or entity syntax;
-- formatting, semicolons, quotes, indentation, or textual ordering.
+- formatting, quotes, indentation, semicolons, or textual order.
 
-Those are pack/template concerns.
-
-A target adapter may validate a path/module specifier or candidate identifier and expose safe normalized facts. The template decides how to spell and position those facts.
+Those belong to packs and templates.
 
 ## Naming boundary
 
-Core owns semantic name projections:
+Dryv owns semantic name projections:
 
 ```text
 x.name.{casing}.{number}
 ```
 
-Language adapters do not create alternate naming APIs such as `language.className`, `language.fieldName`, or `language.fileName`.
+Target plugins do not create alternate semantic naming APIs. Templates select documented projections and may use pack-authored macros for output conventions.
 
-Templates may select the documented core projection they want and may use pack-authored macros for additional output conventions.
+## Module/path facts
 
-## Module/path contract
+Dryv plans provider and consumer artifacts. A target adapter may calculate or validate target-aware facts from their final destinations and explicit project bindings.
 
-Core plans source and destination artifacts. A target adapter may calculate or validate target-aware module/path facts from already planned destinations and project bindings.
-
-A module descriptor may expose facts such as:
+A module descriptor may expose:
 
 ```text
 provider artifact identity
 consumer artifact identity
 relative path segments
 normalized module specifier
-requires extension
-resolves through index
+extension/index requirements
 package/module identity
+symbols
 validation diagnostics
 ```
 
-The template authors the import/export statement:
+The template authors the final statement:
 
 ```jinja
 {% for module in imports.schemaType.modules %}
@@ -113,13 +105,11 @@ import type { {{ module.symbols | join(", ") }} } from "{{ module.specifier }}";
 {% endfor %}
 ```
 
-The adapter must not supply a pre-rendered statement.
+The plugin never returns that rendered line.
 
-## Target options and rules
+## Target options
 
-Any target configuration must be limited to facts required for detection, path calculation, validation, or capability reporting.
-
-Possible typed sections include:
+Target configuration is limited to detection, path calculation, validation, and capability reporting.
 
 ```yaml
 targets:
@@ -129,83 +119,46 @@ targets:
     validation: {}
 ```
 
-Do not add language rule sections for generated type mapping, literal rendering, comment style, imports, exports, decorators, or formatting. Those belong in pack options and templates when variability is needed.
+Generated type mapping, literals, comment style, imports, exports, decorators, framework conventions, and formatting belong to pack options and templates.
 
-Raw mappings and generic recursive merges are prohibited. Every supported option is typed, documented, introspectable, and behavior-versioned.
-
-## Capabilities
-
-Capabilities describe validation/path support rather than generated syntax. Examples may include:
-
-```text
-file.extension.ts
-file.extension.tsx
-file.declaration_name
-module.relative_path
-module.package_path
-module.index_resolution
-module.extension_policy
-identifier.validate.type
-identifier.validate.value
-identifier.reserved_words
-```
-
-A capability does not authorize the adapter to emit code.
+Every supported target option is typed, documented, introspectable, immutable, and behavior-versioned.
 
 ## Context safety
 
-The adapter receives immutable planned artifact/path descriptors and the minimum target configuration required for its service. It must not mutate semantic IR, selections, invocations, artifacts, or pack files.
-
-It does not receive authority to add template-context properties outside the documented target/path descriptor contract.
+The adapter receives the minimum immutable planned artifacts, paths, options, and cancellation required for its operation. It cannot mutate semantic IR, selections, artifacts, pack files, or prepared template contexts.
 
 ## Prohibited responsibilities
 
-A language adapter must not:
+A target adapter must not:
 
-- parse OpenAPI or other semantic sources;
-- extend the semantic kernel or register facets/selectors;
-- select records or templates;
-- discover packs;
-- render Jinja or another engine;
-- render source-code syntax;
+- load or interpret semantic contracts;
+- extend the kernel or register facets/selectors;
+- select semantic records or templates;
+- discover or resolve packs;
+- render templates;
+- render target syntax;
 - write output files;
 - execute commands;
 - own cache persistence;
 - inspect CLI arguments;
 - encode framework architecture;
-- assume TypeScript means Node/NestJS/Next.js or Dart means Flutter.
-
-## Factory example
-
-```python
-def create_plugin() -> LanguageAdapterPlugin:
-    return LanguageAdapterPlugin(
-        id="typescript",
-        version="1.0.0",
-        api_version="1",
-        core_versions=">=2,<3",
-        targets=(typescript_descriptor,),
-        option_schema=typescript_target_option_schema,
-        factory=TypeScriptTargetAdapter,
-    )
-```
+- assume one language implies one framework or ecosystem.
 
 ## Conformance tests
 
-Every target package must run tests for:
+Every target package tests:
 
-- deterministic target/extension inference;
+- deterministic descriptor and suffix inference;
 - longest-known extension matching;
 - filename and reserved-name validation;
-- candidate identifier validation where declared;
-- relative destination/module path calculation;
-- package/project-path binding validation;
-- index and extension module-specifier behavior;
-- typed option decoding and introspection;
+- candidate identifier validation where supported;
+- relative and package module/path facts;
+- index and extension policies;
+- typed option validation and introspection;
 - no emitted syntax or pre-rendered snippets;
 - no semantic-kernel extension;
-- immutable inputs;
-- thread/session isolation;
-- plugin descriptor compatibility.
+- immutable inputs and session isolation;
+- plugin descriptor compatibility;
+- wheel entry-point discovery.
 
-Language-specific packages add focused tests only for their supported detection, filename, identifier-validation, and path/module facts.
+Language packages add focused tests only for capabilities they actually publish.
