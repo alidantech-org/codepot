@@ -4,7 +4,6 @@
 
 - [ ] Define typed question, candidate, answer, validation, and update-result models.
 - [ ] Generate questions from project/provider configuration, pack options, bindings, executable defaults, and command approvals.
-- [ ] Support text, path, typed values, discovered binding candidates, and approvals.
 - [ ] Keep the workflow independent from CLI, IDE, web, or server presentation.
 
 ## CONFIGURE-001 — Project workflow
@@ -19,8 +18,7 @@
 
 - [ ] Add local packs through `source.local`.
 - [ ] Add Git packs through `source.git`, required `ref`, and optional `path`.
-- [ ] Resolve identity and show trust/command requirements before configuration.
-- [ ] Suggest a unique project-local instance name.
+- [ ] Resolve identity and trust/command requirements before configuration.
 - [ ] Update the lock only after successful resolution.
 - [ ] Never create a registry alias or `use` indirection.
 
@@ -28,41 +26,72 @@
 
 - [ ] Configure canonical IR files.
 - [ ] Configure Python module/callable providers.
-- [ ] Validate imported callable results as public Dryv contracts.
-- [ ] Report missing modules, callables, wrong return types, and contract validation failures safely.
-- [ ] Allow hosts to inject in-memory contracts without project-file serialization.
+- [ ] Validate callable results as public Dryv contracts.
+- [ ] Report import/call/type/contract failures safely.
+- [ ] Allow hosts to inject in-memory contracts without serialization.
 
 ## DRYV-CLI-001 — Standalone package
 
-- [ ] Create `packages/python/dryv-cli` and `src/dryv_cli`.
-- [ ] Depend on `dryv`, never the reverse.
-- [ ] Register `dryv = dryv_cli.main:main`.
-- [ ] Move current argument parsing and JSON terminal output out of the runtime distribution.
-- [ ] Preserve runtime-only installation and imports.
+**Status:** implemented; verification required
 
-## DRYV-CLI-002 — Initial commands
+- [x] Create `packages/python/dryv-cli` and `src/dryv_cli`.
+- [x] Depend on `dryv`, never the reverse.
+- [x] Register `dryv = "dryv_cli.main:main"`.
+- [x] Remove the embedded core CLI and core console script.
+- [x] Preserve runtime-only installation and imports.
+- [x] Add package architecture and distribution tests.
+- [x] Remove stale `.gitkeep` from implemented runtime and test directories.
+
+## DRYV-CLI-002 — Initial command foundation
+
+**Status:** implemented for public runtime operations; expansion blocked on runtime APIs
+
+Implemented:
+
+```text
+dryv
+├── plan
+├── generate
+└── plugins
+```
+
+- [x] Parse commands with Click.
+- [x] Use Rich for all terminal output, colors, trees, summaries, and spinners.
+- [x] Use Questionary for interactive confirmation.
+- [x] Define stable operation exit codes.
+- [x] Support plain `--json` machine output.
+- [x] Keep command handlers free of business logic.
+- [x] Prohibit Python `print()` and `input()`.
+- [x] Prohibit Rich panels and box-border layouts.
+- [x] Prevent prompts in JSON and non-interactive automation.
+
+Blocked until matching public runtime operations exist:
 
 ```text
 dryv validate project
 dryv validate pack
 dryv validate plugin
-dryv plugins list
 dryv plugins inspect
-dryv plan
-dryv generate
 dryv ir emit
 dryv state inspect
 ```
 
-- [ ] Parse arguments into typed public runtime requests.
-- [ ] Render structured diagnostics and results.
-- [ ] Define stable exit codes.
-- [ ] Keep all business logic out of command handlers.
+## DRYV-CLI-003 — UX and accessibility hardening
+
+- [x] Borderless root command tree.
+- [x] Hierarchical artifact, diagnostic, plugin, and write trees.
+- [x] Shared semantic color theme.
+- [x] Loading indicators for runtime discovery, planning, and generation.
+- [x] TTY-aware confirmation with `--yes` automation escape.
+- [x] Regression tests for no panels/boxes and no ANSI in JSON.
+- [ ] Add terminal-width snapshots for narrow and wide consoles.
+- [ ] Add `NO_COLOR` and accessibility review evidence.
+- [ ] Add shell completion after the command surface stabilizes.
 
 ## MCP-001 — Structured adapter surface
 
 - [ ] Ensure runtime requests/results serialize without terminal-only fields.
-- [ ] Expose validate, inspect, plan, generate-memory/archive, pack, provider, lock, and approval operations.
+- [ ] Expose validate, inspect, plan, generation, provider, lock, and approval operations.
 - [ ] Apply server-safe policy by default.
 - [ ] Support progress and cancellation hooks.
 
@@ -70,73 +99,58 @@ dryv state inspect
 
 - [ ] Resolve `source.local` relative to `dryv.yaml`.
 - [ ] Validate containment, manifest, identity/version, and digest.
-- [ ] Create a stable run snapshot so mid-run edits cannot change a plan.
-- [ ] Detect local content drift against frozen locks.
+- [ ] Create stable run snapshots and detect lock drift.
 - [ ] Never execute pack commands during resolution.
 
 ## GIT-002 — Generic Git provider
 
-- [ ] Resolve HTTPS/SSH URLs, required refs, and optional subdirectories.
-- [ ] Use existing Git credentials, SSH agents, and credential helpers.
-- [ ] Resolve branches/tags/commits to immutable commits.
-- [ ] Fetch into a controlled content-addressed cache and clean partial failures.
-- [ ] Validate repository-relative containment and pack identity.
-- [ ] Redact credentials from diagnostics and events.
-- [ ] Support public, private, and enterprise hosts through one provider.
+- [ ] Resolve HTTPS/SSH URLs, refs, and optional subdirectories.
+- [ ] Use existing Git credentials and helpers.
+- [ ] Resolve mutable refs to immutable commits.
+- [ ] Use controlled caches and clean partial failures.
+- [ ] Validate containment and redact credentials.
 
-No host-specific locator is required; every service is treated as an ordinary Git host.
-
-## GIT-003 — Source and discovery integration
-
-- [ ] Enforce exactly one of `source.local` or `source.git`.
-- [ ] Require `ref` for Git sources.
-- [ ] Keep pack identity/version in the resolved manifest.
-- [ ] Let future discovery tools return complete source blocks without becoming runtime registries.
-- [ ] Add local, Git-root, monorepo, branch, tag, commit, SSH, and invalid-source fixtures.
+No host-specific locator is required.
 
 ## LOCK-001 — `dryv.lock.yaml`
 
 - [ ] Define typed `dryv.dev/lock/v1` models.
-- [ ] Record project/runtime behavior identity.
-- [ ] Record requested local/Git source identity.
-- [ ] Record exact commits, pack IDs/versions, manifest/content digests, plugin versions, and behavior versions.
-- [ ] Keep credentials, secrets, environment values, approval tokens, and generated output hashes out of the lock.
+- [ ] Record runtime behavior, source identity, exact commits, pack/plugin versions, and digests.
+- [ ] Exclude credentials, secrets, approvals, and generated output hashes.
 - [ ] Implement deterministic serialization.
-
-## LOCK-002 — Reproducibility and approvals
-
-- [ ] Include lock identity in generation and cache keys.
-- [ ] Tie command approvals to exact source, commit, path, digests, executable, and arguments.
-- [ ] Require reapproval after any relevant change.
-- [ ] Implement inspect, update, frozen, and offline checks.
-- [ ] Never update a frozen lock silently.
 
 ## DIST-001 — Runtime distribution
 
-- [ ] Publish `dryv` with no mandatory CLI, authoring, target, engine, or pack defaults.
-- [ ] Prove embedded hosts can install only required plugins.
-- [ ] Document executable Python-plugin trust.
+**Status:** implementation boundary complete; wheel verification required
+
+- [x] `dryv` declares no console script.
+- [x] `dryv` declares no CLI/TUI dependency.
+- [x] `dryv` exposes `DryvRuntime`, `create_runtime`, and runtime inspection models.
+- [ ] Build and inspect the real runtime wheel.
+- [ ] Prove runtime-only installation in a fresh environment.
 
 ## DIST-002 — Interface and official plugins
 
-- [ ] Publish `dryv-cli`, `dryv-author`, `dryv-template-jinja`, `dryv-language-typescript`, and `dryv-language-dart` independently.
-- [ ] Pin compatible public runtime ranges.
-- [ ] Test runtime-only and full development installations.
-- [ ] Verify fresh-wheel entry points and connected generation.
+**Status:** `dryv-cli` implementation present; family verification required
+
+- [x] Add independent `dryv-cli` distribution metadata.
+- [x] Pin a compatible public runtime range.
+- [x] Add console-script ownership tests.
+- [ ] Build and inspect the real CLI wheel.
+- [ ] Install runtime and CLI wheels together in a fresh environment.
+- [ ] Verify all official plugin wheels and connected generation.
 
 ## DIST-003 — Pack discovery metadata
 
-- [ ] Define marketplace metadata: ID, description, Git URL, suggested refs, pack path, targets, frameworks, bindings, commands, docs, and verification.
-- [ ] Return a complete `source` block suitable for `dryv.yaml`.
-- [ ] Keep runtime resolution direct from the project source block.
-- [ ] Keep private packs as direct unindexed references.
+- [ ] Define marketplace metadata and complete source blocks.
+- [ ] Keep runtime resolution direct and private packs unindexed.
 
 ## Acceptance gate
 
-- Local and Git examples decode exactly.
-- Git refs resolve to immutable commits.
-- Lock output is deterministic and credential-free.
-- No registry aliases, host-specific shorthand, or mutable catalog mapping are required.
-- Runtime operations execute no commands or network work unless the host permits them.
-- `dryv` works without `dryv-cli` installed.
-- The full package family installs from real wheels and resolves each plugin exactly once.
+- `dryv` imports and operates without `dryv-cli`.
+- `dryv-cli` owns the only new `dryv` console script.
+- Runtime and CLI lint, formatting, tests, builds, and wheel inspection pass.
+- CLI help/results remain borderless and readable.
+- JSON remains plain and non-interactive.
+- Full package-family wheels resolve every plugin exactly once.
+- Git, lock, and configure claims remain blocked until their implementations exist.
