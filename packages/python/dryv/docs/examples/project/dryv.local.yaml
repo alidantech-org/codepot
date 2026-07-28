@@ -3,9 +3,9 @@ apiVersion: dryv.dev/v1
 name: local-pack-development
 
 sources:
-  api:
-    adapter: openapi
-    file: ./openapi.yaml
+  contract:
+    adapter: ir
+    file: ./contract.dryv.yaml
 
 executables:
   packageManager: pnpm
@@ -17,7 +17,7 @@ packs:
   backendRepositories:
     source:
       local: ./packs/typeorm-repositories
-    input: api
+    input: contract
     output: apps/backend
 
     options:
