@@ -1,36 +1,34 @@
-# Dryv orchestrator runtime
+# Dryv runtime orchestration
 
 ## Purpose
 
-The orchestrator composes the closed IR, project and pack contracts, fixed selectors, source adapters, template engines, target adapters, artifact planning, rendering, and writers into one deterministic generation operation.
+The runtime composes canonical contracts, project and pack configuration, fixed selectors, plugins, artifact planning, rendering, and writers into deterministic generation operations.
 
-It does not introduce another semantic model or allow adapters to bypass planning.
+It does not introduce another semantic model or allow providers, plugins, packs, or interfaces to bypass planning.
 
 ```text
-dryv.yaml
-    ↓ strict decode
-source adapters
-    ↓ immutable Contract
+dryv.yaml or host request
+        ↓ strict configuration
+contract provider
+        ↓ immutable Contract
 core validation
-    ↓
-local pack discovery + DryvPack.yaml
-    ↓
+        ↓
+pack resolution + DryvPack.yaml
+        ↓
 fixed selector invocations
-    ↓
+        ↓
 complete artifact/dependency/path plan
-    ↓ only when ready
-bounded render contexts
-    ↓
+        ↓ only when ready
+bounded immutable contexts
+        ↓
 template engine + target validation
-    ↓
+        ↓
 MemoryOutput
-    ├── deterministic ZIP
-    └── managed transactional filesystem
+        ├── deterministic archive
+        └── managed transactional filesystem
 ```
 
-## Implemented public operations
-
-Python:
+## Current public operations
 
 ```python
 from dryv import generate, generate_to_files
@@ -40,85 +38,73 @@ memory_result = generate("dryv.yaml")
 file_result, write_report = generate_to_files("dryv.yaml")
 ```
 
-CLI:
+These functions remain compatibility-level public operations while the `DryvRuntime` facade is introduced.
 
-```bash
-dryv plan dryv.yaml
-dryv generate dryv.yaml --memory
-dryv generate dryv.yaml
-dryv generate dryv.yaml --destination ./generated-review
+Planned facade:
+
+```python
+from dryv import DryvRuntime
+
+runtime = DryvRuntime.discover()
+project = runtime.load_project("dryv.yaml")
+plan = runtime.plan(project)
+report = runtime.generate_to_files(project)
 ```
 
-The CLI calls the same application services. It has no alternate planner or writer logic.
+Command parsing and terminal output move to the standalone `dryv-cli` package.
 
 ## Supported first production scope
 
-The implemented orchestrator supports:
-
 - strict YAML/JSON `dryv.yaml` decoding;
 - strict `DryvPack.yaml` decoding;
-- local semantic source files;
-- source adapters discovered through Python entry points;
-- the built-in canonical IR JSON/YAML source adapter;
-- project-contained local pack sources;
-- pack compatibility requirements for Dryv and IR versions;
-- Gitignore-compatible include/exclude rules;
-- pack-root `.gitignore` filtering;
-- symlink containment;
+- built-in canonical IR JSON/YAML loading;
+- project-contained local packs;
+- pack compatibility requirements;
+- ignore rules and symlink containment;
 - template, partial, static, and binary discovery;
-- longest template-engine suffix inference;
-- longest target suffix inference;
-- the published fixed selector registry;
-- selection-folder fan-out;
-- `(expression)` and `((literal))` path evaluation;
-- output collision and path validation;
-- explicit symbols, imports, and exports;
-- generated provider matching by semantic identity and group scope;
-- target-adapter module/path facts;
-- static selection-cycle detection;
-- bounded relationship-aware render contexts;
-- cancellation;
-- memory output;
-- deterministic ZIP output;
+- longest engine and target suffix inference;
+- fixed selector registry and selection-folder fan-out;
+- safe path expressions;
+- output collision and target-path validation;
+- symbols, imports, exports, and generated provider matching;
+- bounded relationship-aware contexts;
+- cancellation and structured diagnostics;
+- deterministic memory and archive output;
 - managed transactional filesystem output;
-- ownership state and safe stale deletion;
-- dry-run plan documents and artifact explanation.
+- ownership state, manual-edit protection, and safe stale deletion;
+- dry-run plans and artifact explanation.
 
-## Deliberately separate capability lanes
+## Separate capability lanes
 
-The runtime fails rather than silently ignoring declarations that require another trust subsystem.
+### Python contract provider
+
+A configured module/callable provider is planned so `dryv-author` can return an in-memory `Contract` without an intermediate file.
 
 ### Git pack provider
 
-`source.git` remains a dedicated Git/lock lane. The current local-pack orchestrator reports `PACK_PROVIDER_UNSUPPORTED` for Git pack instances. It does not treat a Git URL as a local path or download code without lock and trust controls.
+Remote packs remain a dedicated trust/lock lane. The local runtime fails safely instead of downloading executable content without immutable identity and credential controls.
 
 ### Commands
 
-Project, pack-instance, or pack-owned commands report `CMD_APPROVAL_REQUIRED` until the command planning, digest, host-policy, approval, timeout, cleanup, and phase-reporting subsystem is installed.
-
-Commands are never executed through a shell by the current orchestrator.
+Project and pack commands remain fail-closed until exact planning, provenance, approvals, host policy, timeout, cleanup, cancellation, and phase reporting are implemented.
 
 ### Incremental generation
 
-The current orchestrator always creates a complete deterministic plan and complete rendered output. Conservative incremental generation starts only after full-generation equivalence and impact analysis are proven.
+The runtime currently creates a complete deterministic plan and output. Incremental generation begins only after impact analysis and byte-for-byte equivalence with full generation are proven.
 
-### Cache
+### Cross-operation cache
 
-Template engines may own bounded instance caches. A cross-operation content cache remains a separate cache-port lane.
-
-These are not silent TODO paths. Their declarations fail readiness with stable diagnostics.
+Template engines may own bounded instance caches. A runtime content cache remains a separate public port and behavior-key design task.
 
 ## Phase 1 — Configuration
 
-The loader accepts only the approved project and pack fields.
+Unknown fields, duplicate keys, recursive values, unsafe paths, non-finite numbers, excessive depth, and oversized configuration trees fail before plugin or pack work.
 
-Unknown fields, duplicate YAML/JSON keys, recursive values, unsafe paths, non-finite numbers, excessive depth, and oversized option trees fail before plugin discovery.
-
-Configuration values are frozen into immutable sorted tuple structures before crossing subsystem boundaries.
+Values are frozen into immutable sorted structures before crossing subsystem boundaries.
 
 ## Phase 2 — Plugin composition
 
-Runtime plugins are discovered from:
+Current entry-point groups:
 
 ```text
 dryv.source_adapters
@@ -126,189 +112,58 @@ dryv.language_adapters
 dryv.template_engines
 ```
 
-Each entry point must load a zero-argument factory returning the published protocol.
+Each entry point loads a zero-argument factory returning the published protocol. The runtime rejects duplicate IDs/aliases, failed factories, protocol mismatches, ambiguous suffixes, and missing requested capabilities.
 
-The runtime rejects:
+Plugin instances are session-owned. Importing a package does not mutate a global registry.
 
-- duplicate plugin IDs or aliases;
-- failed factories;
-- objects that do not implement the public protocol;
-- ambiguous target suffixes;
-- ambiguous engine suffixes;
-- missing requested adapters.
+## Phase 3 — Contract loading
 
-Plugin instances are session-owned. No process-global instance registry is used.
+The current file route passes an authorized location and immutable options to the built-in canonical IR loader. It returns a `Contract`, optional digest, and diagnostics.
 
-## Phase 3 — Source normalization
-
-Every project source is contained beneath the project root, including after symlink resolution.
-
-The selected source adapter receives:
-
-```text
-source_id
-absolute authorized location
-immutable adapter options
-cancellation token
-```
-
-A source result contributes:
-
-```text
-Contract | None
-digest | None
-Diagnostics
-```
-
-No planning occurs when source diagnostics contain errors.
+Future contract providers may return the same public `Contract` directly. No planning occurs when provider or semantic validation reports errors.
 
 ## Phase 4 — Pack discovery
 
-A local pack must remain inside the project root and contain:
+A local pack remains contained beneath the project root and contains:
 
 ```text
 DryvPack.yaml
 templates/
 ```
 
-Discovery:
-
-1. validates manifest compatibility;
-2. validates selection references and dependency cycles;
-3. applies manifest include patterns;
-4. applies manifest exclude patterns;
-5. applies pack-root `.gitignore`;
-6. rejects symlink escape;
-7. classifies every included file;
-8. registers partials without emitting them;
-9. infers engines and targets by longest suffix.
-
-A file with no recognized engine suffix is static/binary and is copied exactly.
+Discovery validates compatibility, selections, dependency cycles, ignore rules, containment, file classifications, partials, engines, and targets. Files without an engine suffix are copied exactly as static or binary artifacts.
 
 ## Phase 5 — Semantic selection
 
-Selectors are fixed and introspectable. Packs select only registered roots.
-
-The current registry is listed in [`../01-foundation/05-authoring-aligned-ir.md`](../01-foundation/05-authoring-aligned-ir.md).
-
-A selector returning zero contexts emits zero artifacts. It does not run once with an empty context.
-
-A literal file outside a semantic selection emits once.
+Selectors are fixed, versioned, and introspectable. Packs select only registered roots. A selector producing no contexts emits no artifacts. Literal files outside a semantic selection emit once.
 
 ## Phase 6 — Artifact planning
 
-Every artifact receives a stable identity separate from its destination:
+Every artifact receives a stable identity separate from destination. Planning fixes the pack, selection, semantic cause, template/static identity, engine, target, path, scope, symbols, options, bindings, and generated dependencies.
 
-```text
-pack instance
-selection key or literal
-selected semantic ID or once
-pack template path
-```
-
-The first pass plans:
-
-- invocation;
-- output path;
-- template/static identity;
-- engine;
-- target;
-- selected semantic identity;
-- group scope;
-- declared symbols.
-
-No renderer or writer runs during this pass.
-
-The plan rejects:
-
-- unsafe destinations;
-- output collisions;
-- duplicate artifact identities;
-- target-invalid paths;
-- invalid expressions;
-- unknown selection folders;
-- missing semantic inputs;
-- zero or conflicting providers.
+The plan rejects unsafe destinations, collisions, duplicate identities, invalid paths/expressions, unknown selections, missing inputs, and ambiguous providers before rendering.
 
 ## Phase 7 — Generated dependencies
 
-After every artifact exists, the second pass resolves `imports` and `exports`.
+After all provider artifacts exist, the runtime resolves declared imports and exports. Target plugins receive planned paths and return module/path facts only. Templates author all import/export syntax.
 
-Provider priority:
+## Phase 8 — Prepared context
 
-1. same semantic identity;
-2. same group scope;
-3. declared selection candidates.
-
-The target adapter receives already planned consumer/provider paths and returns module facts. It never renders an import or export statement.
-
-Templates receive descriptors:
-
-```text
-imports.<localName>.modules
-exports.<selectionKey>.modules
-module.specifier
-module.artifact_path
-module.semantic_id
-module.symbols
-```
-
-## Phase 8 — Render context
-
-The orchestrator prepares one bounded immutable context per artifact. See [`05-template-context-contract.md`](05-template-context-contract.md).
-
-References needed by ordinary templates are resolved before rendering:
-
-- operation inputs/outputs/failures to schemas;
-- storage fields to schema fields;
-- view triggers to operations and payload schemas;
-- event schema references;
-- value-source operation and fields;
-- presentation entries to views;
-- generated module descriptors.
-
-Runtime, filesystem, source loader, pack provider, writer, command executor, cache store, environment, and secret objects never enter the context.
+One bounded immutable context is prepared per artifact. It contains documented semantic and planning facts only. Filesystem handles, providers, writers, executors, caches, environments, secrets, authoring builders, and runtime singletons never enter templates.
 
 ## Phase 9 — Rendering
 
-The selected engine receives:
-
-```text
-template ID
-UTF-8 source
-immutable prepared context
-declared partial registry
-cancellation token
-```
-
-Static and binary files bypass rendering and preserve exact bytes.
-
-Rendering failures produce diagnostics and no file commit occurs.
+The engine receives a template ID, UTF-8 source, immutable context, declared partials, and cancellation. Static/binary files bypass rendering. Any error stops before filesystem commit.
 
 ## Phase 10 — Memory output
 
-Successful generation first produces a deterministic sorted `MemoryOutput`.
-
-This is the common source for:
-
-- tests and golden fixtures;
-- generated-project compiler checks;
-- ZIP output;
-- filesystem output;
-- IDE previews;
-- HTTP/MCP adapters.
+Successful generation first creates sorted deterministic `MemoryOutput`. This is the common source for tests, target compiler checks, archives, filesystem output, IDE previews, and structured service adapters.
 
 ## Phase 11 — Writers
 
-### Deterministic ZIP
+Archive output uses sorted paths and fixed metadata so equal input produces equal bytes.
 
-`ZipArchiveWriter` uses sorted paths, fixed timestamps, fixed permissions, and exact bytes. Equal `MemoryOutput` produces equal archive bytes.
-
-### Managed filesystem
-
-The default file API uses `ManagedFilesystemWriter`.
-
-State:
+Managed filesystem state lives at:
 
 ```text
 .dryv/generation-state.json
@@ -316,57 +171,37 @@ State:
 
 Rules:
 
-- an unmanaged conflicting file is never overwritten;
-- an unchanged managed file may change;
-- a manually edited managed file is protected;
-- an unchanged stale managed file may be deleted;
-- a changed stale file is protected and released from management;
-- output and state changes commit transactionally;
-- a failure rolls replacements/deletions back.
+- unmanaged conflicts are never overwritten;
+- unchanged managed files may be updated;
+- manually edited managed files are protected;
+- unchanged stale managed files may be removed;
+- changed stale files are protected and released;
+- output and state commit transactionally;
+- failures roll changes back.
 
-Generated output digests remain in generation state, not `dryv.lock.yaml`.
-
-## Plan inspection
-
-```python
-from dryv.generation import (
-    explain_artifact,
-    plan_to_document,
-    plan_to_json,
-)
-```
-
-The plan document contains artifact IDs, paths, templates, targets, selections, semantic causes, declared symbols, and resolved dependencies.
-
-`explain_artifact(plan, id_or_path)` returns the exact cause chain for one artifact.
+Generated output hashes remain in ownership state, not `dryv.lock.yaml`.
 
 ## Error guarantee
 
-Every major phase is fail-closed:
-
-- invalid configuration stops before plugins;
-- invalid sources stop before packs;
+- invalid configuration stops before plugin composition;
+- invalid provider results stop before packs;
 - invalid IR stops before selection;
 - invalid packs stop before planning;
 - invalid plans stop before rendering;
 - render failures stop before writing;
-- writer failures roll back committed changes.
+- writer failures preserve or restore the destination and state.
 
 No partially valid plan is rendered.
 
 ## Verification gate
-
-The orchestrator may move to complete only when all of the following run against a clean synchronized checkout:
 
 ```bash
 cd packages/python/dryv
 python -m pip install -e ".[dev]"
 python -m ruff check src tests
 python -m ruff format --check src tests
-python -m pytest -vv
+python -m pytest -q
 python -m build
 ```
 
-Then install the real core, OpenAPI/IR source, Jinja, TypeScript, and Dart wheels together and generate inspectable TypeScript and Dart fixture projects through entry-point discovery.
-
-A merged implementation without this evidence remains `review`, not `complete`.
+Then install the runtime, authoring, Jinja, TypeScript, and Dart wheels in a fresh environment and repeat plugin discovery plus the direct IR and Python authoring manual routes.
