@@ -8,7 +8,7 @@ from dryv.api import OperationResult, OperationStatus
 from dryv.diagnostics import Diagnostic, DiagnosticSeverity, Diagnostics
 from dryv.generation import ArtifactPlan, GenerationData
 from dryv.ports import ManagedWriteChange, ManagedWriteReport
-from dryv.runtime import RuntimeSnapshot
+from dryv.runtime import RuntimePluginInfo, RuntimeSnapshot
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
@@ -62,7 +62,7 @@ def render_operation(
 
 def render_runtime(console: Console, snapshot: RuntimeSnapshot) -> None:
     root = Tree(_label("runtime", snapshot.core_version, "accent", "value"), guide_style="muted")
-    grouped: dict[str, list[Any]] = defaultdict(list)
+    grouped: dict[str, list[RuntimePluginInfo]] = defaultdict(list)
     for plugin in snapshot.plugins:
         grouped[plugin.category.value].append(plugin)
 
@@ -105,7 +105,8 @@ def render_cancelled(console: Console, message: str = "Generation cancelled.") -
 
 
 def render_json(console: Console, document: dict[str, Any]) -> None:
-    console.print_json(json.dumps(document, sort_keys=True))
+    payload = json.dumps(document, indent=2, sort_keys=True)
+    console.print(payload, markup=False, highlight=False, soft_wrap=True)
 
 
 def _diagnostics_tree(diagnostics: Diagnostics) -> Tree:
