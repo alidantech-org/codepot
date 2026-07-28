@@ -150,6 +150,7 @@ def test_dual_entry_points_from_fresh_built_wheels(tmp_path: Path) -> None:
             "pip",
             "install",
             "--no-index",
+            "--no-deps",
             "--disable-pip-version-check",
             *(str(wheel) for wheel in wheels),
         ],
