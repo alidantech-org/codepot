@@ -1,87 +1,107 @@
-# Package topology and bundled defaults
+# Package topology and defaults
 
-## Minimal core
+## Runtime distribution
 
 `dryv` contains:
 
-- public Python API and application services;
-- neutral IR and generation domain;
-- typed configuration and rule protocols;
-- plugin descriptors/registries/ports;
-- runtime/session composition;
-- standard diagnostics/events/results;
-- default memory/filesystem/archive infrastructure where approved.
+- public runtime and application services;
+- canonical immutable IR and transport;
+- typed project and pack configuration;
+- plugin descriptors, registries, and ports;
+- planning and rendering coordination;
+- diagnostics, cancellation, events, and structured results;
+- memory, archive, and managed filesystem writers.
 
-It does not require OpenAPI, TypeScript, Dart, Jinja, or official packs.
+It does not require the CLI, Python authoring frontend, TypeScript plugin, Dart plugin, Jinja plugin, or any reusable pack.
 
-## Batteries-included distribution
-
-The normal user installs:
+Install only the runtime:
 
 ```bash
 pip install dryv
 ```
 
-The `dryv` distribution depends on compatible releases of:
+## Command-line distribution
 
-```text
-dryv
-dryv-openapi
-dryv-language-typescript
-dryv-language-dart
-dryv-template-jinja
-dryv-pack-typescript-sdk
-dryv-pack-dart-sdk
-dryv-pack-flutter-sdk
-```
-
-This package may be a small dependency bundle plus CLI entry point. Defaults are still discovered through public entry points; core has no hardcoded TypeScript/Dart/Jinja branches.
-
-## Optional extensions
-
-Additional language, engine, source, ecosystem, or pack packages install normally or through extras where useful:
+`dryv-cli` is a standalone interface package:
 
 ```bash
-pip install "dryv[kotlin]"
+pip install dryv-cli
+```
+
+It depends on `dryv` and registers the `dryv` command. It must contain no planning, generation, plugin, pack, transport, or writer implementation.
+
+## Authoring frontend
+
+```bash
+pip install dryv-author
+```
+
+`dryv-author` depends on the runtime's public IR and diagnostics. It compiles typed Python declarations into an in-memory `Contract` and does not own generation or canonical transport.
+
+## Optional plugins
+
+```bash
+pip install dryv-template-jinja
+pip install dryv-language-typescript
+pip install dryv-language-dart
+```
+
+Additional language, engine, provider, ecosystem, or infrastructure plugins install as normal Python distributions:
+
+```bash
 pip install acme-dryv-language-csharp
 ```
 
 Third-party plugins use the same compatibility and conformance rules as official packages.
 
+Reusable packs are versioned artifacts and may be distributed through Git, package archives, Python distributions, or a future marketplace without being hardcoded into the runtime.
+
 ## Versioning
 
 The following versions are distinct:
 
-- package release;
+- distribution release;
 - Python public API;
 - plugin API;
-- IR;
+- IR behavior;
 - project schema;
 - pack schema;
 - lock file;
-- language/engine behavior;
+- target/engine behavior;
 - pack version.
 
-The batteries-included distribution pins compatible ranges so a simple installation cannot combine known-incompatible contracts.
+Interface and plugin packages declare compatible runtime ranges so an installation cannot combine known-incompatible public contracts.
 
 ## Trust
 
-Installing a Python plugin grants executable Python dependency trust. Installing a declarative pack supplies data/templates plus separately approved commands. Plugin and pack trust must be displayed distinctly.
+Installing a Python plugin grants executable Python dependency trust. Installing a declarative pack supplies templates and data plus separately approved commands. Plugin and pack trust must be displayed distinctly.
 
 ## Fresh-install acceptance
 
-A clean installation must support:
+Runtime-only environment:
 
 ```text
 import dryv
-dryv plugins
-dryv validate
-dryv configure
+canonical IR encode/decode
+runtime validation and planning APIs
+memory/archive/managed writer APIs
+```
+
+Full development environment:
+
+```text
+import dryv
+import dryv_author
+IR, TypeScript, Dart, and Jinja plugin entry points resolve exactly once
+dryv validate project
+dryv validate pack
+dryv validate plugin
+dryv plan
 dryv generate
 ```
 
-The plugin list should immediately show the bundled OpenAPI, TypeScript, Dart, Jinja, and official pack capabilities.
+The command checks require `dryv-cli`; runtime imports and operations do not.
 
-## Development cutover
+## Archived package isolation
 
-The new distribution is built/tested in isolated environments while the old package remains in the repository. The final release replaces the old published runtime; the two distributions are not expected to be installed side by side while both own the `dryv` import namespace.
+The archived generator keeps its original distribution and import namespace. Dryv uses distinct package names and is tested in isolated environments so the two product lines do not shadow one another.
