@@ -43,12 +43,12 @@ from .common import acquire_runtime, emit_result
     "--confirm",
     "confirm_write",
     is_flag=True,
-    help="Show the plan and ask before writing managed files.",
+    help="Require an interactive confirmation before writing.",
 )
 @click.option(
     "--yes",
     is_flag=True,
-    help="Skip interactive confirmation.",
+    help="Skip the normal interactive confirmation.",
 )
 @click.option(
     "--json",
@@ -76,15 +76,17 @@ def generate_command(
             result = runtime.generate(project)
         emit_result(result, json_output=json_output)
 
-    if confirm_write and not json_output:
-        if not can_prompt():
-            render_failure(
-                get_console(),
-                "Interactive confirmation is unavailable. Re-run with --yes or omit --confirm.",
-                code="PROMPT_UNAVAILABLE",
-            )
-            raise click.exceptions.Exit(2)
+    interactive = can_prompt()
+    should_confirm = not json_output and not yes and (confirm_write or interactive)
+    if confirm_write and not interactive:
+        render_failure(
+            get_console(),
+            "Interactive confirmation is unavailable. Re-run with --yes.",
+            code="PROMPT_UNAVAILABLE",
+        )
+        raise click.exceptions.Exit(2)
 
+    if should_confirm:
         with activity("Preparing confirmation plan"):
             plan_result = runtime.plan(project)
         if not plan_result.ok or plan_result.data is None:
