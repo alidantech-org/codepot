@@ -1,8 +1,8 @@
-# Canonical Codepot IR JSON/YAML transport
+# Canonical Dryv IR JSON/YAML transport
 
 ## Purpose
 
-The closed in-memory IR is portable. A validated `Contract` can be serialized for debugging, review, sharing, caching, signing, fixtures, or later generation without passing through OpenAPI again.
+The closed in-memory IR is portable. A validated `Contract` may be serialized for debugging, review, sharing, caching, signing, fixtures, or later generation.
 
 Transport does not create another semantic model:
 
@@ -10,10 +10,10 @@ Transport does not create another semantic model:
 Contract
 ├── canonical JSON
 ├── readable YAML
-└── strict IR source adapter
+└── strict IR loader
 ```
 
-The decoded result is the same immutable `dryv.ir.Contract` used by source adapters, selectors, planners, and templates.
+Decoding reconstructs the same immutable `dryv.ir.Contract` used by selectors, planners, packs, and templates.
 
 ## Public API
 
@@ -41,7 +41,7 @@ The same guarantee applies to YAML.
 
 ```json
 {
-  "format": "codepot-ir",
+  "format": "dryv.ir",
   "irVersion": "dryv.ir/2.0.0",
   "contract": {
     "$type": "Contract"
@@ -49,7 +49,7 @@ The same guarantee applies to YAML.
 }
 ```
 
-The exact IR version is required. Unknown envelope fields fail.
+The exact format and IR version are required. Unknown envelope fields fail.
 
 ## Record encoding
 
@@ -62,20 +62,13 @@ The transport is explicit and unambiguous:
 {"$enum": "SchemaKind", "value": "object"}
 ```
 
-This representation is intentionally verbose. It is designed to be:
+This representation is intentionally verbose. It is designed to be readable, strict, deterministic, portable, and safe to share between processes.
 
-- readable in reviews;
-- strict during reconstruction;
-- independent of Python module paths;
-- deterministic;
-- round-trippable;
-- safe to share between processes.
-
-Python authoring classes, Pydantic models, decorators, functions, registries, parser nodes, and target adapters never appear.
+Authoring builders, Pydantic models, decorators, functions, registries, parser nodes, template engines, and target adapters never appear.
 
 ## Canonical JSON
 
-Compact canonical JSON is suitable for hashing:
+Compact JSON is suitable for hashing:
 
 ```python
 payload = contract_to_json(contract, pretty=False)
@@ -114,24 +107,16 @@ It rejects:
 
 ## Resource limits
 
-The current codec enforces:
+The codec enforces bounded decoded depth and value counts. The built-in file loader additionally limits source-document bytes. Exact limits are behavior-versioned and covered by tests.
 
-```text
-maximum decoded depth: 128
-maximum decoded values: 500,000
-```
+## Built-in IR loader
 
-The built-in source adapter additionally limits one source document to 32 MiB.
-
-## Built-in source adapter
-
-The core distribution registers:
+The runtime distribution registers:
 
 ```text
 entry-point group: dryv.source_adapters
 name: ir
 plugin id: ir
-alias: codepot-ir
 ```
 
 Project usage:
@@ -140,7 +125,7 @@ Project usage:
 sources:
   contract:
     adapter: ir
-    file: contracts/application.codepot.json
+    file: contracts/application.dryv.json
 ```
 
 YAML is also accepted:
@@ -149,38 +134,24 @@ YAML is also accepted:
 sources:
   contract:
     adapter: ir
-    file: contracts/application.codepot.yaml
+    file: contracts/application.dryv.yaml
 ```
 
-The adapter:
+The loader:
 
-1. reads an absolute host-authorized file or in-memory source;
-2. rejects adapter options;
+1. reads an authorized file or host-supplied in-memory source;
+2. rejects unknown loader options;
 3. decodes the strict transport;
 4. reconstructs immutable IR;
 5. runs core validation;
-6. creates a digest from compact canonical JSON.
+6. derives its digest from compact canonical JSON.
 
-It does not infer, normalize, repair, or add semantics.
+It does not infer, repair, or add semantics.
 
-## Difference from OpenAPI
+## In-memory authoring
 
-```text
-OpenAPI
-→ source interpretation and normalization
-→ Contract
-```
-
-```text
-Codepot IR JSON/YAML
-→ strict reconstruction
-→ Contract
-```
-
-OpenAPI is a source format. Canonical Codepot IR is the already-compiled semantic contract.
+Canonical files are optional. A Python authoring frontend or host application may provide the `Contract` directly to the runtime once the public contract-provider API is enabled.
 
 ## Compatibility
 
-IR migrations are not performed implicitly. An unsupported `irVersion` fails with a stable diagnostic.
-
-Future migration tooling may convert one complete transport version to another explicitly. The ordinary source adapter never silently changes semantic meaning.
+IR migrations are never implicit. An unsupported `irVersion` fails with a stable diagnostic. Future migration tools may convert one complete transport version to another explicitly, but ordinary loading never silently changes semantic meaning.
