@@ -2,9 +2,9 @@
 
 ## Rule
 
-Templates receive only documented immutable semantic, planning, option, binding, and dependency values. They never receive the source adapter, parser, resolver, filesystem, project root, pack provider, writer, command executor, environment, secrets, or mutable registries.
+Templates receive only documented immutable semantic, planning, option, binding, and dependency facts. They never receive contract providers, parsers, module loaders, filesystems, project roots, pack providers, writers, command executors, environments, secrets, authoring builders, or mutable registries.
 
-The orchestrator prepares relationships before rendering so templates do not perform graph searches.
+Dryv resolves relationships before rendering so templates do not perform graph searches.
 
 ## Always-available roots
 
@@ -35,18 +35,11 @@ pack.version
 
 ### `options`
 
-Resolved pack option values, including defaults:
-
-```jinja
-{% if options.mode == "strict" %}
-{% endif %}
-```
-
-Unknown project options fail before rendering.
+Resolved immutable pack options, including defaults. Unknown project options fail before rendering.
 
 ### `bindings`
 
-Immutable project binding values supplied to the pack. Binding values remain explicit project data; they do not become IR or semantic relationships.
+Explicit immutable project values supplied to the pack. Bindings do not become IR or hidden semantic relationships.
 
 ### `artifact`
 
@@ -66,7 +59,7 @@ Templates cannot change the destination.
 target.id
 ```
 
-A target-neutral rendered document may have `target.id == none`.
+Target-neutral rendered documents may have no target ID.
 
 ### `imports` and `exports`
 
@@ -75,7 +68,7 @@ imports.<localName>.modules
 exports.<selectionKey>.modules
 ```
 
-Each module exposes:
+Each module exposes planned facts such as:
 
 ```text
 artifact_path
@@ -85,19 +78,11 @@ specifier
 symbols
 ```
 
-Example:
-
-```jinja
-{% for module in imports.types.modules %}
-import type { {{ module.symbols | join(", ") }} } from "{{ module.specifier }}";
-{% endfor %}
-```
-
-The text remains template-owned.
+Templates author the final statements and formatting.
 
 ## Selector-owned roots
 
-A selected artifact receives its active outer and inner roots.
+A selected artifact receives only the roots active for its selector.
 
 ### Group and schema
 
@@ -117,7 +102,7 @@ operation.effects
 operation.facets
 ```
 
-Each input/output/failure resolves its referenced schema where present.
+Referenced schemas are resolved where present.
 
 ### Storage mapping
 
@@ -129,7 +114,7 @@ mapping.primary_key
 mapping.indexes
 ```
 
-Mapped field references are resolved to schema fields.
+Mapped field references resolve to public schema fields.
 
 ### View
 
@@ -140,7 +125,7 @@ view.parts
 view.triggers
 ```
 
-Triggers expose referenced operations and payload schemas.
+Triggers expose resolved operations and payload schemas.
 
 ### Workflow, policy, and event
 
@@ -149,8 +134,6 @@ workflow
 policy
 event
 ```
-
-Events expose resolved payload/context schemas.
 
 ### Value source
 
@@ -180,11 +163,11 @@ entry.navigation_parent
 entry.order
 ```
 
-The outer `presentation` root is also active for an entry selection.
+The outer `presentation` root remains active for an entry selector.
 
 ## Shared semantic metadata
 
-Semantic records expose `KernelData` through their normal `data` field:
+Semantic records expose public kernel data:
 
 ```text
 schema.data.documentation
@@ -193,59 +176,30 @@ schema.data.guidance
 schema.data.provenance
 ```
 
-The Jinja adapter also provides narrow read-only aliases:
-
-```text
-schema.documentation
-schema.tags
-schema.guidance
-schema.provenance
-
-operation.tags
-view.tags
-presentation.tags
-```
-
-These aliases do not duplicate data in IR.
+The Jinja plugin may expose narrow immutable aliases such as `schema.tags`, `view.guidance`, or `presentation.provenance`. These aliases do not duplicate semantic data.
 
 ## Tags
 
+Verified immutable tag records expose:
+
 ```text
-tags.values
-tags.empty
-tags.has(tag)
-tags.has_any(tag...)
-tags.has_all(tag...)
-tags.under(namespace)
+values
+empty
+has(tag)
+has_any(tag...)
+has_all(tag...)
+under(namespace)
 ```
 
-Examples:
-
-```jinja
-{% if view.tags.has("ui:data-table") %}
-{% endif %}
-
-{% if schema.tags.has_any("orm:custom", "repository:manual") %}
-{% endif %}
-```
-
-Only the dedicated immutable tag record exposes these callables. Ordinary context records cannot call methods.
+Ordinary context records cannot call methods.
 
 ## Guidance
 
-Guidance is an immutable tuple of categorized notes:
-
-```jinja
-{% for note in view.guidance %}
-{{ note.kind.value }}: {{ note.text }}
-{% endfor %}
-```
-
-Guidance is explanatory. Templates must not treat prose as a hidden programming language.
+Guidance is an immutable tuple of categorized notes. It is explanatory and must not be interpreted as a hidden programming language.
 
 ## Names
 
-Named semantic records use:
+Named records use the public name projections:
 
 ```text
 x.name.raw.original
@@ -256,23 +210,19 @@ x.name.kebab.original
 x.name.path.original
 ```
 
-Number projections remain in the documented `name.<case>.<number>` order.
+Path expressions and templates use the same semantic projections. Path expressions do not support calls, arbitrary indexing, or template filters.
 
-Path expressions and Jinja use the same semantic naming projections, but path expressions do not support calls, arbitrary indexing, or template filters.
+## Strict inactive roots
 
-## Absent roots are strict undefined
+A schema-selected template receives `schema`; a presentation-selected template does not. Accessing an inactive root is a strict undefined diagnostic. Packs use the correct fixed selector rather than probing arbitrary roots.
 
-A template selected for a schema receives `schema`; a presentation template does not automatically receive `schema`.
+## Context limits
 
-Accessing an inactive root is a strict undefined diagnostic. Packs must use the correct selector rather than probe arbitrary roots.
+The engine validates and freezes every context before rendering. It enforces depth/item limits and rejects cycles, unsupported objects, unsafe mapping keys, arbitrary callables, private attributes, and mutable runtime values.
 
-## Context size and depth
+## Prohibited context roots
 
-The Jinja adapter validates and freezes every context before rendering. It enforces configured depth/item limits and rejects cycles, unsupported objects, arbitrary mappings with unsafe keys, callables, private attributes, and mutable runtime values.
-
-## Prohibited context additions
-
-Packs and adapters cannot add roots such as:
+Packs and plugins cannot add roots such as:
 
 ```text
 resource
@@ -286,8 +236,8 @@ environment
 secrets
 writer
 commands
-source
-openapi
+provider
+parser
 pydantic
 ```
 
