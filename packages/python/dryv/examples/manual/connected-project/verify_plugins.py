@@ -30,8 +30,7 @@ def main() -> int:
     print(f"  engines: {engine_ids}")
 
     required = {
-        "ir source": "ir" in source_ids,
-        "OpenAPI source": "openapi" in source_ids,
+        "IR source": "ir" in source_ids,
         "TypeScript target": "typescript" in target_ids,
         "Dart target": "dart" in target_ids,
         "Jinja engine": "jinja" in engine_ids,
@@ -45,7 +44,7 @@ def main() -> int:
     if duplicates:
         raise SystemExit(f"duplicate loaded plugin IDs: {duplicates}")
 
-    print("plugin graph is ready for IR, Python authoring, OpenAPI, TypeScript, and Dart tests")
+    print("plugin graph is ready for IR, Python authoring, TypeScript, Dart, and Jinja tests")
     return 0
 
 
