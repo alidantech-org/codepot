@@ -1,12 +1,13 @@
-# Simplified Dryv configuration sample
+# Dryv configuration sample
 
-This sample follows the approved human-oriented project, pack, and lock contracts.
+This sample shows one canonical semantic contract driving several packs.
 
-The earlier planning draft that used `packs.<instance>.use` plus `source: api` is superseded. A pack instance now uses:
+A pack instance uses:
 
-- `source` to locate the pack directly through `local` or `git`;
-- `input` to reference a named semantic source;
-- `output` as the pack emission root.
+- `source` to locate the pack through `local` or `git`;
+- `input` to reference a named semantic contract;
+- `output` as its destination root;
+- `options` and `bindings` for explicitly declared pack configuration.
 
 ## Project example
 
@@ -16,9 +17,9 @@ apiVersion: dryv.dev/v1
 name: defytickets-generated
 
 sources:
-  api:
-    adapter: openapi
-    file: ./openapi.yaml
+  contract:
+    adapter: ir
+    file: ./contract.dryv.yaml
 
 executables:
   packageManager: pnpm
@@ -32,7 +33,7 @@ packs:
   backendRepositories:
     source:
       local: ./packs/typeorm-repositories
-    input: api
+    input: contract
     output: apps/backend
 
     options:
@@ -48,14 +49,14 @@ packs:
       git: https://github.com/alidantech-org/dryv-packs.git
       ref: typescript-sdk/v2.4.1
       path: packs/typescript-sdk
-    input: api
+    input: contract
     output: packages/typescript-sdk
 
   flutterSdk:
     source:
       git: https://github.com/alidantech-org/dryv-pack-flutter-sdk.git
       ref: v1.4.2
-    input: api
+    input: contract
     output: apps/mobile
 ```
 
@@ -64,9 +65,9 @@ packs:
 ```yaml
 apiVersion: dryv.dev/v1
 
-id: alidantech/typeorm-repositories
+id: alidantech/typescript-models
 version: 1.0.0
-description: Generates TypeORM entities and repositories.
+description: Generates TypeScript models and repository files.
 
 requires:
   dryv: ">=2.0 <3.0"
@@ -77,22 +78,22 @@ bindings:
     description: Base class imported by generated repositories.
 
 selections:
-  entities:
-    paths: [src, entities]
-    select: entities.each
-    symbols: [(entity.name.pascal.s)]
+  models:
+    paths: [src, models]
+    select: groups.schemas.objects.each
+    symbols: [(schema.name.pascal.s)]
 
   repositories:
     paths: [src, repositories]
-    select: entities.each
+    select: groups.schemas.objects.each
     imports:
-      entities: entities
+      models: models
     bindings: [baseRepository]
-    symbols: [(entity.name.pascal.s)Repository]
+    symbols: [(schema.name.pascal.s)Repository]
 
-  entitiesIndex:
-    paths: [src, entities]
-    exports: [entities]
+  modelsIndex:
+    paths: [src, models]
+    exports: [models]
 
   repositoriesIndex:
     paths: [src, repositories]
@@ -100,7 +101,7 @@ selections:
 
   rootIndex:
     paths: [src]
-    exports: [entitiesIndex, repositoriesIndex]
+    exports: [modelsIndex, repositoriesIndex]
 
 executables:
   packageManager: pnpm
@@ -116,9 +117,9 @@ Expected pack tree:
 
 ```text
 templates/
-├── {entities}/(entity.name.kebab.s).entity.ts.jinja
-├── {repositories}/(entity.name.kebab.s).repository.ts.jinja
-├── {entitiesIndex}/index.ts.jinja
+├── {models}/(schema.name.kebab.s).ts.jinja
+├── {repositories}/(schema.name.kebab.s).repository.ts.jinja
+├── {modelsIndex}/index.ts.jinja
 ├── {repositoriesIndex}/index.ts.jinja
 ├── {rootIndex}/index.ts.jinja
 ├── _partials/license.txt.jinja
@@ -126,7 +127,7 @@ templates/
 └── .gitignore.jinja
 ```
 
-## Complete maintained examples
+## Maintained examples
 
 - [`../examples/project/dryv.local.yaml`](../examples/project/dryv.local.yaml)
 - [`../examples/project/dryv.git.yaml`](../examples/project/dryv.git.yaml)
@@ -136,7 +137,7 @@ templates/
 - [`../examples/packs/typescript-sdk.DryvPack.yaml`](../examples/packs/typescript-sdk.DryvPack.yaml)
 - [`../examples/packs/flutter-sdk.DryvPack.yaml`](../examples/packs/flutter-sdk.DryvPack.yaml)
 
-See the canonical specifications in:
+See:
 
 - [`../02-configuration/01-project-config-specification.md`](../02-configuration/01-project-config-specification.md)
 - [`../02-configuration/02-pack-manifest-specification.md`](../02-configuration/02-pack-manifest-specification.md)
