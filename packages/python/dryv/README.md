@@ -1,184 +1,151 @@
 # Dryv
 
-Dryv is the clean-room rewrite of the Python generation runtime. This directory contains the approved closed semantic kernel, project/pack contracts, adapter boundaries, implementation stages, package task tracking, and the first public implementation foundation.
+Dryv is the reproducible software derivation runtime in the Codepot ecosystem.
 
-The existing `packages/python/dryv` package remains untouched and serves only as a source of real requirements and representative outputs. New implementation must not import its internals or reproduce its global registries, raw YAML processing, CLI-centered logic, OpenAPI leakage, overlapping emission paths, or old configuration runtime.
+It coordinates a closed semantic contract, reusable packs, language adapters, template engines, planning, deterministic rendering, and managed output. The same semantic meaning can drive several target implementations without placing target syntax inside the semantic kernel.
 
-## Implemented source structure
+> Define once. Derive everywhere.
 
-The implementation follows the approved package architecture instead of placing unrelated contracts in flat modules:
+## Package responsibility
 
-```text
-src/dryv/
-├── __init__.py
-├── api/
-│   ├── cancellation.py
-│   └── results.py
-├── application/
-├── config/
-├── diagnostics/
-│   ├── model.py
-│   └── source.py
-├── domain/
-│   ├── ir/
-│   │   ├── base.py
-│   │   ├── events.py
-│   │   ├── facets.py
-│   │   ├── groups.py
-│   │   ├── naming.py
-│   │   ├── operations.py
-│   │   ├── policies.py
-│   │   ├── schemas.py
-│   │   ├── storage.py
-│   │   ├── types.py
-│   │   ├── validation/
-│   │   │   ├── index.py
-│   │   │   └── validator.py
-│   │   ├── views.py
-│   │   └── workflows.py
-│   └── generation/
-│       └── selectors.py
-├── generation/
-├── infrastructure/
-├── ir/
-├── plugins/
-│   ├── descriptors.py
-│   └── registry.py
-├── ports/
-│   ├── source.py
-│   ├── target.py
-│   └── templates.py
-├── runtime/
-├── testing/
-│   └── conformance.py
-├── versions/
-│   └── model.py
-├── cli/
-└── py.typed
-```
+The `dryv` distribution is the runtime and orchestration library. It owns:
 
-The public `dryv.ir` and `dryv.generation` packages are explicit facades over the internal domain packages. There are no same-name flat modules such as `ir.py`, `plugins.py`, or `ports.py` beside package directories.
+- the canonical immutable IR;
+- semantic validation and diagnostics;
+- project and pack configuration contracts;
+- plugin discovery and compatibility checks;
+- selection and artifact planning;
+- template-context preparation;
+- deterministic in-memory generation;
+- transactional managed output;
+- generation ownership state and manual-edit protection;
+- optional canonical JSON and YAML transport.
 
-## Implemented test structure
+The runtime must remain independent of terminal formatting and interactive interfaces. Command-line behavior is moving to the separate `dryv-cli` distribution.
 
-Tests mirror the production boundaries:
+## Package family
 
 ```text
-tests/
-├── architecture/
-├── contracts/
-│   └── ports/
-├── distribution/
-├── fixtures/
-└── unit/
-    ├── api/
-    ├── diagnostics/
-    ├── domain/
-    │   ├── generation/
-    │   └── ir/
-    ├── plugins/
-    └── versions/
+dryv
+├── dryv-author
+├── dryv-cli
+├── dryv-template-jinja
+├── dryv-language-typescript
+└── dryv-language-dart
 ```
 
-The architecture suite rejects flat source dumps, root-level `test_*.py` files, same-name module/package collisions, old-runtime imports, and invalid dependency direction.
+Dependency direction:
 
-## Implemented foundation
+```text
+dryv-cli ----------------------> dryv
+dryv-author -------------------> dryv
+dryv-template-jinja -----------> dryv
+dryv-language-typescript ------> dryv
+dryv-language-dart ------------> dryv
+```
 
-The initial `dryv` package now provides:
+The runtime does not depend on the CLI, authoring frontend, template engine, or language packages.
 
-- dependency-free Python 3.11+ packaging under the future `dryv` namespace;
-- semantic/API/behavior version values;
-- source identities, spans, immutable diagnostics, cancellation, statuses, and operation results;
-- the exact `name.<case>.<number>` projection contract;
-- a closed typed IR for groups, structural schemas, operations, known facets, views, storage mappings, policies, events, listeners, execution hooks, workflows, and compensation;
-- cross-reference validation before generation;
-- fixed root-first selectors such as `groups.operations.each` and `groups.storage.mappings.each`;
-- immutable plugin descriptors and registry conflict diagnostics;
-- public source-adapter, target-adapter, and template-engine protocols;
-- reusable conformance helpers for independently developed adapter packages;
-- unit, connected-contract, conformance, import-smoke, architecture-boundary, and isolated-wheel tests.
+## Runtime flow
 
-This foundation is intentionally not a generator yet. It is the public contract that allows `dryv-openapi`, TypeScript/Dart target adapters, and the Jinja engine to be implemented in parallel without importing private core code.
+```text
+Python authoring or canonical IR
+              ↓
+       immutable Contract
+              ↓
+          Dryv runtime
+              ├── loads dryv.yaml
+              ├── resolves packs
+              ├── discovers plugins
+              ├── validates the complete plan
+              ├── renders through template engines
+              └── commits managed output safely
+```
 
-## Parallel package imports
+JSON and YAML are optional transport and inspection formats. They are not required intermediate files when a host provides an in-memory contract.
 
-OpenAPI/source adapters use:
+## Public namespaces
 
 ```python
+from dryv import generate, generate_to_files
 from dryv.diagnostics import Diagnostic, Diagnostics
 from dryv.ir import Contract, Group, Operation, Schema
-from dryv.ports import SourceAdapter, SourceAdapterRequest, SourceAdapterResult
+from dryv.ports import TargetAdapter, TemplateEngine
+from dryv.runtime import RuntimePlugins
 ```
 
-Target adapters use:
+The public `dryv.ir` and `dryv.generation` packages are stable facades over internal domain implementations. Plugins must depend only on published Dryv namespaces.
 
-```python
-from dryv.ports import (
-    IdentifierValidationRequest,
-    ModulePathFacts,
-    ModulePathRequest,
-    OutputPathValidationRequest,
-    TargetAdapter,
-    TargetDescriptor,
-)
+## Project and pack contracts
+
+Dryv uses two authored configuration files:
+
+```text
+dryv.yaml       project-owned orchestration
+DryvPack.yaml   pack-owned generation behavior
 ```
 
-Template engines use:
+A project selects semantic input, pack instances, outputs, options, and bindings. A pack owns its templates, static files, selections, output patterns, options, bindings, and compatibility requirements.
 
-```python
-from dryv.ports import RenderRequest, RenderResult, TemplateEngine
+## Plugin families
+
+The current runtime discovers:
+
+```text
+dryv.source_adapters
+dryv.language_adapters
+dryv.template_engines
 ```
 
-All adapter packages can run the same public conformance helpers from `dryv.testing`.
+The built-in `ir` source adapter loads canonical Dryv contracts. TypeScript and Dart language facts and the Jinja template engine remain separately installable plugins.
+
+## Managed generation
+
+Dryv plans the complete artifact set before writing files. The managed writer:
+
+- rejects unmanaged path collisions;
+- refuses to overwrite manually changed managed files;
+- removes only unchanged stale managed files;
+- updates ownership state only after a successful commit;
+- leaves the destination unchanged when generation fails.
+
+Ownership metadata is stored under:
+
+```text
+.dryv/generation-state.json
+```
 
 ## Local verification
 
-From this package directory:
+From `packages/python/dryv`:
 
 ```bash
 python -m pip install -e ".[dev]"
-python -m pytest
 python -m ruff check src tests
+python -m ruff format --check src tests
+python -m pytest -q
 python -m build
 ```
 
-The first user-run verification found a setuptools license-classifier conflict, one wheel-build test failure caused by that conflict, and Ruff findings in the initial flat implementation. The classifier and reported Ruff categories have been corrected while reorganizing the source and tests. The reorganized tree remains under verification until the complete command sequence passes again.
+The connected manual project is under:
 
-No GitHub workflow is required or added.
+```text
+examples/manual/connected-project
+```
 
-## Primary goals
+It validates direct canonical IR, typed Python authoring, local TypeScript and Dart packs, Jinja rendering, compiler checks, deterministic regeneration, and managed-output protection.
 
-- Make the importable Python application API the primary interface.
-- Keep CLI, servers, playgrounds, notebooks, IDE, and MCP tools as thin adapters.
-- Replace raw configuration dictionaries with immutable typed contracts.
-- Maintain a closed, typed, versioned semantic kernel owned only by core.
-- Model groups, structural schemas, operations, views, storage mappings, policies, events, workflows, and known facets through clear typed relationships.
-- Use fixed root-first selectors and outer-to-inner template contexts.
-- Treat `dryv.yaml` as project orchestration and `DryvPack.yaml` as the pack contract.
-- Let templates, macros, partials, and static files own every emitted character.
-- Use target adapters only for suffix detection, target validation, and module/path facts.
-- Support heterogeneous packs containing code, configuration, documentation, static files, and binary assets.
-- Discover source, target, template-engine, ecosystem, pack-provider, writer, cache, and command adapters through normal Python packages and entry points without allowing semantic extension.
-- Plan every semantic reference, artifact identity, output, symbol, dependency, binding, command, approval, and impact relationship before rendering.
-- Explain artifacts and provide deterministic dry-run/blast-radius information.
-- Commit filesystem output transactionally and support memory/archive writers.
-- Prove deterministic full generation before conservative incremental generation.
-- Re-author projects and packs into v2 without embedding old decoders or execution paths.
+## Design principles
 
-## Non-goals
-
-- arbitrary third-party semantic objects, facets, selectors, or graph-query DSLs;
-- neutral `resource`, `model`, `entity`, `frontend`, or `ui` roots;
-- language adapters that render types, literals, imports, exports, comments, validators, decorators, or framework syntax;
-- hidden pack profiles, `filePatterns`, or explicit ordinary-file registries;
-- generated output hashes in the dependency lock.
+- One closed, typed, versioned semantic authority.
+- Templates own every emitted character.
+- Language plugins provide validation and path/module facts, not syntax rendering.
+- Planning completes before rendering or writing.
+- Full generation remains the correctness reference for incremental work.
+- Packs and plugins are ordinary versioned Python distributions.
+- Runtime services are reusable from CLI, IDE, server, notebook, and test hosts.
+- Reproducibility and safe failure take priority over convenience shortcuts.
 
 ## Documentation
 
-Start with [`docs/README.md`](docs/README.md), [`docs/00-governance/00-approved-architecture.md`](docs/00-governance/00-approved-architecture.md), and [`docs/00-governance/04-closed-semantic-kernel.md`](docs/00-governance/04-closed-semantic-kernel.md).
-
-The implementation backlog is in [`docs/tasks/00-master-plan.md`](docs/tasks/00-master-plan.md), parallel ownership is in [`docs/tasks/PARALLEL_WORK.md`](docs/tasks/PARALLEL_WORK.md), and evidence is recorded in [`docs/tasks/PROGRESS.md`](docs/tasks/PROGRESS.md).
-
-## Status
-
-Foundation implementation and corrective verification are in progress on `chatgpt/codepotx-restart`. Configuration decoding, pack discovery, artifact planning, rendering, writing, and CLI work remain future task lanes.
+Start with [`docs/README.md`](docs/README.md), then read the architecture, configuration, generation, plugin, and distribution sections. A practical Dryv Cookbook will become the primary task-oriented guide as the package split stabilizes.
