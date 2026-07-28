@@ -1,52 +1,50 @@
-# Source, pack-provider, and ecosystem adapter contracts
+# Contract-provider, pack-provider, and ecosystem plugin contracts
 
-## Source adapters
+## Contract providers
 
-A source adapter converts one declared semantic input into the closed Dryv kernel.
+A contract provider supplies one public immutable `dryv.ir.Contract` to the runtime.
 
-It owns:
+Initial provider forms:
 
-- source option schema;
-- source loading through controlled ports;
-- syntax parsing and source-format validation;
-- source-format reference resolution;
-- deterministic mapping into known groups, schemas, operations, views, storage mappings, policies, events, workflows, relationships, and known facets;
-- provenance and source diagnostics;
-- source digest contribution.
+- canonical IR JSON/YAML file;
+- configured Python module callable;
+- host-supplied in-memory contract.
 
-It does not own templates, target languages, output paths, writing, commands, CLI behavior, or semantic-kernel evolution.
+A provider owns only the work required to obtain its contract and describe its provenance. It may contribute:
 
-A source adapter cannot:
+- a typed provider configuration schema;
+- controlled loading or importing;
+- deterministic provider identity and digest facts;
+- source-aware diagnostics;
+- cancellation and resource limits.
 
-- add semantic node kinds, relations, schema kinds, or roles;
-- add facets or attachment locations;
-- add selectors, expression roots, template-context properties, or kernel validators;
-- expose generic graph/fact bags as a substitute for typed kernel contracts;
-- leak parser/library/resolver objects into core or templates;
-- silently interpret unknown source metadata as supported application semantics.
+A provider does not own packs, templates, target languages, output paths, writing, commands, CLI behavior, or semantic-kernel evolution.
 
-Unknown source metadata may be preserved only through documented bounded immutable `extensions`, `raw`, and provenance escape hatches. Preservation does not make the metadata a supported facet or semantic object.
+A provider cannot:
 
-The OpenAPI adapter must parse once, resolve references once, decode supported OpenAPI and typed/versioned Codepot `x-codegen` metadata, and produce the canonical kernel directly. It must not expose OpenAPI-specific objects to packs/templates except through approved provenance/raw/extension values.
+- add semantic node kinds, relations, schema kinds, facets, or attachment locations;
+- register selectors, expression roots, template-context properties, or kernel validators;
+- expose arbitrary graph or fact bags as a substitute for public Dryv contracts;
+- leak parser, builder, Pydantic, module-loader, or resolver objects into planning or templates;
+- return a contract that bypasses core validation.
 
-Required source-adapter conformance tests:
+Required conformance tests:
 
-- deterministic immutable kernel output and digest;
-- source-span diagnostics;
-- bounded controlled reference resolution;
-- cancellation;
-- no mutable global parser state;
-- no source-specific types escaping into public domain APIs;
-- no semantic/facet/selector/context registration;
-- bounded extension/raw behavior;
-- source digest stability;
-- in-memory and filesystem source loading.
+- deterministic immutable contract output;
+- precise diagnostics and provenance;
+- cancellation and bounded loading;
+- no process-global mutable state;
+- no provider-specific values escaping into public runtime plans or render contexts;
+- stable identity/digest behavior where the provider publishes a digest;
+- repeated calls do not leak session state.
+
+The built-in `ir` provider strictly decodes canonical Dryv transport. The planned Python provider imports one explicitly configured callable and requires it to return a public `Contract`.
 
 ## Pack providers
 
-A pack provider resolves a pack locator to an immutable local pack snapshot.
+A pack provider resolves a pack locator to an immutable local snapshot.
 
-Initial providers:
+Planned provider forms:
 
 - local directory;
 - generic Git;
@@ -56,65 +54,64 @@ A resolved pack includes:
 
 - source identity;
 - requested reference;
-- immutable resolved commit/version;
+- immutable resolved commit or version;
 - subdirectory;
 - manifest path;
 - content digest;
 - trust metadata;
 - local snapshot root.
 
-The provider does not parse `DryvPack.yaml`, semantic sources, or templates. It supplies the snapshot to the typed pack loader.
+The provider does not decode `DryvPack.yaml`, semantic contracts, or templates. It supplies the snapshot to the typed runtime pack loader.
 
-Git providers use the user's existing Git authentication and credential helpers. Tokens are never stored in `dryv.yaml` or `dryv.lock.yaml`.
+Git providers use existing Git authentication and credential helpers. Credentials are never stored in `dryv.yaml`, `dryv.lock.yaml`, ownership state, or diagnostics.
 
 Required provider tests:
 
 - local path containment;
-- public and private Git URL handling through mocked/controlled Git operations;
+- controlled public/private Git URL handling;
 - immutable commit resolution;
 - subdirectory validation;
-- cache reuse;
+- cache integrity and reuse;
 - content digest changes;
-- cancellation and partial fetch cleanup;
+- cancellation and partial-fetch cleanup;
 - no credential logging.
 
 ## Ecosystem adapters
 
-An ecosystem adapter understands known project manifests, package-manager/toolchain capabilities, and typed project contribution/setup actions for one ecosystem.
+An ecosystem adapter understands known project manifests, package-manager or toolchain capabilities, and typed project contribution/setup actions for one ecosystem.
 
 Examples:
 
-- Node: package.json, workspaces, npm/pnpm/Yarn, scripts, dependencies, exports;
-- Dart: pubspec.yaml, Dart/Flutter SDK constraints, pub dependencies, assets, workspace registration;
-- future Python, Cargo, Gradle, and Maven project adapters.
+- Node: `package.json`, workspaces, package managers, scripts, dependencies, and exports;
+- Dart: `pubspec.yaml`, SDK constraints, dependencies, assets, and workspace registration;
+- future Python, Cargo, Gradle, and Maven adapters.
 
 It may own:
 
-- typed project contribution schemas;
+- typed contribution schemas;
 - manifest detection and decoding;
-- owned versus contributed manifest updates;
-- toolchain/package-manager capability metadata;
+- owned versus contributed updates;
+- toolchain and package-manager capability metadata;
 - deterministic contribution planning;
 - typed action resolution;
 - conflict diagnostics.
 
-It does not execute commands directly; it produces command/action plans consumed through the executor and security policy.
+It does not execute commands directly. It produces plans consumed through the approved command executor and security policy.
 
-It also cannot add application semantic objects/facets/selectors or author generated application syntax. Package-manager command arguments remain exact project/pack-authored commands unless a separately approved project-contribution contract explicitly owns a typed change.
+It cannot add semantic objects, facets, selectors, or generated application syntax. Package-manager arguments remain exact project/pack-authored values unless a separately approved typed contribution contract owns the modification.
 
 Required ecosystem tests:
 
 - manifest round trips;
-- minimal-diff contribution behavior where practical;
+- minimal-diff contributions where practical;
 - conflict handling;
-- package-manager/toolchain detection precedence;
+- toolchain detection precedence;
 - capability intersection;
 - no silent toolchain switching;
 - owned versus contributed manifests;
-- action resolution and command capability declarations;
-- lifecycle-script policy;
-- no semantic-kernel or generated-syntax ownership.
+- action resolution and lifecycle policy;
+- no semantic-kernel or target-syntax ownership.
 
 ## Port boundaries
 
-All adapter categories use public immutable request/result types. They must not import CLI modules, old generator modules, private semantic builders, or concrete runtime singletons.
+All plugin categories use public immutable request/result types. They must not import CLI modules, archived generator modules, private semantic builders, or concrete runtime singletons.
