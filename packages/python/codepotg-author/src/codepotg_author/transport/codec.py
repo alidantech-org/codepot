@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import cast
 
+import yaml
 from codepotg.ir import (
     Contract,
     contract_from_document,
@@ -13,7 +14,6 @@ from codepotg.ir import (
     contract_to_yaml,
 )
 from codepotg.versions import IR_API_VERSION
-import yaml
 from yaml.constructor import ConstructorError
 from yaml.nodes import MappingNode, Node
 
