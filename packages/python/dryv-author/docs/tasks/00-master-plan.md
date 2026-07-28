@@ -1,298 +1,115 @@
-# dryv-author master implementation plan
+# dryv-author master plan
 
-The package compiles concise typed Python declarations into the existing closed Codepot IR and canonical JSON/YAML. It must not become a second semantic graph, runtime DSL, generator, writer, or framework binding system.
+`dryv-author` compiles concise typed Python declarations into the public immutable `dryv.ir.Contract`. It is an authoring frontend, not a second semantic graph, generator, writer, transport owner, CLI, or framework binding system.
 
 ## AUTHOR-001 — Package foundation
 
-**Status:** planned
+- [x] Package metadata, typed marker, source/test layout, and public imports.
+- [x] Import-side-effect, architecture, wheel, and distribution tests.
+- [ ] Finalize release metadata after the Dryv package split stabilizes.
 
-- [ ] Finalize package metadata, dependencies, typing marker, public version, README, license, source/test layout, and build configuration.
-- [ ] Add import-smoke and wheel-content tests.
-- [ ] Prove import has no filesystem, environment, network, plugin discovery, compilation, or global-registry side effects.
+## AUTHOR-002 — Author sessions and immutable options
 
-## AUTHOR-002 — Immutable author options and behavior versions
+- [x] Explicit `Author` session ownership.
+- [x] Frozen typed options and unsupported-core policy.
+- [x] Session-scoped declaration and reference state.
+- [x] No process-global registry or import-time compilation.
 
-**Status:** planned
+## AUTHOR-003 — Diagnostics and provenance
 
-- [ ] Define frozen typed options for ID policy, strictness, Pydantic interpretation, derivation behavior, limits, transport formatting, and unsupported-core policy.
-- [ ] Reject unknown options and wrong value types.
-- [ ] Version every output-affecting author/compiler behavior.
-- [ ] Exclude target language, framework, pack, selector, template, path, writer, and command options.
+- [x] Stable author diagnostic models backed by public Dryv diagnostics.
+- [x] Declaration paths and source context where safely available.
+- [x] Expected validation/linking/compiler failures converted into diagnostics.
+- [ ] Expand source-position coverage without exposing unstable temporary paths.
 
-## AUTHOR-003 — Author session and declaration registry
+## AUTHOR-004 — Typed references
 
-**Status:** planned
+- [x] Kind-specific immutable references.
+- [x] Foreign-session, missing, duplicate, and wrong-kind rejection.
+- [x] Immutable optional, nullable, collection, and projection usages.
+- [x] Deterministic linking and ordering.
+- [ ] Add an explicit future import/export contract before allowing cross-module refs.
 
-- [ ] Implement explicit `Author` session ownership.
-- [ ] Add session-scoped registries by known declaration kind.
-- [ ] Support multiple independent contracts in one process.
-- [ ] Freeze registries before compilation.
-- [ ] Reject declaration mutation after freeze.
-- [ ] Prove no process-global decorator/ref/model registry exists.
+## AUTHOR-005 — Structural schema authoring
 
-## AUTHOR-004 — Provenance and structured diagnostics
+- [x] Reusable properties and fields.
+- [x] Structural object, enum, alias, collection, union, and composite support within the public core contract.
+- [x] Optional and nullable semantics remain distinct.
+- [x] No framework, database, request, response, model, or entity kernel roots.
 
-**Status:** planned
+## AUTHOR-006 — Pydantic compilation
 
-- [ ] Capture Python module/file/line/column and declaration paths where safely available.
-- [ ] Define stable AUTHOR diagnostic families.
-- [ ] Convert expected Pydantic, selector, linker, compiler, and transport failures into diagnostics.
-- [ ] Redact credentials, unstable tracebacks, object addresses, and absolute temporary paths.
+- [x] Pydantic v2 model and field interpretation.
+- [x] Nested models, enums, collections, unions, defaults, and annotations.
+- [x] Deterministic recursive-model handling through refs.
+- [x] Pydantic classes and runtime validators never enter IR or template contexts.
 
-## AUTHOR-005 — Names, IDs, duplicate policy, and deterministic ordering
+## AUTHOR-007 — Projections and derivation
 
-**Status:** planned
+- [x] Pick, omit, partial, extend, and projection chains.
+- [x] Explicit create, update, read, and query derivation helpers.
+- [x] Every result compiles into ordinary structural schemas.
+- [ ] Improve provenance inspection exposed by the runtime plan/debug APIs.
 
-- [ ] Assign deterministic declaration identities and core `SemanticId` values.
-- [ ] Validate explicit IDs and group ownership.
-- [ ] Detect duplicates before construction.
-- [ ] Define stable ordering independent from mutable hash maps.
-- [ ] Reuse public core naming projections rather than inventing author-only naming semantics.
+## AUTHOR-008 — Semantic builders
 
-## AUTHOR-006 — Typed ref foundations
+- [x] Operations, inputs, outputs, failures, and effects.
+- [x] Storage mappings, policies, events, views, and workflows supported by the public IR.
+- [x] Typed reference validation across those declarations.
+- [ ] Add builders only when new public Dryv semantic contracts are published.
 
-**Status:** planned
+## AUTHOR-009 — Tags, guidance, value sources, and presentations
 
-- [ ] Implement immutable generic ref identities and kind-specific public wrappers.
-- [ ] Bind every ref to one author session.
-- [ ] Reject foreign-session refs and wrong-kind refs.
-- [ ] Keep refs non-serializable as final IR values.
-- [ ] Add equality/hash/repr rules that expose no target object or memory address.
+- [x] Compile the subset currently published by the Dryv kernel.
+- [ ] Keep unsupported concepts fail-closed with exact diagnostics.
+- [ ] Never hide unsupported semantics in raw dictionaries or private extension bags.
 
-## AUTHOR-007 — Ref usages, aliases, and forward refs
+## AUTHOR-010 — Compiler pipeline
 
-**Status:** planned
+- [x] Explicit deterministic compiler passes.
+- [x] Freeze declarations before compilation.
+- [x] Compile each declaration and ref exactly once per session.
+- [x] Construct only public Dryv IR values.
+- [x] Run final core validation.
+- [x] Return an immutable contract and diagnostics.
 
-- [ ] Implement immutable optional/required, nullable/non-nullable, array/single, and supported extension/projection usage wrappers.
-- [ ] Implement explicit typed forward declaration/definition.
-- [ ] Resolve aliases without duplicating semantic targets.
-- [ ] Detect missing, duplicate, cyclic, incompatible, and unresolved refs.
-- [ ] Add instrumentation proving each ref resolves once per compile session.
+## AUTHOR-011 — Runtime-owned transport
 
-## AUTHOR-008 — Static typing contract
+- [x] Author compilation returns an in-memory `Contract`.
+- [x] Author transport helpers delegate to the canonical Dryv codec.
+- [ ] Remove remaining compatibility exports after callers migrate.
+- [ ] Expose JSON/YAML emission through `dryv` and `dryv-cli`, not a second author codec.
 
-**Status:** planned
+## AUTHOR-012 — Static typing
 
-- [ ] Add strict Pyright configuration and positive/negative fixtures.
-- [ ] Add strict mypy configuration or document exact supported differences.
-- [ ] Prove wrong ref kinds, unknown field selector attributes, incompatible workflow refs, and invalid builder arguments fail static checks.
-- [ ] Avoid public `Any` escape hatches.
+- [x] Strict Pyright configuration and fixtures.
+- [x] Strict mypy configuration and fixtures.
+- [x] Positive and negative typed-reference cases.
+- [ ] Expand static coverage for future semantic builders without adding `Any` escape hatches.
 
-## AUTHOR-009 — Reusable properties and primitive authoring
+## AUTHOR-013 — Tests and distribution
 
-**Status:** planned
+- [x] Unit, integration, architecture, typing, performance, and distribution suites.
+- [x] Deterministic repeated and concurrent-session checks.
+- [x] Wheel/sdist and isolated-install coverage.
+- [ ] Re-run the complete release matrix after the final Dryv runtime and CLI split.
 
-- [ ] Define reusable primitive/property declarations with types, formats, constraints, defaults/examples, docs, provenance, and supported tags/guidance.
-- [ ] Support ordinary `Annotated` aliases and explicit property refs.
-- [ ] Compile into structural core schema/type facts without OpenAPI or Zod models.
-- [ ] Reject arbitrary Pydantic core schema objects in IR.
+## AUTHOR-014 — Documentation and cookbook
 
-## AUTHOR-010 — Enum, alias, collection, union, and composite schemas
-
-**Status:** planned
-
-- [ ] Compile Python enums and typed declarations into structural enum schemas.
-- [ ] Support aliases, arrays, maps, tuples, unions, intersections where public core supports them.
-- [ ] Preserve optional versus nullable semantics.
-- [ ] Validate duplicate enum values and unsupported arbitrary objects.
-
-## AUTHOR-011 — Pydantic model compiler
-
-**Status:** planned
-
-- [ ] Support Pydantic v2 `BaseModel` subclasses and approved author base model.
-- [ ] Interpret fields, annotations, defaults, requiredness, nested models, enums, collections, unions, and `Annotated` Codepot metadata.
-- [ ] Detect recursive models through refs without infinite expansion.
-- [ ] Convert unsupported validators/computed/runtime behavior into exact diagnostics.
-- [ ] Ensure Pydantic classes never enter core IR or template contexts.
-
-## AUTHOR-012 — Typed field selector engine
-
-**Status:** planned
-
-- [ ] Implement restricted typed selector proxies for fields.
-- [ ] Support single/tuple selections for pick, omit, storage, source, view, and operation helpers.
-- [ ] Reject unknown attributes, foreign schema fields, non-field values, and arbitrary callback behavior.
-- [ ] Add type-checker fixtures for selector safety.
-
-## AUTHOR-013 — Schema projections and derivations
-
-**Status:** planned
-
-- [ ] Implement pick, omit, partial, extend, and alias projection chains.
-- [ ] Implement explicit create/update/read/query derivation authoring.
-- [ ] Record source schema, steps, fields, behavior version, and provenance.
-- [ ] Compile every result into ordinary structural schemas.
-- [ ] Add exact debug and relationship tests; no entity/model/request/response schema kinds.
-
-## AUTHOR-014 — Field capabilities and reference authoring
-
-**Status:** blocked on public core field-capability contracts
-
-- [ ] Define typed author declarations for initialization, mutation, visibility/sensitivity, query operators, sort/select capability, and field reference.
-- [ ] Keep capabilities dormant until an operation/view explicitly uses them.
-- [ ] Compile only into published core field facets.
-- [ ] Never encode unsupported capabilities into arbitrary extensions/raw.
-
-## AUTHOR-015 — Storage mapping authoring
-
-**Status:** planned
-
-- [ ] Create storage mappings from schema refs with deterministic same-name field mapping helpers.
-- [ ] Support explicit fields, source/store names, primary keys, indexes, uniqueness, nullability, and supported relation facts.
-- [ ] Keep stored/generated/computed/absent behavior mapping-relative.
-- [ ] Do not create entity/repository/ORM objects or target-specific declarations.
-
-## AUTHOR-016 — Policies and access authoring
-
-**Status:** planned
-
-- [ ] Define reusable policy refs and concise known access-facet builders.
-- [ ] Compile only public core policy/access facts.
-- [ ] Resolve declared/effective relationships only through core rules.
-- [ ] Do not add a generic Python predicate language.
-
-## AUTHOR-017 — Events and operation effects
-
-**Status:** planned
-
-- [ ] Define events with payload/context schema refs and version/source facts.
-- [ ] Compile caused occurrences into operation/workflow effects.
-- [ ] Validate every event/schema/operation relationship.
-- [ ] Keep delivery/runtime syntax out of authoring.
-
-## AUTHOR-018 — Operation core authoring
-
-**Status:** planned
-
-- [ ] Define operations, inputs, outputs, failures, effects, docs, tags/guidance, and known facets.
-- [ ] Add concise query/command/listener/scheduled helpers that return ordinary operation refs.
-- [ ] Preserve schema-use direction and use-specific required/nullable facts.
-- [ ] Reject operation IDs, input names, output names, and failure codes that conflict.
-
-## AUTHOR-019 — HTTP facet authoring
-
-**Status:** planned for current public subset; extended bindings blocked on core
-
-- [ ] Compile method/path/operation ID supported by current core.
-- [ ] Add concise neutral input/output binding declarations only when public core supports them.
-- [ ] Support path/query/header/cookie/body/status/media/header/cookie facts only through published facet fields.
-- [ ] Never expose runtime request/response objects or framework middleware/controller APIs.
-
-## AUTHOR-020 — Trigger and execution authoring
-
-**Status:** planned
-
-- [ ] Define event/schedule/interaction/storage/system trigger helpers supported by core.
-- [ ] Define execution hooks referencing ordinary operations with phase/order/condition/stop facts.
-- [ ] Validate operation refs, phases, ordering, and cycles according to public contracts.
-
-## AUTHOR-021 — Value sources
-
-**Status:** blocked on public core `ValueSource`
-
-- [ ] Define operation-backed source authoring with item/value/label and optional dependent input facts.
-- [ ] Validate operation output and field refs.
-- [ ] Keep sources neutral to HTTP, frontend fetch code, database joins, and UI controls.
-- [ ] Compile only after core publishes object, validation, selectors, and contexts.
-
-## AUTHOR-022 — Views and parts
-
-**Status:** planned for current public subset
-
-- [ ] Define group-owned views, nested parts, schemas, triggers, access, docs, tags/guidance, and source uses supported by core.
-- [ ] Validate nested IDs and operation/schema/source refs.
-- [ ] Avoid page/screen/component/widget kernel vocabulary.
-
-## AUTHOR-023 — Presentations and placements
-
-**Status:** blocked on public core `Presentation`
-
-- [ ] Define contract-level presentation identity and neutral channel.
-- [ ] Place views across groups without copying them.
-- [ ] Define typed addresses and navigation relationships.
-- [ ] Validate presentation/view/address/navigation refs.
-- [ ] Compile only after core publishes models, selectors, contexts, and version rules.
-
-## AUTHOR-024 — Workflows
-
-**Status:** planned
-
-- [ ] Define workflow inputs, outputs, failures, effects, facets, and typed refs.
-- [ ] Add operation, decision, parallel, wait, and end step helpers.
-- [ ] Add transitions and optional compensation operation facts.
-- [ ] Validate step names, targets, branches, waits/events, refs, and unreachable/invalid structures through core validation.
-
-## AUTHOR-025 — Tags
-
-**Status:** blocked on public core `TagSet`
-
-- [ ] Implement namespaced tag validation and immutable authoring API.
-- [ ] Compile tags into shared kernel data on supported objects.
-- [ ] Expose safe immutable template methods through core-prepared context.
-- [ ] Include tags in transport and digest.
-- [ ] Never use tags as refs, relationships, typed-field replacements, or key/value programming.
-
-## AUTHOR-026 — Categorized guidance/info
-
-**Status:** blocked on public core guidance contract
-
-- [ ] Implement fluent explain/implement/warn/security/persistence/caching/testing/observability/UX/accessibility and custom approved categories.
-- [ ] Deduplicate and deterministically order notes.
-- [ ] Preserve guidance in IR/transport/context.
-- [ ] Prove guidance does not silently create semantic behavior.
-
-## AUTHOR-027 — Multi-pass compiler and `AuthoringResult`
-
-**Status:** planned
-
-- [ ] Implement explicit compiler context and ordered subsystem passes.
-- [ ] Compile each declaration/ref exactly once.
-- [ ] Construct only public core IR values.
-- [ ] Run final core validation.
-- [ ] Return immutable contract, diagnostics, and digest.
-- [ ] Add cancellation/limits only when a public author API defines them; no hidden runtime threads.
-
-## AUTHOR-028 — Canonical JSON/YAML transport
-
-**Status:** planned; core codec ownership must be resolved explicitly
-
-- [ ] Define versioned canonical IR envelope and strict typed document model.
-- [ ] Encode/decode every supported core IR value and relation.
-- [ ] Use safe duplicate-key-aware YAML.
-- [ ] Prove JSON/YAML parity and exact round trips.
-- [ ] Validate after decode and expose structured transport diagnostics.
-- [ ] Keep authoring state/Pydantic/callables out of documents.
-- [ ] Make canonical JSON the digest/signature representation.
-
-## AUTHOR-029 — Connected fixtures, conformance, performance, and distribution
-
-**Status:** planned
-
-- [ ] Build small fixtures for every subsystem.
-- [ ] Build one realistic cross-group contract containing schemas, projections, storage, policies, events, operations, HTTP, views, workflows, and every core-supported approved feature.
-- [ ] Add architecture, contracts, typing, unit, integration, transport, distribution, and performance tests.
-- [ ] Benchmark compile/link/validation/serialization and repeated no-state-leak behavior.
-- [ ] Build wheel/sdist and test isolated installation.
-
-## AUTHOR-030 — Documentation and release
-
-**Status:** planned
-
-- [ ] Document public API, typing support, ref engine, Pydantic support, derivation, diagnostics, transport format, blockers, and explicit non-goals.
-- [ ] Add runnable examples and migration notes for promoted tags/core changes.
-- [ ] Record exact tests, builds, digests, and package compatibility.
+- [x] Public README and design boundaries.
+- [ ] Add focused cookbook recipes for schemas, refs, projections, operations, storage, views, and workflows.
+- [ ] Add migration notes from archived Codepot authoring APIs.
+- [ ] Document the direct in-memory runtime integration once the contract-provider API is published.
 
 ## Completion gate
 
-- authoring compiles only into public closed IR;
+- authoring compiles only into public closed Dryv IR;
 - no process-global registries or import-time compilation;
-- typed refs and selector proxies have static and runtime tests;
-- Pydantic never leaks into IR or template contexts;
+- typed refs have static and runtime tests;
+- Pydantic never leaks into IR or templates;
 - derivations compile into normal structural schemas;
-- unsupported core concepts fail explicitly rather than entering extensions;
-- canonical JSON/YAML round trips exactly and can be shipped as direct semantic input;
-- output is deterministic, immutable, readable, and core-valid;
-- no OpenAPI, target language, framework, pack, template, writer, CLI, command, or old-runtime ownership exists;
-- full lint, format, typing, tests, build, and isolated installation pass;
-- working tree is clean and exact evidence is recorded.
+- unsupported core concepts fail explicitly;
+- canonical transport is owned by the Dryv runtime;
+- no target language, framework, pack, template, writer, CLI, or command ownership;
+- lint, formatting, typing, tests, build, and isolated installation pass;
+- release evidence records the exact commit and tool versions.
