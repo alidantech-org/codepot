@@ -6,13 +6,16 @@ from codepotg.generation import DEFAULT_SELECTOR_REGISTRY
 from codepotg.ir import Contract
 
 
-def test_fixed_selectors_are_root_first_and_deterministic(
+def test_fixed_selectors_use_published_roots_and_are_deterministic(
     connected_contract: Contract,
 ) -> None:
     selector_ids = tuple(item.id for item in DEFAULT_SELECTOR_REGISTRY.descriptors)
 
     assert selector_ids == tuple(sorted(selector_ids))
-    assert all(selector.startswith("groups.") for selector in selector_ids)
+    assert {selector.split(".", 1)[0] for selector in selector_ids} == {
+        "groups",
+        "presentations",
+    }
     operations = DEFAULT_SELECTOR_REGISTRY.select(
         "groups.operations.each",
         connected_contract,
