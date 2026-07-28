@@ -2,11 +2,11 @@
 
 ## Purpose
 
-`dryv.yaml` is the project-owned configuration file. It names semantic inputs, executable names or paths, command policy, project commands, and ordered pack instances.
+`dryv.yaml` is the project-owned orchestration file. It names semantic contracts, executable names or paths, security policy, project commands, and ordered pack instances.
 
-It does not list pack templates, selection folders, generated symbols, or one global language.
+It does not list pack templates, selection folders, generated symbols, or one global target language.
 
-## Canonical shape
+## Current canonical shape
 
 ```yaml
 apiVersion: dryv.dev/v1
@@ -14,9 +14,9 @@ apiVersion: dryv.dev/v1
 name: defytickets-generated
 
 sources:
-  api:
-    adapter: openapi
-    file: ./openapi.yaml
+  contract:
+    adapter: ir
+    file: ./contract.dryv.yaml
 
 executables:
   packageManager: pnpm
@@ -30,7 +30,7 @@ packs:
   backendRepositories:
     source:
       local: ./packs/typeorm-repositories
-    input: api
+    input: contract
     output: apps/backend
 
     options:
@@ -46,23 +46,17 @@ packs:
       git: https://github.com/alidantech-org/dryv-packs.git
       ref: typescript-sdk/v2.4.1
       path: packs/typescript-sdk
-    input: api
+    input: contract
     output: packages/typescript-sdk
 
   flutterSdk:
     source:
       git: https://github.com/alidantech-org/dryv-pack-flutter-sdk.git
       ref: v1.4.2
-    input: api
+    input: contract
     output: apps/mobile
 
 commands:
-  before:
-    refreshOpenApi:
-      executable: packageManager
-      arguments: [exec, codepot-openapi, generate]
-      cwd: ../backend
-
   after:
     formatWorkspace:
       executable: packageManager
@@ -74,24 +68,26 @@ commands:
 
 ### `apiVersion`
 
-Required schema version. Initial value: `dryv.dev/v1`.
+Required schema version. Current value: `dryv.dev/v1`.
 
 ### `name`
 
-Required project identity used in diagnostics, plans, and lock metadata.
+Required project identity used in diagnostics, plans, reports, and lock metadata.
 
 ### `sources`
 
-Named semantic inputs. Each entry selects a source adapter and provides its adapter-owned location/options.
+Named semantic inputs. The built-in `ir` adapter strictly decodes a canonical Dryv contract:
 
 ```yaml
 sources:
-  publicApi:
-    adapter: openapi
-    file: ./specs/public.yaml
+  contract:
+    adapter: ir
+    file: ./contract.dryv.yaml
 ```
 
-Several pack instances may consume the same normalized source through `input`.
+Several pack instances may consume the same input through `input`.
+
+A planned contract-provider model will also support configured Python callables and host-supplied in-memory contracts without requiring an intermediate file. Until that public configuration is implemented, the built-in canonical IR adapter remains the file-based route.
 
 ### `executables`
 
@@ -103,9 +99,7 @@ executables:
   flutter: C:/tools/flutter/bin/flutter
 ```
 
-A pack command may reference one of these keys. Project values replace matching pack defaults.
-
-Dryv does not infer command arguments from the executable and does not translate package-manager syntax.
+A declared command may reference one of these keys. Project values replace matching pack defaults. Dryv does not infer command arguments or translate package-manager syntax.
 
 ### `security`
 
@@ -114,8 +108,6 @@ Project-requested policy. Host policy remains authoritative. Downloaded pack com
 ### `commands`
 
 Project-global commands. `before` runs once before pack generation; `after` runs once after all selected packs.
-
-Commands are keyed mappings:
 
 ```yaml
 commands:
@@ -126,7 +118,7 @@ commands:
       optional: true
 ```
 
-Arguments are opaque strings. Shell parsing is not used unless a separately approved shell mode is added later.
+Arguments are opaque strings. Shell parsing is not used unless a separately approved shell mode is introduced.
 
 ### `packs`
 
@@ -136,7 +128,7 @@ Ordered mapping of project-local pack instance names. The same pack may be confi
 
 ### `source`
 
-Required direct pack locator. Exactly one source form is allowed.
+Required direct pack locator. Exactly one form is allowed.
 
 Local pack:
 
@@ -169,33 +161,33 @@ Rules:
 - `ref` is required and may be a branch, tag, or commit;
 - `path` is optional and relative to the repository root;
 - `local` and `git` may not appear together;
-- branches and tags are resolved to immutable commits in `dryv.lock.yaml`.
+- branches and tags resolve to immutable commits in `dryv.lock.yaml`.
 
-There is no separate registry alias and no `use` indirection.
+There is no registry alias or `use` indirection.
 
 ### `input`
 
-Optional name of a project semantic source. Static-only packs may omit it.
+Optional name of a project semantic contract. Static-only packs may omit it.
 
-`input` is intentionally distinct from `source`: `source` locates the pack; `input` locates the semantic data consumed by it.
+`input` is distinct from `source`: `source` locates the pack; `input` identifies the semantic data consumed by the pack.
 
 ### `output`
 
-Required pack-instance emission root relative to the project configuration file:
+Required pack-instance output root relative to the project file:
 
 ```yaml
 output: packages/typescript-sdk
 ```
 
-Every `paths` array in the pack manifest is relative to this output root.
+Every pack manifest `paths` array is relative to this output root.
 
 ### `options`
 
-Values for the pack's public options. Unknown values are errors.
+Values for the pack's declared public options. Unknown values are errors.
 
 ### `bindings`
 
-Project values satisfying public pack bindings. A binding may point to a project module/path/barrel and symbol according to the installed language adapter.
+Project values satisfying public pack bindings. A binding may identify a project module/path and symbol according to installed target adapters.
 
 ```yaml
 bindings:
@@ -230,9 +222,11 @@ Optional project-owned commands scoped to this pack instance. They use project t
 7. next pack instance;
 8. project `after` commands.
 
+The current runtime remains fail-closed until the separate approved command runtime exists.
+
 ## Lock ownership
 
-`dryv.lock.yaml` is generated by Dryv. It records the exact resolved pack snapshot, identity, digest, and behavior versions. Credentials and secrets never enter the lock.
+`dryv.lock.yaml` records exact resolved pack snapshots, identities, digests, plugin versions, and behavior versions. Credentials and secrets never enter the lock. Generated output hashes belong to `.dryv/generation-state.json`, not the dependency lock.
 
 See [`../05-distribution/02-git-github-locking-and-trust.md`](../05-distribution/02-git-github-locking-and-trust.md).
 
@@ -241,11 +235,11 @@ See [`../05-distribution/02-git-github-locking-and-trust.md`](../05-distribution
 Validation rejects:
 
 - unknown fields;
-- duplicate pack instance names;
-- mixed local/Git source forms;
+- duplicate input or pack names;
+- mixed local/Git pack locators;
 - missing Git refs;
 - unsafe local, repository, subdirectory, or output paths;
-- missing semantic inputs;
+- unknown semantic inputs;
 - invalid pack options or bindings;
 - unknown executable references;
 - unapproved commands;
@@ -257,8 +251,8 @@ Validation rejects:
 
 - project-level `language`;
 - pack-internal template lists;
-- arbitrary selection declarations;
-- old `tasks` entries;
+- arbitrary selector declarations;
+- legacy `tasks` entries;
 - `templateDir`;
 - package-manager dependency conversion logic;
 - a separate registry-to-pack mapping.
