@@ -93,7 +93,7 @@ This package does not own:
 - generated Dart type/null-safety/literal/comment/import/export/annotation syntax;
 - Flutter widgets, state management, navigation, or application layout;
 - `pubspec.yaml` updates or `dart pub get`;
-- OpenAPI or other source parsing;
+- semantic source parsing;
 - template rendering or selection;
 - destination planning/writing;
 - commands;
