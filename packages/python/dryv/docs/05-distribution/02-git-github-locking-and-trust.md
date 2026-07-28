@@ -2,7 +2,7 @@
 
 ## Direct pack sources
 
-Every pack instance declares its source directly. There is no separate registry alias and no `use` mapping.
+Every pack instance declares its source directly. There is no registry alias or `use` mapping.
 
 Local pack:
 
@@ -66,12 +66,12 @@ Rules:
 - `local` is relative to `dryv.yaml`;
 - `git` is a normal Git HTTPS or SSH URL;
 - `ref` is required for Git sources;
-- `path` is optional and must remain inside the resolved repository snapshot;
+- `path` is optional and must remain inside the resolved snapshot;
 - `local` and `git` cannot appear together;
-- the pack identity/version comes from the resolved `DryvPack.yaml`;
+- pack identity/version comes from `DryvPack.yaml`;
 - the project pack key is only a local instance name.
 
-A future marketplace may help users discover packs, but it must insert a complete direct `source` block. Runtime resolution must not depend on a mutable registry-to-repository alias.
+A future marketplace may help users discover packs, but it inserts a complete direct `source` block. Runtime resolution never depends on a mutable registry alias.
 
 ## Authentication
 
@@ -82,7 +82,7 @@ Dryv uses existing Git authentication:
 - controlled HTTPS credentials;
 - enterprise Git configuration.
 
-Credentials are never written to project configuration, pack manifests, lock files, diagnostics, events, cache metadata, or approvals.
+Credentials are never written to project configuration, pack manifests, lock files, diagnostics, events, cache metadata, ownership state, or approvals.
 
 ## Resolution
 
@@ -90,7 +90,7 @@ Credentials are never written to project configuration, pack manifests, lock fil
 
 The provider:
 
-1. resolves the local directory relative to the project;
+1. resolves the directory relative to the project;
 2. validates containment and manifest presence;
 3. snapshots the pack for the run;
 4. reads identity/version;
@@ -104,13 +104,13 @@ The provider:
 
 1. validates the URL, ref, and optional path;
 2. fetches through controlled Git infrastructure;
-3. resolves the requested branch/tag/commit to an exact commit;
+3. resolves the branch, tag, or commit to an exact commit;
 4. snapshots only the resolved repository state;
 5. validates the pack subdirectory and manifest;
 6. calculates manifest/content digests;
 7. stores the immutable snapshot in cache.
 
-A branch or tag is allowed in `dryv.yaml`, but generation in locked mode uses the exact commit recorded in the lock.
+A mutable ref may appear in `dryv.yaml`, but a locked run uses the exact commit recorded in `dryv.lock.yaml`.
 
 ## `dryv.lock.yaml`
 
@@ -150,12 +150,16 @@ packs:
     contentDigest: sha256:4444444444444444444444444444444444444444444444444444444444444444
 
 plugins:
-  source.openapi:
-    package: dryv-openapi
+  source.ir:
+    package: dryv
     version: 2.0.0
     behavior: 1
   language.typescript:
     package: dryv-language-typescript
+    version: 2.0.0
+    behavior: 1
+  template.jinja:
+    package: dryv-template-jinja
     version: 2.0.0
     behavior: 1
 ```
@@ -170,40 +174,30 @@ The lock records:
 - manifest and content digests;
 - plugin and behavior versions that affect planning/output.
 
-The lock excludes credentials, environment secrets, generated file contents, and command approval tokens.
+The lock excludes credentials, environment secrets, generated files, generated file hashes, and approval tokens. Output ownership hashes belong to `.dryv/generation-state.json`.
 
 ## Drift rules
 
 A locked run fails when:
 
-- a Git ref now resolves differently and the exact locked commit is unavailable;
-- local pack content differs from its locked digest in frozen mode;
-- the selected pack path no longer contains the locked pack identity;
+- the exact locked commit is unavailable;
+- local pack content differs in frozen mode;
+- the selected path no longer contains the locked pack identity;
 - manifest/content digests differ;
 - behavior/plugin versions are incompatible;
 - a downloaded pack command changed and lacks renewed approval.
 
-Development commands may explicitly refresh the lock. CI/frozen mode never updates it silently.
+Development commands may explicitly refresh the lock. Frozen mode never updates it silently.
 
 ## Cache
 
-Pack snapshots are cached by immutable identity and content digest, not by mutable branch names.
+Pack snapshots are cached by immutable identity and content digest, not mutable branch names.
 
-Cache reuse must still perform:
-
-- manifest parsing;
-- compatibility validation;
-- digest validation;
-- command approval checks;
-- plan validation.
-
-Partial fetches and invalid archives/snapshots are removed safely.
+Cache reuse still performs manifest parsing, compatibility validation, digest validation, command approval checks, and plan validation. Partial fetches and invalid snapshots are removed safely.
 
 ## Private packs
 
-Private packs require no Codepot-hosted credential service. Resolution succeeds when the user's Git environment can fetch the repository.
-
-This supports public, private, organization, personal, and enterprise Git hosts through the same source shape.
+Private packs require no Dryv-hosted credential service. Resolution succeeds when the user's Git environment can fetch the repository. Public, private, organization, personal, and enterprise Git hosts use the same source shape.
 
 ## Command approvals
 
@@ -212,7 +206,7 @@ Downloaded pack commands require approval by default. Approval identity includes
 - repository URL or local snapshot identity;
 - exact commit for Git sources;
 - pack subdirectory;
-- pack manifest/content digests;
+- manifest/content digests;
 - exact executable reference and argument list;
 - requested environment/filesystem/network capabilities.
 
@@ -225,9 +219,9 @@ Any identity or command change requires new approval.
 - branch/tag/commit resolution;
 - required Git ref validation;
 - monorepo subdirectory containment;
-- moved branch and changed local content drift;
-- credentials redacted everywhere;
-- private repository resolution using existing Git credentials;
+- moved ref and changed local-content drift;
+- credential redaction;
+- private repository resolution through existing Git credentials;
 - cache corruption and partial-fetch cleanup;
 - lock serialization and frozen mode;
 - command approval invalidation;
