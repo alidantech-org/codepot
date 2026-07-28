@@ -1,84 +1,52 @@
 # Authoring-aligned closed IR additions
 
-## Status
-
-This document is the authoritative alignment for the authoring discoveries implemented on `chatgpt/codepotx-restart-orchestrator`. It extends the closed kernel without creating a second author graph, generic fact bag, target binding system, database DSL, REST DSL, or UI framework model.
-
-The following concepts are core-owned, typed, immutable, source-neutral, and transported through the canonical IR format:
-
-- namespaced tags and categorized guidance;
-- field lifecycle/query/reference capabilities;
-- operation-backed value sources;
-- contract-level presentations and view placements.
-
-Any older document that describes these as author-only proposals is superseded by this document after the orchestrator branch passes verification and merges.
-
 ## One compilation target
 
-Every authoring frontend produces the same `dryv.ir.Contract`:
+Every authoring frontend produces the same public immutable `dryv.ir.Contract`:
 
 ```text
-Python dryv-author ───────────┐
-OpenAPI adapter ──────────────────┤
-Canonical IR JSON/YAML ───────────┼──> Contract
-Future native Codepot language ───┘
+Python dryv-author ------------+
+Canonical IR JSON/YAML --------+--> Contract
+Future native Codepot language +
 ```
 
-Pydantic models, decorators, builder objects, Python functions, ref registries, source-parser objects, and authoring projections never enter IR or render contexts.
+Pydantic models, decorators, builder objects, Python functions, ref registries, provider objects, and authoring projections never enter the IR or render contexts.
+
+The following concepts are core-owned, typed, immutable, source-neutral, and transported through the canonical Dryv format:
+
+- namespaced tags and categorized guidance;
+- field lifecycle, query, and reference capabilities;
+- operation-backed value sources;
+- contract-level presentations and view placements.
 
 ## Tags
 
 `KernelData.tags` is an immutable sorted `TagSet`.
 
-Tag grammar:
+Grammar:
 
 ```text
 segment(:segment)*
 segment = [a-z][a-z0-9_-]*
 ```
 
-Examples:
+Tags are Boolean namespaced hints. They may influence pack/template behavior but do not create relationships, replace typed fields, add selectors, register context roots, carry arbitrary values, or contain source code.
+
+Safe template calls on verified tag records:
 
 ```text
-orm:prisma
-orm:prisma:custom_sql
-ui:data-table
-repository:manual
-defytickets:organiser
+has
+has_any
+has_all
+under
+empty
 ```
 
-Tags are Boolean namespaced hints. They may influence pack/template choices but do not:
-
-- create semantic relationships;
-- replace typed fields/facets;
-- add selectors;
-- register context roots;
-- carry arbitrary values;
-- contain source code.
-
-Safe template API:
-
-```jinja
-{% if view.tags.has("ui:data-table") %}
-{% endif %}
-
-{% if schema.tags.has_any("storage:custom", "repository:manual") %}
-{% endif %}
-
-{% if operation.tags.has_all("api:public", "testing:fixture") %}
-{% endif %}
-
-{% for tag in presentation.tags.under("navigation") %}
-{% endfor %}
-```
-
-Known semantics still use typed properties. A field must not use `required`, `nullable`, or `references:Company:id` tags when typed contracts already exist.
-
-Tags do not inherit automatically. Templates may inspect outer context tags explicitly.
+Typed semantics remain authoritative. Requiredness, nullability, references, and access must not be encoded as tags when public typed fields exist.
 
 ## Categorized guidance
 
-`KernelData.guidance` contains unique `GuidanceNote` values with a closed `GuidanceKind`:
+`KernelData.guidance` contains unique `GuidanceNote` values with a closed `GuidanceKind` such as:
 
 ```text
 explain
@@ -94,32 +62,18 @@ accessibility
 ai
 ```
 
-Guidance explains intent to templates, documentation packs, audits, and AI agents. It does not create hidden semantic behavior.
-
-Example authoring intent:
-
-```python
-view.info(
-    lambda info: (
-        info.explain("Main admin page for browsing apps.")
-        .implement("Render filters above the table and keep pagination in URL state.")
-        .testing("Verify filters survive page reload.")
-    )
-)
-```
-
-A caching guidance note does not create a cache policy. Typed semantic declarations remain required for behavior.
+Guidance explains intent to developers, reviewers, documentation packs, templates, and AI tools. It never silently creates behavior.
 
 ## Field capabilities
 
-A schema remains structural. `SchemaField.capabilities` contains broad reusable intent:
+A schema remains structural. `SchemaField.capabilities` contains reusable neutral intent:
 
 ```text
 FieldCapabilities
 ├── lifecycle
-│   ├── initialize: caller | system | derived | forbidden
-│   ├── mutate: caller | system | derived | forbidden
-│   └── visibility: exposed | internal | sensitive
+│   ├── initialize
+│   ├── mutate
+│   └── visibility
 ├── query
 │   ├── operators
 │   ├── sortable
@@ -129,20 +83,13 @@ FieldCapabilities
     └── target_field
 ```
 
-These facts are neutral:
+These facts do not automatically create operations, storage, repositories, forms, controls, or target syntax. Storage remains mapping-relative; there is no universal stored-field flag.
 
-- they do not generate an operation automatically;
-- they do not define SQL, Mongo, HTTP, repository, or UI syntax;
-- they do not override operation access/policy;
-- they do not make a schema an entity.
-
-Authoring may derive ordinary structural schemas from these capabilities. The author compiler must make derivation explicit, deterministic, inspectable, and eventually sealable. The resulting IR contains normal schemas, never `model`, `entity`, `request`, or `response` schema kinds.
-
-Storage remains mapping-relative. A field is stored when a `StorageMapping` maps it. There is no universal `field.stored` Boolean.
+Authoring may derive ordinary structural schemas from capabilities when derivation is explicit, deterministic, and inspectable.
 
 ## Value sources
 
-`ValueSource` describes a neutral operation-backed collection used to discover valid values for a reference or interactive choice:
+A `ValueSource` describes a neutral operation-backed collection used to discover candidate values:
 
 ```text
 ValueSource
@@ -153,14 +100,9 @@ ValueSource
 └── optional search_input
 ```
 
-A value source does not mean HTTP, SQL join, Mongo populate, React select, Flutter picker, or CLI prompt. Packs interpret it for their own target.
+The same source may inform web controls, mobile pickers, CLI prompts, generated tests, or documentation. It does not prescribe transport, persistence, or UI implementation.
 
-Core validation requires:
-
-- referenced operation exists;
-- named operation output exists and references a schema;
-- value and label fields belong to that output schema;
-- label fields are non-empty and unique.
+Core validation requires all referenced operations, outputs, schemas, and fields to exist and agree.
 
 Fixed selector:
 
@@ -168,15 +110,9 @@ Fixed selector:
 groups.value_sources.each
 ```
 
-Template root:
-
-```text
-value_source
-```
-
 ## Presentations
 
-`Presentation` is a contract-level neutral application surface. It composes views from several groups without copying or re-owning them.
+A `Presentation` is a contract-level neutral application surface. It composes views from several groups without copying or re-owning them.
 
 ```text
 Contract
@@ -186,33 +122,9 @@ Contract
         └── view reference
 ```
 
-Channels:
+Supported neutral channels include web, mobile, desktop, command, document, and conversational surfaces.
 
-```text
-web
-mobile
-desktop
-command
-document
-conversational
-```
-
-A presentation owns:
-
-- application-surface identity;
-- channel;
-- view placements;
-- neutral address/route/command strings;
-- navigation parent/order;
-- tags, guidance, documentation, and provenance.
-
-It does not own:
-
-- React, Next.js, Flutter, GoRouter, Redux, Riverpod, CSS, widget trees, animations, or framework state management;
-- visual layout pixels;
-- target-language syntax.
-
-A group owns what a view means. A presentation owns where that view participates in an application surface.
+A presentation may describe identity, channel, view placement, neutral addresses, navigation relationships, tags, guidance, documentation, and provenance. It never contains framework components, pixel layout, target syntax, or runtime state-management details.
 
 Fixed selectors:
 
@@ -221,16 +133,7 @@ presentations.each
 presentations.entries.each
 ```
 
-Template roots:
-
-```text
-presentation
-entry
-```
-
-## Selector registry implemented by the first orchestrator
-
-The initial verified registry is intentionally small:
+## Current selector registry
 
 ```text
 groups.all
@@ -249,33 +152,20 @@ presentations.each
 presentations.entries.each
 ```
 
-Selectors not listed above are not implemented and must not appear in pack guides or examples. In particular, the current runtime does not implement nested child selectors, DTO selectors, operation-input/output/failure selectors, arbitrary aliases, global reversed roots, filters, or graph-query grammar.
-
-A future selector is added only through a typed core change with behavior versioning, validation, context preparation, tests, and documentation.
+Unlisted selectors are unsupported. A new selector requires a typed core change, behavior versioning, validation, context preparation, tests, and documentation.
 
 ## Validation and transport
 
-These additions participate in:
-
-- semantic identity indexing;
-- cross-reference validation;
-- deterministic selectors;
-- bounded render context preparation;
-- canonical JSON/YAML transport;
-- source-adapter loading;
-- plan inspection and artifact explanation.
-
-They are not stored in arbitrary `extensions` or `raw` values.
+These concepts participate in semantic indexing, cross-reference validation, selectors, prepared contexts, canonical JSON/YAML transport, planning, and artifact explanation. They are never hidden in arbitrary extension or raw-value bags.
 
 ## Non-goals
 
 This alignment does not introduce:
 
 - entities or repositories as neutral roots;
-- runtime predicates;
-- database query ASTs;
-- framework bindings keyed to semantic IDs;
-- a generic expression language for business logic;
+- runtime predicates or database query ASTs;
+- framework bindings keyed directly to semantic IDs;
+- arbitrary business-logic expression languages;
 - automatic operation generation;
 - a universal visual UI DSL;
-- target-specific pack configuration in IR.
+- target-specific configuration inside IR.
