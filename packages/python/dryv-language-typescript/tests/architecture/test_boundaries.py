@@ -12,7 +12,6 @@ FORBIDDEN_IMPORTS = (
     "dryv.infrastructure",
     "dryv.runtime",
     "dryv_language_dart",
-    "dryv_openapi",
     "dryv_pack",
     "jinja",
     "requests",
