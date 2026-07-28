@@ -4,6 +4,9 @@ from collections.abc import Callable
 from typing import cast
 
 import yaml
+from yaml.constructor import ConstructorError
+from yaml.nodes import MappingNode, Node
+
 from codepotg.ir import (
     Contract,
     contract_from_document,
@@ -14,8 +17,6 @@ from codepotg.ir import (
     contract_to_yaml,
 )
 from codepotg.versions import IR_API_VERSION
-from yaml.constructor import ConstructorError
-from yaml.nodes import MappingNode, Node
 
 FORMAT = "codepot-ir"
 VERSION = str(IR_API_VERSION)
