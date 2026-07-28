@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from contextlib import nullcontext
-from typing import ContextManager
+from contextlib import AbstractContextManager, nullcontext
 
 from rich.console import Console
 from rich.status import Status
@@ -15,7 +14,7 @@ def get_console() -> Console:
     return _CONSOLE
 
 
-def activity(message: str, *, enabled: bool = True) -> ContextManager[Status | None]:
+def activity(message: str, *, enabled: bool = True) -> AbstractContextManager[Status | None]:
     if not enabled:
         return nullcontext()
     return _CONSOLE.status(f"[accent]{message}[/]", spinner="dots")
