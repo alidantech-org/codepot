@@ -1,140 +1,101 @@
-# Adapter/plugin system and conformance tasks
+# Plugin system and conformance tasks
 
-Plugins extend supported source formats, target validation/path behavior, engines, providers, ecosystems, writers, caches, and executors. They cannot extend the closed semantic kernel or author generated source syntax.
+Plugins provide bounded runtime capabilities. They cannot extend the closed Dryv semantic kernel or author generated source syntax outside templates.
 
-## PLUG-001 — Public adapter descriptors
+## PLUG-001 — Public descriptors
 
-**Status:** planned
-
-**Dependencies:** CORE-002..CORE-005
-
-- [ ] Define category, ID, aliases, distribution, version, API version, core/IR constraints, capabilities, configuration ownership, documentation, trust, and factory.
-- [ ] Define category-specific descriptor extensions without private core imports.
-- [ ] Explicitly exclude semantic node/facet/selector/expression ownership from every plugin descriptor.
-- [ ] Validate descriptor immutability and serialization.
+- [x] Category, ID, aliases, distribution, version, API versions, compatibility, capabilities, trust, and factory metadata.
+- [x] Immutable descriptor validation.
+- [x] No semantic-node, facet, selector, expression-root, or context-extension capability.
+- [ ] Publish stable descriptor introspection through `DryvRuntime`.
 
 ## PLUG-002 — Entry-point discovery
 
-**Status:** planned
+- [x] Standard `importlib.metadata.entry_points` discovery.
+- [x] Lazy factory loading.
+- [x] Runtime-owned plugin instances.
+- [x] Duplicate IDs and aliases fail safely.
+- [x] Package import itself performs no discovery.
+- [ ] Expose structured discovery diagnostics without hiding unrelated healthy plugins.
 
-**Dependencies:** PLUG-001
+## PLUG-003 — Runtime validation and inspection
 
-- [ ] Discover each category through `importlib.metadata.entry_points`.
-- [ ] Load descriptor factories lazily.
-- [ ] Report broken distributions/entry points as diagnostics while keeping unrelated adapters available.
-- [ ] Ensure package import itself performs no discovery.
-- [ ] Add installed-fixture distribution tests.
+- [ ] Add `runtime.validate_plugin(...)`.
+- [ ] Add `runtime.plugins()` and `runtime.inspect_plugin(...)`.
+- [ ] Validate distribution metadata, API ranges, aliases, capabilities, protocols, and factory results.
+- [ ] Return serializable diagnostics suitable for CLI, IDE, server, and MCP hosts.
 
-## PLUG-003 — Runtime registries
+## PLUG-004 — Least-authority contexts
 
-**Status:** planned
+- [x] Target plugins receive only target/path requests, options, diagnostics, and immutable planning facts.
+- [x] Template engines receive only template text, immutable prepared context, declared partials, diagnostics, and cancellation.
+- [x] Contract loaders receive only controlled source data and public IR operations.
+- [ ] Define equally narrow contexts before adding pack providers, ecosystems, caches, writers, or executors as plugins.
+- [ ] Expand session-isolation and no-retained-context tests.
 
-**Dependencies:** PLUG-001, PLUG-002
+## PLUG-005 — Contract-provider conformance
 
-- [ ] Implement runtime-owned category registries.
-- [ ] Validate duplicate IDs, alias conflicts, incompatible API/core/IR versions, missing capabilities, and conflicting configuration ownership.
-- [ ] Reject any descriptor claiming semantic-kernel, facet, selector, expression-root, or template-context extension capability.
-- [ ] Implement exact ID and alias resolution.
-- [ ] Remove all need for process-global decorator registries.
+- [x] Built-in canonical IR loader returns deterministic validated contracts.
+- [x] No provider-specific type escapes into plans or contexts.
+- [x] Cancellation, bounded input, strict decoding, and stable digest coverage.
+- [ ] Add conformance helpers for Python callable and host-supplied contract providers.
+- [ ] Prove repeated provider calls do not leak mutable session state.
 
-## PLUG-004 — Explicit least-authority contexts
+## PLUG-006 — Target-plugin conformance
 
-**Status:** planned
+- [x] Target descriptors and longest-known suffix inference.
+- [x] Filename, identifier, reserved-name, and output-path validation.
+- [x] Relative, package, alias, and explicit module/path facts.
+- [x] Typed immutable options and exact diagnostics.
+- [x] No rendered types, literals, comments, imports, exports, validators, decorators, formatting, or framework snippets.
+- [ ] Add capability-aware conformance so plugins are not forced to claim unsupported features.
 
-**Dependencies:** PLUG-003, core ports
+## PLUG-007 — Template-engine conformance
 
-- [ ] Define least-authority construction contexts per category.
-- [ ] Ensure target adapters receive only target/path descriptors, typed options, diagnostics, and immutable planned path inputs.
-- [ ] Ensure engine adapters receive only template registry, immutable render context, safe helpers, diagnostics, and cache scope.
-- [ ] Ensure source adapters receive controlled source access, closed-kernel builders/contracts, and no template/output services.
-- [ ] Ensure providers/ecosystems/writers/executors receive only their documented ports.
-- [ ] Test session isolation and no retained mutable context.
+- [x] Deterministic rendering and strict undefined behavior.
+- [x] Immutable bounded contexts and declared partials.
+- [x] Cancellation, output limits, syntax diagnostics, and sandbox denial tests.
+- [x] No filesystem, environment, network, Python import, arbitrary callable, command, or destination access.
+- [ ] Publish cache identity contracts only after the runtime cache port is approved.
 
-## PLUG-005 — Source adapter conformance suite
+## PLUG-008 — Pack-provider conformance
 
-**Status:** planned
+- [ ] Immutable resolution identity.
+- [ ] Local/Git containment and subdirectory safety.
+- [ ] Content and manifest digests.
+- [ ] Cancellation and partial-snapshot cleanup.
+- [ ] Credential redaction.
+- [ ] Providers supply snapshots only; typed runtime loaders decode manifests and templates.
 
-**Dependencies:** IR-001..IR-010, source port
+## PLUG-009 — Ecosystem conformance
 
-- [ ] Test deterministic closed-kernel IR and digest.
-- [ ] Test source spans, cancellation, in-memory loading, bounded references, and no source-type leakage.
-- [ ] Test rejection of adapter-defined semantic objects, facets, selectors, expression roots, and context properties.
-- [ ] Test bounded extension/raw size, type, and depth limits.
-- [ ] Provide fixture base classes usable by `dryv-openapi` and third parties.
+- [ ] Known manifest detection and typed contributions.
+- [ ] Conflict handling and owned/contributed modes.
+- [ ] Toolchain capability resolution without silent switching.
+- [ ] Action planning without direct execution.
+- [ ] No semantic-kernel or generated-syntax ownership.
 
-## PLUG-006 — Target/language adapter conformance suite
+## PLUG-010 — Infrastructure conformance
 
-**Status:** planned
+Writer:
 
-**Dependencies:** target path-validation port, typed options, PLAN-007
+- staging, comparison, lifecycle reporting, rollback, path safety, and ownership state.
 
-- [ ] Test target descriptors and longest-known extension inference.
-- [ ] Test filename/reserved-name and declared candidate-identifier validation.
-- [ ] Test destination-relative, project-path, package, namespace, index, and extension module-path facts.
-- [ ] Test typed option schema, defaults, patches where permitted, introspection, and immutable inputs.
-- [ ] Test that adapter outputs contain facts/diagnostics only.
-- [ ] Prohibit rendered types, literals, comments, imports, exports, validators, decorators, formatting, or framework snippets.
-- [ ] Prohibit semantic-kernel/selector/context extension.
-- [ ] Allow capability-specific tests so adapters are not forced to claim unsupported validation/path features.
+Cache:
 
-## PLUG-007 — Template-engine conformance suite
+- complete behavior keys, isolation, corruption handling, bounds, and deterministic reuse.
 
-**Status:** planned
+Executor:
 
-**Dependencies:** engine port, immutable render context, PLAN-005
+- exact arguments, timeout, cancellation, environment filtering, capability enforcement, output capture, and process-tree cleanup.
 
-- [ ] Test suffix inference, deterministic rendering, strict undefined behavior, immutable context, includes, cycles, limits, and diagnostics.
-- [ ] Test denial of filesystem, environment, network, Python import, arbitrary callables, commands, and destination creation.
-- [ ] Test cache invalidation by source/include/engine/helper version.
-- [ ] Test rendering of template-authored import/type/validator/framework text without engine mutation or injection.
-
-## PLUG-008 — Pack-provider conformance suite
-
-**Status:** planned
-
-**Dependencies:** pack provider port
-
-- [ ] Test immutable resolution identity, containment, subdirectories, digests, cancellation, cache cleanup, and credential redaction.
-- [ ] Cover local and Git provider common behavior.
-- [ ] Ensure providers never inspect or modify semantic/template contracts.
-
-## PLUG-009 — Ecosystem adapter conformance suite
-
-**Status:** planned
-
-**Dependencies:** ecosystem port, project/toolchain contracts
-
-- [ ] Test known manifest detection, typed contributions, conflict handling, owned/contributed modes, action planning, and capability resolution.
-- [ ] Ensure adapters never execute commands directly.
-- [ ] Ensure ecosystem adapters cannot add semantic objects/facets/selectors or render application syntax.
-
-## PLUG-010 — Writer/cache/executor conformance suites
-
-**Status:** planned
-
-**Dependencies:** writer/cache/executor ports
-
-- [ ] Writer: staging, create/change/delete/leave, rollback, path safety, exact comparison, and ownership/generation-state records.
-- [ ] Cache: content identity, isolation, corruption handling, bounds, and complete behavior keys.
-- [ ] Executor: timeout, cancellation, environment filtering, capability enforcement, output capture, and process-tree cleanup.
-- [ ] Prove generated output digests/state remain outside the dependency lock.
-
-## PLUG-011 — Official/third-party parity
-
-**Status:** planned
-
-**Dependencies:** PLUG-005..PLUG-010
-
-- [ ] Make official packages depend only on public conformance helpers.
-- [ ] Add third-party fixture packages for every adapter category.
-- [ ] Prove removing each official package makes only its format/target/engine/provider capability unavailable and does not break core import.
-- [ ] Prove no official package has a hidden semantic-extension or syntax-rendering path.
+Generated-output hashes remain outside `dryv.lock.yaml`.
 
 ## Acceptance gate
 
-- Adapter discovery has no internal directory scanning or decorator side effects.
-- Registry instances belong to runtimes/sessions.
-- Official packages pass the exact public suites offered to third parties.
-- No plugin can extend semantic objects, relations, facets, selectors, expression roots, contexts, or validators.
-- No language adapter can author generated source syntax.
-- Every descriptor and configuration conflict has a stable diagnostic.
+- Discovery uses no internal directory scanning or decorator side effects.
+- Registries and plugin instances belong to runtime sessions.
+- Official packages pass the same public suites available to third parties.
+- Plugins cannot extend semantic objects, relations, facets, selectors, expressions, contexts, or validators.
+- Target plugins cannot author generated source syntax.
+- Every descriptor, compatibility, loading, and configuration conflict has a stable diagnostic.
