@@ -2,11 +2,9 @@
 
 ## Goal
 
-Dryv is a clean, importable Python application with explicit domain boundaries and independently installable adapters/infrastructure packages.
+Dryv is an importable Python runtime with explicit domain boundaries and independently installable interfaces, authoring frontends, and plugins.
 
-The implementation directory is `packages/python/dryv`; the eventual supported Python namespace is `dryv`.
-
-## Core source layout
+## Runtime source layout
 
 ```text
 src/dryv/
@@ -20,199 +18,186 @@ src/dryv/
 ├── plugins/
 ├── ports/
 ├── runtime/
-├── infrastructure/
-└── cli/
+└── infrastructure/
 ```
+
+The existing `src/dryv/cli/` code is transitional and moves to `dryv-cli`.
 
 ## Responsibilities
 
 ### `api`
 
-Stable Python-facing requests, results, runtime events, sessions, application facade, and supported exports.
+Stable Python-facing requests, results, cancellation, events, runtime facade, and supported exports.
 
-It contains no filesystem, CLI, OpenAPI, Jinja, TypeScript, Dart, package-manager, or target-source implementation.
+It contains no terminal parsing, target syntax, template-engine implementation, authoring builders, package-manager logic, or concrete project UI.
 
 ### `application`
 
-Use cases and orchestration:
+Use cases and coordination:
 
-- configure;
-- validate;
-- inspect;
-- compile/serialize generation plans;
-- explain artifacts and symbols;
-- query impact/blast radius;
-- generate;
-- resolve packs;
-- manage approvals/locks/cache/generation state;
-- inspect plugins and readiness.
+- load and validate contracts, projects, packs, and plugins;
+- inspect plans, artifacts, symbols, state, and compatibility;
+- plan and generate;
+- emit canonical transport;
+- resolve packs through approved providers;
+- manage locks, approvals, cache, and ownership state through ports.
 
-Application services depend on domain types and ports, not concrete infrastructure.
+Application services depend on domain contracts and ports, not concrete infrastructure.
 
 ### `config`
 
 Typed configuration infrastructure:
 
-- location-aware document nodes;
-- document/schema registry;
-- project and pack models;
-- typed decoding/validation;
-- typed option/patch descriptors;
+- safe document decoding;
+- project, provider, and pack models;
+- typed validation;
+- option and binding descriptors;
 - schema introspection and serialization.
 
-Raw YAML/JSON values stop here. Configuration cannot add semantic kernel objects, facets, selectors, expression roots, or template-context properties.
+Raw YAML/JSON values stop here. Configuration cannot add semantic objects, facets, selectors, expressions, or template-context properties.
 
 ### `domain.ir`
 
 The closed source-neutral semantic kernel:
 
 ```text
-contract/groups
-semantic identity and provenance
-semantic names
-structural schemas, fields, constraints, and schema uses
-operations: inputs, outputs, failures, effects
-known HTTP/access/trigger/execution/events facets
+contract and groups
+semantic identity, names, provenance, tags, and guidance
+structural schemas, fields, constraints, and uses
+operations, inputs, outputs, failures, effects, and known facets
 views, parts, triggers, and flows
-storage mappings, fields, keys, indexes, relations, constraints
-policies and declared/effective access
-application events, listeners, and execution hooks
-workflows, steps, transitions, waits, decisions, branches, compensation
-bounded raw/extensions
-uniform semantic validation
-private typed relationship indexes
+storage mappings, fields, keys, indexes, relations, and constraints
+policies and access
+application events and execution hooks
+value sources
+workflows, transitions, waits, decisions, branches, and compensation
+presentations and view placement
+uniform validation and private typed indexes
 ```
 
-It does not contain neutral resources, models, entities, frontends, UI roots, generated classes/interfaces/types, target syntax, or arbitrary plugin-defined facts.
-
-It must not import OpenAPI, template engines, target adapters, filesystems, commands, caches, runtime composition, or CLI concerns.
-
-The internal representation may use typed graph indexes. The public domain/template contracts remain explicit typed objects.
+It contains no provider implementation, target syntax, template engine, filesystem, command executor, cache implementation, runtime composition, or interface concern.
 
 ### `domain.generation`
 
 Generation semantics:
 
-- pack/file descriptors;
-- root-first fixed selector descriptors/instances;
-- selection folders and active outer-to-inner contexts;
+- pack and file descriptors;
+- fixed selector descriptors and contexts;
 - template/static invocations;
 - stable artifact identity and destinations;
 - external bindings;
-- generated provider/symbol/import/export relationships;
+- generated providers, symbols, imports, and exports;
 - target-aware path/module facts;
-- include/dependency/collision/command graphs;
-- explain/provenance records;
-- semantic-to-artifact impact graph;
-- readiness, lifecycle, ownership, and generation-state intent.
+- dependency, collision, command, and readiness graphs;
+- explanation and impact records;
+- lifecycle and ownership intent.
 
-It does not render target-language source text.
+It does not render target-language text.
 
 ### `plugins`
 
-Public adapter/infrastructure descriptors, API/behavior versions, capabilities, entry-point discovery, runtime-owned registries, and compatibility validation.
+Public descriptors, API/behavior versions, capabilities, factory loading, runtime registries, and compatibility validation.
 
-Official packages use the same APIs as third parties. The plugin system cannot extend application semantics or provide target source renderers.
+Official and third-party plugins use identical public contracts. Plugins cannot extend the semantic kernel or provide target-source renderers.
 
 ### `ports`
 
-Interfaces implemented by adapters/infrastructure:
+Interfaces for:
 
-- source adapter that normalizes into the closed kernel;
-- target/language detection, validation, and module/path adapter;
-- template-engine adapter;
-- pack provider;
-- ecosystem/toolchain adapter;
-- artifact writer;
-- cache store;
-- command executor;
-- approval store;
-- event sink.
+- contract providers/loaders;
+- target validation and module/path facts;
+- template engines;
+- pack providers;
+- ecosystem adapters;
+- writers;
+- cache stores;
+- command executors;
+- approval stores;
+- event sinks.
 
-There is no semantic facet/selector plugin port and no type/literal/import/export renderer port.
+There is no semantic-extension, facet-registration, selector-registration, or type/literal/import/export renderer port.
 
 ### `runtime`
 
-Immutable composition and isolated sessions. Runtime coordinates selected services without process-global state or permitting adapters to mutate kernel registries.
+Immutable composition and isolated sessions. Runtime coordinates selected services without global state or plugin mutation of core registries.
+
+The planned `DryvRuntime` facade provides validation, inspection, planning, generation, transport, and state operations.
 
 ### `infrastructure`
 
-Concrete implementations for:
+Concrete implementations for safe YAML/JSON, canonical contract loading, local pack snapshots, memory/archive/filesystem writers, ownership state, entry-point discovery, and future approved caches/providers/executors.
 
-- safe YAML/JSON parsing;
-- local and generic Git pack snapshots;
-- filesystem, memory, and archive writers;
-- ownership/generation-state persistence;
-- content-addressed cache;
-- subprocess execution;
-- dependency locks;
-- approval persistence;
-- Python entry-point discovery.
+### `dryv-cli`
 
-### `cli`
-
-Thin argument parsing and terminal presentation only. It constructs typed API requests, invokes application services, renders results, and selects exit codes.
+Separate distribution containing thin argument parsing and terminal presentation only. It creates typed runtime requests, invokes public runtime operations, renders results, and selects exit codes.
 
 ## Dependency direction
 
 ```text
-CLI / Python facade / MCP / HTTP / IDE
-                 │
-                 ▼
-           application
-            │        │
-            ▼        ▼
-         domain     ports
-                      ▲
-                      │
-               infrastructure
+dryv-cli / IDE / MCP / HTTP / notebook / host application
+                         │
+                         ▼
+                       api
+                         │
+                         ▼
+                    application
+                     │        │
+                     ▼        ▼
+                  domain     ports
+                               ▲
+                               │
+                        infrastructure
+```
+
+External package direction:
+
+```text
+dryv-cli ----------------------> dryv
+dryv-author -------------------> dryv
+dryv-template-jinja -----------> dryv
+dryv-language-typescript ------> dryv
+dryv-language-dart ------------> dryv
 ```
 
 Rules:
 
-- domain imports no application, infrastructure, runtime, or CLI module;
+- domain imports no application, infrastructure, runtime, or interface module;
 - application imports domain and ports, not concrete infrastructure;
-- infrastructure implements ports and may import public domain/config contracts;
-- CLI/frontends import only public API/presentation helpers;
-- adapter packages import only published public contracts;
-- adapters never import another adapter's internals;
-- only core/domain defines semantic objects/facets/selectors/context contracts;
-- only authored pack files produce generated text.
+- infrastructure implements ports;
+- interfaces import only public runtime APIs;
+- plugin packages import only published public contracts;
+- plugins never import another plugin's internals;
+- only Dryv core defines semantic objects, facets, selectors, and context contracts;
+- only pack templates, macros, partials, and static files author generated text;
+- `dryv` never depends on `dryv-cli` or `dryv-author`.
 
 ## Distribution topology
 
-Planned distributions:
-
 ```text
 dryv
-dryv
-dryv-openapi
+dryv-cli
+dryv-author
 dryv-language-typescript
 dryv-language-dart
 dryv-template-jinja
-dryv-pack-typescript-sdk
-dryv-pack-dart-sdk
-dryv-pack-flutter-sdk
 ```
 
-`dryv` is minimal. `dryv` is the batteries-included distribution installing compatible official defaults.
+Reusable packs are independently versioned artifacts and do not need to be hardcoded runtime dependencies.
 
-## Namespace transition rule
+## Archived package isolation
 
-V2 is developed/tested separately from the old package. It must not rely on side-by-side installation of two distributions owning `dryv`.
-
-Release cutover replaces the old distribution rather than merging implementations.
+The archived generator retains its original package and namespace. Dryv does not import or replace its internals and can be tested independently without namespace collisions.
 
 ## Architecture tests
 
-The core suite verifies:
+The suites verify:
 
-- dependency/import direction and public/private namespaces;
-- no old package imports;
-- no CLI dependency below CLI;
-- no plugin-specific imports in core;
-- no process-global registry mutation;
+- dependency direction and public/private namespaces;
+- no archived implementation imports;
+- no interface dependency below the interface layer;
+- no plugin-specific imports in the semantic kernel;
+- no process-global registries;
 - no plugin-defined semantic/facet/selector/context extension path;
-- no target source renderer ports;
-- generated text originates only from templates/macros/partials/static files;
-- package installation/import in an isolated environment.
+- no target-source renderer ports;
+- generated text originates only from packs;
+- runtime-only and full-family isolated installation.
