@@ -12,49 +12,51 @@ src/dryv/
 ├── api/
 ├── application/
 ├── config/
+├── diagnostics/
 ├── domain/
 │   ├── ir/
 │   └── generation/
+├── generation/
+├── infrastructure/
+├── ir/
 ├── plugins/
 ├── ports/
 ├── runtime/
-└── infrastructure/
+├── testing/
+└── versions/
 ```
 
-The existing `src/dryv/cli/` code is transitional and moves to `dryv-cli`.
+The runtime package contains no `cli/` package and no console script.
+
+## Runtime facade
+
+`dryv.runtime.DryvRuntime` is the primary in-process interface:
+
+```text
+DryvRuntime
+├── snapshot
+├── plan
+├── generate
+└── generate_to_files
+```
+
+A runtime owns one immutable plugin graph. Frontends may discover installed plugins or inject an explicit graph for tests and embedded hosts.
+
+The runtime returns structured operation results and immutable inspection data. It contains no terminal colors, prompts, spinners, command parser, or output formatting.
 
 ## Responsibilities
 
 ### `api`
 
-Stable Python-facing requests, results, cancellation, events, runtime facade, and supported exports.
-
-It contains no terminal parsing, target syntax, template-engine implementation, authoring builders, package-manager logic, or concrete project UI.
+Stable operation results, cancellation, events, and supported public primitives.
 
 ### `application`
 
-Use cases and coordination:
-
-- load and validate contracts, projects, packs, and plugins;
-- inspect plans, artifacts, symbols, state, and compatibility;
-- plan and generate;
-- emit canonical transport;
-- resolve packs through approved providers;
-- manage locks, approvals, cache, and ownership state through ports.
-
-Application services depend on domain contracts and ports, not concrete infrastructure.
+Use cases for project loading, validation, planning, rendering, and writing. Application services depend on domain contracts and ports.
 
 ### `config`
 
-Typed configuration infrastructure:
-
-- safe document decoding;
-- project, provider, and pack models;
-- typed validation;
-- option and binding descriptors;
-- schema introspection and serialization.
-
-Raw YAML/JSON values stop here. Configuration cannot add semantic objects, facets, selectors, expressions, or template-context properties.
+Strict project and pack decoding, typed options/bindings, path validation, and configuration diagnostics.
 
 ### `domain.ir`
 
@@ -63,73 +65,63 @@ The closed source-neutral semantic kernel:
 ```text
 contract and groups
 semantic identity, names, provenance, tags, and guidance
-structural schemas, fields, constraints, and uses
-operations, inputs, outputs, failures, effects, and known facets
-views, parts, triggers, and flows
-storage mappings, fields, keys, indexes, relations, and constraints
+structural schemas and uses
+operations, failures, effects, and known facets
+views and parts
+storage mappings
 policies and access
 application events and execution hooks
 value sources
-workflows, transitions, waits, decisions, branches, and compensation
+workflows and compensation
 presentations and view placement
-uniform validation and private typed indexes
 ```
 
-It contains no provider implementation, target syntax, template engine, filesystem, command executor, cache implementation, runtime composition, or interface concern.
+It contains no source provider implementation, target syntax, template engine, filesystem, command executor, or interface concern.
 
 ### `domain.generation`
 
-Generation semantics:
-
-- pack and file descriptors;
-- fixed selector descriptors and contexts;
-- template/static invocations;
-- stable artifact identity and destinations;
-- external bindings;
-- generated providers, symbols, imports, and exports;
-- target-aware path/module facts;
-- dependency, collision, command, and readiness graphs;
-- explanation and impact records;
-- lifecycle and ownership intent.
-
-It does not render target-language text.
+Selection, artifact identity, dependencies, destinations, module/path facts, explanation, impact, and ownership intent. It does not render target-language text.
 
 ### `plugins`
 
-Public descriptors, API/behavior versions, capabilities, factory loading, runtime registries, and compatibility validation.
-
-Official and third-party plugins use identical public contracts. Plugins cannot extend the semantic kernel or provide target-source renderers.
+Public plugin descriptors, compatibility, and runtime registry validation. Plugins cannot extend the semantic kernel.
 
 ### `ports`
 
-Interfaces for:
-
-- contract providers/loaders;
-- target validation and module/path facts;
-- template engines;
-- pack providers;
-- ecosystem adapters;
-- writers;
-- cache stores;
-- command executors;
-- approval stores;
-- event sinks.
-
-There is no semantic-extension, facet-registration, selector-registration, or type/literal/import/export renderer port.
+Public contracts for source adapters, target adapters, template engines, managed writers, and future approved providers/infrastructure.
 
 ### `runtime`
 
-Immutable composition and isolated sessions. Runtime coordinates selected services without global state or plugin mutation of core registries.
-
-The planned `DryvRuntime` facade provides validation, inspection, planning, generation, transport, and state operations.
+Immutable plugin composition, generation sessions, runtime inspection, and the public `DryvRuntime` facade.
 
 ### `infrastructure`
 
-Concrete implementations for safe YAML/JSON, canonical contract loading, local pack snapshots, memory/archive/filesystem writers, ownership state, entry-point discovery, and future approved caches/providers/executors.
+Safe YAML/JSON, canonical IR loading, pack discovery, plugin entry-point loading, archive/memory/filesystem writers, and ownership state.
 
-### `dryv-cli`
+## Standalone CLI layout
 
-Separate distribution containing thin argument parsing and terminal presentation only. It creates typed runtime requests, invokes public runtime operations, renders results, and selects exit codes.
+```text
+packages/python/dryv-cli/
+├── src/dryv_cli/
+│   ├── commands/
+│   ├── presentation/
+│   ├── prompts/
+│   ├── services/
+│   ├── app.py
+│   ├── main.py
+│   └── __main__.py
+└── tests/
+```
+
+`dryv-cli` owns:
+
+- Click command parsing and help dispatch;
+- Rich colors, spinners, trees, diagnostics, and summaries;
+- Questionary interactive confirmation;
+- stable JSON presentation;
+- CLI exit-code policy.
+
+It imports only public Dryv contracts and contains no planning, rendering, writer, plugin-discovery, or semantic implementation.
 
 ## Dependency direction
 
@@ -137,7 +129,7 @@ Separate distribution containing thin argument parsing and terminal presentation
 dryv-cli / IDE / MCP / HTTP / notebook / host application
                          │
                          ▼
-                       api
+                    DryvRuntime
                          │
                          ▼
                     application
@@ -163,11 +155,10 @@ Rules:
 
 - domain imports no application, infrastructure, runtime, or interface module;
 - application imports domain and ports, not concrete infrastructure;
-- infrastructure implements ports;
-- interfaces import only public runtime APIs;
-- plugin packages import only published public contracts;
-- plugins never import another plugin's internals;
-- only Dryv core defines semantic objects, facets, selectors, and context contracts;
+- runtime composition may select approved infrastructure implementations;
+- interfaces consume only public runtime APIs;
+- plugin packages consume only published contracts;
+- only Dryv core defines semantic objects, facets, selectors, and contexts;
 - only pack templates, macros, partials, and static files author generated text;
 - `dryv` never depends on `dryv-cli` or `dryv-author`.
 
@@ -182,11 +173,7 @@ dryv-language-dart
 dryv-template-jinja
 ```
 
-Reusable packs are independently versioned artifacts and do not need to be hardcoded runtime dependencies.
-
-## Archived package isolation
-
-The archived generator retains its original package and namespace. Dryv does not import or replace its internals and can be tested independently without namespace collisions.
+Reusable packs remain independently versioned artifacts.
 
 ## Architecture tests
 
@@ -194,10 +181,10 @@ The suites verify:
 
 - dependency direction and public/private namespaces;
 - no archived implementation imports;
-- no interface dependency below the interface layer;
-- no plugin-specific imports in the semantic kernel;
-- no process-global registries;
-- no plugin-defined semantic/facet/selector/context extension path;
-- no target-source renderer ports;
-- generated text originates only from packs;
-- runtime-only and full-family isolated installation.
+- no terminal frontend or console script in `dryv`;
+- no private Dryv imports from `dryv-cli`;
+- no direct Python `print()` or `input()` in CLI source;
+- no Rich panels or box borders;
+- no stale `.gitkeep` beside implemented source/tests;
+- no process-global runtime registry;
+- generated text originates only from packs.
