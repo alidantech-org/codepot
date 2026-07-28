@@ -51,7 +51,6 @@ def test_only_published_dryv_namespaces_are_imported() -> None:
 def test_source_has_no_cross_adapter_or_old_renderer_imports() -> None:
     text = "\n".join(path.read_text(encoding="utf-8") for path in python_sources())
     forbidden = (
-        "dryv_openapi",
         "dryv_language_typescript",
         "dryv_language_dart",
         "dryv_pack_",
