@@ -1,0 +1,324 @@
+"""App emit workflow.
+
+Orchestrates JSONL compilation, compatibility inference, language adaptation,
+and either legacy or approved graph-based template emission.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import replace
+from pathlib import Path
+from typing import Any
+
+from archives.codepotg.src.app.models import EmitInput, EmitOutput, RuntimeDiagnostic, RuntimeEvent
+from archives.codepotg.src.app.workflows.normalization import required_normalized_roots
+from archives.codepotg.src.app.workflows.template_paths import resolve_template_root
+from archives.codepotg.src.core.memory_trace import MemoryTrace
+from archives.codepotg.src.emission.bounded_graph_engine import emit_bounded_graph
+from archives.codepotg.src.emission.legacy_queued_engine import emit_legacy_queued as run_legacy_emission
+from archives.codepotg.src.emission.paths.config_loader import load_path_config
+from archives.codepotg.src.emission.templates.renderer import clear_environment_cache
+from archives.codepotg.src.inference.engine import InferenceEngine
+from archives.codepotg.src.inference.generation_contract import build_generation_contract
+from archives.codepotg.src.languages.discovery import resolve_language_adapter
+from archives.codepotg.src.openapi.jsonl import compile_openapi_source_jsonl
+from archives.codepotg.src.openapi.loader import load_openapi_document
+
+
+def run_emit(request: EmitInput) -> EmitOutput:
+    """Run the emit workflow and return structured output."""
+    trace = MemoryTrace.from_environment()
+    try:
+        return _run_emit(request, trace=trace)
+    finally:
+        clear_environment_cache()
+        trace.close()
+
+
+def _run_emit(request: EmitInput, *, trace: MemoryTrace) -> EmitOutput:
+    trace.snapshot("start")
+    cache_path = _generation_cache_path(request.input_path)
+    pre_diagnostics: list[RuntimeDiagnostic] = []
+    seen_jsonl_files: set[str] = set()
+
+    def jsonl_progress(event: Mapping[str, Any]) -> None:
+        stage = str(event.get("stage", "jsonl"))
+        status = str(event.get("status", "progress"))
+        relative = event.get("file")
+        if stage == "input" and status == "compatibility":
+            warning = str(event.get("warning", "YAML compatibility conversion in use"))
+            pre_diagnostics.append(RuntimeDiagnostic(level="warning", message=warning))
+            _notify(
+                request,
+                stage="jsonl_compatibility_warning",
+                message=warning,
+                level="warning",
+            )
+            return
+        if stage == "record" and status == "written" and isinstance(relative, str):
+            if relative in seen_jsonl_files:
+                return
+            seen_jsonl_files.add(relative)
+            _notify(
+                request,
+                stage="jsonl_file_writing",
+                message=f"Writing JSONL: {cache_path / Path(relative)}",
+            )
+            return
+        if stage == "runtime" and status == "tuned":
+            message = str(event.get("message", "Runtime limits resolved"))
+            pre_diagnostics.append(RuntimeDiagnostic(level="info", message=message))
+            _notify(request, stage="runtime_tuned", message=message)
+            return
+        messages = {
+            ("compiler", "started"): "Compiling OpenAPI into indexed JSONL",
+            ("compiler", "reused"): f"Reused JSONL cache: {cache_path}",
+            ("compiler", "completed"): f"JSONL cache ready: {cache_path}",
+            ("compiler", "failed"): "JSONL compilation failed",
+        }
+        message = messages.get((stage, status))
+        if message:
+            _notify(
+                request,
+                stage=f"jsonl_{status}",
+                message=message,
+                level="error" if status == "failed" else "info",
+            )
+
+    jsonl_result = compile_openapi_source_jsonl(
+        request.input_path,
+        cache_path,
+        progress=jsonl_progress,
+    )
+    trace.snapshot("jsonl_ready")
+    pre_diagnostics.append(
+        RuntimeDiagnostic(
+            level="info",
+            message=(
+                f"JSONL cache {'reused' if jsonl_result.reused else 'compiled'}: "
+                f"{jsonl_result.cache_dir}"
+            ),
+        )
+    )
+    pre_diagnostics.extend(
+        RuntimeDiagnostic(level="info", message=message)
+        for message in jsonl_result.diagnostics
+        if not any(existing.message == message for existing in pre_diagnostics)
+    )
+
+    compatibility_input = jsonl_result.compatibility_path or request.input_path
+    _notify(
+        request,
+        stage="loading_openapi",
+        message=f"Loading compatibility OpenAPI contract: {compatibility_input}",
+    )
+    document = load_openapi_document(compatibility_input)
+    trace.snapshot("document_loaded")
+
+    _notify(request, stage="inferring_schemas", message="Inferring schemas")
+    _notify(request, stage="inferring_operations", message="Inferring operations")
+    graph = InferenceEngine().infer(document, copy_raw=False)
+    del document
+    trace.snapshot("graph_inferred")
+
+    _notify(
+        request,
+        stage="resolving_language",
+        message=f"Resolving language adapter: {request.language}",
+    )
+    adapter = resolve_language_adapter(request.language)
+    template_root = resolve_template_root(
+        adapter=adapter,
+        templates_path=request.templates_path,
+    )
+    normalized_roots = required_normalized_roots(template_root)
+    roots_message = (
+        "Normalized roots: " + ", ".join(sorted(normalized_roots))
+        if normalized_roots
+        else "Normalized roots: none (compatibility fast path)"
+    )
+    pre_diagnostics.append(RuntimeDiagnostic(level="info", message=roots_message))
+    _notify(request, stage="normalization_planned", message=roots_message)
+
+    _notify(
+        request,
+        stage="building_contract",
+        message="Building generation API contract",
+    )
+    api_contract = build_generation_contract(
+        graph,
+        normalized_roots=normalized_roots,
+    )
+    del graph
+    trace.snapshot("contract_built")
+
+    _notify(request, stage="planning_output_files", message="Planning output files")
+    template_contract = adapter.build_template_contract(
+        api=api_contract,
+        output_path=request.output_path,
+        template_root=template_root,
+        dry_run=request.dry_run,
+        frontend=request.frontend,
+        progress=request.progress,
+    )
+    source_meta = jsonl_result.manifest.source
+    source_size = int(source_meta.get("originalSize", source_meta.get("size", 0)))
+    template_contract = replace(
+        template_contract,
+        emit=replace(
+            template_contract.emit,
+            meta={
+                **template_contract.emit.meta,
+                "jsonl_cache": str(jsonl_result.cache_dir),
+                "jsonl_reused": jsonl_result.reused,
+                "jsonl_source_size": source_size,
+                "jsonl_index_backend": "sqlite",
+                "normalized_roots": tuple(sorted(normalized_roots)),
+            },
+        ),
+    )
+    trace.snapshot("template_contract_built")
+
+    path_config = load_path_config(template_root)
+    if path_config.uses_graph:
+        _notify(
+            request,
+            stage="rendering_writing_files",
+            message="Rendering dependency graph with adaptive batches",
+        )
+        emission_result = emit_bounded_graph(
+            template_contract,
+            progress=request.progress,
+        )
+    else:
+        _notify(
+            request,
+            stage="rendering_writing_files",
+            message="Rendering legacy pack with adaptive batches",
+        )
+        emission_result = run_legacy_emission(
+            template_contract,
+            progress=request.progress,
+        )
+    trace.snapshot("emission_complete")
+
+    _notify(
+        request,
+        stage="language_post_actions",
+        message="Running language post-actions",
+    )
+    post_result = adapter.after_emit(
+        result=emission_result,
+        progress=request.progress,
+    )
+
+    _notify(
+        request,
+        stage="emission_complete",
+        message="Emission completed",
+        total=len(emission_result.plan.files),
+    )
+
+    write_result = emission_result.write_result
+    diagnostics = [
+        *pre_diagnostics,
+        RuntimeDiagnostic(
+            level="info",
+            message=(
+                "Emission completed: "
+                f"{len(write_result.created)} created, "
+                f"{len(write_result.updated)} updated, "
+                f"{len(write_result.unchanged)} unchanged, "
+                f"{len(write_result.skipped)} skipped."
+            ),
+        ),
+        RuntimeDiagnostic(
+            level="info",
+            message=(
+                "Managed: "
+                f"{len(write_result.created) - len(write_result.immutable_created)} created, "
+                f"{len(write_result.updated)} updated, "
+                f"{len(write_result.unchanged)} unchanged. "
+                "Immutable: "
+                f"{len(write_result.immutable_created)} created, "
+                f"{len(write_result.immutable_skipped)} skipped existing. "
+                f"Refused: {len(write_result.refused)}."
+            ),
+        ),
+    ]
+    queue_stats = emission_result.queue_stats
+    if queue_stats is not None:
+        diagnostics.append(
+            RuntimeDiagnostic(
+                level="info",
+                message=(
+                    "Graph queues: "
+                    f"files peak={queue_stats.pending_files_high_water}, "
+                    f"bytes peak={queue_stats.pending_bytes_high_water}, "
+                    f"waits={queue_stats.queue_waits}, "
+                    f"batches={queue_stats.batches_written}, "
+                    f"batch peak={queue_stats.batch_files_high_water} files/"
+                    f"{queue_stats.batch_bytes_high_water} bytes, "
+                    f"written={queue_stats.files_written}."
+                ),
+            )
+        )
+
+    diagnostics.extend(
+        RuntimeDiagnostic(level="info", message=message)
+        for message in post_result.diagnostics
+    )
+    diagnostics.extend(
+        RuntimeDiagnostic(level="info", message=message)
+        for message in trace.summaries()
+    )
+
+    output = EmitOutput(
+        input_path=request.input_path,
+        language=request.language,
+        output_path=request.output_path,
+        dry_run=request.dry_run,
+        planned=[file.output_path for file in emission_result.plan.files],
+        written=list(write_result.created),
+        updated=list(write_result.updated),
+        unchanged=list(write_result.unchanged),
+        skipped=list(write_result.skipped),
+        immutable_created=list(write_result.immutable_created),
+        immutable_skipped=list(write_result.immutable_skipped),
+        refused=list(write_result.refused),
+        diagnostics=diagnostics,
+    )
+    del api_contract
+    del template_contract
+    del emission_result
+    del jsonl_result
+    return output
+
+
+def _generation_cache_path(input_path: Path) -> Path:
+    source = input_path.expanduser().resolve()
+    return source.parent / ".codepotg" / "cache" / source.stem
+
+
+def _notify(
+    request: EmitInput,
+    *,
+    stage: str,
+    message: str,
+    level: str = "info",
+    current: int | None = None,
+    total: int | None = None,
+) -> None:
+    """Emit a runtime progress event when a sink is provided."""
+    if request.progress is None:
+        return
+    request.progress(
+        RuntimeEvent(
+            stage=stage,
+            message=message,
+            level=level,
+            current=current,
+            total=total,
+        )
+    )

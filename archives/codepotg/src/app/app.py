@@ -1,0 +1,142 @@
+"""Public runtime application API."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from archives.codepotg.src.app.models import (
+    EmitInput,
+    EmitOutput,
+    GenerateInput,
+    GenerateOutput,
+    InferInput,
+    InferOutput,
+    InspectInput,
+    InspectOutput,
+    JsonlInput,
+    JsonlOutput,
+    PathsInput,
+    PathsOutput,
+    ProgressSink,
+    ValidateInput,
+    ValidateOutput,
+)
+from archives.codepotg.src.app.workflows.emit import run_emit
+from archives.codepotg.src.app.workflows.generate import run_generate
+from archives.codepotg.src.app.workflows.infer import run_infer
+from archives.codepotg.src.app.workflows.inspect import run_inspect
+from archives.codepotg.src.app.workflows.jsonl import run_jsonl
+from archives.codepotg.src.app.workflows.paths import run_paths
+from archives.codepotg.src.app.workflows.validate import run_validate
+
+
+class GeneratorApp:
+    """Public runtime API for the generator.
+
+    Interfaces such as CLI, UI, tests, or HTTP handlers should call this class.
+    Runtime methods return structured results and do not render terminal output.
+    """
+
+    def inspect(self, input_path: Path) -> InspectOutput:
+        """Inspect an OpenAPI document."""
+        return run_inspect(
+            InspectInput(
+                input_path=input_path,
+            )
+        )
+
+    def infer(
+        self,
+        input_path: Path,
+        output_path: Path | None = None,
+    ) -> InferOutput:
+        """Run OpenAPI inference."""
+        return run_infer(
+            InferInput(
+                input_path=input_path,
+                output_path=output_path,
+            )
+        )
+
+    def emit(
+        self,
+        input_path: Path,
+        language: str,
+        output_path: Path,
+        *,
+        dry_run: bool = False,
+        templates_path: Path | None = None,
+    ) -> EmitOutput:
+        """Emit generated output for a language."""
+        return run_emit(
+            EmitInput(
+                input_path=input_path,
+                language=language,
+                output_path=output_path,
+                dry_run=dry_run,
+                templates_path=templates_path,
+            )
+        )
+
+    def generate(
+        self,
+        *,
+        config_path: Path | None = None,
+        task_name: str | None = None,
+        all_tasks: bool = False,
+        dry_run: bool = False,
+        verbose: bool = False,
+        refresh: bool = False,
+        skip_before: bool = False,
+        skip_after: bool = False,
+        progress: ProgressSink | None = None,
+    ) -> GenerateOutput:
+        """Run CodepotFile-driven generation."""
+        return run_generate(
+            GenerateInput(
+                config_path=config_path,
+                task_name=task_name,
+                all_tasks=all_tasks,
+                dry_run=dry_run,
+                verbose=verbose,
+                refresh=refresh,
+                skip_before=skip_before,
+                skip_after=skip_after,
+                progress=progress,
+            )
+        )
+
+    def jsonl(
+        self,
+        input_path: Path,
+        output_path: Path,
+        *,
+        reuse_unchanged: bool = True,
+        progress: ProgressSink | None = None,
+    ) -> JsonlOutput:
+        """Compile a user-visible indexed JSONL cache."""
+        return run_jsonl(
+            JsonlInput(
+                input_path=input_path,
+                output_path=output_path,
+                reuse_unchanged=reuse_unchanged,
+                progress=progress,
+            )
+        )
+
+    def paths(
+        self,
+        template_root: Path,
+        *,
+        progress: ProgressSink | None = None,
+    ) -> PathsOutput:
+        """Resolve and inspect a template pack paths configuration."""
+        return run_paths(PathsInput(template_root=template_root, progress=progress))
+
+    def validate(self, input_path: Path) -> ValidateOutput:
+        """Validate an OpenAPI document."""
+        return run_validate(
+            ValidateInput(
+                input_path=input_path,
+            )
+        )
