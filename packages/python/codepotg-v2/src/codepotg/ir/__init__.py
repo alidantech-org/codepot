@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+from importlib import import_module
+from typing import TYPE_CHECKING, Any
+
 from codepotg.domain.ir import (
     AccessFacet,
     Compensation,
@@ -70,6 +75,42 @@ from codepotg.domain.ir import (
     walk_workflow_steps,
 )
 
+_CODEC_EXPORTS = {
+    "IrCodecError",
+    "contract_from_document",
+    "contract_from_json",
+    "contract_from_yaml",
+    "contract_to_document",
+    "contract_to_json",
+    "contract_to_yaml",
+    "validate_transport",
+}
+
+if TYPE_CHECKING:
+    from .codec import (
+        IrCodecError,
+        contract_from_document,
+        contract_from_json,
+        contract_from_yaml,
+        contract_to_document,
+        contract_to_json,
+        contract_to_yaml,
+        validate_transport,
+    )
+
+
+def __getattr__(name: str) -> Any:
+    if name not in _CODEC_EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(import_module(".codec", __name__), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(__all__))
+
+
 __all__ = [
     "AccessFacet",
     "Compensation",
@@ -96,6 +137,7 @@ __all__ = [
     "GuidanceKind",
     "GuidanceNote",
     "HttpFacet",
+    "IrCodecError",
     "JsonScalar",
     "KernelData",
     "Name",
@@ -133,33 +175,18 @@ __all__ = [
     "WorkflowStep",
     "WorkflowStepKind",
     "WorkflowTransition",
-    "pluralize",
-    "singularize",
-    "type_references",
-    "validate_contract",
-    "walk_groups",
-    "walk_views",
-    "walk_workflow_steps",
-]
-
-from .codec import (
-    IrCodecError,
-    contract_from_document,
-    contract_from_json,
-    contract_from_yaml,
-    contract_to_document,
-    contract_to_json,
-    contract_to_yaml,
-    validate_transport,
-)
-
-__all__ += [
-    "IrCodecError",
     "contract_from_document",
     "contract_from_json",
     "contract_from_yaml",
     "contract_to_document",
     "contract_to_json",
     "contract_to_yaml",
+    "pluralize",
+    "singularize",
+    "type_references",
+    "validate_contract",
     "validate_transport",
+    "walk_groups",
+    "walk_views",
+    "walk_workflow_steps",
 ]

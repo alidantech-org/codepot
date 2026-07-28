@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+from importlib import import_module
+from typing import TYPE_CHECKING, Any
+
 from .api import CancellationToken, OperationCancelled, OperationResult, OperationStatus
 from .diagnostics import (
     Diagnostic,
@@ -24,12 +29,6 @@ from .ir import (
     Operation,
     Schema,
     SemanticId,
-    contract_from_document,
-    contract_from_json,
-    contract_from_yaml,
-    contract_to_document,
-    contract_to_json,
-    contract_to_yaml,
     validate_contract,
 )
 from .plugins import PluginCategory, PluginDescriptor, PluginRegistry, PluginTrust
@@ -47,7 +46,43 @@ from .versions import (
 
 __version__ = str(CORE_VERSION)
 
-from .application import generate, generate_to_files
+_LAZY_EXPORTS = {
+    "contract_from_document": ("codepotg.ir", "contract_from_document"),
+    "contract_from_json": ("codepotg.ir", "contract_from_json"),
+    "contract_from_yaml": ("codepotg.ir", "contract_from_yaml"),
+    "contract_to_document": ("codepotg.ir", "contract_to_document"),
+    "contract_to_json": ("codepotg.ir", "contract_to_json"),
+    "contract_to_yaml": ("codepotg.ir", "contract_to_yaml"),
+    "generate": ("codepotg.application", "generate"),
+    "generate_to_files": ("codepotg.runtime.composition", "generate_to_files"),
+}
+
+if TYPE_CHECKING:
+    from .application import generate
+    from .ir import (
+        contract_from_document,
+        contract_from_json,
+        contract_from_yaml,
+        contract_to_document,
+        contract_to_json,
+        contract_to_yaml,
+    )
+    from .runtime.composition import generate_to_files
+
+
+def __getattr__(name: str) -> Any:
+    target = _LAZY_EXPORTS.get(name)
+    if target is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    module_name, attribute = target
+    value = getattr(import_module(module_name), attribute)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(__all__))
+
 
 __all__ = [
     "ApiVersion",
