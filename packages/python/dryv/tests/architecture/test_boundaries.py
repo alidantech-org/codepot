@@ -115,9 +115,7 @@ def test_domain_dependency_direction_and_clean_room_boundary() -> None:
                 )
             ):
                 violations.append(f"{relative} violates domain dependency direction: {imported}")
-            if relative.parts[0] == "application" and imported.startswith(
-                "dryv.infrastructure"
-            ):
+            if relative.parts[0] == "application" and imported.startswith("dryv.infrastructure"):
                 violations.append(f"{relative} imports concrete infrastructure: {imported}")
 
     assert violations == []

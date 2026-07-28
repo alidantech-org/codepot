@@ -58,10 +58,7 @@ class DryvRuntime:
         for adapter in self.plugins.target_adapters:
             descriptor = adapter.plugin
             provided = tuple(
-                sorted(
-                    f"{target.id}: {', '.join(target.extensions)}"
-                    for target in adapter.targets
-                )
+                sorted(f"{target.id}: {', '.join(target.extensions)}" for target in adapter.targets)
             )
             plugins.append(
                 RuntimePluginInfo(

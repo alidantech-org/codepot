@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dryv.diagnostics import Diagnostic, DiagnosticSeverity, Diagnostics
+from dryv.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
 from rich.text import Text
 from rich.tree import Tree
 

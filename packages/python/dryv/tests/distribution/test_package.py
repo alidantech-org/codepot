@@ -24,7 +24,7 @@ def test_wheel_builds_contains_typed_package_tree_and_imports_in_isolation(
         str(dist),
         cwd=PACKAGE_ROOT,
     )
-    wheels = tuple(dist.glob("dryv_core-*.whl"))
+    wheels = tuple(dist.glob("dryv-*.whl"))
     assert len(wheels) == 1
     wheel = wheels[0]
 

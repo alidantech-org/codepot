@@ -17,7 +17,9 @@ def plan_tree(artifacts: tuple[ArtifactPlan, ...], project_name: str) -> Tree:
 
     for pack_instance, pack_id in sorted(grouped):
         pack_node = root.add(_label(pack_instance, pack_id, "command", "muted"))
-        for artifact in sorted(grouped[(pack_instance, pack_id)], key=lambda item: item.output_path):
+        for artifact in sorted(
+            grouped[(pack_instance, pack_id)], key=lambda item: item.output_path
+        ):
             artifact_node = pack_node.add(
                 _label(artifact.output_path, artifact.kind.value, "path", "muted")
             )
@@ -26,9 +28,7 @@ def plan_tree(artifacts: tuple[ArtifactPlan, ...], project_name: str) -> Tree:
                     _label("selection", artifact.selection_key, "muted", "identifier")
                 )
             if artifact.semantic_id:
-                artifact_node.add(
-                    _label("semantic", artifact.semantic_id, "muted", "identifier")
-                )
+                artifact_node.add(_label("semantic", artifact.semantic_id, "muted", "identifier"))
             if artifact.target_id:
                 artifact_node.add(_label("target", artifact.target_id, "muted", "value"))
             artifact_node.add(_label("template", artifact.template_id, "muted", "path"))

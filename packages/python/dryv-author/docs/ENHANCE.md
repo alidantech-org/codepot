@@ -1844,3 +1844,742 @@ User.pick(
 ```
 
 That approach is clean, readable and compatible with the builder-flow philosophy proven in the earlier Codepot design.
+
+## Evaluation
+
+Your concern is valid. The later design discussion became heavily focused on **protecting the closed IR and defining boundaries**, but that can make the product appear smaller than originally intended.
+
+The original thread was not proposing a limited schema authoring package. It proposed a **complete typed Python authoring system for all software meaning understood by Dryv**:
+
+```text
+typed Python authoring
+        ↓
+complete Dryv Contract
+        ↓
+validation and planning
+        ↓
+packs, templates and managed output
+```
+
+The authoring design may change, especially around field capabilities and derivation, but the semantic feature set must remain. 
+
+# Feature scope that must remain
+
+## 1. Multiple authoring sources, one semantic contract
+
+Dryv must support several ways of producing the same contract:
+
+```text
+dryv-author Python declarations ─┐
+OpenAPI adapter ─────────────────┤
+Native Codepot language ─────────┼──> dryv.ir.Contract
+Canonical IR transport ─────────┘
+```
+
+OpenAPI is only one source adapter. It is not the foundation of authoring.
+
+All sources must compile to:
+
+* One IR
+* One validation model
+* One selector system
+* One template-context contract
+* One planning and generation pipeline
+
+No source frontend gets its own competing graph or generation mechanism. 
+
+---
+
+## 2. Typed Python authoring
+
+`dryv-author` remains a full typed authoring frontend using:
+
+* Python annotations
+* Generics
+* Protocols
+* Overloads
+* `Literal`
+* `Annotated`
+* Pydantic
+* Pyright and mypy
+* Typed immutable references
+* Deterministic linking
+* Structured diagnostics
+
+Pydantic is used for authoring validation and introspection, but no Pydantic classes, validators, builders or Python functions enter the final contract.
+
+---
+
+## 3. Contracts and groups
+
+The outer semantic organization remains:
+
+```text
+Contract
+├── Groups
+└── Workflows
+```
+
+Groups own connected domain meaning such as:
+
+```text
+Group
+├── Properties
+├── Schemas
+├── Operations
+├── Policies
+├── Events
+├── Storage mappings
+├── Value sources
+└── Views
+```
+
+The exact ownership of presentations may be contract-level or another clearly defined location, but the feature itself remains.
+
+---
+
+## 4. Reusable properties and types
+
+The authoring system must support:
+
+* Primitive properties
+* Reusable constrained properties
+* Enums
+* Object schemas
+* Schema fields
+* Nested schemas
+* References
+* Arrays
+* Optionality
+* Nullability
+* Defaults
+* Constraints
+* Structural extension
+
+Both styles remain valid:
+
+```python
+Email = Annotated[EmailStr, cp.field(min_length=3)]
+```
+
+and explicit reusable property definitions that return typed references.
+
+---
+
+## 5. Structural schemas
+
+Schemas remain neutral structural types. They may represent:
+
+* Domain structures
+* Inputs
+* Outputs
+* Event payloads
+* Query shapes
+* View data
+* Stored structures
+* Derived structures
+* Mapped external shapes
+
+A schema must not automatically become:
+
+* An ORM entity
+* A database table
+* An endpoint
+* A form
+* A frontend component
+
+Persistence, operations and views remain separately declared.
+
+---
+
+## 6. Field capabilities
+
+Field capabilities remain an important feature.
+
+The change is only where and how they are authored.
+
+Instead of embedding every capability while defining the base schema:
+
+```python
+User = schemas.object(...)
+User.field_capabilities(...)
+```
+
+Capabilities can be applied after the structural schema exists.
+
+They may express:
+
+* Initialization eligibility
+* Mutation eligibility
+* Visibility
+* Sensitivity
+* Selection support
+* Filtering support
+* Sorting support
+* Reference intent
+* Lifecycle facts
+* Other closed, typed field facts
+* Namespaced tags for non-semantic hints
+
+Capabilities must not automatically generate schemas, operations, repositories, forms or controls.
+
+---
+
+## 7. Explicit schema derivation
+
+Schema derivation remains a major feature. Only automatic fixed derivations are removed.
+
+Dryv must support explicit:
+
+* Pick
+* Omit
+* Include
+* Exclude
+* Partial
+* Requiredness changes
+* Nullability changes
+* Extension
+* Field addition
+* Field removal
+* Rename
+* Replacement
+* Constraint modification
+* Capability filtering
+* Tag filtering
+* Reusable derivation rules
+* Derivation provenance
+
+The lambda field selector remains:
+
+```python
+User.pick(
+    "UserRead",
+    lambda f: (
+        f.id,
+        f.email,
+        f.display_name,
+    ),
+)
+```
+
+Dryv should not automatically invent:
+
+```text
+UserCreate
+UserRead
+UserUpdate
+UserPublic
+UserQuery
+```
+
+The author explicitly creates those schemas, but the full derivation machinery remains.
+
+---
+
+## 8. Schema mappings and shape transformations
+
+Mappings must remain first-class because derivation is not only field filtering.
+
+Dryv needs to describe transformations such as:
+
+```text
+first_name + last_name → full_name
+full_name → first_name + last_name
+address object → flattened address fields
+external identifier → internal reference structure
+```
+
+Required mapping forms include:
+
+* One-to-one
+* One-to-many
+* Many-to-one
+* Many-to-many
+* Rename
+* Split
+* Combine
+* Flatten
+* Nest
+* Replacement
+* Directionality
+* Reversibility
+* Lossiness
+* Typed source and target fields
+
+The canonical contract stores mapping meaning, not arbitrary Python executable functions.
+
+---
+
+## 9. Reusable session-level rules
+
+Authors must be able to define reusable rules once and apply them explicitly across schemas:
+
+```python
+PublicFields = author.derivation_rules.define(...)
+MutableInputFields = author.derivation_rules.define(...)
+SearchResultFields = author.derivation_rules.define(...)
+```
+
+Then:
+
+```python
+UserPublic = User.derive(
+    "UserPublic",
+    lambda d: d.apply(PublicFields),
+)
+```
+
+This avoids repetition without introducing automatic behavior.
+
+Reusable capability profiles should also remain available.
+
+---
+
+## 10. Operations
+
+Operations remain the neutral behavior unit.
+
+They include:
+
+```text
+Operation
+├── Inputs
+├── Outputs
+├── Failures
+├── Effects
+└── Known facets
+```
+
+The authoring API must support:
+
+* Multiple typed inputs
+* Multiple typed outputs
+* Named outputs
+* Failures
+* Policies
+* Events
+* Effects
+* Execution facts
+* Triggers
+* Transport facets
+* Scheduling facts where supported
+* Listener behavior
+* Read-oriented and write-oriented operation facts
+
+Conveniences such as:
+
+```python
+users.query(...)
+users.command(...)
+users.listener(...)
+users.job(...)
+```
+
+remain useful, but compile into ordinary operations. They must not create separate query, command or job semantic roots. 
+
+---
+
+## 11. Known facets
+
+Facets remain a major feature and must not be reduced to HTTP alone.
+
+Approved facets must be closed and core-owned.
+
+Examples include:
+
+* HTTP
+* Access
+* Events
+* Execution
+* Trigger
+* Scheduling
+* Other formally approved transport or execution facets
+
+The important restriction is that Dryv must not accept an arbitrary generic metadata or bindings bag.
+
+That restriction does not remove facets; it requires each facet to have a typed contract.
+
+---
+
+## 12. Policies, security and access
+
+The feature scope includes:
+
+* Credentials
+* Principals
+* Roles
+* Public access
+* Protected access
+* Policy composition
+* Operation access requirements
+* View access requirements
+* Presentation access requirements
+* Typed policy references
+
+Security must remain neutral rather than tied directly to one web framework.
+
+---
+
+## 13. Failures and errors
+
+Operations must retain explicit typed failure declarations:
+
+* Failure identity
+* Semantic intent
+* Payload schema
+* Status or transport representation where a facet defines it
+* Reusable group- or contract-level failures
+* Operation-specific failures
+
+Failures should not be reduced to arbitrary strings.
+
+---
+
+## 14. Events, effects and execution
+
+The original scope explicitly includes:
+
+* Events
+* Event payloads
+* Emitted events
+* Consumed events
+* Operation effects
+* Execution hooks or facts
+* Listeners
+* Jobs
+* Auditing intent
+* Other closed execution semantics
+
+Events and workflows were specifically identified as first-class parts of the desired Python authoring system. 
+
+---
+
+## 15. Storage mappings
+
+Storage remains explicit and separate from schema definition.
+
+The system must support:
+
+* Schema-to-storage mapping
+* Field mappings
+* Store identity
+* Primary keys
+* Unique constraints
+* Indexes
+* Generated values
+* Stored fields
+* Computed fields
+* Omitted fields
+* Relationships
+* Mapping-specific storage state
+
+An entity-like authoring helper may exist, but it must compile to:
+
+```text
+Schema
++ StorageMapping
++ StorageFieldMappings
++ Constraints
+```
+
+It must not create a competing `Entity` root. 
+
+---
+
+## 16. Value sources
+
+Value sources must remain.
+
+A value source connects:
+
+* An operation
+* Its collection or item output
+* A value field
+* A label field
+* Optional supporting facts
+
+The same value source may support:
+
+* Web select controls
+* Mobile pickers
+* CLI prompts
+* Documentation
+* Generated tests
+* Conversational interfaces
+
+It describes candidate-value meaning, not a framework-specific fetch implementation.
+
+---
+
+## 17. Views and triggers
+
+Views remain neutral interaction units containing:
+
+* Used schemas
+* Fields
+* Parts
+* Value sources
+* Triggered operations
+* Access
+* Guidance
+* Relationships to other views
+
+A view must not become a React component, Flutter widget or HTML table.
+
+Those are pack decisions.
+
+The original thread explicitly preserved views and view triggers as semantic product intent. 
+
+---
+
+## 18. Presentations
+
+Presentations from the later approved design must also remain.
+
+A presentation can represent:
+
+* Admin application
+* Customer application
+* Mobile application
+* CLI application
+* Documentation portal
+* Desktop application
+* Conversational surface
+
+It may define:
+
+* Identity
+* Channel
+* Placed views
+* Routes or addresses
+* Navigation
+* Access
+* Guidance
+
+It must not define CSS, component libraries, animations or framework routers.
+
+Presentations were a later expansion of the design, not a replacement for views.
+
+---
+
+## 19. Workflows
+
+The complete workflow scope must remain:
+
+* Workflows
+* Workflow steps
+* Transitions
+* Decisions
+* Branches
+* Inputs and outputs
+* Operation steps
+* Events
+* Failure paths
+* Compensation
+* Workflow policies
+* Guidance
+* Typed step references
+
+Workflows are contract semantic objects, not Python control flow preserved in the IR.
+
+---
+
+## 20. Guidance and tags
+
+Both remain useful.
+
+### Guidance
+
+Categorized guidance for humans, AI tools and templates:
+
+* Explanation
+* Implementation
+* Security
+* Persistence
+* Testing
+* Caching
+* Observability
+* UX
+* Accessibility
+* Warnings
+
+Guidance never silently creates behavior.
+
+### Tags
+
+Namespaced, immutable Boolean hints:
+
+```text
+ui:data-table
+repository:custom
+orm:custom
+```
+
+Tags may guide packs but never replace typed semantic facts.
+
+---
+
+## 21. Reusable authoring composition
+
+Creative Python composition was one of the strongest original ideas.
+
+Authors must be able to build reusable functions and builders such as:
+
+```python
+audited_command(...)
+tenant_owned(...)
+searchable_schema(...)
+crud(...)
+standard_admin_views(...)
+```
+
+These patterns may be highly expressive in Python.
+
+They must compile into normal Dryv concepts:
+
+```text
+Schema
+Operation
+Policy
+Event
+StorageMapping
+View
+Presentation
+Workflow
+```
+
+They do not add private IR objects or template roots. 
+
+---
+
+## 22. Typed references and deterministic compilation
+
+Every declaration should return typed references that flow into later builders:
+
+```text
+SchemaRef
+FieldRef
+OperationRef
+PolicyRef
+EventRef
+StorageRef
+ValueSourceRef
+ViewRef
+PresentationRef
+WorkflowRef
+WorkflowStepRef
+```
+
+Compilation must perform:
+
+* Session freezing
+* Declaration validation
+* Deterministic ID assignment
+* Duplicate detection
+* Typed reference resolution
+* Foreign-session detection
+* Wrong-kind detection
+* Projection and derivation expansion
+* Mapping validation
+* Contract construction
+* Core contract validation
+* Structured diagnostics
+
+No process-global registry is allowed. 
+
+---
+
+## 23. Canonical transport and infrastructure representations
+
+The final contract must support:
+
+* Immutable in-memory representation
+* Canonical JSON
+* Canonical YAML
+* Optional indexed JSONL
+* Digests
+* Diffing
+* Inspection
+* Caching
+* Large-contract loading
+* Impact analysis
+
+JSONL remains an infrastructure representation, not a second semantic model. 
+
+---
+
+## 24. Runtime and generation integration
+
+`dryv-author` ends when it returns:
+
+```text
+AuthoringResult
+├── contract
+└── diagnostics
+```
+
+It does not:
+
+* Choose packs
+* Select templates
+* Create paths
+* Render code
+* Write files
+* Run formatters
+* Run package managers
+* Generate framework code directly
+
+The complete flow remains:
+
+```text
+dryv-author
+→ Dryv Contract
+→ Dryv runtime
+→ validation
+→ selection
+→ planning
+→ packs
+→ language and template plugins
+→ managed output
+```
+
+The original thread was explicit that Python authoring must not bypass the standard planner and generation system. 
+
+# What actually changed in the newer authoring design
+
+Only these authoring choices changed:
+
+1. **Field capabilities move outside initial schema construction.**
+2. **No fixed schemas are automatically derived.**
+3. **Authors explicitly define every derived schema.**
+4. **Derivations can select by typed field refs, capabilities, tags and reusable rules.**
+5. **Mappings expand derivation beyond pick and omit.**
+6. **Lambda field selectors remain central.**
+7. **Global rules provide reuse but are applied explicitly.**
+8. **Typed references replace string-based semantic connections.**
+
+None of these changes removes:
+
+* Schemas
+* Capabilities
+* Derivation
+* Operations
+* Facets
+* Policies
+* Events
+* Storage
+* Views
+* Presentations
+* Value sources
+* Workflows
+* Guidance
+* Tags
+* Composition patterns
+
+## Locked clarification
+
+The design should now be read as:
+
+> Dryv keeps the entire approved semantic feature set. Only the Python authoring flow is being redesigned to become more explicit, strongly typed and composable, without automatic schema assumptions or string-based semantic wiring.
+
+That should be placed near the beginning of the final design documentation so future revisions do not mistake an authoring API change for a reduction in Dryv’s capabilities.

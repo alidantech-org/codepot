@@ -6,7 +6,13 @@ from dryv.generation import GenerationData
 from dryv.ports import ManagedWriteReport
 from dryv.runtime import DryvRuntime, PluginLoadError
 
-from dryv_cli.presentation import activity, get_console, render_failure, render_json, render_operation
+from dryv_cli.presentation import (
+    activity,
+    get_console,
+    render_failure,
+    render_json,
+    render_operation,
+)
 from dryv_cli.presentation.serialization import result_document
 from dryv_cli.services import load_runtime, operation_exit_code
 

@@ -54,7 +54,7 @@ def test_cli_avoids_box_and_panel_rendering() -> None:
 def test_cli_package_owns_the_console_script() -> None:
     project = (PACKAGE_ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
-    assert '[project.scripts]' in project
+    assert "[project.scripts]" in project
     assert 'dryv = "dryv_cli.main:main"' in project
     assert '"rich>=' in project
     assert '"questionary>=' in project

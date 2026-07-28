@@ -37,9 +37,7 @@ class TransactionalFilesystemWriter:
     def write(self, output: MemoryOutput, root: str | Path) -> WriteReport:
         destination_root = Path(root).resolve()
         destination_root.mkdir(parents=True, exist_ok=True)
-        staging_root = Path(
-            tempfile.mkdtemp(prefix=".dryv-stage-", dir=destination_root.parent)
-        )
+        staging_root = Path(tempfile.mkdtemp(prefix=".dryv-stage-", dir=destination_root.parent))
         content_root = staging_root / "content"
         backup_root = staging_root / "backup"
         changes: list[WriteChange] = []
