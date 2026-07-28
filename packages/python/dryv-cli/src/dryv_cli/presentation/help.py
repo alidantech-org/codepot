@@ -14,6 +14,9 @@ class TreeHelpCommand(click.Command):
 
 
 class TreeHelpGroup(click.Group):
+    def list_commands(self, ctx: click.Context) -> list[str]:
+        return list(self.commands)
+
     def format_help(self, ctx: click.Context, formatter: click.HelpFormatter) -> None:
         formatter.write(click.style("Dryv", fg="cyan", bold=True))
         formatter.write("\n")
