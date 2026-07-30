@@ -1,0 +1,15 @@
+export const modelNames = [
+{% for model in schemas.models %}  "{{ model.name.pascal.o }}",
+{% endfor %}] as const;
+
+export const dtoNames = [
+{% for dto in schemas.dtos %}  "{{ dto.name.pascal.o }}",
+{% endfor %}] as const;
+
+export const enumNames = [
+{% for enum in schemas.enums %}  "{{ enum.name.pascal.o }}",
+{% endfor %}] as const;
+
+export const operationNames = [
+{% for operation in operations %}  "{{ operation.name.camel.o }}",
+{% endfor %}] as const;

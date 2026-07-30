@@ -1,0 +1,29 @@
+import { Module } from '@nestjs/common';
+
+import {
+{% for operation in resource.operations %}
+  {{ operation.meta.use_case_impl_class }},
+{% endfor %}
+} from '@/modules/{% for part in resource.path %}{{ part }}/{% endfor %}{{ resource.name.kebab.o }}/use-cases';
+import { {{ resource.name.pascal.o }}GeneratedController } from './{{ resource.name.kebab.o }}.generated-controller';
+import { {{ resource.name.pascal.o }}GeneratedService } from './{{ resource.name.kebab.o }}.generated-service';
+
+/**
+ * ---------------------------------------------------------------------------
+ * {{ resource.name.pascal.o }}GeneratedModule
+ * ---------------------------------------------------------------------------
+ *
+ * Managed Nest module that wires generated controllers/services to immutable
+ * use-case implementations.
+ */
+@Module({
+  controllers: [{{ resource.name.pascal.o }}GeneratedController],
+  providers: [
+    {{ resource.name.pascal.o }}GeneratedService,
+{% for operation in resource.operations %}
+    {{ operation.meta.use_case_impl_class }},
+{% endfor %}
+  ],
+  exports: [{{ resource.name.pascal.o }}GeneratedService],
+})
+export class {{ resource.name.pascal.o }}GeneratedModule {}

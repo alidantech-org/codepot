@@ -1,0 +1,16 @@
+selection=operation
+language={{ lang.name }}
+name={{ operation.name.camel.o }}
+id={{ operation.api.id }}
+method={{ operation.api.method }}
+path={{ operation.api.path }}
+resource={{ operation.api.resource }}
+description={{ operation.api.description }}
+parameter_count={{ operation.parameters | length }}
+response_count={{ operation.responses | length }}
+has_request={{ operation.request_body is not none }}
+target_ref={{ operation.api.target.ref if operation.api.target else "" }}
+raw_probe={{ operation.api.meta.get("x-operation-probe", {}).get("enabled", false) }}
+emit_group={{ operation.emit.group }}
+emit_key={{ operation.emit.key }}
+resource_path={{ operation.emit.resource_path | join("/") }}

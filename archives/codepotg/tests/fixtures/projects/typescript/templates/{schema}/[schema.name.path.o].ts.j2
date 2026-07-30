@@ -1,0 +1,16 @@
+export const {{ schema.name.camel.o }}SchemaContract = {
+  id: "{{ schema.api.id }}",
+  name: "{{ schema.name.pascal.o }}",
+  kind: "{{ schema.api.kind }}",
+  nullable: "{{ schema.api.nullable }}",
+  fieldCount: {{ schema.fields | length }},
+  fields: [
+{% for field in schema.fields %}    {
+      name: "{{ field.name.raw.o }}",
+      type: "{{ field.lang.type }}",
+      required: "{{ field.api.required }}",
+      nullable: "{{ field.api.nullable }}",
+      defaultValue: "{{ field.meta.default }}",
+    },
+{% endfor %}  ],
+} as const;

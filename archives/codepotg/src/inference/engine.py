@@ -1,0 +1,129 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
+from copy import deepcopy
+from pathlib import Path
+from typing import Any
+
+from archives.codepotg.src.constants.codegen import ATTR_RESOURCE, X_CODEGEN
+from archives.codepotg.src.inference.graph import collect_dependencies
+from archives.codepotg.src.inference.models import InferenceGraph, InferredResource
+from archives.codepotg.src.inference.operations.engine import infer_operations
+from archives.codepotg.src.inference.schemas import infer_schemas
+from archives.codepotg.src.openapi.document import OpenApiDocument
+
+
+def _clean_optional_text(value: object) -> str:
+    if not isinstance(value, str):
+        return ""
+
+    cleaned = value.strip()
+
+    if not cleaned or cleaned == "-":
+        return ""
+
+    return cleaned
+
+
+class InferenceEngine:
+    def infer(
+        self,
+        document: OpenApiDocument | Mapping[str, Any],
+        *,
+        copy_raw: bool = True,
+    ) -> InferenceGraph:
+        """Infer a graph, copying source data unless the caller transfers ownership."""
+
+        if isinstance(document, Mapping):
+            document = OpenApiDocument(
+                path=Path("<memory>"),
+                raw=deepcopy(dict(document)),
+            )
+
+        schemas = infer_schemas(document)
+        operations = infer_operations(document)
+        resources = _collect_resources(schemas, operations)
+        dependencies = collect_dependencies(schemas, operations)
+        schemas = _propagate_resources_to_schemas(schemas, operations, resources)
+
+        raw = deepcopy(document.raw) if copy_raw else document.raw
+        x_codegen = raw.get(X_CODEGEN)
+
+        return InferenceGraph(
+            title=document.title,
+            openapi_version=document.openapi_version,
+            api_version=document.api_version,
+            description=_clean_optional_text(document.description),
+            servers=document.servers,
+            resources=resources,
+            schemas=schemas,
+            operations=operations,
+            dependencies=dependencies,
+            x_codegen=x_codegen if isinstance(x_codegen, dict) else {},
+            raw=raw,
+        )
+
+
+def _collect_resources(
+    schemas: tuple,
+    operations: tuple,
+) -> tuple[InferredResource, ...]:
+    resources: dict[str, InferredResource] = {}
+
+    for item in (*schemas, *operations):
+        resource = getattr(item, ATTR_RESOURCE, None)
+
+        if resource is None:
+            continue
+
+        existing = resources.get(resource.name)
+        if existing is None:
+            resources[resource.name] = resource
+            continue
+
+        if not existing.path and resource.path:
+            resources[resource.name] = resource
+
+    return tuple(sorted(resources.values(), key=lambda item: item.name.lower()))
+
+
+def _propagate_resources_to_schemas(
+    schemas: tuple,
+    operations: tuple,
+    resources: tuple[InferredResource, ...],
+) -> tuple:
+    """Assign resources to schemas based on which operations use them."""
+
+    schema_to_resource: dict[str, InferredResource] = {}
+
+    for operation in operations:
+        op_resource = operation.resource
+        if op_resource is None:
+            continue
+
+        refs = set()
+        for param in operation.parameters:
+            if param.schema_ref:
+                refs.add(param.schema_ref)
+            refs.update(param.schema_refs)
+
+        if operation.request_body:
+            refs.update(operation.request_body.schema_refs)
+
+        for response in operation.responses:
+            refs.update(response.schema_refs)
+
+        for ref in refs:
+            if ref not in schema_to_resource:
+                schema_to_resource[ref] = op_resource
+
+    schema_list = list(schemas)
+    for index, schema in enumerate(schema_list):
+        if schema.resource is None:
+            resource = schema_to_resource.get(schema.ref)
+            if resource:
+                from dataclasses import replace
+
+                schema_list[index] = replace(schema, resource=resource)
+
+    return tuple(schema_list)

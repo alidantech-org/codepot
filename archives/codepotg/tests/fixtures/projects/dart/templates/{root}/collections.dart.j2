@@ -1,0 +1,15 @@
+const modelNames = <String>[
+{% for model in schemas.models %}  '{{ model.name.pascal.o }}',
+{% endfor %}];
+
+const dtoNames = <String>[
+{% for dto in schemas.dtos %}  '{{ dto.name.pascal.o }}',
+{% endfor %}];
+
+const enumNames = <String>[
+{% for enum in schemas.enums %}  '{{ enum.name.pascal.o }}',
+{% endfor %}];
+
+const operationNames = <String>[
+{% for operation in operations %}  '{{ operation.name.camel.o }}',
+{% endfor %}];

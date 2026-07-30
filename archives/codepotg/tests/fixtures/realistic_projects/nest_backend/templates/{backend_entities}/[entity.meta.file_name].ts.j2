@@ -1,0 +1,53 @@
+{% set normalized_entity = entity_contract.by_id[entity.name.raw.o] %}
+import * as typeorm from 'typeorm';
+import * as ApiTypes from '@gen/types';
+{% for relation in entity.relations if relation.target_file_name %}
+import { {{ relation.target_class_name }} } from './{{ relation.target_file_name }}';
+{% endfor %}
+
+/**
+ * ---------------------------------------------------------------------------
+ * {{ entity.meta.class_name }}
+ * ---------------------------------------------------------------------------
+ *
+ * Managed TypeORM-style entity generated from x-codegen.entities.
+ * Normalized store: {{ normalized_entity.store }}
+ * Effective fields: {{ normalized_entity.effective_fields.count }}
+ */
+{% for constraint in entity.constraints %}
+@typeorm.Index([{% for field in constraint.fields %}'{{ field }}'{% if not loop.last %}, {% endif %}{% endfor %}]{% if constraint.unique %}, { unique: true }{% endif %})
+{% endfor %}
+@typeorm.Entity({ name: '{{ entity.meta.table_name or entity.name.snake.o }}' })
+export class {{ entity.meta.class_name }} {
+{% for field in entity.fields %}
+{% if field.meta.primary %}
+  @typeorm.PrimaryGeneratedColumn('{{ field.meta.generated or "uuid" }}')
+{% elif field.name.camel.o == "createdAt" %}
+  @typeorm.CreateDateColumn({ name: '{{ field.meta.column_name }}', type: 'timestamptz' })
+{% elif field.name.camel.o == "updatedAt" %}
+  @typeorm.UpdateDateColumn({ name: '{{ field.meta.column_name }}', type: 'timestamptz' })
+{% elif field.name.camel.o == "deletedAt" %}
+  @typeorm.DeleteDateColumn({ name: '{{ field.meta.column_name }}', type: 'timestamptz', nullable: true })
+{% else %}
+  @typeorm.Column({ {{ field.meta.column_options }} })
+{% endif %}
+  {{ field.lang.display_name }}: {{ field.lang.type }};
+
+{% endfor %}
+{% for field in entity.backend_fields %}
+  @typeorm.Column({ {{ field.meta.column_options }} })
+  {{ field.lang.display_name }}: {{ field.lang.type }};
+
+{% endfor %}
+{% for relation in entity.relations %}
+{% if relation.api.cardinality in ("hasMany", "one_to_many") and relation.target_class_name %}
+  @typeorm.OneToMany(() => {{ relation.target_class_name }}, (entity) => entity.{{ relation.inverse_field_name or entity.name.camel.o }})
+  {{ relation.name.camel.o }}: {{ relation.target_class_name }}[];
+
+{% elif relation.api.cardinality in ("belongsTo", "hasOne", "many_to_one", "one_to_one") and relation.target_class_name %}
+  @typeorm.ManyToOne(() => {{ relation.target_class_name }}, (entity) => entity.{{ relation.inverse_field_name or entity.name.camel.o }})
+  {{ relation.name.camel.o }}: {{ relation.target_class_name }};
+
+{% endif %}
+{% endfor %}
+}

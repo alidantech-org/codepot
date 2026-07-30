@@ -1,0 +1,59 @@
+apiVersion: dryv.dev/v1
+
+name: defytickets-generated
+
+sources:
+  contract:
+    adapter: ir
+    file: ./contract.dryv.yaml
+
+executables:
+  packageManager: pnpm
+  flutter: flutter
+  dart: dart
+
+security:
+  packCommands: approve
+
+packs:
+  backendRepositories:
+    source:
+      local: ./packs/typeorm-repositories
+    input: contract
+    output: apps/backend
+
+    options:
+      repositoryStyle: class
+
+    bindings:
+      baseRepository:
+        from: src/database/base.repository.ts
+        symbol: BaseRepository
+
+  typescriptSdk:
+    source:
+      git: https://github.com/alidantech-org/dryv-packs.git
+      ref: typescript-sdk/v2.4.1
+      path: packs/typescript-sdk
+    input: contract
+    output: packages/typescript-sdk
+
+    options:
+      clientName: DefyTicketsClient
+
+  flutterSdk:
+    source:
+      git: https://github.com/alidantech-org/dryv-pack-flutter-sdk.git
+      ref: v1.4.2
+    input: contract
+    output: apps/mobile
+
+    options:
+      clientName: DefyTicketsClient
+
+commands:
+  after:
+    formatWorkspace:
+      executable: packageManager
+      arguments: [exec, prettier, --write, packages/typescript-sdk]
+      optional: true

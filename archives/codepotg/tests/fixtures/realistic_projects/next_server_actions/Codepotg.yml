@@ -1,0 +1,8 @@
+allow: true
+
+tasks:
+  realistic:
+    input: ./openapi.generated.json
+    language: typescript
+    templateDir: ./templates
+    output: ./.generated-review

@@ -1,0 +1,151 @@
+template_extension: '.j2'
+strip_template_extension: true
+allow_raw_files: true
+
+imports:
+  strategy: relative
+
+write_policy:
+  default_mode: managed
+  managed_roots:
+    - .gen
+  immutable_roots:
+    - src/modules
+  protected_roots:
+    - .gen
+    - src
+  clean_roots:
+    - .gen
+
+folders:
+  root:
+    mode: managed
+    parts:
+      - .gen
+
+  resource_types:
+    mode: managed
+    select: resources
+    as: resource
+    parts:
+      - .gen
+      - types
+      - [resource.path]
+      - [resource.name.kebab.o]
+
+  resource_dto:
+    mode: managed
+    select: resources
+    as: resource
+    parts:
+      - .gen
+      - types
+      - [resource.path]
+      - [resource.name.kebab.o]
+      - dto
+
+  resource_enums:
+    mode: managed
+    select: resources
+    as: resource
+    parts:
+      - .gen
+      - types
+      - [resource.path]
+      - [resource.name.kebab.o]
+      - enums
+
+  dto:
+    mode: managed
+    select: schemas.emit_dtos
+    as: dto
+    parts:
+      - .gen
+      - types
+      - [dto.emit.resource_path]
+      - dto
+
+  enum:
+    mode: managed
+    select: schemas.emit_enums
+    as: enum
+    parts:
+      - .gen
+      - types
+      - [enum.emit.resource_path]
+      - enums
+
+  backend_resource:
+    mode: managed
+    select: resources
+    as: resource
+    parts:
+      - .gen
+      - backend
+      - [resource.path]
+      - [resource.name.kebab.o]
+
+  backend_entities:
+    mode: managed
+    select: entities
+    as: entity
+    parts:
+      - .gen
+      - backend
+      - [entity.resource.path]
+      - [entity.resource.name.kebab.o]
+      - entities
+
+  backend_entity_index:
+    mode: managed
+    select: resources
+    as: resource
+    parts:
+      - .gen
+      - backend
+      - [resource.path]
+      - [resource.name.kebab.o]
+      - entities
+
+  backend_use_case_types:
+    mode: managed
+    select: operations
+    as: operation
+    parts:
+      - .gen
+      - backend
+      - [operation.resource.path]
+      - [operation.resource.name.kebab.o]
+      - use-cases
+
+  immutable_use_cases:
+    mode: immutable
+    select: operations
+    as: operation
+    parts:
+      - src
+      - modules
+      - [operation.resource.path]
+      - [operation.resource.name.kebab.o]
+      - use-cases
+
+  immutable_use_case_index:
+    mode: immutable
+    select: resources
+    as: resource
+    parts:
+      - src
+      - modules
+      - [resource.path]
+      - [resource.name.kebab.o]
+      - use-cases
+
+  immutable_module:
+    mode: immutable
+    select: resources
+    as: resource
+    parts:
+      - src
+      - modules
+      - [resource.path]
+      - [resource.name.kebab.o]

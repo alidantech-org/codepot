@@ -1,0 +1,7 @@
+export const {{ resource.name.camel.o }}ResourceContract = {
+  id: "{{ resource.api.id }}",
+  name: "{{ resource.name.pascal.o }}",
+  path: [{% for part in resource.path %}"{{ part }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+  operationCount: {{ resource.operations | length }},
+  schemaCount: {{ resource.schemas | length }},
+} as const;

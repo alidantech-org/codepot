@@ -1,0 +1,18 @@
+node={{ file.meta.node }}
+selection={{ selection.name }}
+scope={{ selection.scope }}
+model={{ model.name.pascal.o }}
+source_kind={{ source.kind if source else "" }}
+source_ref={{ source.ref if source else "" }}
+source_type={{ source.get("type", "") if source else "" }}
+provider={{ providers.enums }}
+provider_output_count={{ provider_outputs.enums | length }}
+import_count={{ file.imports | length }}
+dependency_count={{ file.dependencies | length }}
+field_count={{ model.fields | length }}
+{% for field in model.fields %}field={{ field.api.id }}|required={{ field.lang.required }}|nullable={{ field.lang.nullable }}|type={{ field.lang.type }}|schema_ref={{ field.api.schema_ref or "" }}|dependency_count={{ field.emit.dependencies | length if field.emit else 0 }}
+{% endfor %}{% for dependency in file.dependencies %}dependency={{ dependency.ref }}|importable={{ dependency.is_importable }}|exists={{ dependency.exists }}|symbol={{ dependency.target.name.pascal.o if dependency.target and dependency.target.name else "" }}
+{% endfor %}{% for import in file.imports %}import={{ import.statement }}|style={{ import.style }}|path={{ import.path }}
+{% endfor %}normalized_schema_count={{ schema_contract.schemas.count }}
+document_openapi={{ document_contract.openapi.value }}
+resolver_loads={{ resolver_stats.loads }}

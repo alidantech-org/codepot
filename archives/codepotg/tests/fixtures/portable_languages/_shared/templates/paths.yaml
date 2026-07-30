@@ -1,0 +1,82 @@
+$schema: https://schemas.codepot.dev/codepotg/v1/paths.schema.json
+
+template_extension: ".j2"
+strip_template_extension: true
+allow_raw_files: false
+
+write_policy:
+  default_mode: managed
+  managed_roots:
+    - contract
+    - schemas
+    - operations
+    - resources
+    - package
+  immutable_roots:
+    - contract
+    - package
+  protected_roots:
+    - contract
+    - schemas
+    - operations
+    - resources
+    - package
+  clean_roots:
+    - contract
+    - schemas
+    - operations
+    - resources
+    - package
+
+folders:
+  root:
+    mode: once
+    parts:
+      - contract
+
+  package:
+    mode: once
+    parts:
+      - "[lang.meta.type_system.package_root]"
+
+  schema:
+    select: schemas.all
+    as: schema
+    parts:
+      - schemas
+
+  native_schema:
+    select: schemas.emit_models
+    as: schema
+    parts:
+      - "[lang.meta.type_system.model_root]"
+
+  native_enum:
+    select: schemas.emit_enums
+    as: schema
+    parts:
+      - "[lang.meta.type_system.model_root]"
+
+  operation:
+    select: operations
+    as: operation
+    parts:
+      - operations
+
+  native_operation:
+    select: operations
+    as: operation
+    parts:
+      - "[lang.meta.type_system.client_root]"
+
+  native_support:
+    select: lang.meta.type_system.support_files
+    as: support
+    parts:
+      - "[support.root]"
+
+  resource:
+    select: resources
+    as: resource
+    parts:
+      - resources

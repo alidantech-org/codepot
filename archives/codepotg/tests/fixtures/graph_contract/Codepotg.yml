@@ -1,0 +1,8 @@
+allow: true
+
+tasks:
+  graph:
+    input: ./openapi.json
+    language: python
+    templateDir: ./templates
+    output: ./.generated-review

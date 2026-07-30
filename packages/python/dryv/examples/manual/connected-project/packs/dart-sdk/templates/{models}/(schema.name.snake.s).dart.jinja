@@ -1,0 +1,10 @@
+// {{ options.banner }}
+// semantic source: {{ bindings.contractSource }}
+{% if schema.data.tags.has("domain:audited") %}/// This schema is marked domain:audited in the neutral IR.
+{% endif %}final class {{ schema.name.pascal.s }} {
+  const {{ schema.name.pascal.s }}({
+{% for field in schema.fields %}    {% if field.required %}required {% endif %}this.{{ field.name.camel.s }},
+{% endfor %}  });
+
+{% for field in schema.fields %}  final {% if field.type.name == "string" %}String{% elif field.type.name == "boolean" %}bool{% elif field.type.name == "integer" %}int{% elif field.type.name == "number" %}double{% else %}Object{% endif %}{% if field.nullable %}?{% endif %} {{ field.name.camel.s }};
+{% endfor %}}

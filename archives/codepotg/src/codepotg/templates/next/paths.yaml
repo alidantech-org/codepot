@@ -1,0 +1,114 @@
+$schema: https://schemas.codepot.dev/codepotg/v1/paths.schema.json
+
+template_extension: ".j2"
+strip_template_extension: true
+allow_raw_files: true
+
+imports:
+  strategy: relative
+
+folders:
+  root:
+    mode: once
+    parts:
+      - gen
+      - server
+
+  resource:
+    select: resources
+    as: resource
+    parts:
+      - gen
+      - server
+      - actions
+
+  ui_resource:
+    select: resources
+    as: resource
+    parts:
+      - gen
+      - components
+      - [resource.path]
+      - [resource.name.path.o]
+
+  ui_page:
+    select: resources
+    as: resource
+    parts:
+      - gen
+      - pages
+      - [resource.path]
+      - [resource.name.path.o]
+
+  resource_types:
+    select: resources
+    as: resource
+    parts:
+      - gen
+      - server
+      - types
+      - [resource.path]
+      - [resource.name.path.o]
+
+  resource_dto:
+    select: resources
+    as: resource
+    parts:
+      - gen
+      - server
+      - types
+      - [resource.path]
+      - [resource.name.path.o]
+      - dto
+
+  resource_models:
+    select: resources
+    as: resource
+    parts:
+      - gen
+      - server
+      - types
+      - [resource.path]
+      - [resource.name.path.o]
+      - models
+
+  resource_enums:
+    select: resources
+    as: resource
+    parts:
+      - gen
+      - server
+      - types
+      - [resource.path]
+      - [resource.name.path.o]
+      - enums
+
+  model:
+    select: schemas.emit_models
+    as: model
+    parts:
+      - gen
+      - server
+      - types
+      - [model.emit.resource_path]
+      - models
+
+  dto:
+    select: schemas.emit_dtos
+    as: dto
+    parts:
+      - gen
+      - server
+      - types
+      - [dto.emit.resource_path]
+      - dto
+
+  enum:
+    select: schemas.emit_enums
+    as: enum
+    parts:
+      - gen
+      - server
+      - types
+      - [enum.emit.resource_path]
+      - enums

@@ -1,0 +1,69 @@
+{% if lang.name == "python" -%}
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "{{ lang.package.name }}"
+version = "{{ lang.package.version }}"
+requires-python = ">=3.11"
+dependencies = [
+{% for dependency in lang.package.dependencies %}  "{{ dependency }}",
+{% endfor %}]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+{% elif lang.name == "java" -%}
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>generated</groupId>
+  <artifactId>{{ lang.package.name }}</artifactId>
+  <version>{{ lang.package.version }}</version>
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.17.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <version>2.17.2</version>
+    </dependency>
+  </dependencies>
+</project>
+{% elif lang.name == "csharp" -%}
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>
+{% elif lang.name == "go" -%}
+module example.com/generated/{{ lang.package.name }}
+
+go 1.22
+
+require github.com/google/uuid v1.6.0
+{% elif lang.name == "rust" -%}
+[package]
+name = "{{ lang.package.name | replace('_', '-') }}"
+version = "{{ lang.package.version }}"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["serde", "v4"] }
+rust_decimal = { version = "1", features = ["serde"] }
+{% endif -%}

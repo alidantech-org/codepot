@@ -1,0 +1,60 @@
+apiVersion: dryv.dev/lock/v1
+
+project: defytickets-generated
+
+runtime:
+  dryv: 2.0.0
+  ir: 2.0
+  namingBehavior: 1
+  selectionBehavior: 1
+
+packs:
+  backendRepositories:
+    source:
+      local: ./packs/typeorm-repositories
+    pack:
+      id: alidantech/typeorm-repositories
+      version: 1.0.0
+    manifestDigest: sha256:1111111111111111111111111111111111111111111111111111111111111111
+    contentDigest: sha256:2222222222222222222222222222222222222222222222222222222222222222
+
+  typescriptSdk:
+    source:
+      git: https://github.com/alidantech-org/dryv-packs.git
+      ref: typescript-sdk/v2.4.1
+      commit: 53e69ea110cf7739d54782d776be63ab46dfe243
+      path: packs/typescript-sdk
+    pack:
+      id: alidantech/typescript-sdk
+      version: 2.4.1
+    manifestDigest: sha256:3333333333333333333333333333333333333333333333333333333333333333
+    contentDigest: sha256:4444444444444444444444444444444444444444444444444444444444444444
+
+  flutterSdk:
+    source:
+      git: https://github.com/alidantech-org/dryv-pack-flutter-sdk.git
+      ref: v1.4.2
+      commit: 8c31b7ea116ad42f7861905d7b9d406f6e28580f
+    pack:
+      id: alidantech/flutter-sdk
+      version: 1.4.2
+    manifestDigest: sha256:5555555555555555555555555555555555555555555555555555555555555555
+    contentDigest: sha256:6666666666666666666666666666666666666666666666666666666666666666
+
+plugins:
+  source.ir:
+    package: dryv
+    version: 2.0.0
+    behavior: 1
+  language.typescript:
+    package: dryv-language-typescript
+    version: 2.0.0
+    behavior: 1
+  language.dart:
+    package: dryv-language-dart
+    version: 2.0.0
+    behavior: 1
+  template.jinja:
+    package: dryv-template-jinja
+    version: 2.0.0
+    behavior: 1

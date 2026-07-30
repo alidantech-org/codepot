@@ -15,6 +15,7 @@ next-env.d.ts
 .env
 .env.*
 !.env.example
+.venv*/
 
 # System and editor
 .DS_Store
@@ -25,3 +26,6 @@ Thumbs.db
 .codepot/backups/
 .build/
 .idea/
+*.vscode/
+*.tmp
+.chatgptx

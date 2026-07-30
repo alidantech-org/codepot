@@ -1,0 +1,7 @@
+.dart_tool/
+build/
+.pub/
+pubspec.lock
+# "*.g.dart" --> illigal to ignore generated files as package is used via github and generated files are required for the package to work. See
+
+      

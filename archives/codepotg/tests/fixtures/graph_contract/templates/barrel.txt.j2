@@ -1,0 +1,8 @@
+node={{ file.meta.node }}
+barrel={{ barrel.name }}
+scope={{ barrel.scope }}
+count={{ barrel.count }}
+provides={{ barrel.provides | join(",") }}
+symbols={{ barrel.symbols | join(",") }}
+members={% for member in barrel.members %}{{ member.output_path }}{% if not loop.last %},{% endif %}{% endfor %}
+immutable={{ file.meta.barrel }}

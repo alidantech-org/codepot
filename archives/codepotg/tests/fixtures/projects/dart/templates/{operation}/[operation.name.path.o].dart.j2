@@ -1,0 +1,9 @@
+const {{ operation.name.camel.o }}OperationContract = <String, Object?>{
+  'id': '{{ operation.api.id }}',
+  'method': '{{ operation.api.method }}',
+  'path': '{{ operation.api.path }}',
+  'functionName': '{{ operation.lang.function_name }}',
+  'parameterCount': {{ operation.parameters | length }},
+  'responseCount': {{ operation.responses | length }},
+  'hasRequestBody': '{{ operation.request_body is not none }}',
+};

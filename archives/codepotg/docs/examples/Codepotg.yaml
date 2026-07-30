@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://schemas.codepot.dev/codepotg/v1/codepotg.schema.json
+$schema: https://schemas.codepot.dev/codepotg/v1/codepotg.schema.json
+
+allow: true
+
+defaults:
+  templateDir: ./templates
+  env:
+    CODEPOTG_MODE: strict
+
+tasks:
+  python-client:
+    description: Generate the Python API client.
+    input: ./openapi.json
+    language: python
+    output: ./generated/python
+    clean:
+      - ./generated/python
+    after:
+      - name: Format generated Python
+        run: ruff format generated/python
+        optional: true
+
+  typescript-client:
+    description: Generate the TypeScript API client from the same OpenAPI source.
+    input: ./openapi.json
+    language: typescript
+    output: ./generated/typescript

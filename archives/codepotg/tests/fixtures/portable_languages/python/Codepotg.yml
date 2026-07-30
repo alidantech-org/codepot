@@ -1,0 +1,10 @@
+$schema: https://schemas.codepot.dev/codepotg/v1/codepotg.schema.json
+
+allow: true
+
+tasks:
+  fixture:
+    input: ../_shared/openapi.json
+    language: python
+    templateDir: ../_shared/templates
+    output: ./.generated-review

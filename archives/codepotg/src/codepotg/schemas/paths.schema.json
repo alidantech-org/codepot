@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.codepot.dev/codepotg/v1/paths.schema.json",
+  "title": "CodepotG template path configuration",
+  "description": "Schema for paths.yaml and paths.yml template-pack generation graphs.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri-reference",
+      "description": "JSON Schema URI used by editors and authoring tools."
+    },
+    "template_extension": {
+      "type": "string",
+      "minLength": 1,
+      "default": ".j2"
+    },
+    "strip_template_extension": {
+      "type": "boolean",
+      "default": true
+    },
+    "allow_raw_files": {
+      "type": "boolean",
+      "default": true
+    },
+    "imports": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "enum": ["relative", "package", "none"],
+          "default": "relative"
+        }
+      }
+    },
+    "write_policy": {
+      "$ref": "#/$defs/writePolicy"
+    },
+    "folders": {
+      "type": "object",
+      "propertyNames": {"minLength": 1},
+      "additionalProperties": {"$ref": "#/$defs/folder"}
+    },
+    "selections": {
+      "type": "object",
+      "propertyNames": {"minLength": 1},
+      "additionalProperties": {"$ref": "#/$defs/selection"}
+    },
+    "emissions": {
+      "type": "object",
+      "propertyNames": {"minLength": 1},
+      "additionalProperties": {"$ref": "#/$defs/emission"}
+    },
+    "barrels": {
+      "type": "object",
+      "propertyNames": {"minLength": 1},
+      "additionalProperties": {"$ref": "#/$defs/barrel"}
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dynamicPathPart": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "prefixItems": [
+        {"$ref": "#/$defs/nonEmptyString"}
+      ],
+      "items": false
+    },
+    "pathPart": {
+      "oneOf": [
+        {"$ref": "#/$defs/nonEmptyString"},
+        {"$ref": "#/$defs/dynamicPathPart"}
+      ]
+    },
+    "pathParts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/pathPart"}
+    },
+    "stringList": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/nonEmptyString"},
+      "uniqueItems": true
+    },
+    "lifecycle": {
+      "enum": ["managed", "immutable"]
+    },
+    "selectionScope": {
+      "enum": ["each", "all", "resource"]
+    },
+    "writePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default_mode": {
+          "$ref": "#/$defs/lifecycle",
+          "default": "managed"
+        },
+        "managed_roots": {"$ref": "#/$defs/stringList"},
+        "immutable_roots": {"$ref": "#/$defs/stringList"},
+        "protected_roots": {"$ref": "#/$defs/stringList"},
+        "clean_roots": {"$ref": "#/$defs/stringList"}
+      }
+    },
+    "folder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parts"],
+      "properties": {
+        "select": {"type": "string"},
+        "as": {"$ref": "#/$defs/nonEmptyString"},
+        "alias": {"$ref": "#/$defs/nonEmptyString"},
+        "mode": {
+          "enum": ["each", "group", "once", "managed", "immutable"]
+        },
+        "parts": {"$ref": "#/$defs/pathParts"},
+        "description": {"type": "string"}
+      }
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["select"],
+      "properties": {
+        "select": {"$ref": "#/$defs/nonEmptyString"},
+        "as": {"$ref": "#/$defs/nonEmptyString"},
+        "alias": {"$ref": "#/$defs/nonEmptyString"},
+        "scope": {"$ref": "#/$defs/selectionScope"},
+        "description": {"type": "string"}
+      }
+    },
+    "providerMap": {
+      "type": "object",
+      "propertyNames": {"minLength": 1},
+      "additionalProperties": {"$ref": "#/$defs/nonEmptyString"}
+    },
+    "emission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selection", "template", "output"],
+      "properties": {
+        "selection": {"$ref": "#/$defs/nonEmptyString"},
+        "template": {"$ref": "#/$defs/nonEmptyString"},
+        "output": {"$ref": "#/$defs/pathParts"},
+        "imports": {"$ref": "#/$defs/providerMap"},
+        "provides": {"$ref": "#/$defs/stringList"},
+        "lifecycle": {"$ref": "#/$defs/lifecycle"},
+        "description": {"type": "string"}
+      }
+    },
+    "barrel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["template", "output", "exports"],
+      "properties": {
+        "template": {"$ref": "#/$defs/nonEmptyString"},
+        "output": {"$ref": "#/$defs/pathParts"},
+        "exports": {
+          "allOf": [
+            {"$ref": "#/$defs/stringList"},
+            {"minItems": 1}
+          ]
+        },
+        "scope": {
+          "enum": ["all", "resource"],
+          "default": "all"
+        },
+        "as": {"$ref": "#/$defs/nonEmptyString"},
+        "alias": {"$ref": "#/$defs/nonEmptyString"},
+        "lifecycle": {"$ref": "#/$defs/lifecycle"},
+        "description": {"type": "string"}
+      }
+    }
+  },
+  "examples": [
+    {
+      "$schema": "https://schemas.codepot.dev/codepotg/v1/paths.schema.json",
+      "write_policy": {
+        "default_mode": "managed",
+        "managed_roots": ["generated"],
+        "protected_roots": ["generated"],
+        "clean_roots": ["generated"]
+      },
+      "selections": {
+        "models": {
+          "select": "schemas.emit_models",
+          "as": "model",
+          "scope": "each"
+        }
+      },
+      "emissions": {
+        "model-files": {
+          "selection": "models",
+          "template": "model.py.j2",
+          "output": ["generated", "models", "[model.emit.file_name]"],
+          "provides": ["models"]
+        }
+      }
+    }
+  ]
+}

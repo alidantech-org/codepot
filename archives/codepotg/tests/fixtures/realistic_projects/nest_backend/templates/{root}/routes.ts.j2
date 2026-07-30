@@ -1,0 +1,49 @@
+{% macro route_value(operation) -%}
+{%- if operation.meta.has_path_params -%}
+({{ "{ " }}{{ operation.meta.path_params | join(", ") }}{{ " }" }}: {
+{%- for param in operation.meta.path_params %}
+  {{ param }}: string;
+{%- endfor %}
+}) => {
+  {%- set ns = namespace(path=operation.api.path) -%}
+  {%- for param in operation.meta.path_params -%}
+    {%- set ns.path = ns.path | replace("{" ~ param ~ "}", "${" ~ param ~ "}") -%}
+  {%- endfor -%}
+  return `{{ ns.path }}`;
+}
+{%- else -%}
+'{{ operation.api.path }}'
+{%- endif -%}
+{%- endmacro %}
+
+/**
+ * ---------------------------------------------------------------------------
+ * API Routes
+ * ---------------------------------------------------------------------------
+ *
+ * Generated route map for every operation in this API version. Routes with
+ * path parameters are emitted as typed functions; static routes are strings.
+ */
+export const routes = {
+{%- for resource in resources if resource.operations %}
+  {{ resource.name.camel.o }}: {
+{%- for operation in resource.operations %}
+     {{ "\n"}}
+    /**
+     * -------------------------------------------------------------------------
+     * {{ operation.lang.function_name }}
+     * -------------------------------------------------------------------------
+     *
+     * @method {{ operation.lang.method | upper }}
+     * @path {{ operation.api.path }}
+     *{%- if operation.meta.has_path_params %}
+     * @params {{ operation.meta.path_params | join(", ") }}
+     *{%- endif %}
+     */
+    {{ operation.lang.function_name }}: {{ route_value(operation) }},
+{%- endfor %}
+  },
+{%- endfor %}
+} as const;
+
+export default routes;
