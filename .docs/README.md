@@ -16,18 +16,25 @@ This folder is a research and architecture companion to the active package docum
 - how a team can implement the same architecture in any suitable language;
 - how effectiveness should be measured against realistic alternatives.
 
+## Research scope
+
+The review covered the normative Dryv architecture and authoring documents, active package descriptions, historical OpenAPI/CodepotG/CodepotX material, relevant commit history, and focused source-level inspection of the runtime facade, generation session, planner, writer, and author compiler. It also compared Codepot with current official and primary sources on platform engineering, specification-driven AI, schema governance, semantic code generation, model-driven engineering, and AI productivity.
+
+This was not an execution of every repository test or a line-by-line audit of every source file. The documents therefore distinguish source-confirmed behavior from architecture and from unproven product effects.
+
 ## Reading order
 
 1. [`engineering-paper.md`](engineering-paper.md) — the main research paper and verdict.
 2. [`repository-evolution.md`](repository-evolution.md) — how the project grew, changed names, and refined its boundaries.
-3. [`research-findings.md`](research-findings.md) — external evidence and adjacent systems.
-4. [`hardening-priorities.md`](hardening-priorities.md) — engineering risks that can invalidate the product if left unresolved.
-5. [`refinement-and-scope.md`](refinement-and-scope.md) — what Codepot should and should not attempt to model.
-6. [`usability-and-adoption.md`](usability-and-adoption.md) — workflows, personas, onboarding, and adoption requirements.
-7. [`possible-effects-and-risks.md`](possible-effects-and-risks.md) — expected benefits, second-order effects, and failure modes.
-8. [`evidence-and-validation.md`](evidence-and-validation.md) — experiments and metrics required to prove effectiveness.
-9. [`sources.md`](sources.md) — repository and external research sources.
-10. [`plan/README.md`](plan/README.md) — the language-neutral implementation program.
+3. [`implementation-audit.md`](implementation-audit.md) — source-level findings from the active Dryv runtime, planner, writer, and author compiler.
+4. [`research-findings.md`](research-findings.md) — external evidence and adjacent systems.
+5. [`hardening-priorities.md`](hardening-priorities.md) — engineering risks that can invalidate the product if left unresolved.
+6. [`refinement-and-scope.md`](refinement-and-scope.md) — what Codepot should and should not attempt to model.
+7. [`usability-and-adoption.md`](usability-and-adoption.md) — workflows, personas, onboarding, and adoption requirements.
+8. [`possible-effects-and-risks.md`](possible-effects-and-risks.md) — expected benefits, second-order effects, and failure modes.
+9. [`evidence-and-validation.md`](evidence-and-validation.md) — experiments and metrics required to prove effectiveness.
+10. [`sources.md`](sources.md) — repository and external research sources.
+11. [`plan/README.md`](plan/README.md) — the language-neutral implementation program.
 
 ## Current conclusion
 
