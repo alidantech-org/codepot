@@ -6,12 +6,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
-
-from app import GeneratorApp
 from archives.codepotg.tests.fixtures.realistic_openapi import (
     FICTIONAL_SERVER_URL,
     write_fictional_real_openapi,
 )
+
+from app import GeneratorApp
 
 
 @dataclass(frozen=True)

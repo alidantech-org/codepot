@@ -60,7 +60,10 @@ from archives.codepotg.src.contracts.template import (
     TemplateSchemaMeta,
 )
 from archives.codepotg.src.inference.frontends import all_template_frontends, template_frontends
-from archives.codepotg.src.languages.debug.context.path_values import safe_file_name, safe_path_parts
+from archives.codepotg.src.languages.debug.context.path_values import (
+    safe_file_name,
+    safe_path_parts,
+)
 from archives.codepotg.src.languages.decorators import language_adapter
 
 

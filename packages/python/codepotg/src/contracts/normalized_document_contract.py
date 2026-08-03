@@ -12,7 +12,12 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any
 
-from archives.codepotg.src.contracts.normalized import PresenceValue, SourceObject, presence_from_mapping, source_object
+from archives.codepotg.src.contracts.normalized import (
+    PresenceValue,
+    SourceObject,
+    presence_from_mapping,
+    source_object,
+)
 from archives.codepotg.src.contracts.source import FrozenMap, freeze_source_map
 
 

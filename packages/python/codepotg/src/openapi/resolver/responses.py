@@ -7,7 +7,10 @@ from archives.codepotg.src.constants.openapi import CONTENT, DESCRIPTION
 from archives.codepotg.src.openapi.document import OpenApiDocument
 from archives.codepotg.src.openapi.refs import get_ref
 from archives.codepotg.src.openapi.resolver.components import resolve_component_ref
-from archives.codepotg.src.openapi.resolver.content import get_content_schema_refs, get_content_types
+from archives.codepotg.src.openapi.resolver.content import (
+    get_content_schema_refs,
+    get_content_types,
+)
 
 
 def resolve_response(

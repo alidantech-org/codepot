@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
-
 from archives.codepotg.cli.paths import normalize_cli_path
 from archives.codepotg.cli.presentation.core.console import (
     console,
@@ -17,6 +16,7 @@ from archives.codepotg.cli.presentation.core.console import (
 )
 from archives.codepotg.cli.presentation.core.reporter import Reporter
 from archives.codepotg.cli.presentation.emit.files import render_emit_files
+
 from codepot_file.loader import CODEPOTG_CONFIG_NAME
 
 

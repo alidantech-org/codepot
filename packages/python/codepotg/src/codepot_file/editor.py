@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 from archives.codepotg.src.codepot_file.loader import (
     CODEPOTG_CONFIG_NAME,
     LEGACY_CONFIG_NAMES,

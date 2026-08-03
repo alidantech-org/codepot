@@ -11,7 +11,10 @@ from archives.codepotg.src.contracts.api import (
     ApiSchemaGroups,
 )
 from archives.codepotg.src.contracts.names import make_contract_name
-from archives.codepotg.src.languages.debug.context.path_values import safe_file_name, safe_path_parts
+from archives.codepotg.src.languages.debug.context.path_values import (
+    safe_file_name,
+    safe_path_parts,
+)
 from archives.codepotg.src.languages.discovery import resolve_language_adapter
 from archives.codepotg.tests.fixtures.contracts import make_api_contract
 

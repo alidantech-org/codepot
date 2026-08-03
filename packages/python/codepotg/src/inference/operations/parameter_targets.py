@@ -6,7 +6,10 @@ metadata to actual inferred parameters from OpenAPI operations.
 
 from typing import Any
 
-from archives.codepotg.src.inference.metadata.parameters import get_parameter_target_refs, get_parameter_target_source
+from archives.codepotg.src.inference.metadata.parameters import (
+    get_parameter_target_refs,
+    get_parameter_target_source,
+)
 from archives.codepotg.src.inference.models import InferredParameter, InferredParameterTarget
 
 

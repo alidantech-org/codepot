@@ -4,9 +4,9 @@ from pathlib import Path
 from threading import Event
 
 import pytest
+from archives.codepotg.tests.emission import graph_queue
 
 from contracts.emission import EmissionFile
-from archives.codepotg.tests.emission import graph_queue
 from emission.graph_queue import (
     GraphQueueError,
     GraphQueueLimits,

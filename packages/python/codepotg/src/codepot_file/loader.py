@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 from archives.codepotg.src.codepot_file.models import CodepotCommand, CodepotFile, CodepotTask
 from archives.codepotg.src.core.errors import ConfigError
 

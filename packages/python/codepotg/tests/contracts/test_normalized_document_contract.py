@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from archives.codepotg.src.contracts.normalized_document_contract import (
+    build_normalized_document_contract,
+)
+
 from emission.contexts.bounded import bounded_graph_context
 from inference.lossless_contract import build_api_contract
 from inference.models import InferenceGraph
 from languages.debug.adapter import DebugLanguageAdapter
-from archives.codepotg.src.contracts.normalized_document_contract import (
-    build_normalized_document_contract,
-)
 
 
 def _complete_document() -> dict:

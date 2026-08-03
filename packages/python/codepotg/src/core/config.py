@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pydantic import BaseModel, Field
-
 from archives.codepotg.src.constants.app import (
     DEFAULT_PROJECT_NAME,
     PYDANTIC_ARBITRARY_TYPES_ALLOWED,
 )
 from archives.codepotg.src.core.paths import ProjectPaths
+from pydantic import BaseModel, Field
 
 
 class CliOptions(BaseModel):

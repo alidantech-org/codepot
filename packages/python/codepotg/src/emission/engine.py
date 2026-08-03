@@ -19,7 +19,12 @@ from archives.codepotg.src.contracts.emission import (
 )
 from archives.codepotg.src.contracts.events import ProgressSink, RuntimeEvent
 from archives.codepotg.src.contracts.paths import PathLifecycleMode, PathWritePolicy
-from archives.codepotg.src.contracts.template import TemplateContract, TemplateDependency, TemplateFile, TemplateGroup
+from archives.codepotg.src.contracts.template import (
+    TemplateContract,
+    TemplateDependency,
+    TemplateFile,
+    TemplateGroup,
+)
 from archives.codepotg.src.core.errors import ConfigError
 from archives.codepotg.src.emission.dependencies.output_index import build_output_index
 from archives.codepotg.src.emission.dependencies.resolver import resolve_file_dependencies

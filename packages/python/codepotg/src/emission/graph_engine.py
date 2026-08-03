@@ -15,7 +15,10 @@ from archives.codepotg.src.contracts.events import ProgressSink, RuntimeEvent
 from archives.codepotg.src.contracts.paths import PathLifecycleMode, PathWritePolicy
 from archives.codepotg.src.contracts.template import TemplateDependency, TemplateFile, TemplateGroup
 from archives.codepotg.src.core.errors import ConfigError
-from archives.codepotg.src.emission.engine import EmissionContextBuilder, import_planner_for_language
+from archives.codepotg.src.emission.engine import (
+    EmissionContextBuilder,
+    import_planner_for_language,
+)
 from archives.codepotg.src.emission.imports.base import ImportPlanningContext
 from archives.codepotg.src.emission.paths.config_loader import load_path_config
 from archives.codepotg.src.emission.paths.graph_planner import (
@@ -26,7 +29,10 @@ from archives.codepotg.src.emission.paths.graph_planner import (
 )
 from archives.codepotg.src.emission.planning import VirtualOutputRegistry
 from archives.codepotg.src.emission.templates.renderer import render_template
-from archives.codepotg.src.emission.writer.file_writer import write_bytes_if_changed, write_text_if_changed
+from archives.codepotg.src.emission.writer.file_writer import (
+    write_bytes_if_changed,
+    write_text_if_changed,
+)
 
 
 def emit_graph(

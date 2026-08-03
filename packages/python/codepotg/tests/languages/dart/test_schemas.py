@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from languages.dart.adapter import DartLanguageAdapter
 from archives.codepotg.src.contracts.api import (
     ApiContract,
     ApiDocumentInfo,
@@ -16,6 +15,8 @@ from archives.codepotg.src.contracts.api import (
     ApiSchemaKind,
 )
 from archives.codepotg.src.contracts.names import make_contract_name
+
+from languages.dart.adapter import DartLanguageAdapter
 
 
 def _field(name: str, *, required: bool = True) -> ApiField:

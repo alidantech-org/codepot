@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from app.models import RuntimeEvent
 from archives.codepotg.cli.presentation.core.console import console, error_console
+
+from app.models import RuntimeEvent
 
 
 class Reporter:

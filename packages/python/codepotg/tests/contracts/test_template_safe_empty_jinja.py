@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from archives.codepotg.tests.fixtures.contracts import make_api_contract
+
 from contracts.api import ApiEntity
 from contracts.names import make_contract_name
 from contracts.template import (
@@ -14,7 +16,6 @@ from contracts.template import (
     TemplateSchema,
 )
 from emission.templates.renderer import render_template
-from archives.codepotg.tests.fixtures.contracts import make_api_contract
 
 
 def test_selected_contract_defaults_render_without_undefined_values(tmp_path: Path) -> None:

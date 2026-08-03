@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 from archives.codepotg.src.contracts.path_yaml import PathYamlError, path_config_from_yaml
 from archives.codepotg.src.contracts.paths import PathConfig, default_path_config
 

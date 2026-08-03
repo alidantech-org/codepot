@@ -6,7 +6,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
-from archives.codepotg.src.contracts.template import TemplateDependency, TemplateFile, TemplateImport
+from archives.codepotg.src.contracts.template import (
+    TemplateDependency,
+    TemplateFile,
+    TemplateImport,
+)
 
 
 @dataclass(frozen=True)

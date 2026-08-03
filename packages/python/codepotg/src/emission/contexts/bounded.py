@@ -3,7 +3,9 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping
 from typing import Any
 
-from archives.codepotg.src.contracts.normalized_document_contract import build_normalized_document_contract
+from archives.codepotg.src.contracts.normalized_document_contract import (
+    build_normalized_document_contract,
+)
 from archives.codepotg.src.contracts.template import TemplateContract
 
 

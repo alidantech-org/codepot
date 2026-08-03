@@ -4,7 +4,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from archives.codepotg.src.constants.codegen import FILTER, OPERATORS, QUERY, SEARCH, SELECT, SORT, X_CODEGEN
+from archives.codepotg.src.constants.codegen import (
+    FILTER,
+    OPERATORS,
+    QUERY,
+    SEARCH,
+    SELECT,
+    SORT,
+    X_CODEGEN,
+)
 from archives.codepotg.src.inference.models.schemas import QueryMetadata
 
 

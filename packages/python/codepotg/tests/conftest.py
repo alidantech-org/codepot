@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from archives.codepotg.tests.fixtures.openapi import load_real_contract
 
 

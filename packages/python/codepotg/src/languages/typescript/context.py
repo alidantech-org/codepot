@@ -8,7 +8,10 @@ from pathlib import Path
 from archives.codepotg.src.contracts.api import ApiContract
 from archives.codepotg.src.contracts.names import NameSet
 from archives.codepotg.src.languages.typescript.constants import DEFAULT_API_VERSION
-from archives.codepotg.src.languages.typescript.names import safe_contract_name, safe_ts_package_name
+from archives.codepotg.src.languages.typescript.names import (
+    safe_contract_name,
+    safe_ts_package_name,
+)
 
 
 @dataclass(frozen=True)

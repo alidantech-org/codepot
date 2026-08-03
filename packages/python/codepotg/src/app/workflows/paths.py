@@ -12,7 +12,10 @@ from archives.codepotg.src.app.models import (
     PathsOutput,
     RuntimeEvent,
 )
-from archives.codepotg.src.emission.paths.config_loader import load_path_config, resolve_path_config_file
+from archives.codepotg.src.emission.paths.config_loader import (
+    load_path_config,
+    resolve_path_config_file,
+)
 
 
 def run_paths(request: PathsInput) -> PathsOutput:

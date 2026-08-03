@@ -12,9 +12,16 @@ from collections.abc import Mapping
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from archives.codepotg.src.contracts.emission import EmissionFile, EmissionPlan, EmissionResult, TemplateContext
+from archives.codepotg.src.contracts.emission import (
+    EmissionFile,
+    EmissionPlan,
+    EmissionResult,
+    TemplateContext,
+)
 from archives.codepotg.src.contracts.events import ProgressSink, RuntimeEvent
-from archives.codepotg.src.contracts.normalized_document_contract import build_normalized_document_contract
+from archives.codepotg.src.contracts.normalized_document_contract import (
+    build_normalized_document_contract,
+)
 from archives.codepotg.src.core.system_resources import tune_runtime
 from archives.codepotg.src.emission import engine as legacy
 from archives.codepotg.src.emission.graph_queue import GraphQueueLimits

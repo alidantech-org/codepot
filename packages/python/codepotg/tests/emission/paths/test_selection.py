@@ -3,9 +3,16 @@
 from __future__ import annotations
 
 import pytest
-
-from archives.codepotg.src.contracts.paths import PathConfig, PathFolder, PathSelectionMode, default_path_config
-from archives.codepotg.src.emission.paths.selection import CONTEXT_FOLDER_PARTS, expand_folder_contexts
+from archives.codepotg.src.contracts.paths import (
+    PathConfig,
+    PathFolder,
+    PathSelectionMode,
+    default_path_config,
+)
+from archives.codepotg.src.emission.paths.selection import (
+    CONTEXT_FOLDER_PARTS,
+    expand_folder_contexts,
+)
 
 
 def test_expands_folder_each_mode():

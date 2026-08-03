@@ -6,12 +6,11 @@ from collections.abc import Mapping, Sequence
 from dataclasses import asdict, is_dataclass
 from typing import Any
 
+from archives.codepotg.cli.constants.defaults import ACRONYM_REPLACEMENTS, NUMERIC_COLUMN_TOKENS
+from archives.codepotg.cli.presentation.core.console import console
 from rich import box
 from rich.table import Table
 from rich.text import Text
-
-from archives.codepotg.cli.constants.defaults import ACRONYM_REPLACEMENTS, NUMERIC_COLUMN_TOKENS
-from archives.codepotg.cli.presentation.core.console import console
 
 
 def render_key_value_table(

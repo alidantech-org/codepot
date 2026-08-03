@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from archives.codepotg.src.languages.discovery import discover_languages, resolve_language_adapter
 from archives.codepotg.tests.fixtures.contracts import make_api_contract
 

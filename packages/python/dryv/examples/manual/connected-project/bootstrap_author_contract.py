@@ -3,13 +3,14 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from dryv_author import Author, field
+
 from dryv.ir import (
     contract_from_json,
     contract_from_yaml,
     contract_to_json,
     contract_to_yaml,
 )
-from dryv_author import Author, field
 
 ROOT = Path(__file__).resolve().parent
 

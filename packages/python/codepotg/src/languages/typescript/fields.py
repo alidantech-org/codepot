@@ -13,7 +13,10 @@ from archives.codepotg.src.contracts.template import (
     TemplateItemKey,
 )
 from archives.codepotg.src.languages.typescript.dependencies import field_dependencies
-from archives.codepotg.src.languages.typescript.names import TYPESCRIPT_RESERVED_WORDS, safe_enum_key
+from archives.codepotg.src.languages.typescript.names import (
+    TYPESCRIPT_RESERVED_WORDS,
+    safe_enum_key,
+)
 from archives.codepotg.src.languages.typescript.types import ts_field_type
 
 

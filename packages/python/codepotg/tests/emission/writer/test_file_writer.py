@@ -5,9 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from archives.codepotg.src.emission.writer import file_writer
-from archives.codepotg.src.emission.writer.file_writer import write_bytes_if_changed, write_text_if_changed
+from archives.codepotg.src.emission.writer.file_writer import (
+    write_bytes_if_changed,
+    write_text_if_changed,
+)
 
 
 def test_write_text_if_changed_creates_file(tmp_path: Path) -> None:

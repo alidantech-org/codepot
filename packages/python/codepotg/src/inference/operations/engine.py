@@ -5,8 +5,14 @@ from typing import Any
 from archives.codepotg.src.constants.codegen import X_CODEGEN
 from archives.codepotg.src.constants.http import HTTP_METHODS
 from archives.codepotg.src.constants.openapi import OPERATION_ID, REQUEST_BODY, RESPONSES
-from archives.codepotg.src.inference.metadata.parameters import get_parameter_target_refs, get_parameter_target_source
-from archives.codepotg.src.inference.metadata.targets import get_codegen_target_ref, get_codegen_target_source
+from archives.codepotg.src.inference.metadata.parameters import (
+    get_parameter_target_refs,
+    get_parameter_target_source,
+)
+from archives.codepotg.src.inference.metadata.targets import (
+    get_codegen_target_ref,
+    get_codegen_target_source,
+)
 from archives.codepotg.src.inference.metadata.ui import get_operation_ui_metadata
 from archives.codepotg.src.inference.models import InferredOperation, InferredOperationTarget
 from archives.codepotg.src.inference.operations.parameters import infer_parameters

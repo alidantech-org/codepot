@@ -8,10 +8,11 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
-
 from archives.codepotg.src.contracts.emission import TemplateContext
-from archives.codepotg.src.contracts.normalized_document_contract import build_normalized_document_contract
+from archives.codepotg.src.contracts.normalized_document_contract import (
+    build_normalized_document_contract,
+)
+from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
 _NORMALIZED_ROOTS = {
     "normalized": "normalized",

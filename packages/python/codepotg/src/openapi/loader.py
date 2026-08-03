@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 from archives.codepotg.src.constants.files import ENCODING_UTF8, EXT_JSON, EXT_YAML, EXT_YML
 from archives.codepotg.src.constants.openapi import (
     ERR_FILE_NOT_FOUND,

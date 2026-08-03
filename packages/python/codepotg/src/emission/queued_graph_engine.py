@@ -16,7 +16,10 @@ from archives.codepotg.src.contracts.emission import (
 from archives.codepotg.src.contracts.events import ProgressSink, RuntimeEvent
 from archives.codepotg.src.contracts.paths import PathLifecycleMode
 from archives.codepotg.src.core.errors import ConfigError
-from archives.codepotg.src.emission.engine import EmissionContextBuilder, import_planner_for_language
+from archives.codepotg.src.emission.engine import (
+    EmissionContextBuilder,
+    import_planner_for_language,
+)
 from archives.codepotg.src.emission.graph_engine import _emission_file
 from archives.codepotg.src.emission.graph_queue import (
     GraphQueueLimits,
@@ -27,7 +30,10 @@ from archives.codepotg.src.emission.graph_queue import (
     rendered_size,
 )
 from archives.codepotg.src.emission.paths.config_loader import load_path_config
-from archives.codepotg.src.emission.paths.graph_planner import PathGraphPlanningError, plan_path_graph
+from archives.codepotg.src.emission.paths.graph_planner import (
+    PathGraphPlanningError,
+    plan_path_graph,
+)
 from archives.codepotg.src.emission.planning import VirtualOutputRegistry
 from archives.codepotg.src.emission.templates.renderer import render_template
 

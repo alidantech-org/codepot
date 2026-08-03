@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from languages.dart.adapter import DartLanguageAdapter
 from archives.codepotg.src.contracts.api import (
     ApiContract,
     ApiDocumentInfo,
@@ -19,6 +18,8 @@ from archives.codepotg.src.contracts.api import (
 )
 from archives.codepotg.src.contracts.names import make_contract_name
 from archives.codepotg.src.languages.dart.urls import build_endpoint_path
+
+from languages.dart.adapter import DartLanguageAdapter
 
 
 def test_build_endpoint_path_keeps_routes_versionless() -> None:

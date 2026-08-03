@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from archives.codepotg.src.contracts.names import make_contract_name
+
 from utils.naming import build_name
 
 

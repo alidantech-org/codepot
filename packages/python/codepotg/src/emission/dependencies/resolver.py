@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from archives.codepotg.src.contracts.template import TemplateDependency, TemplateDependencyTargetKind, TemplateFile
+from archives.codepotg.src.contracts.template import (
+    TemplateDependency,
+    TemplateDependencyTargetKind,
+    TemplateFile,
+)
 from archives.codepotg.src.emission.dependencies.output_index import OutputIndex
 
 REASON_MISSING = "target was not emitted"

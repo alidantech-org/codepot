@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
-
 from archives.codepotg.cli.constants.constants import (
     HELP_DEBUG,
     HELP_DRY_RUN,

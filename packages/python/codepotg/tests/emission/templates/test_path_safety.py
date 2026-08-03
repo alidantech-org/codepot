@@ -5,8 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
-from archives.codepotg.src.emission.templates.path_safety import UnsafePathError, validate_relative_path
+from archives.codepotg.src.emission.templates.path_safety import (
+    UnsafePathError,
+    validate_relative_path,
+)
 
 
 def test_safe_relative_path_allows_normal_path() -> None:

@@ -17,8 +17,12 @@ from archives.codepotg.src.contracts.api import (
 from archives.codepotg.src.contracts.names import make_contract_name
 from archives.codepotg.src.contracts.normalized import contract_collection
 from archives.codepotg.src.contracts.normalized_api import build_normalized_api_view
-from archives.codepotg.src.contracts.normalized_codegen_contract import build_normalized_codegen_contract
-from archives.codepotg.src.contracts.normalized_document_contract import build_normalized_document_contract
+from archives.codepotg.src.contracts.normalized_codegen_contract import (
+    build_normalized_codegen_contract,
+)
+from archives.codepotg.src.contracts.normalized_document_contract import (
+    build_normalized_document_contract,
+)
 from archives.codepotg.src.contracts.normalized_domains import build_normalized_domain_view
 from archives.codepotg.src.contracts.normalized_entity_contract import (
     NormalizedEntityContract,
@@ -26,11 +30,17 @@ from archives.codepotg.src.contracts.normalized_entity_contract import (
     NormalizedEntityFieldContract,
     build_normalized_entity_contract,
 )
-from archives.codepotg.src.contracts.normalized_frontend_contract import build_normalized_frontend_contract
-from archives.codepotg.src.contracts.normalized_schema_contract import build_normalized_schema_contract
+from archives.codepotg.src.contracts.normalized_frontend_contract import (
+    build_normalized_frontend_contract,
+)
+from archives.codepotg.src.contracts.normalized_schema_contract import (
+    build_normalized_schema_contract,
+)
 from archives.codepotg.src.contracts.normalized_sources import extend_normalized_source_registry
 from archives.codepotg.src.contracts.source import freeze_source_map
-from archives.codepotg.src.inference.contract import build_api_contract as build_compatibility_api_contract
+from archives.codepotg.src.inference.contract import (
+    build_api_contract as build_compatibility_api_contract,
+)
 from archives.codepotg.src.inference.models import InferenceGraph
 
 

@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from typer.testing import CliRunner
-
 from archives.codepotg.cli.main import app
+from typer.testing import CliRunner
 
 
 def test_paths_command_lists_resolved_folder_recipes(tmp_path: Path) -> None:

@@ -5,11 +5,11 @@ from contextlib import chdir
 from pathlib import Path
 
 import yaml
+from archives.codepotg.cli.main import app
 from typer.testing import CliRunner
 
 from app.models import EmitOutput
 from app.workflows import generate as generate_workflow
-from archives.codepotg.cli.main import app
 from codepotg.schemas import CODEPOTG_SCHEMA_ID
 
 CONFIG_NAME = "Codepotg.yaml"

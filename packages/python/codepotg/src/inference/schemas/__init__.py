@@ -13,8 +13,16 @@ from archives.codepotg.src.constants.codegen import X_CODEGEN
 from archives.codepotg.src.constants.openapi import REF_SCHEMAS
 from archives.codepotg.src.inference.classifiers import classify_schema
 from archives.codepotg.src.inference.metadata.query import infer_query_metadata
-from archives.codepotg.src.inference.models import InferredResource, InferredSchema, InferredSchemaKind
-from archives.codepotg.src.inference.models.schemas import InferredSchemaComposition, InferredSchemaField, QueryMetadata
+from archives.codepotg.src.inference.models import (
+    InferredResource,
+    InferredSchema,
+    InferredSchemaKind,
+)
+from archives.codepotg.src.inference.models.schemas import (
+    InferredSchemaComposition,
+    InferredSchemaField,
+    QueryMetadata,
+)
 from archives.codepotg.src.inference.resources import extract_resource_from_x_codegen
 from archives.codepotg.src.inference.schemas.composition import (
     get_composition_refs,
@@ -24,7 +32,10 @@ from archives.codepotg.src.inference.schemas.composition import (
 )
 from archives.codepotg.src.inference.schemas.enums import infer_enum_type, infer_enum_values
 from archives.codepotg.src.inference.schemas.fields import infer_schema_fields
-from archives.codepotg.src.inference.schemas.primitives import infer_primitive_format, infer_primitive_type
+from archives.codepotg.src.inference.schemas.primitives import (
+    infer_primitive_format,
+    infer_primitive_type,
+)
 from archives.codepotg.src.inference.schemas.resolution import resolve_schema_alias
 from archives.codepotg.src.openapi.document import OpenApiDocument
 from archives.codepotg.src.openapi.refs import find_refs, get_ref

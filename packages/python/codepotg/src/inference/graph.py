@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from archives.codepotg.src.constants.openapi import OPERATION_PREFIX
-from archives.codepotg.src.inference.models import InferredDependency, InferredOperation, InferredSchema
+from archives.codepotg.src.inference.models import (
+    InferredDependency,
+    InferredOperation,
+    InferredSchema,
+)
 from archives.codepotg.src.inference.operations.dependencies import collect_operation_dependencies
 
 

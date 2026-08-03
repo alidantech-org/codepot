@@ -7,8 +7,12 @@ from dataclasses import replace
 from typing import Any
 
 from archives.codepotg.src.contracts.source import freeze_source_map
-from archives.codepotg.src.inference.contract import build_api_contract as build_compatibility_api_contract
-from archives.codepotg.src.inference.lossless_contract import build_api_contract as build_full_api_contract
+from archives.codepotg.src.inference.contract import (
+    build_api_contract as build_compatibility_api_contract,
+)
+from archives.codepotg.src.inference.lossless_contract import (
+    build_api_contract as build_full_api_contract,
+)
 from archives.codepotg.src.inference.models import InferenceGraph
 
 

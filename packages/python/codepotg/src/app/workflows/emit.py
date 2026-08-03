@@ -16,7 +16,9 @@ from archives.codepotg.src.app.workflows.normalization import required_normalize
 from archives.codepotg.src.app.workflows.template_paths import resolve_template_root
 from archives.codepotg.src.core.memory_trace import MemoryTrace
 from archives.codepotg.src.emission.bounded_graph_engine import emit_bounded_graph
-from archives.codepotg.src.emission.legacy_queued_engine import emit_legacy_queued as run_legacy_emission
+from archives.codepotg.src.emission.legacy_queued_engine import (
+    emit_legacy_queued as run_legacy_emission,
+)
 from archives.codepotg.src.emission.paths.config_loader import load_path_config
 from archives.codepotg.src.emission.templates.renderer import clear_environment_cache
 from archives.codepotg.src.inference.engine import InferenceEngine

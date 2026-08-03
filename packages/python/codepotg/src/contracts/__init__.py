@@ -16,11 +16,25 @@ from archives.codepotg.src.contracts.api import (
     ApiResponse,
     ApiSchema,
 )
-from archives.codepotg.src.contracts.emission import EmissionFile, EmissionPlan, EmissionResult, EmissionWriteResult
+from archives.codepotg.src.contracts.emission import (
+    EmissionFile,
+    EmissionPlan,
+    EmissionResult,
+    EmissionWriteResult,
+)
 from archives.codepotg.src.contracts.events import EventLevel, ProgressSink, RuntimeEvent
-from archives.codepotg.src.contracts.language import LanguageAdapter, LanguagePostAction, LanguagePostResult
+from archives.codepotg.src.contracts.language import (
+    LanguageAdapter,
+    LanguagePostAction,
+    LanguagePostResult,
+)
 from archives.codepotg.src.contracts.names import NameSet
-from archives.codepotg.src.contracts.source import FrozenMap, freeze_source_map, freeze_source_value, thaw_source_value
+from archives.codepotg.src.contracts.source import (
+    FrozenMap,
+    freeze_source_map,
+    freeze_source_value,
+    thaw_source_value,
+)
 from archives.codepotg.src.contracts.template import (
     TemplateContract,
     TemplateContractMeta,

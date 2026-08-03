@@ -4,9 +4,8 @@ import json
 from contextlib import chdir
 from pathlib import Path
 
-from typer.testing import CliRunner
-
 from archives.codepotg.cli.main import app
+from typer.testing import CliRunner
 
 
 def test_jsonl_command_writes_visible_cache_and_progress(tmp_path: Path) -> None:

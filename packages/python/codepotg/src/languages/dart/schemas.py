@@ -18,7 +18,10 @@ from archives.codepotg.src.contracts.template import (
 from archives.codepotg.src.languages.dart.dependencies import schema_dependencies
 from archives.codepotg.src.languages.dart.fields import template_field
 from archives.codepotg.src.languages.dart.names import DART_RESERVED_WORDS, safe_enum_key
-from archives.codepotg.src.languages.dart.paths import resource_path_for_schema, safe_schema_file_name
+from archives.codepotg.src.languages.dart.paths import (
+    resource_path_for_schema,
+    safe_schema_file_name,
+)
 
 
 def _merge_fields_with_overrides(

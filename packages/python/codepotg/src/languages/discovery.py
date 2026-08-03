@@ -10,7 +10,10 @@ from importlib import import_module
 from pathlib import Path
 
 from archives.codepotg.src.contracts.language import LanguageAdapter
-from archives.codepotg.src.languages.decorators import get_registered_adapter, list_registered_languages
+from archives.codepotg.src.languages.decorators import (
+    get_registered_adapter,
+    list_registered_languages,
+)
 
 ADAPTER_MODULE_NAME = "adapter"
 

@@ -4,7 +4,13 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
-from archives.codepotg.src.contracts.api import ApiContract, ApiEntity, ApiOperation, ApiResource, ApiSchema
+from archives.codepotg.src.contracts.api import (
+    ApiContract,
+    ApiEntity,
+    ApiOperation,
+    ApiResource,
+    ApiSchema,
+)
 from archives.codepotg.src.contracts.normalized import (
     ContractCollection,
     ContractDiagnostic,
@@ -20,7 +26,10 @@ from archives.codepotg.src.contracts.normalized import (
     structured_notes,
 )
 from archives.codepotg.src.contracts.normalized_builders import build_reference, build_schema_use
-from archives.codepotg.src.contracts.normalized_domains import NormalizedAccessPolicy, NormalizedDomainView
+from archives.codepotg.src.contracts.normalized_domains import (
+    NormalizedAccessPolicy,
+    NormalizedDomainView,
+)
 from archives.codepotg.src.contracts.source import FrozenMap, freeze_source_map
 
 

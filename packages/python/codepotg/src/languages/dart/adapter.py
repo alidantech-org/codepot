@@ -31,7 +31,11 @@ from archives.codepotg.src.languages.dart.constants import (
 )
 from archives.codepotg.src.languages.dart.context import build_dart_context
 from archives.codepotg.src.languages.dart.operations import template_operations
-from archives.codepotg.src.languages.dart.resources import feature_resources, resource_paths, template_resources
+from archives.codepotg.src.languages.dart.resources import (
+    feature_resources,
+    resource_paths,
+    template_resources,
+)
 from archives.codepotg.src.languages.dart.schemas import template_schema_groups
 from archives.codepotg.src.languages.dart.urls import default_base_url
 from archives.codepotg.src.languages.decorators import language_adapter

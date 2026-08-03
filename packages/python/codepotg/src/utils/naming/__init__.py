@@ -7,7 +7,12 @@ Singular access is stable and preserves the authored name; use plural access
 only where a generated plural form is explicitly required.
 """
 
-from archives.codepotg.src.utils.naming.provider import NameProvider, NameSet, PluralizedName, build_name
+from archives.codepotg.src.utils.naming.provider import (
+    NameProvider,
+    NameSet,
+    PluralizedName,
+    build_name,
+)
 
 __all__ = [
     "NameProvider",

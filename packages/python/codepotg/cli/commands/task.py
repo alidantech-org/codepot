@@ -7,9 +7,13 @@ from typing import Any
 
 import questionary
 import typer
-
 from archives.codepotg.cli.paths import normalize_cli_path
-from archives.codepotg.cli.presentation.core.console import print_error, print_success, print_warning
+from archives.codepotg.cli.presentation.core.console import (
+    print_error,
+    print_success,
+    print_warning,
+)
+
 from codepot_file.editor import (
     DEFAULT_INPUT,
     DEFAULT_LANGUAGE,

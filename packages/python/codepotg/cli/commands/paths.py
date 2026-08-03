@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
-
 from archives.codepotg.cli.paths import normalize_cli_path
 from archives.codepotg.cli.presentation.core.console import (
     print_error,

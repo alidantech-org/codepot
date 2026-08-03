@@ -8,7 +8,10 @@ from threading import Condition, Lock, Thread
 
 from archives.codepotg.src.contracts.emission import EmissionFile, EmissionWriteResult
 from archives.codepotg.src.contracts.paths import PathLifecycleMode
-from archives.codepotg.src.emission.writer.file_writer import write_bytes_if_changed, write_text_if_changed
+from archives.codepotg.src.emission.writer.file_writer import (
+    write_bytes_if_changed,
+    write_text_if_changed,
+)
 
 _SENTINEL = object()
 

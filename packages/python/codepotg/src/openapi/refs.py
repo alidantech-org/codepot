@@ -3,7 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from archives.codepotg.src.constants.openapi import COMPONENT_REF_PREFIX, COMPONENTS, JSON_POINTER_PREFIX, REF
+from archives.codepotg.src.constants.openapi import (
+    COMPONENT_REF_PREFIX,
+    COMPONENTS,
+    JSON_POINTER_PREFIX,
+    REF,
+)
 
 
 @dataclass(frozen=True)

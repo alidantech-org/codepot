@@ -5,7 +5,13 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any
 
-from archives.codepotg.src.contracts.api import ApiContract, ApiField, ApiOperation, ApiResource, ApiSchema
+from archives.codepotg.src.contracts.api import (
+    ApiContract,
+    ApiField,
+    ApiOperation,
+    ApiResource,
+    ApiSchema,
+)
 from archives.codepotg.src.contracts.normalized import (
     ContractCollection,
     ContractDiagnostic,

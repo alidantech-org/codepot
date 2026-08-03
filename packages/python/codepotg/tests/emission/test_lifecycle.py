@@ -3,13 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
-from core.errors import ConfigError
 from archives.codepotg.src.codepot_file.models import CodepotTask
 from archives.codepotg.src.codepot_file.runner import clean_task_paths
 from archives.codepotg.src.emission.engine import emit
 from archives.codepotg.src.emission.paths.config_loader import load_path_config
 from archives.codepotg.tests.fixtures.contracts import make_template_contract
+
+from core.errors import ConfigError
 
 
 def test_existing_templates_without_write_policy_behave_as_before(tmp_path: Path) -> None:

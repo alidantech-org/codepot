@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from archives.codepotg.src.emission.templates.descriptor import describe_template
 
 

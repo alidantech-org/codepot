@@ -5,7 +5,12 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from archives.codepotg.src.app.models import RuntimeDiagnostic, RuntimeEvent, ValidateInput, ValidateOutput
+from archives.codepotg.src.app.models import (
+    RuntimeDiagnostic,
+    RuntimeEvent,
+    ValidateInput,
+    ValidateOutput,
+)
 from archives.codepotg.src.openapi.loader import load_openapi_document
 
 

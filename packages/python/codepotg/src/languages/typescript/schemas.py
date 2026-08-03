@@ -17,8 +17,14 @@ from archives.codepotg.src.contracts.template import (
 )
 from archives.codepotg.src.languages.typescript.dependencies import schema_dependencies
 from archives.codepotg.src.languages.typescript.fields import template_field
-from archives.codepotg.src.languages.typescript.names import TYPESCRIPT_RESERVED_WORDS, safe_enum_key
-from archives.codepotg.src.languages.typescript.paths import resource_path_for_schema, safe_schema_file_name
+from archives.codepotg.src.languages.typescript.names import (
+    TYPESCRIPT_RESERVED_WORDS,
+    safe_enum_key,
+)
+from archives.codepotg.src.languages.typescript.paths import (
+    resource_path_for_schema,
+    safe_schema_file_name,
+)
 
 
 def template_schema_groups(

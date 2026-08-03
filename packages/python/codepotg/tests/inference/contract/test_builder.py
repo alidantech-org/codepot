@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from contracts.api import ApiHttpMethod
 from archives.codepotg.src.inference.contract import build_api_contract
 from archives.codepotg.src.inference.models import (
     InferenceGraph,
@@ -12,6 +11,8 @@ from archives.codepotg.src.inference.models import (
 )
 from archives.codepotg.src.inference.models.schemas import InferredSchemaField
 from archives.codepotg.tests.fixtures.openapi import load_real_graph
+
+from contracts.api import ApiHttpMethod
 
 
 def test_api_contract_preserves_real_openapi(real_openapi_path) -> None:

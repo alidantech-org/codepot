@@ -5,7 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from archives.codepotg.src.emission.paths.config_loader import PATH_CONFIG_FILES
-from archives.codepotg.src.emission.templates.descriptor import TemplateDescriptor, describe_template
+from archives.codepotg.src.emission.templates.descriptor import (
+    TemplateDescriptor,
+    describe_template,
+)
 from archives.codepotg.src.emission.templates.renderer import clear_environment_cache
 
 

@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from archives.codepotg.src.app.models import InspectInput, InspectOutput, ResourceSummary, RuntimeDiagnostic, RuntimeEvent
+from archives.codepotg.src.app.models import (
+    InspectInput,
+    InspectOutput,
+    ResourceSummary,
+    RuntimeDiagnostic,
+    RuntimeEvent,
+)
 from archives.codepotg.src.openapi.inspector import inspect_openapi_document
 from archives.codepotg.src.openapi.loader import load_openapi_document
 

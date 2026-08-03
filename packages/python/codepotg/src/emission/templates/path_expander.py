@@ -7,7 +7,10 @@ from pathlib import Path
 from typing import Any
 
 from archives.codepotg.src.contracts.paths import PathTokenKind
-from archives.codepotg.src.emission.templates.path_safety import validate_path_part, validate_relative_path
+from archives.codepotg.src.emission.templates.path_safety import (
+    validate_path_part,
+    validate_relative_path,
+)
 from archives.codepotg.src.emission.templates.path_tokens import parse_path_segment
 from archives.codepotg.src.emission.templates.resolver import resolve_variable, stringify_value
 

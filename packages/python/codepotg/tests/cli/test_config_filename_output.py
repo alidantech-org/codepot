@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from archives.codepotg.cli.main import app
 from typer.testing import CliRunner
 
 from app.models import EmitOutput
 from app.workflows import generate as generate_workflow
-from archives.codepotg.cli.main import app
 
 
 def test_generate_reports_explicit_yml_config_name(tmp_path: Path, monkeypatch) -> None:

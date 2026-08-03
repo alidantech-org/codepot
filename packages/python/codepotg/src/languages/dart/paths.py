@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from archives.codepotg.src.contracts.api import ApiResource, ApiSchema
 from archives.codepotg.src.languages.dart.names import name_text
-from archives.codepotg.src.languages.debug.context.path_values import safe_file_name, safe_path_parts
+from archives.codepotg.src.languages.debug.context.path_values import (
+    safe_file_name,
+    safe_path_parts,
+)
 
 SHARED_PATH = ("shared",)
 
