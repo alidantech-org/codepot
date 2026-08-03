@@ -1,19 +1,19 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, relative, resolve, sep } from "node:path";
-import { fileURLToPath } from "node:url";
-import GithubSlugger from "github-slugger";
-import matter from "gray-matter";
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, relative, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import GithubSlugger from 'github-slugger';
+import matter from 'gray-matter';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
-const appRoot = resolve(scriptDirectory, "..");
-const workspaceRoot = resolve(appRoot, "../..");
-const docsRoot = resolve(workspaceRoot, "docs");
-const generatedRoot = resolve(appRoot, "src/generated");
-const docsOutput = resolve(generatedRoot, "docs.ts");
-const tocOutput = resolve(generatedRoot, "docs-toc.json");
+const appRoot = resolve(scriptDirectory, '..');
+const workspaceRoot = resolve(appRoot, '..');
+const docsRoot = resolve(workspaceRoot, '/docs');
+const generatedRoot = resolve(appRoot, 'src/generated');
+const docsOutput = resolve(generatedRoot, 'docs.ts');
+const tocOutput = resolve(generatedRoot, 'docs-toc.json');
 
-const navigation = JSON.parse(await readFile(resolve(docsRoot, "navigation.json"), "utf8"));
-const ecosystem = JSON.parse(await readFile(resolve(docsRoot, "ecosystem.json"), "utf8"));
+const navigation = JSON.parse(await readFile(resolve(docsRoot, 'navigation.json'), 'utf8'));
+const ecosystem = JSON.parse(await readFile(resolve(docsRoot, 'ecosystem.json'), 'utf8'));
 const documents = {};
 const tablesOfContents = {};
 const index = [];
@@ -21,25 +21,25 @@ const searchIndex = [];
 const seenPaths = new Set();
 
 function isValidPublicPath(value, { allowRoot = false } = {}) {
-  if (allowRoot && value === "") return true;
+  if (allowRoot && value === '') return true;
   return (
-    typeof value === "string" &&
+    typeof value === 'string' &&
     /^[a-z0-9][a-z0-9/_-]*$/.test(value) &&
-    !value.includes("..") &&
-    !value.endsWith("/") &&
-    !value.includes("//")
+    !value.includes('..') &&
+    !value.endsWith('/') &&
+    !value.includes('//')
   );
 }
 
 function resolveDocumentSource(item) {
-  const source = typeof item.source === "string" ? item.source : item.path;
+  const source = typeof item.source === 'string' ? item.source : item.path;
   if (!isValidPublicPath(source)) {
     throw new Error(`Invalid documentation source: ${String(source)}`);
   }
 
   const sourceFile = resolve(docsRoot, `${source}.md`);
   const relativePath = relative(docsRoot, sourceFile);
-  if (!relativePath || relativePath.startsWith("..") || relativePath.split(sep).includes("..")) {
+  if (!relativePath || relativePath.startsWith('..') || relativePath.split(sep).includes('..')) {
     throw new Error(`Documentation source escapes docs/: ${source}`);
   }
   return { source, sourceFile };
@@ -47,40 +47,40 @@ function resolveDocumentSource(item) {
 
 function cleanHeadingText(value) {
   return value
-    .replace(/\s+#+\s*$/, "")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/<[^>]+>/g, "")
-    .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/__([^_]+)__/g, "$1")
-    .replace(/\*([^*]+)\*/g, "$1")
-    .replace(/_([^_]+)_/g, "$1")
-    .replace(/\\([#*_`])/g, "$1")
+    .replace(/\s+#+\s*$/, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    .replace(/\\([#*_`])/g, '$1')
     .trim();
 }
 
 function cleanMarkdownText(value) {
   return value
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/~~~[\s\S]*?~~~/g, " ")
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/[`*_>#|]/g, " ")
-    .replace(/^[-+]\s+/gm, " ")
-    .replace(/^\d+\.\s+/gm, " ")
-    .replace(/\s+/g, " ")
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/~~~[\s\S]*?~~~/g, ' ')
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/[`*_>#|]/g, ' ')
+    .replace(/^[-+]\s+/gm, ' ')
+    .replace(/^\d+\.\s+/gm, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
 function normalizeSearchText(value) {
   return value
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-    .replace(/[^a-z0-9+#./_-]+/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(/[^a-z0-9+#./_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -88,7 +88,7 @@ function createSnippet(value, maximumLength = 190) {
   const clean = cleanMarkdownText(value);
   if (clean.length <= maximumLength) return clean;
   const shortened = clean.slice(0, maximumLength + 1);
-  const boundary = shortened.lastIndexOf(" ");
+  const boundary = shortened.lastIndexOf(' ');
   return `${shortened.slice(0, boundary > 120 ? boundary : maximumLength).trim()}…`;
 }
 
@@ -103,7 +103,7 @@ function extractDocumentData(content) {
     const fenceMatch = line.match(/^\s*(```+|~~~+)/);
     if (fenceMatch) {
       const marker = fenceMatch[1][0];
-      fence = fence === marker ? null : fence ?? marker;
+      fence = fence === marker ? null : (fence ?? marker);
       continue;
     }
     if (fence) continue;
@@ -116,7 +116,7 @@ function extractDocumentData(content) {
       const heading = {
         id: slugger.slug(text),
         text,
-        level: match[1].length,
+        level: match[1].length
       };
       headings.push(heading);
 
@@ -136,7 +136,7 @@ function extractDocumentData(content) {
 }
 
 function hrefForPath(path) {
-  return path ? `/docs/${path}` : "/docs";
+  return path ? `/docs/${path}` : '/docs';
 }
 
 async function addDocument(item, sectionTitle, ancestors = [], inheritedPackage = null) {
@@ -145,21 +145,19 @@ async function addDocument(item, sectionTitle, ancestors = [], inheritedPackage 
     throw new Error(`Invalid public documentation path: ${String(publicPath)}`);
   }
   if (seenPaths.has(publicPath)) {
-    throw new Error(`Duplicate public documentation path: ${publicPath || "(root)"}`);
+    throw new Error(`Duplicate public documentation path: ${publicPath || '(root)'}`);
   }
   seenPaths.add(publicPath);
 
   const { source, sourceFile } = resolveDocumentSource(item);
-  const markdown = await readFile(sourceFile, "utf8");
+  const markdown = await readFile(sourceFile, 'utf8');
   const parsed = matter(markdown);
-  const title = String(
-    parsed.data.title ?? item.title ?? (publicPath || "Documentation"),
-  );
-  const description = String(parsed.data.description ?? "");
+  const title = String(parsed.data.title ?? item.title ?? (publicPath || 'Documentation'));
+  const description = String(parsed.data.description ?? '');
   const packageId =
-    typeof item.package === "string"
+    typeof item.package === 'string'
       ? item.package
-      : inheritedPackage ?? (typeof parsed.data.product === "string" ? parsed.data.product : null);
+      : (inheritedPackage ?? (typeof parsed.data.product === 'string' ? parsed.data.product : null));
   const { headings, sections } = extractDocumentData(parsed.content);
   const breadcrumbItems = [...ancestors, { title, path: publicPath }];
   const pageSnippet = description || createSnippet(parsed.content);
@@ -174,12 +172,12 @@ async function addDocument(item, sectionTitle, ancestors = [], inheritedPackage 
     section: sectionTitle,
     package: packageId,
     breadcrumbs: breadcrumbItems,
-    searchText: normalizeSearchText(`${title} ${description} ${parsed.content}`),
+    searchText: normalizeSearchText(`${title} ${description} ${parsed.content}`)
   });
 
   searchIndex.push({
-    id: `page:${publicPath || "root"}`,
-    kind: "page",
+    id: `page:${publicPath || 'root'}`,
+    kind: 'page',
     path: publicPath,
     href: hrefForPath(publicPath),
     title,
@@ -190,16 +188,14 @@ async function addDocument(item, sectionTitle, ancestors = [], inheritedPackage 
     snippet: pageSnippet,
     level: 1,
     breadcrumbs: breadcrumbItems,
-    searchText: normalizeSearchText(
-      `${packageId ?? ""} ${title} ${description} ${sectionTitle} ${parsed.content}`,
-    ),
+    searchText: normalizeSearchText(`${packageId ?? ''} ${title} ${description} ${sectionTitle} ${parsed.content}`)
   });
 
   for (const heading of sections) {
-    const body = heading.lines.join(" ");
+    const body = heading.lines.join(' ');
     searchIndex.push({
-      id: `heading:${publicPath || "root"}:${heading.id}`,
-      kind: "heading",
+      id: `heading:${publicPath || 'root'}:${heading.id}`,
+      kind: 'heading',
       path: publicPath,
       href: `${hrefForPath(publicPath)}#${heading.id}`,
       title: heading.text,
@@ -211,8 +207,8 @@ async function addDocument(item, sectionTitle, ancestors = [], inheritedPackage 
       level: heading.level,
       breadcrumbs: breadcrumbItems,
       searchText: normalizeSearchText(
-        `${packageId ?? ""} ${heading.text} ${title} ${description} ${sectionTitle} ${body}`,
-      ),
+        `${packageId ?? ''} ${heading.text} ${title} ${description} ${sectionTitle} ${body}`
+      )
     });
   }
 
@@ -226,13 +222,13 @@ async function addDocument(item, sectionTitle, ancestors = [], inheritedPackage 
 }
 
 if (!navigation.home) {
-  throw new Error("navigation.json must define a home document.");
+  throw new Error('navigation.json must define a home document.');
 }
-await addDocument(navigation.home, "Documentation");
+await addDocument(navigation.home, 'Documentation');
 
 for (const section of navigation.sections ?? []) {
   for (const item of section.items ?? []) {
-    await addDocument(item, String(section.title ?? "Documentation"));
+    await addDocument(item, String(section.title ?? 'Documentation'));
   }
 }
 
@@ -251,29 +247,27 @@ const resolvedEcosystem = {
   products: (ecosystem.products ?? []).map((product) => ({
     ...product,
     docsSlug:
-      typeof product.docsSlug === "string"
-        ? redirects[product.docsSlug] ?? product.docsSlug
-        : product.docsSlug,
-  })),
+      typeof product.docsSlug === 'string' ? (redirects[product.docsSlug] ?? product.docsSlug) : product.docsSlug
+  }))
 };
 
 const source = [
-  "// Generated by scripts/sync-docs.mjs. Do not edit.",
+  '// Generated by scripts/sync-docs.mjs. Do not edit.',
   `export const DOCS = ${JSON.stringify(documents, null, 2)} as const;`,
   `export const NAVIGATION = ${JSON.stringify(navigation, null, 2)} as const;`,
   `export const DOC_INDEX = ${JSON.stringify(index, null, 2)} as const;`,
   `export const DOC_SEARCH_INDEX = ${JSON.stringify(searchIndex, null, 2)} as const;`,
   `export const DOC_REDIRECTS = ${JSON.stringify(redirects, null, 2)} as const;`,
   `export const ECOSYSTEM = ${JSON.stringify(resolvedEcosystem, null, 2)} as const;`,
-  "export type DocPath = keyof typeof DOCS;",
-  "",
-].join("\n");
+  'export type DocPath = keyof typeof DOCS;',
+  ''
+].join('\n');
 
 await mkdir(generatedRoot, { recursive: true });
 await Promise.all([
-  writeFile(docsOutput, source, "utf8"),
-  writeFile(tocOutput, `${JSON.stringify(tablesOfContents, null, 2)}\n`, "utf8"),
+  writeFile(docsOutput, source, 'utf8'),
+  writeFile(tocOutput, `${JSON.stringify(tablesOfContents, null, 2)}\n`, 'utf8')
 ]);
 console.log(
-  `Synced ${Object.keys(documents).length} nested documentation pages, ${searchIndex.length} search records, JSON tables of contents, redirects, and ecosystem metadata.`,
+  `Synced ${Object.keys(documents).length} nested documentation pages, ${searchIndex.length} search records, JSON tables of contents, redirects, and ecosystem metadata.`
 );
