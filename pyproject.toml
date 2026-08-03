@@ -41,7 +41,6 @@ dryv = { workspace = true }
 
 [tool.pytest.ini_options]
 testpaths = [
-  "packages/python/codepotg/tests",
   "packages/python/dryv/tests",
   "packages/python/dryv-author/tests",
   "packages/python/dryv-cli/tests",
