@@ -10,11 +10,12 @@ from dryv_cli.presentation import get_console, render_cancelled, render_failure
 
 def main(argv: Sequence[str] | None = None) -> int:
     try:
-        app.main(
+        result = app.main(
             args=list(argv) if argv is not None else None,
             prog_name="dryv",
             standalone_mode=False,
         )
+        return result if isinstance(result, int) else 0
     except click.exceptions.Exit as exc:
         return exc.exit_code
     except click.ClickException as exc:
@@ -23,4 +24,3 @@ def main(argv: Sequence[str] | None = None) -> int:
     except (click.Abort, KeyboardInterrupt):
         render_cancelled(get_console(), "Interrupted.")
         return 130
-    return 0
