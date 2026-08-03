@@ -4,10 +4,11 @@ import pytest
 
 from dryv_template_jinja import JinjaEngineRules, JinjaTemplateEngine
 
-from tests.conftest import diagnostic_code, render
 
-
-def test_plain_interpolation_loop_and_conditionals(engine: JinjaTemplateEngine) -> None:
+def test_plain_interpolation_loop_and_conditionals(
+    engine: JinjaTemplateEngine,
+    render,
+) -> None:
     result = render(
         engine,
         "{% if enabled %}{% for item in items %}{{ item }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}",
@@ -26,12 +27,14 @@ def test_plain_interpolation_loop_and_conditionals(engine: JinjaTemplateEngine) 
 def test_loop_state_callables_remain_deliberately_denied(
     engine: JinjaTemplateEngine,
     source: str,
+    render,
+    diagnostic_code,
 ) -> None:
     result = render(engine, source, context=(("items", ("a", "b")),))
     assert diagnostic_code(result) == "JINJA_CALLABLE_DENIED"
 
 
-def test_template_defined_macro_runs(engine: JinjaTemplateEngine) -> None:
+def test_template_defined_macro_runs(engine: JinjaTemplateEngine, render) -> None:
     result = render(
         engine,
         "{% macro wrap(value) %}[{{ value }}]{% endmacro %}{{ wrap(name) }}",
@@ -40,7 +43,7 @@ def test_template_defined_macro_runs(engine: JinjaTemplateEngine) -> None:
     assert result.content == "[demo]"
 
 
-def test_static_include_and_nested_include(engine: JinjaTemplateEngine) -> None:
+def test_static_include_and_nested_include(engine: JinjaTemplateEngine, render) -> None:
     result = render(
         engine,
         'A{% include "a.jinja" %}D',
@@ -52,7 +55,7 @@ def test_static_include_and_nested_include(engine: JinjaTemplateEngine) -> None:
     assert result.content == "ABCD"
 
 
-def test_static_inheritance_with_super(engine: JinjaTemplateEngine) -> None:
+def test_static_inheritance_with_super(engine: JinjaTemplateEngine, render) -> None:
     result = render(
         engine,
         '{% extends "base.jinja" %}{% block body %}child+{{ super() }}{% endblock %}',
@@ -61,7 +64,7 @@ def test_static_inheritance_with_super(engine: JinjaTemplateEngine) -> None:
     assert result.content == "child+base"
 
 
-def test_static_import_and_from_import(engine: JinjaTemplateEngine) -> None:
+def test_static_import_and_from_import(engine: JinjaTemplateEngine, render) -> None:
     partials = (
         (
             "macros.jinja",
@@ -84,24 +87,35 @@ def test_static_import_and_from_import(engine: JinjaTemplateEngine) -> None:
     assert from_imported.content == "A!"
 
 
-def test_strict_undefined_returns_stable_diagnostic(engine: JinjaTemplateEngine) -> None:
+def test_strict_undefined_returns_stable_diagnostic(
+    engine: JinjaTemplateEngine,
+    render,
+    diagnostic_code,
+) -> None:
     result = render(engine, "{{ missing }}")
     assert diagnostic_code(result) == "JINJA_UNDEFINED"
     assert dict(result.diagnostics.errors[0].details)["undefined_name"] == "missing"
 
 
-def test_whitespace_defaults_and_trailing_newline(engine: JinjaTemplateEngine) -> None:
+def test_whitespace_defaults_and_trailing_newline(
+    engine: JinjaTemplateEngine,
+    render,
+) -> None:
     result = render(engine, "start\n{% if true %}\nvalue\n{% endif %}\n")
     assert result.content == "start\nvalue\n"
 
 
-def test_custom_newline_sequence() -> None:
+def test_custom_newline_sequence(render) -> None:
     engine = JinjaTemplateEngine(rules=JinjaEngineRules(newline_sequence="\r\n"))
     result = render(engine, "a\r\nb\n")
     assert result.content == "a\r\nb\r\n"
 
 
-def test_syntax_error_is_source_spanned(engine: JinjaTemplateEngine) -> None:
+def test_syntax_error_is_source_spanned(
+    engine: JinjaTemplateEngine,
+    render,
+    diagnostic_code,
+) -> None:
     result = render(engine, "line1\n{% if %}\n")
     assert diagnostic_code(result) == "JINJA_SYNTAX"
     diagnostic = result.diagnostics.errors[0]
@@ -109,7 +123,11 @@ def test_syntax_error_is_source_spanned(engine: JinjaTemplateEngine) -> None:
     assert diagnostic.span.start.line == 2
 
 
-def test_missing_include_diagnostic_names_dependency(engine: JinjaTemplateEngine) -> None:
+def test_missing_include_diagnostic_names_dependency(
+    engine: JinjaTemplateEngine,
+    render,
+    diagnostic_code,
+) -> None:
     result = render(engine, '{% include "missing.jinja" %}')
     assert diagnostic_code(result) == "JINJA_INCLUDE_MISSING"
     assert dict(result.diagnostics.errors[0].details)["dependency_id"] == "missing.jinja"
@@ -117,17 +135,23 @@ def test_missing_include_diagnostic_names_dependency(engine: JinjaTemplateEngine
 
 def test_root_source_type_rejection_uses_template_diagnostic(
     engine: JinjaTemplateEngine,
+    render,
+    diagnostic_code,
 ) -> None:
     result = render(engine, object())  # type: ignore[arg-type]
     assert diagnostic_code(result) == "JINJA_TEMPLATE_INVALID"
 
 
-def test_context_rejection_is_structured(engine: JinjaTemplateEngine) -> None:
+def test_context_rejection_is_structured(
+    engine: JinjaTemplateEngine,
+    render,
+    diagnostic_code,
+) -> None:
     result = render(engine, "{{ value }}", context=(("value", object()),))
     assert diagnostic_code(result) == "JINJA_CONTEXT_UNSAFE"
 
 
-def test_render_limit_is_checked_while_streaming() -> None:
+def test_render_limit_is_checked_while_streaming(render, diagnostic_code) -> None:
     engine = JinjaTemplateEngine(rules=JinjaEngineRules(max_render_bytes=5))
     result = render(engine, "{{ items | join('') }}", context=(("items", ("abc", "def")),))
     assert diagnostic_code(result) == "JINJA_RENDER_LIMIT"
