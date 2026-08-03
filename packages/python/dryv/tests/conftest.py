@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from dryv.ir import Contract
-from tests.fixtures import build_connected_contract
+from dryv.testing.fixtures import build_connected_contract
 
 
 @pytest.fixture
