@@ -5,7 +5,7 @@ import matter from "gray-matter";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = resolve(scriptDirectory, "../../..");
-const docsRoot = resolve(workspaceRoot, "docs");
+const docsRoot = resolve(workspaceRoot, ".docs/public");
 const warnings = [];
 const publicPaths = new Set();
 const sources = new Set();
@@ -36,7 +36,7 @@ function resolveDocumentSource(item) {
   const sourceFile = resolve(docsRoot, `${source}.md`);
   const relativePath = relative(docsRoot, sourceFile);
   if (!relativePath || relativePath.startsWith("..") || relativePath.split(sep).includes("..")) {
-    return { error: `Documentation source escapes docs/: ${source}` };
+    return { error: `Documentation source escapes .docs/public/: ${source}` };
   }
   return { source, sourceFile };
 }
