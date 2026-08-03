@@ -13,10 +13,8 @@ from dryv.ir import (
 )
 from dryv_template_jinja import JinjaTemplateEngine
 
-from tests.conftest import render
 
-
-def test_real_public_dryv_values_render_target_like_authored_text() -> None:
+def test_real_public_dryv_values_render_target_like_authored_text(render) -> None:
     identifier = TypeExpression.primitive("string")
     field = SchemaField(
         id=SemanticId("orders.Order.id"),
