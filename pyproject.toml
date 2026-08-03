@@ -48,7 +48,11 @@ testpaths = [
   "packages/python/dryv-language-typescript/tests",
   "packages/python/dryv-template-jinja/tests",
 ]
-addopts = ["--strict-config", "--strict-markers"]
+addopts = [
+  "--import-mode=importlib",
+  "--strict-config",
+  "--strict-markers",
+]
 markers = [
   "distribution: wheel, sdist, and isolated installation checks",
   "oracle: optional target-compiler oracle",
