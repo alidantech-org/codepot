@@ -15,13 +15,13 @@ from .diagnostics import diagnostics_tree
 from .trees import plan_tree, runtime_tree, write_tree
 
 _STATUS_STYLES = {
-    OperationStatus.READY: ("✓", "success"),
-    OperationStatus.GENERATED: ("✓", "success"),
+    OperationStatus.READY: ("OK", "success"),
+    OperationStatus.GENERATED: ("OK", "success"),
     OperationStatus.GENERATED_WITH_WARNINGS: ("!", "warning"),
     OperationStatus.GENERATED_WITH_ACTIONS: ("!", "warning"),
     OperationStatus.PARTIALLY_GENERATED: ("!", "warning"),
-    OperationStatus.FAILED: ("×", "error"),
-    OperationStatus.CANCELLED: ("–", "warning"),
+    OperationStatus.FAILED: ("X", "error"),
+    OperationStatus.CANCELLED: ("-", "warning"),
 }
 
 
@@ -60,7 +60,7 @@ def render_runtime(console: Console, snapshot: RuntimeSnapshot) -> None:
 
 def render_failure(console: Console, message: str, *, code: str = "CLI_FAILED") -> None:
     line = Text()
-    line.append("× ", style="error")
+    line.append("X ", style="error")
     line.append(code, style="error")
     line.append("  ")
     line.append(message, style="value")
@@ -69,7 +69,7 @@ def render_failure(console: Console, message: str, *, code: str = "CLI_FAILED") 
 
 def render_cancelled(console: Console, message: str = "Generation cancelled.") -> None:
     line = Text()
-    line.append("– ", style="warning")
+    line.append("- ", style="warning")
     line.append(message, style="value")
     console.print(line)
 
