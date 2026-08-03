@@ -58,10 +58,10 @@ dev = [
 
 [project.urls]
 Homepage = "https://github.com/alidantech-org/codepot"
-Documentation = "https://github.com/alidantech-org/codepot/tree/main/packages/python/codepotg/docs"
+Documentation = "https://github.com/alidantech-org/codepot/tree/develop/.docs/products/frozen/codepotg"
 Repository = "https://github.com/alidantech-org/codepot"
 Issues = "https://github.com/alidantech-org/codepot/issues"
-Changelog = "https://github.com/alidantech-org/codepot/blob/main/packages/python/codepotg/CHANGELOG.md"
+Changelog = "https://github.com/alidantech-org/codepot/blob/develop/packages/python/codepotg/CHANGELOG.md"
 
 [project.scripts]
 codepotg = "codepotg.cli.main:app"
@@ -121,4 +121,3 @@ ignore = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src", "."]
