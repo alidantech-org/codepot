@@ -4,8 +4,6 @@ import pytest
 
 from dryv_template_jinja import JinjaTemplateEngine
 
-from tests.conftest import render
-
 
 @pytest.mark.parametrize(
     "source",
@@ -22,7 +20,7 @@ from tests.conftest import render
         "{{ (1 / 0).__traceback__ }}",
     ],
 )
-def test_common_sandbox_escape_payloads_fail_closed(source: str) -> None:
+def test_common_sandbox_escape_payloads_fail_closed(source: str, render) -> None:
     context: tuple[tuple[str, object], ...] = (
         ("config", (("safe", "value"),)),
         ("value", "text"),
@@ -46,7 +44,7 @@ def test_common_sandbox_escape_payloads_fail_closed(source: str) -> None:
         "{% from variable import x %}",
     ],
 )
-def test_dynamic_or_traversing_dependencies_are_denied(source: str) -> None:
+def test_dynamic_or_traversing_dependencies_are_denied(source: str, render) -> None:
     result = render(JinjaTemplateEngine(), source, context=(("variable", "safe.jinja"),))
     assert result.content is None
     assert result.diagnostics.has_errors
@@ -77,13 +75,13 @@ def test_dynamic_or_traversing_dependencies_are_denied(source: str) -> None:
         "importlib",
     ],
 )
-def test_python_and_host_roots_are_not_globals(name: str) -> None:
+def test_python_and_host_roots_are_not_globals(name: str, render) -> None:
     result = render(JinjaTemplateEngine(), "{{ " + name + " }}")
     assert result.content is None
     assert result.diagnostics.errors[0].code == "JINJA_UNDEFINED"
 
 
-def test_private_safe_record_keys_cannot_be_reached_by_item_or_attribute() -> None:
+def test_private_safe_record_keys_cannot_be_reached_by_item_or_attribute(render) -> None:
     result = render(
         JinjaTemplateEngine(),
         "{{ value.__class__ }} {{ value['__class__'] }}",
