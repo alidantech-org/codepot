@@ -24,7 +24,6 @@ Codepot does not replace programming languages, databases, frameworks, compilers
 
 ### Active
 
-- [`apps/docs`](apps/docs/README.md) — dedicated documentation application boundary.
 - [`apps/site`](apps/site/README.md) — public website and current documentation renderer.
 - [`packages/python/dryv`](packages/python/dryv/README.md) — canonical runtime, Runtime IR, planning, and generation orchestration.
 - [`packages/python/dryv-author`](packages/python/dryv-author/README.md) — Python authoring frontend that compiles to Runtime IR.
