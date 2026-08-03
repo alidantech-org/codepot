@@ -28,7 +28,7 @@ packages/python/dryv-language-typescript
 packages/python/dryv-template-jinja
 ```
 
-CodepotG remains frozen. Workspace membership allows reproducible maintenance and testing; it does not make CodepotG an active product or a dependency of Dryv.
+CodepotG remains frozen. Workspace membership allows reproducible dependency resolution and explicitly approved maintenance; it does not make CodepotG active, part of the default test suite, or a dependency of Dryv.
 
 ## First setup
 
@@ -42,13 +42,15 @@ uv sync --all-packages
 
 ## Common commands
 
-Run the complete Python test suite:
+Run the active Dryv-family Python test suite:
 
 ```bash
 uv run --all-packages pytest
 ```
 
-Run one package's tests while retaining the connected workspace and root development tools:
+The root pytest configuration intentionally excludes frozen CodepotG. Its restored implementation still contains legacy archive-qualified imports and must only be repaired or tested through an explicitly approved frozen-maintenance task.
+
+Run one active package's tests while retaining the connected workspace and root development tools:
 
 ```bash
 uv run --all-packages pytest packages/python/dryv/tests
