@@ -6,8 +6,8 @@ import matter from 'gray-matter';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const appRoot = resolve(scriptDirectory, '..');
-const workspaceRoot = resolve(appRoot, '..');
-const docsRoot = resolve(workspaceRoot, '/docs');
+const workspaceRoot = resolve(appRoot, '../..');
+const docsRoot = resolve(workspaceRoot, '.docs/public');
 const generatedRoot = resolve(appRoot, 'src/generated');
 const docsOutput = resolve(generatedRoot, 'docs.ts');
 const tocOutput = resolve(generatedRoot, 'docs-toc.json');
@@ -40,7 +40,7 @@ function resolveDocumentSource(item) {
   const sourceFile = resolve(docsRoot, `${source}.md`);
   const relativePath = relative(docsRoot, sourceFile);
   if (!relativePath || relativePath.startsWith('..') || relativePath.split(sep).includes('..')) {
-    throw new Error(`Documentation source escapes docs/: ${source}`);
+    throw new Error(`Documentation source escapes .docs/public/: ${source}`);
   }
   return { source, sourceFile };
 }
