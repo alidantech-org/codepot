@@ -3,8 +3,6 @@ from __future__ import annotations
 from dryv.api import CancellationToken
 from dryv_template_jinja import JinjaTemplateEngine
 
-from tests.conftest import diagnostic_code, render
-
 
 class CheckpointCancellation(CancellationToken):
     def __init__(self, cancel_at: int) -> None:
@@ -19,7 +17,7 @@ class CheckpointCancellation(CancellationToken):
         super().raise_if_cancelled()
 
 
-def test_pre_cancelled_request_returns_no_partial_content() -> None:
+def test_pre_cancelled_request_returns_no_partial_content(render, diagnostic_code) -> None:
     token = CancellationToken()
     token.cancel("stop")
     result = render(JinjaTemplateEngine(), "content", cancellation=token)
@@ -27,7 +25,7 @@ def test_pre_cancelled_request_returns_no_partial_content() -> None:
     assert result.content is None
 
 
-def test_mid_render_cancellation_returns_no_partial_content() -> None:
+def test_mid_render_cancellation_returns_no_partial_content(render, diagnostic_code) -> None:
     token = CheckpointCancellation(cancel_at=8)
     result = render(
         JinjaTemplateEngine(),
