@@ -48,7 +48,7 @@ Run the active Dryv-family Python test suite:
 uv run --all-packages pytest
 ```
 
-The root pytest configuration uses `--import-mode=importlib`. Multiple workspace members may contain `tests/conftest.py` and similarly named test modules; importlib mode keeps those files isolated by their collection paths instead of importing them through one ambiguous top-level `tests` package.
+The root pytest configuration uses `--import-mode=importlib`. Active workspace test roots must remain ordinary directories: do not add `tests/__init__.py`. Several packages may contain `tests/conftest.py` and similarly named test modules, and making those roots importable would collapse them into the same top-level `tests` package and cause plugin or import-path collisions.
 
 The root pytest configuration intentionally excludes frozen CodepotG. Its restored implementation still contains legacy archive-qualified imports and must only be repaired or tested through an explicitly approved frozen-maintenance task.
 
