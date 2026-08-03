@@ -8,13 +8,19 @@ Authoring does not generate application files, select packs, define output paths
 
 ## Local verification
 
+From the repository root:
+
 ```bash
-cd packages/python/dryv-author
-python -m pytest
+uv run --all-packages pytest packages/python/dryv-author/tests
+uv run --all-packages mypy packages/python/dryv-author/src
+uv run --all-packages pyright packages/python/dryv-author
 ```
+
+The root workspace supplies the local `dryv` dependency. Do not connect packages through `PYTHONPATH`, editable `pip` installs, or a package-local virtual environment.
 
 ## Canonical documentation
 
 - [Authoring documentation](../../../.docs/products/dryv/authoring/README.md)
 - [Architecture rules](../../../.docs/architecture/README.md)
+- [Python workspace](../../../.docs/project/python-workspace.md)
 - [Authoring tasks](../../../.docs/tasks/dryv/authoring/README.md)

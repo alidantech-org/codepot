@@ -1,6 +1,6 @@
 # Human validation: connected Dryv project
 
-This workspace is a real inspectable Dryv project rather than a pytest fixture. It validates two semantic authoring routes against the same packs and target plugins:
+The executable fixture lives at `packages/python/dryv/examples/manual/connected-project`. It is a real inspectable Dryv project rather than a pytest fixture. It validates two semantic authoring routes against the same packs and target plugins:
 
 ```text
 A. public dryv.ir objects
@@ -23,31 +23,22 @@ B. dryv-author declarations
 
 The purpose is to prove that software meaning belongs to the neutral contract while emitted text belongs to packs.
 
-## 1. Create a clean environment
+## 1. Synchronize the repository workspace
 
-From the repository root in Git Bash:
+From the repository root:
 
 ```bash
-rm -rf .venv-dryv-manual
-py -3.12 -m venv .venv-dryv-manual
-source .venv-dryv-manual/Scripts/activate
-
-python -m pip install --upgrade pip
-python -m pip install \
-  -e packages/python/dryv \
-  -e packages/python/dryv-author \
-  -e packages/python/dryv-template-jinja \
-  -e packages/python/dryv-language-typescript \
-  -e packages/python/dryv-language-dart
-
+uv sync --all-packages
 cd packages/python/dryv/examples/manual/connected-project
 rm -rf runs collision-output
 ```
 
+`uv` manages the root `.venv` and installs all connected Python workspace members in editable mode. Do not create or activate a fixture-specific environment and do not install sibling packages manually.
+
 ## 2. Verify installed plugins
 
 ```bash
-python verify_plugins.py
+uv run --all-packages python verify_plugins.py
 ```
 
 Expected IDs, each exactly once:
@@ -63,7 +54,7 @@ engines: jinja
 ### 3. Bootstrap the contract
 
 ```bash
-python bootstrap_contract.py
+uv run --all-packages python bootstrap_contract.py
 ```
 
 Expected files:
@@ -78,9 +69,9 @@ The script validates the contract and performs canonical JSON/YAML round trips.
 ### 4. Plan and generate
 
 ```bash
-dryv plan dryv.yaml | tee plan-direct.json
-dryv generate dryv.yaml --memory | tee memory-output-direct.json
-dryv generate dryv.yaml --destination runs/direct | tee write-report-direct.json
+uv run --package dryv-cli dryv plan dryv.yaml | tee plan-direct.json
+uv run --package dryv-cli dryv generate dryv.yaml --memory | tee memory-output-direct.json
+uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct | tee write-report-direct.json
 find runs/direct -type f | sort
 ```
 
@@ -91,7 +82,7 @@ Expected: 12 managed artifacts across TypeScript and Dart.
 ### 5. Compile declarations
 
 ```bash
-python bootstrap_author_contract.py
+uv run --all-packages python bootstrap_author_contract.py
 ```
 
 Expected files:
@@ -106,9 +97,9 @@ The authoring package creates an in-memory public `Contract`; the canonical runt
 ### 6. Plan and generate
 
 ```bash
-dryv plan dryv-author.yaml | tee plan-author.json
-dryv generate dryv-author.yaml --memory | tee memory-output-author.json
-dryv generate dryv-author.yaml --destination runs/author | tee write-report-author.json
+uv run --package dryv-cli dryv plan dryv-author.yaml | tee plan-author.json
+uv run --package dryv-cli dryv generate dryv-author.yaml --memory | tee memory-output-author.json
+uv run --package dryv-cli dryv generate dryv-author.yaml --destination runs/author | tee write-report-author.json
 find runs/author -type f | sort
 ```
 
@@ -164,12 +155,11 @@ Acceptance: both routes format and analyze successfully.
 ```bash
 find runs/direct/typescript/src runs/direct/dart/lib -type f -print0 \
   | sort -z | xargs -0 sha256sum > before-direct.sha256
-
-dryv generate dryv.yaml --destination runs/direct > rerun-report-direct.json
+uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct \
+  > rerun-report-direct.json
 
 find runs/direct/typescript/src runs/direct/dart/lib -type f -print0 \
   | sort -z | xargs -0 sha256sum > after-direct.sha256
-
 diff -u before-direct.sha256 after-direct.sha256
 ```
 
@@ -183,7 +173,7 @@ printf '\n// HUMAN EDIT THAT MUST BE PROTECTED\n' \
   >> runs/direct/typescript/src/models/user.ts
 
 set +e
-dryv generate dryv.yaml --destination runs/direct
+uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct
 EDIT_EXIT=$?
 set -e
 
@@ -202,14 +192,14 @@ Recover:
 
 ```bash
 cp /tmp/dryv-user.ts runs/direct/typescript/src/models/user.ts
-dryv generate dryv.yaml --destination runs/direct
+uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct
 ```
 
 ## 12. Prove stale managed-file cleanup
 
 ```bash
-python bootstrap_contract.py --without-ticket
-dryv generate dryv.yaml --destination runs/direct
+uv run --all-packages python bootstrap_contract.py --without-ticket
+uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct
 
 test ! -f runs/direct/typescript/src/models/ticket.ts
 test ! -f runs/direct/dart/lib/models/ticket.dart
@@ -218,8 +208,8 @@ test ! -f runs/direct/dart/lib/models/ticket.dart
 Restore the complete contract:
 
 ```bash
-python bootstrap_contract.py
-dryv generate dryv.yaml --destination runs/direct
+uv run --all-packages python bootstrap_contract.py
+uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct
 ```
 
 ## 13. Prove unmanaged collision protection
@@ -230,7 +220,7 @@ mkdir -p collision-output/typescript/src/models
 printf 'UNMANAGED HUMAN FILE\n' > collision-output/typescript/src/models/user.ts
 
 set +e
-dryv generate dryv.yaml --destination collision-output
+uv run --package dryv-cli dryv generate dryv.yaml --destination collision-output
 COLLISION_EXIT=$?
 set -e
 

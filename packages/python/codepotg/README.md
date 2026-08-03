@@ -8,8 +8,19 @@ CodepotG is the earlier Python OpenAPI-oriented generator and Jinja pack system 
 
 Active development happens in the [`dryv` package family](../dryv/README.md).
 
+## Frozen maintenance verification
+
+CodepotG participates in the root `uv` workspace so an explicitly approved maintenance task can reproduce its environment without a package-local virtual environment:
+
+```bash
+uv run --all-packages pytest packages/python/codepotg/tests
+```
+
+Workspace membership does not change CodepotG's frozen status and does not make it a dependency of Dryv.
+
 ## Canonical documentation
 
 - [Frozen CodepotG record](../../../.docs/products/frozen/codepotg/README.md)
 - [Component status](../../../.docs/project/component-status.md)
+- [Python workspace](../../../.docs/project/python-workspace.md)
 - [Dryv product family](../../../.docs/products/dryv/README.md)

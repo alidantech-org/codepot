@@ -22,6 +22,16 @@
 - Do not add new top-level folders without an approved repository-structure change.
 - Keep temporary files, generated output, caches, and local environments out of commits.
 
+## Python workspace
+
+- All packages under `packages/python/` are managed from the root `uv` workspace.
+- Use `uv sync`, `uv run`, `uv add`, `uv lock`, and `uv build`; do not manually create or activate virtual environments.
+- Do not run `pip install`, `python -m pip install`, or editable installs for repository development.
+- Do not create package-local `.venv` directories or independently managed requirements files.
+- Internal Python package dependencies must resolve through declared workspace sources, not `PYTHONPATH` or pytest `pythonpath` injection.
+- Commit dependency metadata and the root `uv.lock` together.
+- Follow [`../../project/python-workspace.md`](../../project/python-workspace.md).
+
 ## File placement
 
 - Executable applications belong under `apps/`.

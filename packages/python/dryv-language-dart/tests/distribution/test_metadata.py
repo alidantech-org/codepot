@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import shutil
 import subprocess
-import sys
 import tarfile
 import zipfile
 from importlib.metadata import distribution, entry_points
@@ -13,24 +13,28 @@ from dryv.versions import Version
 import dryv_language_dart
 
 PACKAGE_ROOT = Path(__file__).parents[2]
+WORKSPACE_ROOT = PACKAGE_ROOT.parents[2]
 
 
 @pytest.fixture(scope="module")
 def built_distribution_artifacts(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> tuple[Path, Path]:
+    uv = shutil.which("uv")
+    assert uv is not None, "distribution tests must run through the uv workspace"
     output = tmp_path_factory.mktemp("dart-dist")
     completed = subprocess.run(
         [
-            sys.executable,
-            "-m",
+            uv,
             "build",
-            "--no-isolation",
-            "--outdir",
+            "--package",
+            "dryv-language-dart",
+            "--out-dir",
             str(output),
-            str(PACKAGE_ROOT),
+            "--no-sources",
+            "--no-build-isolation",
         ],
-        cwd=PACKAGE_ROOT,
+        cwd=WORKSPACE_ROOT,
         capture_output=True,
         text=True,
     )

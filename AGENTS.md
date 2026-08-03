@@ -14,6 +14,7 @@ This file is the repository entry point for AI contributors. Detailed rules, gui
 8. Do not modify `.github/**` without explicit user approval.
 9. Inspect before editing, remain inside allowed paths, preserve unrelated work, and record exact validation evidence.
 10. Do not silently change the semantic kernel, package boundaries, public contracts, generation ownership, or architecture.
+11. Manage every package under `packages/python/` through the root `uv` workspace. Do not create or activate package-local virtual environments, use `pip install`, or connect packages through `PYTHONPATH`.
 
 ## Required routing
 
@@ -21,6 +22,7 @@ This file is the repository entry point for AI contributors. Detailed rules, gui
 - Approved architecture: [`.docs/architecture/`](.docs/architecture/README.md)
 - Active Dryv product documentation: [`.docs/products/dryv/`](.docs/products/dryv/README.md)
 - Application documentation: [`.docs/apps/`](.docs/apps/README.md)
+- Python workspace workflow: [`.docs/project/python-workspace.md`](.docs/project/python-workspace.md)
 - Task planning and status: [`.docs/tasks/`](.docs/tasks/README.md)
 - Repeatable agent procedures: [`.docs/agents/skills/`](.docs/agents/skills/README.md)
 

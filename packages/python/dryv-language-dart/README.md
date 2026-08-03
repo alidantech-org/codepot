@@ -8,13 +8,17 @@ It does not render Dart source; templates own emitted syntax.
 
 ## Local verification
 
+From the repository root:
+
 ```bash
-cd packages/python/dryv-language-dart
-python -m pytest
+uv run --all-packages pytest packages/python/dryv-language-dart/tests
 ```
+
+The root workspace installs this adapter, the TypeScript adapter, and the local `dryv` runtime together so entry-point integration tests do not require manual environment wiring.
 
 ## Canonical documentation
 
 - [Dart adapter documentation](../../../.docs/products/dryv/language-dart/README.md)
 - [Language-adapter contract](../../../.docs/architecture/plugins/02-language-adapter-contract.md)
+- [Python workspace](../../../.docs/project/python-workspace.md)
 - [Dart adapter tasks](../../../.docs/tasks/dryv/language-dart/README.md)

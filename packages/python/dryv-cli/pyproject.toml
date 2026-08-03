@@ -29,19 +29,12 @@ dependencies = [
   "rich>=13.9,<15",
 ]
 
-[project.optional-dependencies]
-dev = [
-  "build>=1.2",
-  "pytest>=8.3",
-  "ruff>=0.9",
-]
-
 [project.scripts]
 dryv = "dryv_cli.main:main"
 
 [project.urls]
 Homepage = "https://github.com/alidantech-org/codepot"
-Documentation = "https://github.com/alidantech-org/codepot/tree/chatgpt/develop/packages/python/dryv-cli"
+Documentation = "https://github.com/alidantech-org/codepot/tree/develop/.docs/products/dryv/cli"
 Repository = "https://github.com/alidantech-org/codepot"
 Issues = "https://github.com/alidantech-org/codepot/issues"
 
@@ -69,5 +62,4 @@ ignore = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src", "../dryv/src"]
 addopts = ["--strict-markers", "--strict-config"]

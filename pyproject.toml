@@ -1,0 +1,58 @@
+[project]
+name = "codepot-python-workspace"
+version = "0.0.0"
+description = "Development workspace for all Codepot Python packages"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+test = [
+  "jsonschema>=4.23",
+  "pytest>=8.3",
+  "setuptools>=77",
+  "wheel>=0.45",
+]
+lint = [
+  "ruff>=0.9",
+]
+typing = [
+  "mypy>=1.11",
+  "pyright>=1.1.375",
+  "types-PyYAML>=6.0.12",
+]
+release = [
+  "twine>=6.0",
+]
+dev = [
+  { include-group = "test" },
+  { include-group = "lint" },
+  { include-group = "typing" },
+]
+
+[tool.uv]
+package = false
+default-groups = ["dev"]
+
+[tool.uv.workspace]
+members = ["packages/python/*"]
+
+[tool.uv.sources]
+dryv = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = [
+  "packages/python/codepotg/tests",
+  "packages/python/dryv/tests",
+  "packages/python/dryv-author/tests",
+  "packages/python/dryv-cli/tests",
+  "packages/python/dryv-language-dart/tests",
+  "packages/python/dryv-language-typescript/tests",
+  "packages/python/dryv-template-jinja/tests",
+]
+addopts = ["--strict-config", "--strict-markers"]
+markers = [
+  "distribution: wheel, sdist, and isolated installation checks",
+  "oracle: optional target-compiler oracle",
+  "performance: deterministic performance or benchmark-contract check",
+  "typing: static type-checker contract test",
+]

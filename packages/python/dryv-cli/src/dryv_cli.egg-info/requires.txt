@@ -1,9 +1,0 @@
-click<9,>=8.1.7
-dryv<2.1,>=2.0.0a1
-questionary<3,>=2.1
-rich<15,>=13.9
-
-[dev]
-build>=1.2
-pytest>=8.3
-ruff>=0.9

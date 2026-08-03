@@ -28,21 +28,9 @@ dependencies = [
   "PyYAML>=6,<7",
 ]
 
-[project.optional-dependencies]
-dev = [
-  "build>=1.2",
-  "mypy>=1.11",
-  "pyright>=1.1.375",
-  "pytest>=8.3",
-  "ruff>=0.9",
-  "setuptools>=77",
-  "types-PyYAML>=6.0.12",
-  "wheel",
-]
-
 [project.urls]
 Homepage = "https://github.com/alidantech-org/codepot"
-Documentation = "https://github.com/alidantech-org/codepot/tree/chatgpt/codepotx-restart/packages/python/dryv-author/docs"
+Documentation = "https://github.com/alidantech-org/codepot/tree/develop/.docs/products/dryv/authoring"
 Repository = "https://github.com/alidantech-org/codepot"
 Issues = "https://github.com/alidantech-org/codepot/issues"
 
@@ -70,7 +58,6 @@ ignore = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
 addopts = ["--strict-markers", "--strict-config"]
 markers = [
   "performance: deterministic compiler or transport performance test",

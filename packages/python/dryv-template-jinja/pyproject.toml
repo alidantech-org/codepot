@@ -29,19 +29,12 @@ dependencies = [
   "Jinja2>=3.1.4,<4.0",
 ]
 
-[project.optional-dependencies]
-dev = [
-  "build>=1.2",
-  "pytest>=8.3",
-  "ruff>=0.9",
-]
-
 [project.entry-points."dryv.template_engines"]
 jinja = "dryv_template_jinja.plugin:create_plugin"
 
 [project.urls]
 Homepage = "https://github.com/alidantech-org/codepot"
-Documentation = "https://github.com/alidantech-org/codepot/tree/chatgpt/codepotx-restart/packages/python/dryv-template-jinja"
+Documentation = "https://github.com/alidantech-org/codepot/tree/develop/.docs/products/dryv/template-jinja"
 Repository = "https://github.com/alidantech-org/codepot"
 Issues = "https://github.com/alidantech-org/codepot/issues"
 
@@ -76,7 +69,6 @@ tests = ["tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
 addopts = ["--strict-markers", "--strict-config"]
 markers = [
   "distribution: wheel, sdist, and isolated installation checks",

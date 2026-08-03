@@ -4,7 +4,6 @@ import os
 import shutil
 import subprocess
 import sys
-import venv
 import zipfile
 from pathlib import Path
 
@@ -13,30 +12,38 @@ import markupsafe
 import pytest
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[2]
-CORE_ROOT = PACKAGE_ROOT.parent / "dryv"
+PYTHON_PACKAGES_ROOT = PACKAGE_ROOT.parent
+WORKSPACE_ROOT = PYTHON_PACKAGES_ROOT.parents[1]
+CORE_ROOT = PYTHON_PACKAGES_ROOT / "dryv"
+PACKAGE_NAMES = {
+    CORE_ROOT: ("dryv", "dryv-"),
+    PACKAGE_ROOT: ("dryv-template-jinja", "dryv_template_jinja-"),
+}
 
 
 def _build_wheel(project: Path, wheelhouse: Path) -> Path:
+    uv = _uv_executable()
+    package_name, prefix = PACKAGE_NAMES[project]
     completed = subprocess.run(
         [
-            sys.executable,
-            "-m",
-            "pip",
-            "wheel",
-            "--no-deps",
-            "--no-build-isolation",
-            "--wheel-dir",
+            uv,
+            "build",
+            "--package",
+            package_name,
+            "--wheel",
+            "--out-dir",
             str(wheelhouse),
-            str(project),
+            "--no-sources",
+            "--no-build-isolation",
         ],
+        cwd=WORKSPACE_ROOT,
         check=False,
         capture_output=True,
         text=True,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
     candidates = tuple(wheelhouse.glob("*.whl"))
-    expected = "dryv_template_jinja" if project == PACKAGE_ROOT else "dryv_core"
-    return next(path for path in candidates if path.name.startswith(expected))
+    return next(path for path in candidates if path.name.startswith(prefix))
 
 
 @pytest.mark.distribution
@@ -54,13 +61,14 @@ def test_wheel_contents_are_isolated(tmp_path: Path) -> None:
 def test_isolated_wheels_discover_entry_point_and_render(tmp_path: Path) -> None:
     if not CORE_ROOT.exists():
         pytest.skip("sibling dryv package is unavailable")
+    uv = _uv_executable()
     wheelhouse = tmp_path / "wheelhouse"
     wheelhouse.mkdir()
     core_wheel = _build_wheel(CORE_ROOT, wheelhouse)
     jinja_wheel = _build_wheel(PACKAGE_ROOT, wheelhouse)
     environment = tmp_path / "venv"
-    venv.EnvBuilder(with_pip=True, system_site_packages=False).create(environment)
-    python = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    _run(uv, "venv", str(environment), "--python", sys.executable, cwd=WORKSPACE_ROOT)
+    python = _venv_python(environment)
     site_result = subprocess.run(
         [str(python), "-c", "import site; print(site.getsitepackages()[0])"],
         check=True,
@@ -72,12 +80,14 @@ def test_isolated_wheels_discover_entry_point_and_render(tmp_path: Path) -> None
     shutil.copytree(Path(markupsafe.__file__).parent, isolated_site / "markupsafe")
     installed = subprocess.run(
         [
-            str(python),
-            "-m",
+            uv,
             "pip",
             "install",
+            "--python",
+            str(python),
             "--force-reinstall",
             "--no-deps",
+            "--no-index",
             str(core_wheel),
             str(jinja_wheel),
         ],
@@ -104,6 +114,29 @@ assert partial.content == 'ABC'
     completed = subprocess.run(
         [str(python), "-I", "-c", script],
         cwd=tmp_path,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+
+
+def _uv_executable() -> str:
+    executable = shutil.which("uv")
+    assert executable is not None, "distribution tests must run through the uv workspace"
+    return executable
+
+
+def _venv_python(environment: Path) -> Path:
+    if os.name == "nt":
+        return environment / "Scripts" / "python.exe"
+    return environment / "bin" / "python"
+
+
+def _run(*arguments: str, cwd: Path | None = None) -> None:
+    completed = subprocess.run(
+        arguments,
+        cwd=cwd,
         check=False,
         capture_output=True,
         text=True,

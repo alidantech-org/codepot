@@ -13,17 +13,14 @@ authors = [{ name = "Alidantech" }]
 dependencies = ["dryv>=2.0.0a1,<2.1"]
 classifiers = ["Programming Language :: Python :: 3", "Typing :: Typed"]
 
-[project.optional-dependencies]
-dev = [
-  "build>=1.2",
-  "pytest>=8.3",
-  "ruff>=0.9",
-  "setuptools>=77",
-  "wheel>=0.45",
-]
-
 [project.entry-points."dryv.language_adapters"]
 typescript = "dryv_language_typescript.plugin:create_plugin"
+
+[project.urls]
+Homepage = "https://github.com/alidantech-org/codepot"
+Documentation = "https://github.com/alidantech-org/codepot/tree/develop/.docs/products/dryv/language-typescript"
+Repository = "https://github.com/alidantech-org/codepot"
+Issues = "https://github.com/alidantech-org/codepot/issues"
 
 [tool.setuptools.package-dir]
 "" = "src"
@@ -45,6 +42,5 @@ ignore = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
 addopts = ["--strict-markers", "--strict-config"]
 markers = ["oracle: optional compiler oracle", "performance: deterministic performance smoke test"]

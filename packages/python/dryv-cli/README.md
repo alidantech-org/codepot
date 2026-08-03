@@ -8,13 +8,18 @@ The CLI does not duplicate Runtime IR, planning, generation, plugin, or ownershi
 
 ## Local verification
 
+From the repository root:
+
 ```bash
-cd packages/python/dryv-cli
-python -m pytest
+uv run --all-packages pytest packages/python/dryv-cli/tests
+uv run --package dryv-cli dryv --help
 ```
+
+The root workspace supplies the editable `dryv` runtime dependency and exposes the `dryv` console command without manual activation.
 
 ## Canonical documentation
 
 - [CLI documentation](../../../.docs/products/dryv/cli/README.md)
 - [Runtime architecture](../../../.docs/products/dryv/runtime/README.md)
+- [Python workspace](../../../.docs/project/python-workspace.md)
 - [Dryv task system](../../../.docs/tasks/dryv/README.md)

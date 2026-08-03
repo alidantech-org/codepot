@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 import textwrap
@@ -8,10 +9,11 @@ from collections.abc import Sequence
 from pathlib import Path
 
 PYTHON_PACKAGES_ROOT = Path(__file__).resolve().parents[3]
-PACKAGE_ROOTS = (
-    PYTHON_PACKAGES_ROOT / "dryv",
-    PYTHON_PACKAGES_ROOT / "dryv-language-typescript",
-    PYTHON_PACKAGES_ROOT / "dryv-language-dart",
+WORKSPACE_ROOT = PYTHON_PACKAGES_ROOT.parents[1]
+PACKAGE_NAMES = (
+    ("dryv", "dryv-"),
+    ("dryv-language-typescript", "dryv_language_typescript-"),
+    ("dryv-language-dart", "dryv_language_dart-"),
 )
 
 SMOKE_SCRIPT = textwrap.dedent(
@@ -99,59 +101,66 @@ def _run(
 
 
 def _single_wheel(output: Path, prefix: str) -> Path:
-    wheels = tuple(sorted(output.glob(f"{prefix}-*.whl")))
+    wheels = tuple(sorted(output.glob(f"{prefix}*.whl")))
     assert len(wheels) == 1, wheels
     return wheels[0]
 
 
-def _venv_python(venv: Path) -> Path:
+def _venv_python(environment: Path) -> Path:
     if os.name == "nt":
-        return venv / "Scripts" / "python.exe"
-    return venv / "bin" / "python"
+        return environment / "Scripts" / "python.exe"
+    return environment / "bin" / "python"
+
+
+def _uv_executable() -> str:
+    executable = shutil.which("uv")
+    assert executable is not None, "distribution tests must run through the uv workspace"
+    return executable
 
 
 def test_dual_entry_points_from_fresh_built_wheels(tmp_path: Path) -> None:
+    uv = _uv_executable()
     output = tmp_path / "dist"
     output.mkdir()
 
-    for package_root in PACKAGE_ROOTS:
+    for package_name, _ in PACKAGE_NAMES:
         _run(
             [
-                sys.executable,
-                "-m",
+                uv,
                 "build",
-                "--no-isolation",
+                "--package",
+                package_name,
                 "--wheel",
-                "--outdir",
+                "--out-dir",
                 str(output),
-                str(package_root),
+                "--no-sources",
+                "--no-build-isolation",
             ],
-            cwd=package_root,
+            cwd=WORKSPACE_ROOT,
         )
 
-    wheels = (
-        _single_wheel(output, "dryv_core"),
-        _single_wheel(output, "dryv_language_typescript"),
-        _single_wheel(output, "dryv_language_dart"),
-    )
+    wheels = tuple(_single_wheel(output, prefix) for _, prefix in PACKAGE_NAMES)
 
-    venv = tmp_path / "wheel-environment"
-    _run([sys.executable, "-m", "venv", str(venv)], cwd=tmp_path)
+    environment_path = tmp_path / "wheel-environment"
+    _run(
+        [uv, "venv", str(environment_path), "--python", sys.executable],
+        cwd=WORKSPACE_ROOT,
+    )
 
     environment = os.environ.copy()
     environment["PYTHONNOUSERSITE"] = "1"
     environment.pop("PYTHONPATH", None)
 
-    python = _venv_python(venv)
+    python = _venv_python(environment_path)
     _run(
         [
-            str(python),
-            "-m",
+            uv,
             "pip",
             "install",
+            "--python",
+            str(python),
             "--no-index",
             "--no-deps",
-            "--disable-pip-version-check",
             *(str(wheel) for wheel in wheels),
         ],
         cwd=tmp_path,
