@@ -8,11 +8,9 @@ from dryv.api import CancellationToken
 from dryv.ports import RenderRequest
 from dryv_template_jinja import JinjaEngineRules, JinjaTemplateEngine
 
-from tests.conftest import diagnostic_code, render
-
 
 @pytest.mark.performance
-def test_large_but_bounded_loop_renders_deterministically() -> None:
+def test_large_but_bounded_loop_renders_deterministically(render) -> None:
     engine = JinjaTemplateEngine(rules=JinjaEngineRules(max_render_bytes=100_000))
     context = (("items", tuple(range(1_000))),)
     first = render(engine, "{% for item in items %}{{ item }},\n{% endfor %}", context=context)
@@ -23,7 +21,7 @@ def test_large_but_bounded_loop_renders_deterministically() -> None:
 
 
 @pytest.mark.performance
-def test_output_limit_stops_oversized_render() -> None:
+def test_output_limit_stops_oversized_render(render, diagnostic_code) -> None:
     engine = JinjaTemplateEngine(rules=JinjaEngineRules(max_render_bytes=1_024))
     result = render(
         engine,
