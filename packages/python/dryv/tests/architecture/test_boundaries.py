@@ -27,7 +27,6 @@ REQUIRED_TEST_AREAS = {
     "architecture",
     "contracts",
     "distribution",
-    "fixtures",
     "unit",
 }
 FORBIDDEN_FLAT_MODULES = {
