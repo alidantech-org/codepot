@@ -18,7 +18,7 @@ Pack selection, binding, and rendering
 Generated files and existing target runtimes
 ```
 
-Codepot does not replace programming languages, databases, frameworks, compilers, or application runtimes. It provides a semantic layer above them. See [`.docs/WHY.md`](.docs/WHY.md) for the project thesis and research position.
+Codepot does not replace programming languages, databases, frameworks, compilers, or application runtimes. It provides a semantic layer above them. See [`.docs/research/WHY.md`](.docs/research/WHY.md) for the project thesis and research position.
 
 ## Current development status
 
@@ -59,7 +59,7 @@ Applications and packages keep only a concise local `README.md`. Architecture, p
 
 ## Documentation
 
-- [Why Codepot exists](.docs/WHY.md)
+- [Why Codepot exists](.docs/research/WHY.md)
 - [Documentation index](.docs/README.md)
 - [Project and component status](.docs/project/README.md)
 - [Approved architecture](.docs/architecture/README.md)

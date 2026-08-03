@@ -1,78 +1,50 @@
-# Codepot documentation source
+# Public documentation source
 
-This directory is the single source of truth for the public Codepot documentation site.
+This directory contains the canonical Markdown and publication manifests consumed by the current documentation renderer in `apps/site`.
 
-## Source layout
+It is one section of the repository-wide `.docs` system, not a second documentation root.
 
-- `index.md` renders at `/docs`.
-- `navigation.json` defines every published public path, recursive sidebar tree, package ownership, and compatibility redirect.
-- `ecosystem.json` defines package and platform status, commands, registry links, and external links.
-- `packages/index.md` renders at `/docs/packages`.
-- `packages/<package>/index.md` renders at `/docs/packages/<package>`.
-- Other nested Markdown files render at the matching path declared in `navigation.json`.
+## Contents
 
-A source path and a public path may differ. The navigation record is authoritative:
+- `index.md` — `/docs` home page.
+- `navigation.json` — public allowlist, hierarchy, source paths, package ownership, redirects, and ordering.
+- `ecosystem.json` — active and frozen component metadata used by the site.
+- `getting-started/` — current public project introduction.
+- `dryv/` — public documentation for the active implementation.
+- `packages/` — frozen package reference pages.
+- `contributing/` — public repository and documentation rules.
 
-```json
-{
-  "title": "Template variables",
-  "path": "packages/codepotg/template-variables",
-  "source": "packages/codepotg/template-variables"
-}
-```
+Files that are not selected by `navigation.json` are not published, even when retained under this directory for historical reference.
 
-## Package documentation
-
-Every active package owns a complete nested tree rather than one oversized page:
+## Current publication model
 
 ```text
-docs/packages/
-├── codepot-openapi/
-├── codepotg/
-├── codepotx/
-└── codepotx-cli/
+.docs/public Markdown and manifests
+        ↓
+apps/site/scripts/validate-docs.mjs
+        ↓
+apps/site/scripts/sync-docs.mjs
+        ↓
+apps/site/src/generated/
+        ↓
+/docs routes
 ```
 
-Package roots must declare `package` in `navigation.json`. Descendants inherit that package identity and receive:
+Generated files under `apps/site/src/generated/` are build artifacts and must not be edited manually.
 
-- a focused package sidebar;
-- package status and registry information;
-- package-scoped previous and next links;
-- nested breadcrumbs;
-- package-aware search ranking.
+## Validation
 
-## Generated site data
-
-`apps/site/scripts/sync-docs.mjs` precompiles:
-
-- Markdown content;
-- recursive navigation;
-- page metadata and breadcrumbs;
-- JSON tables of contents;
-- page and heading search records;
-- compatibility redirects;
-- ecosystem metadata.
-
-The runtime does not scan the repository or parse Markdown files. `prepare:docs` runs before development, type checking, linting, and production builds.
-
-Do not edit files under `apps/site/src/generated/` manually.
-
-## Validation rules
-
-`apps/site/scripts/validate-docs.mjs` verifies:
+The validator checks:
 
 - valid and unique public paths;
-- valid source paths inside `docs/`;
-- recursive child paths stay under their parent;
-- every navigation source exists;
-- frontmatter titles are present;
-- package identities match;
-- internal `/docs/...` links resolve or redirect;
-- ecosystem products point to published documentation;
-- available external links use HTTPS;
-- unavailable links remain `null`.
-
-## Commands
+- source containment inside `.docs/public`;
+- nested path relationships;
+- source existence and frontmatter;
+- package identity consistency;
+- internal `/docs/...` links;
+- redirects;
+- ecosystem product IDs and documentation routes;
+- external-link shape.
 
 From the repository root:
 
@@ -83,10 +55,6 @@ pnpm --filter @codepot/site typecheck
 pnpm --filter @codepot/site build
 ```
 
-During local writing, run:
+## Ownership rule
 
-```bash
-pnpm --filter @codepot/site dev
-```
-
-The `predev` script validates and synchronizes documentation automatically.
+Public documentation may summarize the project for external users, but it must not redefine the canonical architecture, component status, task state, or agent rules. Link to the owning `.docs` section when deeper authority is required.
