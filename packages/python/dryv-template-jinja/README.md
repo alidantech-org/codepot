@@ -16,5 +16,5 @@ python -m pytest
 ## Canonical documentation
 
 - [Jinja adapter documentation](../../../.docs/products/dryv/template-jinja/README.md)
-- [Template architecture](../../../.docs/architecture/templating.md)
+- [Template-engine adapter contract](../../../.docs/architecture/plugins/03-template-engine-adapter-contract.md)
 - [Template tasks](../../../.docs/tasks/dryv/template-jinja/README.md)

@@ -17,4 +17,4 @@ python -m pytest
 
 - [CLI documentation](../../../.docs/products/dryv/cli/README.md)
 - [Runtime architecture](../../../.docs/products/dryv/runtime/README.md)
-- [CLI tasks](../../../.docs/tasks/dryv/cli/README.md)
+- [Dryv task system](../../../.docs/tasks/dryv/README.md)

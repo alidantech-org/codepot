@@ -16,5 +16,5 @@ python -m pytest
 ## Canonical documentation
 
 - [TypeScript adapter documentation](../../../.docs/products/dryv/language-typescript/README.md)
-- [Language adapter architecture](../../../.docs/architecture/templating.md)
+- [Language-adapter contract](../../../.docs/architecture/plugins/02-language-adapter-contract.md)
 - [TypeScript adapter tasks](../../../.docs/tasks/dryv/language-typescript/README.md)

@@ -16,5 +16,5 @@ python -m pytest
 ## Canonical documentation
 
 - [Dart adapter documentation](../../../.docs/products/dryv/language-dart/README.md)
-- [Language adapter architecture](../../../.docs/architecture/templating.md)
+- [Language-adapter contract](../../../.docs/architecture/plugins/02-language-adapter-contract.md)
 - [Dart adapter tasks](../../../.docs/tasks/dryv/language-dart/README.md)
