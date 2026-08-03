@@ -1,94 +1,13 @@
 # codepotx-cli
 
-`codepotx-cli` is the official terminal frontend for the `codepotx` runtime.
+> **Status: Frozen**
+>
+> This package is retained for historical comparison. It is not an active development target. Changes require a ready task that explicitly authorizes narrow maintenance.
 
-It deliberately owns only argument parsing, project-runtime discovery, terminal presentation, and process exit codes. Authoring, template compilation, generation planning, filesystem safety, diagnostics, events, and execution remain in `codepotx`.
+`codepotx-cli` is the earlier terminal frontend for `codepotx`. The active CLI is [`packages/python/dryv-cli`](../../python/dryv-cli/README.md).
 
-This boundary allows the same runtime operations to be reused by web interfaces, editor extensions, MCP servers, desktop tools, AI integrations, and embedded Node.js applications without copying CLI behavior.
+## Canonical documentation
 
-## Status and documentation
-
-The package is under active development alongside `codepotx`. Its package version is currently `0.0.0`, so it is not yet a published stable npm release.
-
-- documentation: https://code.alidantech.org/docs/packages/codepotx-cli
-- source: https://github.com/alidantech-org/codepot/tree/main/packages/nodejs/codepotx-cli
-
-The full documentation covers getting started, commands, options, project-local runtime resolution, JSON automation, and troubleshooting.
-
-## Binary
-
-```text
-codepotx
-```
-
-## Commands
-
-```bash
-codepotx validate
-codepotx inspect --json
-codepotx variables <task>
-codepotx plan <task> --json
-codepotx generate <task> --dry-run
-codepotx generate <task>
-codepotx features
-codepotx help
-codepotx version
-```
-
-## Options
-
-```text
--r, --root <path>       Project root
--f, --file <path>       CodepotFile.yml path
--c, --config <path>     codepotx.config.ts path
--t, --task <name>       Task name
-    --all               Run all tasks
-    --dry-run           Render without writes or commands
-    --refresh           Refresh source and artifact caches
-    --skip-before       Skip before commands
-    --skip-after        Skip after commands
-    --json              Machine-readable output
-    --pretty            Pretty-print JSON output
--v, --verbose           Print runtime events
-```
-
-A positional task name is accepted where a command requires one.
-
-## Runtime resolution
-
-For normal commands the CLI loads the consumer project runtime, subscribes to runtime events for presentation, executes the requested operation, then disposes the subscription.
-
-The CLI prefers the project-local `codepotx/runtime` installation. This keeps the frontend aligned with the runtime version selected by the project instead of embedding a second copy of domain behavior.
-
-## Programmatic entrypoint
-
-```ts
-import { runCli } from 'codepotx-cli';
-
-const exitCode = await runCli([
-  'plan',
-  'sdk',
-  '--json',
-]);
-```
-
-Applications that need typed in-process responses should call `codepotx/runtime` directly.
-
-## Development
-
-```bash
-pnpm --filter codepotx-cli typecheck
-pnpm --filter codepotx-cli test
-pnpm --filter codepotx-cli build
-pnpm --filter codepotx-cli package:lint
-```
-
-The package is ESM-only and targets Node.js 22.18 or newer.
-
-## Architectural rule
-
-New compiler, authoring, templating, generation, platform, or safety behavior must be implemented in `codepotx`, not in this package. The CLI may translate user input into runtime requests and render runtime responses; it must not become a second engine.
-
-## License
-
-MIT
+- [Frozen package record](../../../.docs/products/frozen/codepotx-cli/README.md)
+- [Component status](../../../.docs/project/component-status.md)
+- [Active Dryv CLI documentation](../../../.docs/products/dryv/cli/README.md)

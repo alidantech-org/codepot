@@ -1,16 +1,20 @@
 # dryv-language-dart
 
-Pure-Python Dart target validation and URI facts for Dryv.
+**Status:** Active
 
-## Baseline
+`dryv-language-dart` is the Dart target adapter for Dryv. It provides target naming, path, module, package, keyword, identifier, and validation facts through the public language-adapter contract.
 
-- Language baseline: Dart 3.12.2 identifier, keyword, privacy, and URI subset.
-- Behavior version: `1`.
-- Date verified: 2026-07-27.
-- Supported output suffix: `.dart`.
-- Identifier subset: ASCII by default; a specification-oriented Unicode-category policy is available.
-- URI forms: canonical relative URIs with `./` for same-folder paths, explicit `dart:` URIs, explicit `package:` URIs, and package URIs built only from explicit package/library-root facts.
-- Private names: a leading underscore is preserved and reported as an informational fact by default.
-- Unsupported: Flutter assumptions, hidden barrel/index rewriting, symbol combinators, import/export rendering, project configuration decoding, and diagnostics on `ModulePathFacts`.
+It does not render Dart source; templates own emitted syntax.
 
-Templates own every emitted Dart character.
+## Local verification
+
+```bash
+cd packages/python/dryv-language-dart
+python -m pytest
+```
+
+## Canonical documentation
+
+- [Dart adapter documentation](../../../.docs/products/dryv/language-dart/README.md)
+- [Language adapter architecture](../../../.docs/architecture/templating.md)
+- [Dart adapter tasks](../../../.docs/tasks/dryv/language-dart/README.md)
