@@ -71,7 +71,7 @@ The script validates the contract and performs canonical JSON/YAML round trips.
 ```bash
 uv run --package dryv-cli dryv plan dryv.yaml | tee plan-direct.json
 uv run --package dryv-cli dryv generate dryv.yaml --memory | tee memory-output-direct.json
-uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct | tee write-report-direct.json
+uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct --yes | tee write-report-direct.json
 find runs/direct -type f | sort
 ```
 
@@ -99,7 +99,7 @@ The authoring package creates an in-memory public `Contract`; the canonical runt
 ```bash
 uv run --package dryv-cli dryv plan dryv-author.yaml | tee plan-author.json
 uv run --package dryv-cli dryv generate dryv-author.yaml --memory | tee memory-output-author.json
-uv run --package dryv-cli dryv generate dryv-author.yaml --destination runs/author | tee write-report-author.json
+uv run --package dryv-cli dryv generate dryv-author.yaml --destination runs/author --yes | tee write-report-author.json
 find runs/author -type f | sort
 ```
 
@@ -148,14 +148,14 @@ do
 done
 ```
 
-Acceptance: both routes format and analyze successfully.
+Acceptance: both generated Dart projects format and analyze successfully.
 
 ## 10. Prove deterministic regeneration
 
 ```bash
 find runs/direct/typescript/src runs/direct/dart/lib -type f -print0 \
   | sort -z | xargs -0 sha256sum > before-direct.sha256
-uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct \
+uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct --yes \
   > rerun-report-direct.json
 
 find runs/direct/typescript/src runs/direct/dart/lib -type f -print0 \
@@ -173,7 +173,7 @@ printf '\n// HUMAN EDIT THAT MUST BE PROTECTED\n' \
   >> runs/direct/typescript/src/models/user.ts
 
 set +e
-uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct
+uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct --yes
 EDIT_EXIT=$?
 set -e
 
@@ -192,14 +192,14 @@ Recover:
 
 ```bash
 cp /tmp/dryv-user.ts runs/direct/typescript/src/models/user.ts
-uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct
+uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct --yes
 ```
 
 ## 12. Prove stale managed-file cleanup
 
 ```bash
 uv run --all-packages python bootstrap_contract.py --without-ticket
-uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct
+uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct --yes
 
 test ! -f runs/direct/typescript/src/models/ticket.ts
 test ! -f runs/direct/dart/lib/models/ticket.dart
@@ -209,7 +209,7 @@ Restore the complete contract:
 
 ```bash
 uv run --all-packages python bootstrap_contract.py
-uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct
+uv run --package dryv-cli dryv generate dryv.yaml --destination runs/direct --yes
 ```
 
 ## 13. Prove unmanaged collision protection
@@ -220,7 +220,7 @@ mkdir -p collision-output/typescript/src/models
 printf 'UNMANAGED HUMAN FILE\n' > collision-output/typescript/src/models/user.ts
 
 set +e
-uv run --package dryv-cli dryv generate dryv.yaml --destination collision-output
+uv run --package dryv-cli dryv generate dryv.yaml --destination collision-output --yes
 COLLISION_EXIT=$?
 set -e
 
