@@ -1,110 +1,44 @@
 ---
 title: Architecture
-description: Understand the shared project principles and the different architectures used by the prototype, JavaScript, and Rust generations.
-order: 5
+description: The three-tier Dryv architecture and its strict ownership boundaries.
 ---
 
 # Architecture
 
-Codepot uses different implementations at different maturity stages, but the project follows one architectural direction: separate software meaning, generation policy, platform capabilities, and user interfaces.
-
-## Shared conceptual layers
-
 ```text
-software intent
+Authoring
     ↓
-validated semantic or normalized artifact
+Canonical Dryv Runtime IR
     ↓
-target-specific template/render model
+Templating
     ↓
-complete generation plan
-    ↓
-safe project-owned writes
+Usage and generated output
 ```
 
-The exact files and engines differ, but the boundaries remain recognizable.
+## Authoring
 
-## Prototype architecture
+Authoring defines software meaning, validates authored definitions, creates explicit relationships, and compiles into Runtime IR.
 
-```text
-codepot-openapi TypeScript builders
-        ↓
-OpenAPI 3.x + x-codegen metadata
-        ↓
-codepotg OpenAPI loader and inference
-        ↓
-normalized generation contracts
-        ↓
-Jinja template pack + paths.yaml
-        ↓
-planned files, lifecycle policy, diagnostics, writes
-```
+Authoring does not generate source code, select packs, define output paths, write files, serialize Runtime IR, or create a competing semantic model.
 
-OpenAPI is the interchange boundary. This makes the authoring and generation packages independently useful.
+## Runtime
 
-## `codepotx` architecture
+Runtime IR is the only semantic authority. The runtime owns canonical validation, serialization, loading, inspection, planning, plugin contracts, and safe generation orchestration.
 
-`codepotx` communicates through versioned, readonly, JSON-safe artifacts:
+Dryv is called a runtime because it executes the derivation process. It is not the runtime of the generated application.
 
-- compiled authoring artifact;
-- compiled template pack;
-- template variable catalog;
-- generation plan;
-- rendered generation;
-- generation manifest;
-- generation result.
+## Templating
 
-Its public areas are:
+Packs define how Runtime IR becomes source code, configuration, documentation, packages, fragments, and projects. Packs use the same vocabulary and cannot redefine software meaning.
 
-```text
-contract
-internal
-authoring
-templating
-generation
-platform
-runtime
-```
+Templates own emitted characters. Target adapters provide target facts and validation rather than hidden rendering.
 
-The runtime composes engines through ports. Node and memory platform adapters satisfy the same service contract. The CLI imports public runtime and contract APIs instead of internal folders.
+## Usage
 
-Read [`codepotx`](/docs/codepotx) for the package-level dependency rules.
+Usage connects authored source or serialized IR, packs, options, project bindings, output destinations, and generation commands.
 
-## Final Rust architecture
+The CLI remains a frontend over runtime operations.
 
-```text
-Codepot.toml + source modules
-    ↓
-filesystem package resolver + std selection
-    ↓
-lossless lexer + recoverable parser
-    ↓
-package/import graph + symbols + strong semantic analysis
-    ↓
-target-neutral IR + persistent workspace snapshot
-    ↓
-CLI | LSP | extension | future runtime/generators | web | MCP
-```
+## Required properties
 
-The compiler owns meaning. Future generators consume resolved IR rather than re-deciding types, validation, imports, or security inside templates.
-
-## Frontend-neutral execution
-
-A central rule for both `codepotx` and the final platform is that interfaces do not own engine behavior.
-
-```text
-terminal  editor  web  MCP  desktop  AI agent
-     \      |      |    |      |       /
-          reusable runtime and artifacts
-```
-
-This keeps behavior consistent across tools and makes it possible to add new interfaces without rebuilding the compiler or generator.
-
-## Safety boundaries
-
-- Plan complete output before mutation.
-- Keep generated ownership explicit.
-- Preserve immutable and user-edited files.
-- Restrict cleanup to known managed files and allowed scopes.
-- Keep diagnostics structured and available to every frontend.
-- Treat commands and filesystem access as injected platform capabilities rather than domain logic.
+Generation must be deterministic, explainable, portable, inspectable, ownership-safe, and reproducible from locked inputs.
