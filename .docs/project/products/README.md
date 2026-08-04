@@ -1,6 +1,5 @@
-# Product documentation
+# Product records
 
-- [`dryv/`](dryv/README.md) — active product family.
-- [`frozen/`](frozen/README.md) — retained CodepotG and Node.js package documentation.
+Active package documentation now mirrors code under [`../../packages/`](../../packages/).
 
-Product status is governed by [`../project/component-status.md`](../project/component-status.md). Local package READMEs are entry points only.
+The remaining [`frozen/`](frozen/README.md) tree is a transitional record and will move to the archive during frozen-package cleanup.
