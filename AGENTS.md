@@ -20,11 +20,8 @@ This file is the repository router for AI contributors. Detailed rules, guides, 
 
 - Current focus: [`.docs/TODO.md`](.docs/TODO.md)
 - Repository purpose: [`.docs/WHY.md`](.docs/WHY.md)
+- Documentation map: [`.docs/README.md`](.docs/README.md)
 - Agent rules and procedures: [`.docs/agents/`](.docs/agents/README.md)
-- Package documentation: [`.docs/packages/`](.docs/packages/)
-- Application documentation: [`.docs/apps/`](.docs/apps/README.md)
 - Published documentation: [`.docs/public/`](.docs/public/README.md)
-- Component status: [`.docs/project/component-status.md`](.docs/project/component-status.md)
-- Python workspace workflow: [`.docs/project/python-workspace.md`](.docs/project/python-workspace.md)
 
 When documentation, implementation, and the current task disagree, do not guess. Stop and resolve the contradiction explicitly.
