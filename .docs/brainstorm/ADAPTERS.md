@@ -1070,3 +1070,274 @@ Current direction:
 > Keyword lists are declarative pack data used for warnings and template-controlled identifier handling.
 
 The architecture is cleaner if language adapters are eliminated completely rather than weakened, renamed, or made optional.
+
+Yes. This can be handled efficiently without language adapters.
+
+The key is to treat a barrel as a normal generated artifact that **re-exports symbols** from other artifacts.
+
+## Planning model
+
+Before rendering, Dryv builds three indexes.
+
+### 1. Artifact index
+
+```text
+artifact ID → output path
+```
+
+Example:
+
+```text
+User model → src/models/user.ts
+Models barrel → src/models/index.ts
+User service → src/services/user.service.ts
+```
+
+### 2. Symbol index
+
+```text
+symbol identity → defining artifact
+```
+
+Example:
+
+```text
+User → src/models/user.ts
+UserService → src/services/user.service.ts
+```
+
+The symbol identity should be based on the IR item and declared template output, not only the text `User`.
+
+### 3. Export index
+
+```text
+artifact → symbols it makes available
+```
+
+A normal file exports symbols it defines:
+
+```text
+user.ts exports User
+```
+
+A barrel exports symbols originating elsewhere:
+
+```text
+models/index.ts re-exports User
+models/index.ts re-exports Order
+```
+
+Dryv retains both facts:
+
+```text
+User is defined by:
+  src/models/user.ts
+
+User is also available through:
+  src/models/index.ts
+```
+
+## Import resolution
+
+When a template requests `User`, Dryv resolves:
+
+```text
+requested semantic symbol
+    ↓
+defining artifact
+    ↓
+available export routes
+    ├── direct file
+    └── one or more barrels
+```
+
+The pack must explicitly determine which route is intended.
+
+Possible decisions:
+
+```text
+Import directly from defining artifact
+Import through a named barrel
+Import through the nearest matching barrel
+```
+
+Dryv should not silently choose a barrel when several are available.
+
+## Direct import
+
+Consumer:
+
+```text
+src/services/user.service.ts
+```
+
+Provider:
+
+```text
+src/models/user.ts
+```
+
+Dryv calculates neutral path facts:
+
+```text
+consumer directory:
+  src/services
+
+source artifact:
+  src/models/user.ts
+
+relative segments:
+  ..
+  models
+  user
+```
+
+The template renders them:
+
+```jinja
+{{ dependency.relative_segments | join_slash }}
+```
+
+Result:
+
+```text
+../models/user
+```
+
+Dryv does not write the import statement itself.
+
+## Barrel import
+
+Consumer:
+
+```text
+src/services/user.service.ts
+```
+
+Chosen barrel:
+
+```text
+src/models/index.ts
+```
+
+Dryv calculates relativity against the barrel, not the defining file:
+
+```text
+relative segments:
+  ..
+  models
+```
+
+The template may produce:
+
+```text
+../models
+```
+
+The trace still records:
+
+```text
+User
+→ defined in user.ts
+→ re-exported by models/index.ts
+→ imported by user.service.ts through the barrel
+```
+
+## Efficient algorithm
+
+Planning can run in near-linear time.
+
+```text
+1. Create all template invocations.
+2. Calculate every artifact path.
+3. Register symbols defined by each artifact.
+4. Register barrel export relationships.
+5. Build reverse index:
+      symbol → available export artifacts
+6. Resolve every import request through hash lookups.
+7. Calculate relative path tokens.
+8. Validate ambiguity, missing symbols, collisions, and cycles.
+9. Render only after the graph is valid.
+```
+
+Approximate complexity:
+
+```text
+O(artifacts + symbols + exports + imports)
+```
+
+Dryv does not need to search every file for every import.
+
+The important indexes are:
+
+```text
+symbol → defining artifact
+symbol → barrel artifacts
+artifact → exported symbols
+template invocation → artifact
+```
+
+## Barrel cycles
+
+Dryv should detect and reject unclear export cycles such as:
+
+```text
+models/index
+→ exports domain/index
+
+domain/index
+→ exports models/index
+```
+
+Diagnostics should show the complete cycle before rendering.
+
+## Information passed to templates
+
+Each resolved import can expose:
+
+```text
+symbol name
+symbol semantic identity
+defining artifact
+selected import artifact
+whether imported directly or through a barrel
+consumer artifact
+relative path segments
+source filename
+source stem
+source extension
+```
+
+The template remains responsible for:
+
+* import syntax;
+* path separators;
+* extension removal;
+* aliases;
+* package imports;
+* symbol aliases;
+* combined imports.
+
+## Important design rule
+
+```text
+Dryv resolves where a symbol is available.
+The pack decides which export route to use.
+The template decides how the import is written.
+```
+
+That gives efficient symbol resolution, correct relativity, barrel support, and complete traceability without requiring language adapters.
+
+## Checklist update
+
+**Artifact and symbol indexing** — `PROPOSED`
+Use precomputed artifact, symbol, and export indexes.
+
+**Barrel meaning** — `PROPOSED`
+A barrel is a normal artifact that re-exports symbols from other artifacts.
+
+**Import relativity** — `PROPOSED`
+Calculate paths relative to the selected import artifact, which may be the defining file or a barrel.
+
+**Barrel selection** — `UNREVIEWED`
+We still need to decide whether packs must always name the barrel or may request a deterministic “nearest barrel” rule.

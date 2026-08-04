@@ -333,3 +333,228 @@ Open questions: ...
 ```
 
 The safest first decision is **the core selection statement shape**, because target names, modes, filters, and variables will all depend on it.
+
+
+Yes. That is the right starting point.
+
+I would refine it slightly to:
+
+```text
+Concept
+→ Authorability
+→ Selectability
+→ Templatability
+→ Emitability
+→ Composability
+→ Auditability
+```
+
+The added **Composability** stage covers symbols, imports, exports, barrels, and artifact dependencies.
+
+## Approved foundation
+
+* **Language adapters are eliminated.**
+* Dryv resolves semantic items, artifacts, symbols, paths, and dependencies.
+* Template packs own language syntax, imports, exports, types, and formatting.
+
+## Review meaning
+
+### 1. Concept
+
+Does this concept belong in the canonical software model?
+
+Examples:
+
+```text
+package
+module
+group
+schema
+field
+operation
+event
+policy
+workflow
+```
+
+We determine:
+
+* what it means;
+* what owns it;
+* what it may contain;
+* what it may reference;
+* whether it is neutral enough for Dryv.
+
+### 2. Authorability
+
+How can a user define or obtain the concept?
+
+A concept may be:
+
+* directly authored;
+* derived from another concept;
+* inferred from explicit relationships;
+* runtime-created only.
+
+We must avoid concepts that exist only for template convenience but have no real software meaning.
+
+### 3. Selectability
+
+Can a template directly select this concept?
+
+Separate questions:
+
+* Can it be a selection root?
+* Can it be filtered?
+* Can it be grouped?
+* Can related concepts be queried through it?
+* What is its deterministic ordering?
+
+Not every concept must be directly selectable.
+
+For example, an operation output may be accessible through an operation without becoming its own selection root.
+
+### 4. Templatability
+
+What does a template receive when this concept is selected?
+
+We decide:
+
+* primary variable name;
+* collection variable name;
+* owner variables;
+* direct child values;
+* accessible relationships;
+* optional additional context.
+
+Selectability and templatability must remain separate:
+
+> A concept may be available inside template context without being directly selectable.
+
+### 5. Emitability
+
+Can a template invocation produce something for this concept?
+
+Possible emissions include:
+
+* file;
+* folder;
+* symbol;
+* configuration entry;
+* documentation section;
+* reusable artifact.
+
+We decide:
+
+* what the artifact represents;
+* which concept caused it;
+* which symbols it defines;
+* whether it may emit multiple artifacts;
+* whether several templates may emit different representations of the same concept.
+
+### 6. Composability
+
+How does the emitted result interact with other generated results?
+
+This covers:
+
+* symbol definitions;
+* symbol consumption;
+* direct imports;
+* barrel imports;
+* exports;
+* re-exports;
+* path relativity;
+* artifact dependencies;
+* pack-to-pack connections.
+
+Dryv resolves the graph. Templates render the syntax.
+
+### 7. Auditability
+
+Can users explain the complete journey?
+
+```text
+Authored concept
+→ Runtime IR concept
+→ selection result
+→ template context
+→ emitted artifact
+→ symbol/export route
+→ consuming artifacts
+```
+
+Users must be able to ask:
+
+* Why was this selected?
+* Why was it skipped?
+* What variables were available?
+* What did it emit?
+* Where was the symbol defined?
+* Was it imported directly or through a barrel?
+* Which authored concept caused this file?
+
+## Human review sheet
+
+For every concept, we can use this checklist:
+
+```text
+Concept:
+Meaning:
+Owner:
+Directly authored:
+Derived or inferred:
+Directly selectable:
+Available as related context:
+Allowed filters:
+Allowed grouping:
+Primary template variable:
+May emit artifacts:
+May define symbols:
+May consume symbols:
+May be re-exported:
+Required trace information:
+Status:
+```
+
+## Recommended first concept order
+
+Start with the structural foundation:
+
+```text
+1. package
+2. module
+3. group
+4. schema
+5. field
+6. operation
+```
+
+Do not design selection keywords yet.
+
+First approve what each concept means and whether it deserves:
+
+```text
+authorability
+selectability
+templatability
+emitability
+```
+
+After those six concepts are clear, we can derive selection vocabulary instead of inventing keywords before knowing what they must represent.
+
+## Checklist update
+
+```text
+[APPROVED] Eliminate language adapters
+[APPROVED] Templates own target-language syntax
+[APPROVED] Dryv resolves artifacts, symbols, paths, and dependencies
+
+[PROPOSED] Concept review pipeline
+[PROPOSED] Add Composability before Auditability
+[UNREVIEWED] Concept catalog
+[UNREVIEWED] Selection vocabulary
+[UNREVIEWED] Template variable vocabulary
+```
+
+The first item to review should be **Package as a concept**, followed by Module and Group.
