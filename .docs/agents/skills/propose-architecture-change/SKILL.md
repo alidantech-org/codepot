@@ -11,10 +11,11 @@ A requirement appears to need a new semantic concept, package boundary, plugin c
 3. Identify alternatives, including no change.
 4. Define affected architecture, IR, contexts, selectors, configuration, packages, and public APIs.
 5. Analyze compatibility, migration, determinism, security, caching, locking, and traceability consequences.
-6. Define required documents, tests, versions, and tasks.
-7. Request explicit approval.
-8. Do not implement before approval and document updates.
+6. Record the proposal under the owning package or app documentation folder.
+7. Define required documents, tests, versions, and later implementation tasks.
+8. Request explicit approval.
+9. Do not implement or create an implementation task before approval.
 
 ## Output
 
-A proposal based on `.docs/tasks/templates/architecture-proposal.md`.
+An item-local proposal under `.docs/packages/<ecosystem>/<package>/` or `.docs/apps/<app>/`.
