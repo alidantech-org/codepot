@@ -1,34 +1,15 @@
-# AI contributor system
+# Agent documentation
 
-This directory is the canonical operating manual for AI agents working in Codepot.
+This folder contains the detailed rules, guides, and reusable skills for AI contributors. Its structure is intentionally stable.
 
-The root [`AGENTS.md`](../../AGENTS.md) is only a router and safety gate. Detailed rules, guides, and reusable skills live here.
+Start with:
 
-## Mandatory reading order
+1. [`rules/repository.md`](rules/repository.md)
+2. [`rules/architecture.md`](rules/architecture.md)
+3. [`rules/documentation.md`](rules/documentation.md)
+4. [`rules/tasks.md`](rules/tasks.md)
+5. [`rules/verification.md`](rules/verification.md)
 
-Before changing any file:
+Use [`../TODO.md`](../TODO.md) to identify the item currently in focus. When it points to an implementation task, read that task from the owning package or app folder before changing code.
 
-1. Read root [`AGENTS.md`](../../AGENTS.md).
-2. Read [`../project/component-status.md`](../project/component-status.md).
-3. Read [`rules/repository.md`](rules/repository.md).
-4. Read [`rules/architecture.md`](rules/architecture.md).
-5. Read the assigned task under [`../tasks`](../tasks/README.md).
-6. Read the relevant architecture and product documents named by the task.
-7. Select and follow the appropriate skill under [`skills/`](skills/README.md).
-
-## Sections
-
-- [`rules/`](rules/README.md) — non-negotiable repository, architecture, documentation, task, and verification rules.
-- [`guides/`](guides/README.md) — explanatory workflows for inspecting, planning, implementing, reviewing, and handing off work.
-- [`skills/`](skills/README.md) — concise repeatable procedures an agent can execute.
-
-## Rule hierarchy
-
-1. Explicit user instructions for the current task.
-2. Root `AGENTS.md` and `.docs/agents/rules`.
-3. Approved architecture under `.docs/architecture`.
-4. The assigned task contract.
-5. Product and application documentation.
-6. Existing implementation patterns.
-
-An agent must not use stale code, old documentation, or archived material to override a higher authority.
+Active internal documentation mirrors code under `../packages/` and `../apps/`. Published documentation remains under [`../public/`](../public/README.md). Historical material is deliberately outside the active reading path under `.archives/.docs`.
