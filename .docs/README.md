@@ -1,27 +1,16 @@
 # Codepot documentation
 
-This directory is the single canonical home for authored Codepot documentation.
+`.docs` is the canonical home for repository documentation.
 
-Code lives with the application or package that executes it. Architecture, plans, tasks, research, agent instructions, audits, operational guides, and public documentation live here. Applications and packages keep only a concise local `README.md` that explains the component and links back to this directory.
+- [`WHY.md`](WHY.md) explains why Codepot exists.
+- [`TODO.md`](TODO.md) points to the small amount of work currently in focus.
+- [`agents/`](agents/README.md) contains the detailed rules, guides, and skills for AI contributors.
+- `packages/<ecosystem>/<package>/` mirrors package paths and owns each package's active internal documentation.
+- `apps/<app>/` mirrors application paths and owns each app's active internal documentation.
+- [`public/`](public/README.md) contains documentation approved for publication.
 
-## Documentation map
+Each package or app has exactly one active internal documentation folder. Other documents link to that folder instead of repeating its architecture, status, or task information.
 
-- [`project/`](project/README.md) — project identity, repository structure, component status, and development model.
-- [`architecture/`](architecture/README.md) — approved Codepot and Dryv architecture.
-- [`products/`](products/README.md) — active Dryv product documentation and frozen package records.
-- [`apps/`](apps/README.md) — documentation for active applications.
-- [`agents/`](agents/README.md) — rules, guides, and reusable skills for AI contributors.
-- [`tasks/`](tasks/README.md) — canonical task planning, ownership, status, and evidence.
-- [`decisions/`](decisions/README.md) — approved architecture decision records.
-- [`audits/`](audits/README.md) — technical audits and review evidence.
-- [`examples/`](examples/README.md) — documentation-owned examples and design fixtures.
-- [`operations/`](operations/README.md) — release, publishing, and deployment guidance.
-- [`public/`](public/README.md) — Markdown and navigation consumed by the documentation site.
-- [`plan/`](plan/README.md) — existing implementation planning documents; intentionally unchanged in this reorganization.
-- [`research/`](research/README.md) — existing research and engineering papers; intentionally unchanged in this reorganization.
+A detailed task, when one exists, lives under its owning item. `TODO.md` only points to the current item and goal. Completed, abandoned, frozen, and superseded material moves to `.archives/.docs` after durable facts are incorporated into current documentation.
 
-## Authority rule
-
-A document has one canonical owner. Do not duplicate the same rule or design in an application, package, task, or agent file. Link to the canonical document instead.
-
-When documentation and implementation disagree, do not silently choose one. Record the discrepancy in a task or architecture proposal and resolve it explicitly.
+Dryv currently has no active implementation tasks while its next plan is being derived. Its package documentation records implemented architecture and the cleanup, rewrite, and improvement direction only.

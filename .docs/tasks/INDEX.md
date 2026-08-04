@@ -1,25 +1,11 @@
 # Task index
 
-This index records task areas rather than duplicating every package ledger.
+No Dryv implementation task is active. Historical Dryv task records are archived under `.archives/.docs/tasks/dryv`.
 
-## Active product
-
-- Dryv runtime: [`dryv/runtime/`](dryv/runtime/README.md)
-- Dryv authoring: [`dryv/authoring/`](dryv/authoring/README.md)
-- Jinja adapter: [`dryv/template-jinja/`](dryv/template-jinja/README.md)
-- TypeScript adapter: [`dryv/language-typescript/`](dryv/language-typescript/README.md)
-- Dart adapter: [`dryv/language-dart/`](dryv/language-dart/README.md)
-- CLI and cross-package work: create explicit tasks under [`dryv/`](dryv/README.md)
-
-## Applications
+Existing task areas awaiting item-local migration:
 
 - Documentation app: [`apps/docs/`](apps/docs/README.md)
 - Public site: [`apps/site/`](apps/site/README.md)
+- Cross-cutting records: [`cross-cutting/`](cross-cutting/README.md)
 
-## Frozen packages
-
-Frozen packages have no standing feature backlog. Create a narrowly scoped maintenance task under `cross-cutting/frozen-maintenance/` only after explicit approval.
-
-## Migration note
-
-The moved package task ledgers preserve existing wording and evidence. Before implementation, normalize the selected task against the repository-wide task contract and current component status. Old ledgers do not authorize work in frozen packages or supersede the active Dryv architecture.
+Do not create new tasks in this top-level tree. Use the owning package or app folder and add a short pointer to `.docs/TODO.md` only when the task becomes current.
