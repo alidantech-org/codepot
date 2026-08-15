@@ -1,7 +1,29 @@
-"""Public facade boundary for the Dryv cache Feature.
+"""Versioned context/render/artifact cache policy and storage contracts."""
 
-Task 00 establishes this package boundary only. Capability behavior is added
-by the dedicated follow-up task without bypassing this public root.
-"""
+from .model import (
+    CACHE_RECORD_VERSION,
+    ArtifactCacheKey,
+    CacheEntry,
+    CacheFeature,
+    CacheMode,
+    CacheStage,
+    CacheStore,
+    CacheTransaction,
+    ContextCacheKey,
+    InMemoryCacheStore,
+    RenderCacheKey,
+)
 
-__all__: tuple[str, ...] = ()
+__all__ = [
+    "CACHE_RECORD_VERSION",
+    "ArtifactCacheKey",
+    "CacheEntry",
+    "CacheFeature",
+    "CacheMode",
+    "CacheStage",
+    "CacheStore",
+    "CacheTransaction",
+    "ContextCacheKey",
+    "InMemoryCacheStore",
+    "RenderCacheKey",
+]
