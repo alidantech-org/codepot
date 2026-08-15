@@ -6,7 +6,7 @@ from dataclasses import dataclass, fields, is_dataclass
 from typing import Generic, TypeVar
 
 from dryv.diagnostics import Diagnostics
-from dryv.ir import Contract, SemanticId, walk_groups
+from dryv.ir import Contract, SemanticId, TriggerKind, walk_groups
 from dryv.ir.model.schema_resolution import EffectiveSchema, resolve_effective_schema
 from dryv.ir.validation import SemanticIndex, validate_contract
 
@@ -205,6 +205,9 @@ def _derive(contract: Contract, index: SemanticIndex) -> DerivedRelationships:
         if operation.facets.events is not None:
             for event_id in operation.facets.events.consumes:
                 event_listeners[event_id].append(operation.id)
+        trigger = operation.facets.trigger
+        if trigger is not None and trigger.kind is TriggerKind.EVENT and trigger.event is not None:
+            event_listeners[trigger.event].append(operation.id)
         schema_ids = set(operation.subjects)
         schema_ids.update(item.schema for item in operation.inputs)
         schema_ids.update(item.schema for item in operation.outputs if item.schema is not None)
