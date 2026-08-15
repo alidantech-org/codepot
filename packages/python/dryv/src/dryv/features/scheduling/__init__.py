@@ -1,7 +1,37 @@
-"""Public facade boundary for the Dryv scheduling Feature.
+"""Bounded dependency-aware scheduling contracts for Dryv Runtime."""
 
-Task 00 establishes this package boundary only. Capability behavior is added
-by the dedicated follow-up task without bypassing this public root.
-"""
+from .scheduler import (
+    BoundedChannel,
+    CancellationToken,
+    JobResult,
+    JobStatus,
+    QueueLimits,
+    RetrySafeTransportError,
+    ScheduleChannels,
+    ScheduledJob,
+    ScheduleReport,
+    SchedulingError,
+    SchedulingFeature,
+    SchedulingMetrics,
+    WorkerCapacity,
+    WorkerDisconnectedError,
+    WorkSession,
+)
 
-__all__: tuple[str, ...] = ()
+__all__ = [
+    "BoundedChannel",
+    "CancellationToken",
+    "JobResult",
+    "JobStatus",
+    "QueueLimits",
+    "RetrySafeTransportError",
+    "ScheduleChannels",
+    "ScheduledJob",
+    "ScheduleReport",
+    "SchedulingError",
+    "SchedulingFeature",
+    "SchedulingMetrics",
+    "WorkerCapacity",
+    "WorkerDisconnectedError",
+    "WorkSession",
+]
