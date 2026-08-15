@@ -185,8 +185,8 @@ class PlanningFeature:
             missing = tuple(dep for dep in artifact.dependencies if dep not in known)
             if missing:
                 raise PlanningError("PLAN_MISSING_ARTIFACT_DEPENDENCY", f"artifact {artifact.id!r} depends on missing artifact {missing[0]!r}", subject=artifact.id)
-        _assert_acyclic(artifacts)
-        return GenerationPlan(PLAN_VERSION, CONTEXT_VERSION, tuple(invocations), tuple(sorted(artifacts, key=lambda item: item.id)))
+        ordered_artifacts = _order_artifacts(artifacts)
+        return GenerationPlan(PLAN_VERSION, CONTEXT_VERSION, tuple(invocations), ordered_artifacts)
 
 
 def _canonical_context(value: Mapping[str, JsonValue], max_bytes: int) -> dict[str, JsonValue]:
@@ -220,10 +220,11 @@ def _safe_path(path: str) -> None:
         raise PlanningError("PLAN_OUTPUT_PATH", f"output path must be a safe project-relative path: {path!r}")
 
 
-def _assert_acyclic(artifacts: Sequence[PlannedArtifact]) -> None:
-    graph = {item.id: item.dependencies for item in artifacts}
+def _order_artifacts(artifacts: Sequence[PlannedArtifact]) -> tuple[PlannedArtifact, ...]:
+    by_id = {item.id: item for item in artifacts}
     active: list[str] = []
     done: set[str] = set()
+    result: list[PlannedArtifact] = []
 
     def visit(identity: str) -> None:
         if identity in done:
@@ -233,14 +234,16 @@ def _assert_acyclic(artifacts: Sequence[PlannedArtifact]) -> None:
             raise PlanningError("PLAN_ARTIFACT_CYCLE", f"artifact dependency cycle: {cycle}", subject=identity)
         active.append(identity)
         try:
-            for dependency in graph.get(identity, ()):
+            for dependency in by_id[identity].dependencies:
                 visit(dependency)
         finally:
             active.pop()
         done.add(identity)
+        result.append(by_id[identity])
 
-    for identity in sorted(graph):
+    for identity in sorted(by_id):
         visit(identity)
+    return tuple(result)
 
 
 __all__ = [
