@@ -2,36 +2,72 @@
 
 Code: `packages/python/dryv`
 
-Status: active implementation; architecture cleanup, rewrite, improvement, and replanning are in progress. No implementation task is currently active.
+Status: active architecture refactor planning. The approved implementation sequence starts at [`tasks/00-runtime-feature-boundaries.md`](tasks/00-runtime-feature-boundaries.md).
 
-## Current architecture
+## Approved architecture direction
+
+Dryv Engine is the deterministic semantic/planning runtime. It does not own frontend UI, project filesystem mutation, author implementation languages, template execution processes, or HTTP/WebSocket hosting.
 
 ```text
-Authoring
-    -> Canonical Dryv Runtime IR
-    -> Templating
-    -> Usage and generated output
+Author Backend
+    ↓ Canonical Dryv IR
+
+Project Client
+    ↓ dryv.yaml + logical resources + previous managed outputs
+
+Network host when used
+    ↓
+Dryv Runtime
+    ↓ coordinates independent Features
+    ↓
+AuthorSession / RenderSession when required
+    ↓
+Artifact + WriteInstruction stream
+    ↓
+Project Client
+    ↓
+user filesystem apply
 ```
 
-Responsibilities remain separate:
+## Canonical meaning
 
-- authoring defines software and compiles into Runtime IR;
-- Runtime IR is the only semantic authority;
-- the runtime owns IR validation, serialization, loading, inspection, planning, and safe generation;
-- template packs own selection, binding, rendering, output paths, and generated dependencies;
-- usage connects authored input or serialized IR with packs, options, bindings, and destinations;
-- the CLI presents the runtime without becoming a second semantic system.
+Canonical Dryv IR remains the only semantic authority. The working concept family includes:
 
-Generation must remain deterministic, explainable, portable, and safe around managed and unmanaged files.
+```text
+Contract
+├── Groups
+│   ├── Properties
+│   ├── Schemas
+│   ├── Policies
+│   ├── Failures
+│   ├── Events
+│   ├── Operations
+│   ├── StorageMappings
+│   ├── ValueSources
+│   └── Views
+├── Workflows
+└── Presentations
+```
 
-## Replanning direction
+Cross-cutting information includes tags, guidance, documentation, provenance, and typed references.
 
-The next plan will simplify and harden the implemented architecture without restoring deprecated task ledgers or copying old design documents. New tasks will be created only after a concrete plan is approved.
+Schema supports the approved zero-or-one direct base Schema extension model with transitive chains and explicit overrides. Relationship owners author forward relationships; Runtime may derive reverse indexes for inspection and template context.
 
-Related packages:
+## Engine structure
 
-- [`../dryv-author/`](../dryv-author/README.md)
-- [`../dryv-cli/`](../dryv-cli/README.md)
-- [`../dryv-template-jinja/`](../dryv-template-jinja/README.md)
-- [`../dryv-language-typescript/`](../dryv-language-typescript/README.md)
-- [`../dryv-language-dart/`](../dryv-language-dart/README.md)
+The refactor organizes independent capabilities under `dryv.features.*`, with Runtime as the only composition root. Planned Features include serialization, project configuration, resources, hashing, IR validation/indexing, packs, planning, cache, authoring sessions, templating sessions, scheduling, artifacts, and diagnostics.
+
+`dryv.yaml` is usage configuration. `dryv.pack.yaml` defines pack/generation behavior. Canonical IR may be represented as JSON, YAML, or JSONL; these are representations of the same semantic contract.
+
+## External boundaries
+
+- Author Backends compile authored source to Canonical Dryv IR and may run independently.
+- Render Clients receive template content plus canonical JSON context and return generated logical output bytes.
+- Project Clients collect local/private resources and safely apply Artifact/WriteInstruction streams.
+- A separate API/network package may host Dryv Runtime over HTTP/WebSocket for local or remote frontends.
+
+Dryv generation must remain deterministic, explainable, portable, bounded, cache-safe, and fully traceable from semantic input through planned artifacts.
+
+## Tasks
+
+Implementation tasks live under [`tasks/`](tasks/) and must be executed in dependency order. `.docs/TODO.md` points to the currently active task only.
