@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from dryv.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity, RelatedLocation, SourceSpan
+from dryv.diagnostics import (
+    Diagnostic,
+    Diagnostics,
+    DiagnosticSeverity,
+    RelatedLocation,
+    SourceSpan,
+)
 
 from ..base import SemanticId
 from ..events import Event
@@ -56,20 +62,35 @@ class SemanticIndex:
                 _register(seen, schema.id, "schema", _owner_span(schema), diagnostics)
                 index.schemas.setdefault(schema.id, schema)
                 for schema_field in schema.fields:
-                    _register(seen, schema_field.id, "schema_field", _owner_span(schema_field), diagnostics)
+                    _register(
+                        seen,
+                        schema_field.id,
+                        "schema_field",
+                        _owner_span(schema_field),
+                        diagnostics,
+                    )
                     index.fields.setdefault(schema_field.id, schema_field)
             for operation in group.operations:
-                _register(seen, operation.id, "operation", _owner_span(operation), diagnostics)
+                _register(
+                    seen,
+                    operation.id,
+                    "operation",
+                    _owner_span(operation),
+                    diagnostics,
+                )
                 index.operations.setdefault(operation.id, operation)
             for view in walk_views(group.views):
                 _register(seen, view.id, "view", _owner_span(view), diagnostics)
                 index.views.setdefault(view.id, view)
             for mapping in group.storage_mappings:
-                _register(seen, mapping.id, "storage_mapping", _owner_span(mapping), diagnostics)
+                _register(
+                    seen,
+                    mapping.id,
+                    "storage_mapping",
+                    _owner_span(mapping),
+                    diagnostics,
+                )
                 index.storage.setdefault(mapping.id, mapping)
-            for workflow in group.workflows:
-                _register(seen, workflow.id, "workflow", _owner_span(workflow), diagnostics)
-                index.workflows.setdefault(workflow.id, workflow)
             for policy in group.policies:
                 _register(seen, policy.id, "policy", _owner_span(policy), diagnostics)
                 index.policies.setdefault(policy.id, policy)
@@ -80,13 +101,40 @@ class SemanticIndex:
                 _register(seen, event.id, "event", _owner_span(event), diagnostics)
                 index.events.setdefault(event.id, event)
             for source in group.value_sources:
-                _register(seen, source.id, "value_source", _owner_span(source), diagnostics)
+                _register(
+                    seen,
+                    source.id,
+                    "value_source",
+                    _owner_span(source),
+                    diagnostics,
+                )
                 index.value_sources.setdefault(source.id, source)
+        for workflow in contract.workflows:
+            _register(
+                seen,
+                workflow.id,
+                "workflow",
+                _owner_span(workflow),
+                diagnostics,
+            )
+            index.workflows.setdefault(workflow.id, workflow)
         for presentation in contract.presentations:
-            _register(seen, presentation.id, "presentation", _owner_span(presentation), diagnostics)
+            _register(
+                seen,
+                presentation.id,
+                "presentation",
+                _owner_span(presentation),
+                diagnostics,
+            )
             index.presentations.setdefault(presentation.id, presentation)
             for entry in presentation.entries:
-                _register(seen, entry.id, "presentation_entry", _owner_span(entry), diagnostics)
+                _register(
+                    seen,
+                    entry.id,
+                    "presentation_entry",
+                    _owner_span(entry),
+                    diagnostics,
+                )
                 index.presentation_entries.setdefault(entry.id, entry)
         return index, Diagnostics.from_iterable(diagnostics)
 
@@ -95,13 +143,33 @@ def owner_span(owner: object) -> SourceSpan | None:
     return _owner_span(owner)
 
 
-def _register(seen: dict[SemanticId, _Seen], semantic_id: SemanticId, kind: str, span: SourceSpan | None, diagnostics: list[Diagnostic]) -> None:
+def _register(
+    seen: dict[SemanticId, _Seen],
+    semantic_id: SemanticId,
+    kind: str,
+    span: SourceSpan | None,
+    diagnostics: list[Diagnostic],
+) -> None:
     previous = seen.get(semantic_id)
     if previous is None:
         seen[semantic_id] = _Seen(kind, span)
         return
-    related = ((RelatedLocation(f"first declared as {previous.kind}", previous.span),) if previous.span is not None else ())
-    diagnostics.append(Diagnostic(code="IR_DUPLICATE_ID", severity=DiagnosticSeverity.ERROR, message=f"semantic id {semantic_id} is declared more than once", span=span, related=related, details=(("id", str(semantic_id)), ("kind", kind)), suggestion="assign a stable unique semantic id"))
+    related = (
+        (RelatedLocation(f"first declared as {previous.kind}", previous.span),)
+        if previous.span is not None
+        else ()
+    )
+    diagnostics.append(
+        Diagnostic(
+            code="IR_DUPLICATE_ID",
+            severity=DiagnosticSeverity.ERROR,
+            message=f"semantic id {semantic_id} is declared more than once",
+            span=span,
+            related=related,
+            details=(("id", str(semantic_id)), ("kind", kind)),
+            suggestion="assign a stable unique semantic id",
+        )
+    )
 
 
 def _owner_span(owner: object) -> SourceSpan | None:
