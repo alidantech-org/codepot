@@ -1,7 +1,10 @@
-"""Public facade boundary for the Dryv project Feature.
+"""Meaning and validation of Dryv usage configuration (`dryv.yaml`).
 
-Task 00 establishes this package boundary only. Capability behavior is added
-by the dedicated follow-up task without bypassing this public root.
+The Project Feature consumes already-decoded documents and logical resource
+identifiers. It performs no filesystem, Git, network, or server operations.
 """
 
-__all__: tuple[str, ...] = ()
+from .decoder import ProjectConfigurationError, decode_project
+from .models import BuildMode, CacheMode, ConfigScalar, PackInstanceConfig, PackSource, ProjectConfig, SourceConfig, freeze_object, freeze_value
+
+__all__ = ["BuildMode", "CacheMode", "ConfigScalar", "PackInstanceConfig", "PackSource", "ProjectConfig", "ProjectConfigurationError", "SourceConfig", "decode_project", "freeze_object", "freeze_value"]
