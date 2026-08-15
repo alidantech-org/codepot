@@ -50,7 +50,20 @@ def test_artifact_dependencies_must_be_planned_and_acyclic() -> None:
     assert cycle.value.code == "PLAN_ARTIFACT_CYCLE"
 
 
+def test_artifacts_are_emitted_in_dependency_order() -> None:
+    dependent = _candidate(invocation_id="invocation.a", output_id="artifact.a", artifact_dependencies=("artifact.z",))
+    provider = _candidate(invocation_id="invocation.z", output_id="artifact.z", output_path="src/z.ts", semantic_ids=("schema.z",), semantic_dependencies=("schema.z",))
+    plan = PlanningFeature().build((dependent, provider))
+    assert tuple(item.id for item in plan.artifacts) == ("artifact.z", "artifact.a")
+
+
 def test_output_paths_cannot_escape_project_root() -> None:
     with pytest.raises(PlanningError) as caught:
         PlanningFeature().build((_candidate(output_path="../outside.ts"),))
     assert caught.value.code == "PLAN_OUTPUT_PATH"
+
+
+def test_non_finite_context_numbers_are_structured_errors() -> None:
+    with pytest.raises(PlanningError) as caught:
+        PlanningFeature().build((_candidate(context={"value": float("nan")}),))
+    assert caught.value.code == "PLAN_CONTEXT_NUMBER"
