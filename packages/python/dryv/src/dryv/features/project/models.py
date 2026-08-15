@@ -177,6 +177,7 @@ class ProjectConfig:
     resources: tuple[str, ...] = ()
     cache_mode: CacheMode = CacheMode.USE
     build_mode: BuildMode = BuildMode.RENDER
+    renderers: FrozenObject = ()
 
     def __post_init__(self) -> None:
         if self.api_version != "dryv.dev/v1":
