@@ -1,9 +1,11 @@
 # Task 17 — Build the Authoring Feature around Canonical IR sessions
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Tasks 08, 10 and 12
 Validation: author-session contract tests, IR-stream validation tests
+
+> Implementation is complete on `develop`. External executable certification is still pending because the connected environment exposes no repository checkout or CI runner. See [`../PROGRESS-11-17.md`](../PROGRESS-11-17.md) and [`../protocols/author-session-v1.md`](../protocols/author-session-v1.md).
 
 ## Goal
 
