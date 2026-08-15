@@ -1,7 +1,17 @@
-"""Public facade boundary for the Dryv ir Feature.
+"""Runtime validation, indexing, resolution and inspection for Canonical Dryv IR."""
 
-Task 00 establishes this package boundary only. Capability behavior is added
-by the dedicated follow-up task without bypassing this public root.
-"""
+from .runtime import (
+    BoundedRecordIndex,
+    DerivedRelationships,
+    IRFeature,
+    IRRuntimeError,
+    IRSnapshot,
+)
 
-__all__: tuple[str, ...] = ()
+__all__ = [
+    "BoundedRecordIndex",
+    "DerivedRelationships",
+    "IRFeature",
+    "IRRuntimeError",
+    "IRSnapshot",
+]
