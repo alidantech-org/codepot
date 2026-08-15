@@ -1,9 +1,11 @@
 # Task 11 — Build the Hashing Feature
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Task 10
 Validation: deterministic hash tests, cross-representation tests
+
+> Implementation is complete on `develop`. External executable certification is still pending because the connected environment exposes no repository checkout or CI runner. See [`../PROGRESS-11-17.md`](../PROGRESS-11-17.md).
 
 ## Goal
 
