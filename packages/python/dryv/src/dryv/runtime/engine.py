@@ -11,14 +11,10 @@ from dryv.features.artifacts import (
     ArtifactProvenance,
     GeneratedArtifact,
 )
-from dryv.features.authoring import (
-    AUTHOR_PROTOCOL_VERSION,
-    AuthoringFeature,
-)
+from dryv.features.authoring import AUTHOR_PROTOCOL_VERSION, AuthoringFeature
 from dryv.features.cache import (
     CacheEntry,
     CacheFeature,
-    CacheMode,
     CacheStage,
     CacheTransaction,
     ContextCacheKey,
@@ -34,10 +30,8 @@ from dryv.features.hashing import (
 from dryv.features.ir import IRFeature, IRSnapshot
 from dryv.features.packs import NormalizedPack, decode_pack_manifest, normalize_pack
 from dryv.features.planning import (
-    CONTEXT_VERSION,
     GenerationPlan,
     InvocationStatus,
-    PlannedInvocation,
     PlanningFeature,
 )
 from dryv.features.project import decode_project
@@ -274,12 +268,13 @@ class DryvRuntime:
                 request,
                 trace,
             )
+            cache_lock = threading.Lock()
             workers = tuple(
                 _RenderWorker(
                     available,
                     templating=self.templating,
                     cache=transaction,
-                    cache_lock=threading.Lock(),
+                    cache_lock=cache_lock,
                 )
                 for available in sorted(
                     request.render_sessions,
@@ -662,7 +657,7 @@ class DryvRuntime:
                 HashPurpose.CONTEXT,
                 cast(object, invocation.context),
             ).identity
-            request = RenderRequest(
+            render_request = RenderRequest(
                 protocol_version=RENDER_PROTOCOL_VERSION,
                 context_version=plan.context_version,
                 job_id=invocation.id,
@@ -686,7 +681,7 @@ class DryvRuntime:
                     required_capability=invocation.renderer_capability,
                     dependencies=dependencies,
                     order=order_by_artifact[artifact.id],
-                    payload=request,
+                    payload=render_request,
                 )
             )
         return tuple(jobs)
