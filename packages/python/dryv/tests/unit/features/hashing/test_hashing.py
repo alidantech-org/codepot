@@ -19,6 +19,11 @@ def test_canonical_values_ignore_object_key_order() -> None:
     assert first.identity.startswith("sha256:v1:canonical-document:")
 
 
+def test_canonical_document_has_stable_golden_vector() -> None:
+    value = hash_value(HashPurpose.CANONICAL_DOCUMENT, {"b": 2, "a": [1, True]})
+    assert value.digest == "16a5b9826a81dd3e37eb091f70b193b43807f6f51851ee61fc7ef0ee809b5255"
+
+
 def test_hash_purpose_is_part_of_identity() -> None:
     content = b"same"
     resource = hash_bytes(HashPurpose.RESOURCE_CONTENT, content)
