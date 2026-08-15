@@ -1,10 +1,17 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Iterator
 from hashlib import sha256
-from typing import BinaryIO, Iterable, Iterator
+from typing import BinaryIO
 
 from .ids import ResourceId
-from .models import OriginMetadata, Resource, ResourceDescriptor, ResourceManifest, ResourceManifestEntry
+from .models import (
+    OriginMetadata,
+    Resource,
+    ResourceDescriptor,
+    ResourceManifest,
+    ResourceManifestEntry,
+)
 
 _DEFAULT_MAX_RESOURCE_BYTES = 64 * 1024 * 1024
 _DEFAULT_CHUNK_BYTES = 64 * 1024

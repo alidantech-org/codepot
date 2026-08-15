@@ -4,7 +4,18 @@ from dataclasses import dataclass, field
 
 from dryv.config import PackManifest, ProjectConfig
 from dryv.domain.generation import SelectionContext
-from dryv.ir import Contract, Event, Operation, Presentation, PresentationEntry, Schema, SemanticId, StorageMapping, ValueSource, View
+from dryv.ir import (
+    Contract,
+    Event,
+    Operation,
+    Presentation,
+    PresentationEntry,
+    Schema,
+    SemanticId,
+    StorageMapping,
+    ValueSource,
+    View,
+)
 from dryv.ir.validation import SemanticIndex
 
 from .models import ArtifactPlan, ModuleCollection, ModuleDescriptor

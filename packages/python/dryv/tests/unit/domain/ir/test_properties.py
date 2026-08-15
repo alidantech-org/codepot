@@ -1,4 +1,15 @@
-from dryv.ir import Contract, Group, Name, Property, Schema, SchemaField, SchemaKind, SemanticId, TypeExpression, validate_contract
+from dryv.ir import (
+    Contract,
+    Group,
+    Name,
+    Property,
+    Schema,
+    SchemaField,
+    SchemaKind,
+    SemanticId,
+    TypeExpression,
+    validate_contract,
+)
 
 
 def test_group_owned_property_can_be_referenced_by_schema_field() -> None:

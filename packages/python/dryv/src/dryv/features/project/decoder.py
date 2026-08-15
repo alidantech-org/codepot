@@ -2,7 +2,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from .models import BuildMode, CacheMode, PackInstanceConfig, PackSource, ProjectConfig, SourceConfig, freeze_object
+from .models import (
+    BuildMode,
+    CacheMode,
+    PackInstanceConfig,
+    PackSource,
+    ProjectConfig,
+    SourceConfig,
+    freeze_object,
+)
 
 
 class ProjectConfigurationError(ValueError):

@@ -16,7 +16,8 @@ from .presentations import validate_presentations
 from .properties import validate_property_contract
 from .schema_extensions import validate_schema_extensions
 from .storage import validate_storage_facts
-from .validator import ContractValidator as _BaseContractValidator, _error
+from .validator import ContractValidator as _BaseContractValidator
+from .validator import _error
 from .value_sources import validate_value_sources
 from .views import validate_view_relationships
 from .workflows import validate_workflow_graphs

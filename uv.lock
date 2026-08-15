@@ -13,8 +13,6 @@ members = [
     "dryv",
     "dryv-author",
     "dryv-cli",
-    "dryv-language-dart",
-    "dryv-language-typescript",
     "dryv-template-jinja",
 ]
 
@@ -429,28 +427,6 @@ requires-dist = [
     { name = "questionary", specifier = ">=2.1,<3" },
     { name = "rich", specifier = ">=13.9,<15" },
 ]
-
-[[package]]
-name = "dryv-language-dart"
-version = "0.1.0a1"
-source = { editable = "packages/python/dryv-language-dart" }
-dependencies = [
-    { name = "dryv" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "dryv", editable = "packages/python/dryv" }]
-
-[[package]]
-name = "dryv-language-typescript"
-version = "0.1.0a1"
-source = { editable = "packages/python/dryv-language-typescript" }
-dependencies = [
-    { name = "dryv" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "dryv", editable = "packages/python/dryv" }]
 
 [[package]]
 name = "dryv-template-jinja"

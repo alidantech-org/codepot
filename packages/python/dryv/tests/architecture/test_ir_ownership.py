@@ -33,7 +33,7 @@ CONCEPT_ROOTS = {
 
 def test_canonical_ir_exposes_the_approved_concept_roots() -> None:
     present = {path.name for path in CANONICAL_ROOT.iterdir() if path.is_dir()}
-    assert CONCEPT_ROOTS <= present
+    assert present >= CONCEPT_ROOTS
 
 
 def test_workflow_is_contract_owned_not_group_owned() -> None:

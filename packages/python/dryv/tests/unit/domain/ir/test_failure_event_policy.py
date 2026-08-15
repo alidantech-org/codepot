@@ -1,4 +1,15 @@
-from dryv.ir import Contract, Event, Failure, Group, Name, Policy, Schema, SchemaKind, SemanticId, validate_contract
+from dryv.ir import (
+    Contract,
+    Event,
+    Failure,
+    Group,
+    Name,
+    Policy,
+    Schema,
+    SchemaKind,
+    SemanticId,
+    validate_contract,
+)
 
 
 def test_failure_is_group_owned_and_schema_reference_is_validated() -> None:

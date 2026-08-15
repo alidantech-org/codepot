@@ -13,9 +13,17 @@ from typing import Any
 
 import yaml
 
-from dryv.features.project import ProjectConfigurationError, ProjectConfig, decode_project as _decode_project
+from dryv.features.project import ProjectConfig, ProjectConfigurationError
+from dryv.features.project import decode_project as _decode_project
 
-from .models import BindingDefinition, OptionDefinition, PackManifest, SelectionConfig, freeze_object, freeze_value
+from .models import (
+    BindingDefinition,
+    OptionDefinition,
+    PackManifest,
+    SelectionConfig,
+    freeze_object,
+    freeze_value,
+)
 
 
 class ConfigurationError(ValueError):

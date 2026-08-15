@@ -1,4 +1,15 @@
-from ..model.base import Documentation, FrozenObject, FrozenValue, GuidanceKind, GuidanceNote, JsonScalar, KernelData, Provenance, SemanticId, TagSet
+from ..model.base import (
+    Documentation,
+    FrozenObject,
+    FrozenValue,
+    GuidanceKind,
+    GuidanceNote,
+    JsonScalar,
+    KernelData,
+    Provenance,
+    SemanticId,
+    TagSet,
+)
 from ..model.naming import Name, NameProjection, pluralize, singularize
 from ..model.types import TypeExpression, TypeKind, type_references
 

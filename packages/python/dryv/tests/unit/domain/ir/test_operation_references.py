@@ -1,4 +1,15 @@
-from dryv.ir import Contract, Event, EventEffect, Failure, Group, Name, Operation, OperationEffects, SemanticId, validate_contract
+from dryv.ir import (
+    Contract,
+    Event,
+    EventEffect,
+    Failure,
+    Group,
+    Name,
+    Operation,
+    OperationEffects,
+    SemanticId,
+    validate_contract,
+)
 
 
 def test_operation_references_reusable_failure_and_event() -> None:
