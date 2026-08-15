@@ -10,10 +10,10 @@ from typing import Any
 import yaml
 
 from dryv.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
-from dryv.ir.model import Contract, Name, SemanticId
+from dryv.ir import Contract, Name, SemanticId
 from dryv.versions import IR_API_VERSION
 
-public_ir = import_module("dryv.ir.model")
+public_ir = import_module("dryv.ir")
 public_diagnostics = import_module("dryv.diagnostics")
 _FORMAT = "codepot-ir"
 _MAX_DEPTH = 128
