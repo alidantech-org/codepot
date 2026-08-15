@@ -15,8 +15,10 @@ from .policies import validate_policy_event_relationships
 from .presentations import validate_presentations
 from .properties import validate_property_contract
 from .schema_extensions import validate_schema_extensions
+from .storage import validate_storage_facts
 from .validator import ContractValidator as _BaseContractValidator, _error
 from .value_sources import validate_value_sources
+from .views import validate_view_relationships
 from .workflows import validate_workflow_graphs
 
 
@@ -81,7 +83,9 @@ class ContractValidator(_BaseContractValidator):
             .extend(validate_failures(contract, index))
             .extend(validate_policy_event_relationships(contract, index))
             .extend(validate_operation_relationships(contract, index))
+            .extend(validate_storage_facts(contract, index))
             .extend(validate_value_sources(contract, index))
+            .extend(validate_view_relationships(contract, index))
             .extend(validate_presentations(contract, index))
             .extend(validate_workflow_graphs(contract, index))
             .extend(validate_additional_contract(contract, index))
