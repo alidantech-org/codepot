@@ -53,6 +53,12 @@ class Group:
     def storage(self) -> StorageNamespace:
         return StorageNamespace(self.storage_mappings)
 
+    @property
+    def workflows(self) -> tuple[Workflow, ...]:
+        """Compatibility view during migration; Workflows are Contract-owned."""
+
+        return ()
+
 
 @dataclass(frozen=True, slots=True)
 class Contract:
