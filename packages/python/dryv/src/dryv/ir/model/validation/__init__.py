@@ -10,6 +10,7 @@ from ..workflows import Workflow, WorkflowStep, walk_workflow_steps
 from .additional import validate_additional_contract
 from .failures import validate_failures
 from .index import SemanticIndex
+from .operations import validate_operation_relationships
 from .policies import validate_policy_event_relationships
 from .presentations import validate_presentations
 from .properties import validate_property_contract
@@ -79,6 +80,7 @@ class ContractValidator(_BaseContractValidator):
             .extend(validate_schema_extensions(contract, index))
             .extend(validate_failures(contract, index))
             .extend(validate_policy_event_relationships(contract, index))
+            .extend(validate_operation_relationships(contract, index))
             .extend(validate_value_sources(contract, index))
             .extend(validate_presentations(contract, index))
             .extend(validate_workflow_graphs(contract, index))
