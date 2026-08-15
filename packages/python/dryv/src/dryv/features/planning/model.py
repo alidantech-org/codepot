@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Mapping, Sequence, TypeAlias
@@ -128,7 +129,13 @@ class GenerationPlan:
         }
 
     def canonical_bytes(self) -> bytes:
-        return json.dumps(self.canonical_document(), ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode("utf-8")
+        return json.dumps(
+            self.canonical_document(),
+            ensure_ascii=False,
+            allow_nan=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
 
 
 class PlanningFeature:
@@ -192,7 +199,11 @@ def _canonical_context(value: Mapping[str, JsonValue], max_bytes: int) -> dict[s
 
 
 def _normalize(value: object) -> JsonValue:
-    if value is None or isinstance(value, (str, bool, int, float)):
+    if value is None or isinstance(value, (str, bool, int)):
+        return value
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise PlanningError("PLAN_CONTEXT_NUMBER", "context numbers must be finite")
         return value
     if isinstance(value, list | tuple):
         return [_normalize(item) for item in value]
