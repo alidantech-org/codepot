@@ -1,9 +1,11 @@
 # Task 13 — Build the Packs Feature for `dryv.pack.yaml`
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Tasks 09, 10 and 12
 Validation: pack-manifest tests, resource-reference tests, architecture tests
+
+> Implementation is complete on `develop`. External executable certification is still pending because the connected environment exposes no repository checkout or CI runner. See [`../PROGRESS-11-17.md`](../PROGRESS-11-17.md).
 
 ## Goal
 
