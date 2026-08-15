@@ -1,7 +1,35 @@
-"""Public facade boundary for the Dryv authoring Feature.
+"""Author-session contracts for producing validated Canonical Dryv IR."""
 
-Task 00 establishes this package boundary only. Capability behavior is added
-by the dedicated follow-up task without bypassing this public root.
-"""
+from .session import (
+    AUTHOR_PROTOCOL_VERSION,
+    AuthorBackendHello,
+    AuthorComplete,
+    AuthorDiagnostic,
+    AuthorDocument,
+    AuthorIRRecord,
+    AuthorMessage,
+    AuthorProgress,
+    AuthorRequest,
+    AuthorSession,
+    AuthorSource,
+    AuthoringError,
+    AuthoringFeature,
+    AuthoringResult,
+)
 
-__all__: tuple[str, ...] = ()
+__all__ = [
+    "AUTHOR_PROTOCOL_VERSION",
+    "AuthorBackendHello",
+    "AuthorComplete",
+    "AuthorDiagnostic",
+    "AuthorDocument",
+    "AuthorIRRecord",
+    "AuthorMessage",
+    "AuthorProgress",
+    "AuthorRequest",
+    "AuthorSession",
+    "AuthorSource",
+    "AuthoringError",
+    "AuthoringFeature",
+    "AuthoringResult",
+]
