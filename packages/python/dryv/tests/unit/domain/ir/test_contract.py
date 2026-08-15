@@ -22,7 +22,8 @@ def test_connected_application_contract_exposes_expected_relations(
 
     assert group.storage.mappings == group.storage_mappings
     assert group.operations[2].facets.trigger is not None
-    assert group.workflows[0].steps[0].compensation is not None
+    assert connected_contract.workflows[0].steps[0].compensation is not None
+    assert group.workflows == ()
 
 
 def test_kernel_objects_are_immutable(connected_contract: Contract) -> None:
