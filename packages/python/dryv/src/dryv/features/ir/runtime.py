@@ -6,7 +6,7 @@ from dataclasses import dataclass, fields, is_dataclass
 from typing import Generic, TypeVar
 
 from dryv.diagnostics import Diagnostics
-from dryv.ir import Contract, Group, Schema, SemanticId, walk_groups, walk_views
+from dryv.ir import Contract, SemanticId, walk_groups
 from dryv.ir.model.schema_resolution import EffectiveSchema, resolve_effective_schema
 from dryv.ir.validation import SemanticIndex, validate_contract
 
@@ -107,9 +107,7 @@ class BoundedRecordIndex(Generic[T]):
 class IRFeature:
     def load_contract(self, contract: Contract) -> IRSnapshot:
         diagnostics = validate_contract(contract)
-        index, index_diagnostics = SemanticIndex.build(contract)
-        if index_diagnostics.items:
-            diagnostics = diagnostics.extend(index_diagnostics)
+        index, _ = SemanticIndex.build(contract)
         objects = _semantic_objects(contract, index)
         dependencies = _dependency_graph(objects)
         dependents = _reverse_graph(dependencies)
