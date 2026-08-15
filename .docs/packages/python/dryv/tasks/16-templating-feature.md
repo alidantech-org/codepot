@@ -1,9 +1,11 @@
 # Task 16 — Build the Templating Feature around Render Sessions
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Tasks 14 and 15
 Validation: render-session contract tests, result validation tests, architecture tests
+
+> Implementation is complete on `develop`. External executable certification is still pending because the connected environment exposes no repository checkout or CI runner. See [`../PROGRESS-11-17.md`](../PROGRESS-11-17.md) and [`../protocols/render-session-v1.md`](../protocols/render-session-v1.md).
 
 ## Goal
 
