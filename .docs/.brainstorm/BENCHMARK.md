@@ -1831,3 +1831,41 @@ The lists should have deterministic ordering, such as authored order followed by
 [APPROVED] Templates may receive derived relationship lists.
 [APPROVED] Derived template context does not alter canonical authorship.
 ```
+
+Understood.
+
+```text
+[APPROVED] Field definition and field capabilities are separate.
+
+Field definition:
+- type
+- format
+- requiredness
+- nullability
+- default
+- validation rules
+- documentation
+- references
+
+Field capabilities:
+- create
+- update
+- select
+- sort
+- search
+- filter
+- relation loading
+- other derivation capabilities
+
+Runtime:
+- validates capability references
+- derives capability-based field lists
+- exposes both fields and derived lists to templates
+```
+
+```text
+[REJECTED] The proposed Python authoring syntax
+[REJECTED] The proposed Python code structure
+```
+
+The concept is approved independently of any authoring-language API. We should define the canonical meaning and strongly typed IR shape first, then design authoring syntax separately for each language.
