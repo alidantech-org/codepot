@@ -1,9 +1,11 @@
 # Task 02 — Complete Contract, Group, and Property semantics
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Task 01
 Validation: semantic model tests, reference-resolution tests, architecture tests
+
+> Implementation is complete on `develop`. External executable certification is still pending because the connected environment exposes no repository checkout or CI runner. See [`../PROGRESS-00-10.md`](../PROGRESS-00-10.md).
 
 ## Goal
 
