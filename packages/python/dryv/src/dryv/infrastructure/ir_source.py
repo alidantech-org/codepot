@@ -8,6 +8,7 @@ from dryv.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
 from dryv.features.serialization import (
     IrCodecError,
     contract_from_json,
+    contract_from_jsonl,
     contract_from_yaml,
     contract_to_json,
 )
@@ -27,13 +28,14 @@ _PLUGIN = PluginDescriptor(
     aliases=("codepot-ir",),
     capabilities=(
         "format.json",
+        "format.jsonl",
         "format.yaml",
         "source.file",
         "source.memory",
         "transport.canonical",
     ),
     trust=PluginTrust.EXECUTABLE,
-    documentation="Canonical Codepot IR JSON/YAML transport source adapter.",
+    documentation="Canonical Dryv IR JSON/YAML/JSONL transport source adapter.",
 )
 
 
@@ -61,11 +63,12 @@ class IrDocumentSourceAdapter:
                     "IR_SOURCE_LIMIT",
                     f"IR source exceeds {_MAX_SOURCE_BYTES} bytes",
                 )
-            contract = (
-                contract_from_json(content)
-                if suffix == ".json" or content.lstrip().startswith((b"{", b"["))
-                else contract_from_yaml(content)
-            )
+            if suffix in {".jsonl", ".ndjson"}:
+                contract = contract_from_jsonl((content,))
+            elif suffix == ".json" or content.lstrip().startswith((b"{", b"[")):
+                contract = contract_from_json(content)
+            else:
+                contract = contract_from_yaml(content)
             cancellation.raise_if_cancelled()
             canonical = contract_to_json(contract, pretty=False).encode("utf-8")
             digest = sha256(canonical).hexdigest()
