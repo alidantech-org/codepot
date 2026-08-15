@@ -4,7 +4,7 @@ from dryv.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
 
 from ..groups import Contract, walk_groups
 from ..presentations import Presentation
-from ..sources import ValueSource
+from ..schema_resolution import SchemaResolutionError, resolve_effective_schema
 from .index import SemanticIndex, owner_span
 
 
@@ -12,11 +12,16 @@ def validate_additional_contract(
     contract: Contract,
     index: SemanticIndex,
 ) -> Diagnostics:
+    """Validate remaining cross-cutting references not owned by focused validators.
+
+    ValueSource validation is intentionally not repeated here; its dedicated
+    validator resolves effective inherited Schema fields.
+    """
+
     diagnostics: list[Diagnostic] = []
 
     for group in walk_groups(contract.groups):
         for schema in group.schemas:
-            field_ids = {item.id for item in schema.fields}
             for field in schema.fields:
                 reference = field.capabilities.reference
                 if reference is None:
@@ -33,7 +38,14 @@ def validate_additional_contract(
                         )
                     )
                     continue
-                target_fields = {item.id for item in target_schema.fields}
+                try:
+                    effective = resolve_effective_schema(
+                        target_schema.id,
+                        index.schemas,
+                    )
+                except SchemaResolutionError:
+                    continue
+                target_fields = {item.id for item in effective.fields}
                 if reference.target_field not in target_fields:
                     diagnostics.append(
                         _missing(
@@ -44,84 +56,11 @@ def validate_additional_contract(
                             str(reference.target_field),
                         )
                     )
-            del field_ids
-
-        for source in group.value_sources:
-            _validate_value_source(source, index, diagnostics)
 
     for presentation in contract.presentations:
         _validate_presentation(presentation, index, diagnostics)
 
     return Diagnostics.from_iterable(diagnostics)
-
-
-def _validate_value_source(
-    source: ValueSource,
-    index: SemanticIndex,
-    diagnostics: list[Diagnostic],
-) -> None:
-    operation = index.operations.get(source.operation)
-    if operation is None:
-        diagnostics.append(
-            _missing(
-                "IR_MISSING_OPERATION",
-                "value source operation does not exist",
-                source,
-                "operation",
-                str(source.operation),
-            )
-        )
-        return
-
-    output = next(
-        (
-            item
-            for item in operation.outputs
-            if item.name is not None and item.name.raw.original == source.output
-        ),
-        None,
-    )
-    if output is None:
-        diagnostics.append(
-            _missing(
-                "IR_MISSING_OPERATION_OUTPUT",
-                "value source operation output does not exist",
-                source,
-                "output",
-                source.output,
-            )
-        )
-        return
-    if output.schema is None:
-        diagnostics.append(
-            _missing(
-                "IR_VALUE_SOURCE_OUTPUT_SCHEMA",
-                "value source output must reference a schema",
-                source,
-                "output",
-                source.output,
-            )
-        )
-        return
-
-    schema = index.schemas.get(output.schema)
-    if schema is None:
-        return
-    field_ids = {item.id for item in schema.fields}
-    for relation, field_id in (
-        ("value", source.value_field),
-        *(("label", item) for item in source.label_fields),
-    ):
-        if field_id not in field_ids:
-            diagnostics.append(
-                _missing(
-                    "IR_MISSING_FIELD",
-                    f"value source {relation} field does not belong to its output schema",
-                    source,
-                    "field",
-                    str(field_id),
-                )
-            )
 
 
 def _validate_presentation(
@@ -142,7 +81,10 @@ def _validate_presentation(
                     str(entry.view),
                 )
             )
-        if entry.navigation_parent is not None and entry.navigation_parent not in entry_ids:
+        if (
+            entry.navigation_parent is not None
+            and entry.navigation_parent not in entry_ids
+        ):
             diagnostics.append(
                 _missing(
                     "IR_MISSING_PRESENTATION_ENTRY",
@@ -158,7 +100,9 @@ def _validate_presentation(
                     Diagnostic(
                         code="IR_PRESENTATION_ADDRESS_CONFLICT",
                         severity=DiagnosticSeverity.ERROR,
-                        message="presentation addresses must be unique within one presentation",
+                        message=(
+                            "presentation addresses must be unique within one presentation"
+                        ),
                         span=owner_span(entry),
                         details=(
                             ("address", entry.address),
