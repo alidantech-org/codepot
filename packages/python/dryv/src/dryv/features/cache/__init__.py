@@ -13,6 +13,7 @@ from .model import (
     InMemoryCacheStore,
     RenderCacheKey,
 )
+from .serialization import cache_entry_bytes
 
 __all__ = [
     "CACHE_RECORD_VERSION",
@@ -26,4 +27,5 @@ __all__ = [
     "ContextCacheKey",
     "InMemoryCacheStore",
     "RenderCacheKey",
+    "cache_entry_bytes",
 ]
