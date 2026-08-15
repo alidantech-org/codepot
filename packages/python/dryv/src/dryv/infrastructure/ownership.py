@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import shutil
@@ -8,6 +7,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
+from dryv.features.hashing import HashPurpose, hash_bytes
 from dryv.generation.models import MemoryOutput
 from dryv.ports.writers import (
     ManagedWriteChange,
@@ -209,7 +209,7 @@ def _safe_relative(path: str) -> PurePosixPath:
 
 
 def _digest(content: bytes) -> str:
-    return hashlib.sha256(content).hexdigest()
+    return hash_bytes(HashPurpose.ARTIFACT_CONTENT, content).digest
 
 
 def _unique_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Callable, Mapping, Protocol, TypeAlias
 
@@ -30,6 +31,8 @@ class RendererHello:
     deterministic: bool = True
 
     def __post_init__(self) -> None:
+        if not self.renderer_id or not self.renderer_version or not self.fingerprint:
+            raise ValueError("renderer hello requires identity, version and fingerprint")
         if self.max_concurrency < 1:
             raise ValueError("renderer max_concurrency must be positive")
         for values in (self.capabilities, self.protocol_versions, self.context_versions, self.template_media_types):
@@ -41,6 +44,10 @@ class RendererHello:
 class PlannedOutput:
     id: str
     path: str
+
+    def __post_init__(self) -> None:
+        if not self.id or not self.path:
+            raise ValueError("planned render outputs require id and path")
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,13 +66,26 @@ class RenderRequest:
     options: tuple[tuple[str, JsonValue], ...] = ()
 
     def __post_init__(self) -> None:
-        if not self.job_id or not self.required_capability:
-            raise ValueError("render requests require job id and renderer capability")
+        if self.protocol_version < 1 or self.context_version < 1:
+            raise ValueError("render protocol and context versions must be positive")
+        for label, value in (
+            ("job id", self.job_id),
+            ("renderer capability", self.required_capability),
+            ("template resource id", self.template_resource_id),
+            ("template media type", self.template_media_type),
+            ("template hash", self.template_hash),
+            ("context hash", self.context_hash),
+        ):
+            if not value or value.strip() != value:
+                raise ValueError(f"render request {label} must be non-empty and trimmed")
         output_ids = tuple(item.id for item in self.outputs)
         if not output_ids or len(output_ids) != len(set(output_ids)):
             raise ValueError("render requests require unique planned output ids")
-        if tuple(sorted(name for name, _ in self.options)) != tuple(name for name, _ in self.options):
-            raise ValueError("render options must be sorted")
+        option_names = tuple(name for name, _ in self.options)
+        if tuple(sorted(option_names)) != option_names or len(option_names) != len(set(option_names)):
+            raise ValueError("render options must be sorted by unique name")
+        _validate_json(dict(self.context), "context")
+        _validate_json({name: value for name, value in self.options}, "options")
 
 
 @dataclass(frozen=True, slots=True)
@@ -120,6 +140,9 @@ class TemplatingFeature:
             raise TemplatingError("RENDER_CANCELLED", "render job was cancelled before submission", job_id=request.job_id)
 
         result = session.render(request)
+        if is_cancelled is not None and is_cancelled():
+            session.cancel(request.job_id)
+            raise TemplatingError("RENDER_CANCELLED", "render job was cancelled", job_id=request.job_id)
         if result.job_id != request.job_id:
             raise TemplatingError("RENDER_JOB_MISMATCH", "renderer returned a result for a different job", job_id=request.job_id)
         if result.cancelled:
@@ -152,6 +175,26 @@ class TemplatingFeature:
             raise TemplatingError("RENDER_CONTEXT_MISMATCH", "renderer does not support requested context version", job_id=request.job_id)
         if request.template_media_type not in hello.template_media_types:
             raise TemplatingError("RENDER_TEMPLATE_MEDIA_TYPE", f"renderer does not support {request.template_media_type!r}", job_id=request.job_id)
+
+
+def _validate_json(value: object, label: str) -> None:
+    if value is None or isinstance(value, (str, bool, int)):
+        return
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise ValueError(f"render {label} numbers must be finite")
+        return
+    if isinstance(value, list | tuple):
+        for item in value:
+            _validate_json(item, label)
+        return
+    if isinstance(value, dict):
+        if not all(isinstance(key, str) for key in value):
+            raise ValueError(f"render {label} object keys must be strings")
+        for item in value.values():
+            _validate_json(item, label)
+        return
+    raise ValueError(f"render {label} contains unsupported value {type(value).__name__}")
 
 
 __all__ = [

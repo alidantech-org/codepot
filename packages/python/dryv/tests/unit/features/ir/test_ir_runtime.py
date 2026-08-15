@@ -11,11 +11,13 @@ def test_ir_runtime_builds_reverse_indexes_and_dependencies(connected_contract: 
     assert snapshot.valid
 
     operation = connected_contract.groups[0].operations[0]
+    listener = connected_contract.groups[0].operations[2]
     event = connected_contract.groups[0].events[0]
     schema = connected_contract.groups[0].schemas[0]
     mapping = connected_contract.groups[0].storage_mappings[0]
 
     assert operation.id in snapshot.derived.event_emitters[event.id]
+    assert listener.id in snapshot.derived.event_listeners[event.id]
     assert operation.id in snapshot.derived.schema_operations[schema.id]
     assert mapping.id in snapshot.derived.schema_storage_mappings[schema.id]
     assert schema.id in snapshot.direct_dependencies(operation.id)
