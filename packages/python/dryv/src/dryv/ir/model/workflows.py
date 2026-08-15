@@ -7,7 +7,7 @@ from .base import FrozenObject, KernelData, SemanticId, validate_frozen_object
 from .events import OperationEffects
 from .facets import WorkflowFacets
 from .naming import Name
-from .operations import OperationFailure, OperationOutput
+from .operations import OperationOutput
 from .schemas import SchemaUse
 
 
@@ -30,6 +30,8 @@ class Compensation:
     def __post_init__(self) -> None:
         if self.retry_attempts < 0:
             raise ValueError("compensation retry_attempts must be non-negative")
+        if self.condition is not None and not self.condition.strip():
+            raise ValueError("compensation condition must not be empty when provided")
         validate_frozen_object("compensation input bindings", self.input_bindings)
 
 
@@ -37,6 +39,10 @@ class Compensation:
 class WorkflowDecisionCase:
     condition: str
     target: str
+
+    def __post_init__(self) -> None:
+        if not self.condition.strip() or not self.target.strip():
+            raise ValueError("workflow decision cases require condition and target")
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,8 +58,8 @@ class WorkflowStep:
     data: KernelData = field(default_factory=KernelData)
 
     def __post_init__(self) -> None:
-        if not self.name:
-            raise ValueError("workflow steps require a name")
+        if not self.name.strip() or self.name.strip() != self.name:
+            raise ValueError("workflow steps require a non-empty trimmed name")
         if self.kind is WorkflowStepKind.OPERATION and self.operation is None:
             raise ValueError("operation steps require an operation")
         if self.kind is WorkflowStepKind.PARALLEL and not self.nested_steps:
@@ -72,6 +78,12 @@ class WorkflowTransition:
     target: str
     condition: str | None = None
 
+    def __post_init__(self) -> None:
+        if not self.source.strip() or not self.target.strip():
+            raise ValueError("workflow transitions require source and target")
+        if self.condition is not None and not self.condition.strip():
+            raise ValueError("workflow transition condition must not be empty when provided")
+
 
 @dataclass(frozen=True, slots=True)
 class Workflow:
@@ -81,7 +93,7 @@ class Workflow:
     outputs: tuple[OperationOutput, ...] = ()
     steps: tuple[WorkflowStep, ...] = ()
     transitions: tuple[WorkflowTransition, ...] = ()
-    failures: tuple[OperationFailure, ...] = ()
+    failures: tuple[SemanticId, ...] = ()
     effects: OperationEffects = field(default_factory=OperationEffects)
     facets: WorkflowFacets = field(default_factory=WorkflowFacets)
     compensation_order: str = "reverse_completed"
@@ -92,18 +104,18 @@ class Workflow:
         names = tuple(step.name for step in self.steps)
         if len(names) != len(set(names)):
             raise ValueError("workflow step names must be unique")
+        if len(self.failures) != len(set(self.failures)):
+            raise ValueError("workflow failure references must be unique")
         if self.compensation_order not in {"reverse_completed", "declared"}:
             raise ValueError("unsupported workflow compensation order")
 
 
 def walk_workflow_steps(steps: tuple[WorkflowStep, ...]) -> tuple[WorkflowStep, ...]:
     result: list[WorkflowStep] = []
-
     def visit(step: WorkflowStep) -> None:
         result.append(step)
         for child in step.nested_steps:
             visit(child)
-
     for step in steps:
         visit(step)
     return tuple(result)

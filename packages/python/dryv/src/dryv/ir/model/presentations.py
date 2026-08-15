@@ -18,8 +18,6 @@ class PresentationChannel(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class PresentationEntry:
-    """Placement of one semantic view inside an application surface."""
-
     id: SemanticId
     name: Name
     view: SemanticId
@@ -31,12 +29,12 @@ class PresentationEntry:
     def __post_init__(self) -> None:
         if self.address is not None and (not self.address or self.address.strip() != self.address):
             raise ValueError("presentation entry addresses must be non-empty trimmed strings")
+        if self.navigation_parent == self.id:
+            raise ValueError("presentation entry cannot be its own navigation parent")
 
 
 @dataclass(frozen=True, slots=True)
 class Presentation:
-    """Neutral application surface composed from views across groups."""
-
     id: SemanticId
     name: Name
     channel: PresentationChannel
@@ -47,3 +45,6 @@ class Presentation:
         entry_ids = tuple(item.id for item in self.entries)
         if len(entry_ids) != len(set(entry_ids)):
             raise ValueError("presentation entry ids must be unique")
+        entry_names = tuple(item.name for item in self.entries)
+        if len(entry_names) != len(set(entry_names)):
+            raise ValueError("presentation entry names must be unique")
