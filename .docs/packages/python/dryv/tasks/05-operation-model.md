@@ -1,9 +1,11 @@
 # Task 05 — Complete Operation I/O, relationships, effects, and facets
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Task 04
 Validation: operation semantic tests, relationship tests, transport round trips
+
+> Implementation is complete on `develop`. External executable certification is still pending because the connected environment exposes no repository checkout or CI runner. See [`../PROGRESS-00-10.md`](../PROGRESS-00-10.md).
 
 ## Goal
 
