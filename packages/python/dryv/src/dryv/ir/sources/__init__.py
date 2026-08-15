@@ -1,3 +1,3 @@
-from ..model.sources import ValueSource
+from ..model.sources import ValueSource, ValueSourceDependency
 
-__all__ = ["ValueSource"]
+__all__ = ["ValueSource", "ValueSourceDependency"]

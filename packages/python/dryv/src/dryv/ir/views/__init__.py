@@ -1,3 +1,3 @@
-from ..model.views import View, ViewTrigger, walk_views
+from ..model.views import View, ViewConnection, ViewEventReaction, ViewTrigger, ViewWorkflowTrigger, walk_views
 
-__all__ = ["View", "ViewTrigger", "walk_views"]
+__all__ = ["View", "ViewConnection", "ViewEventReaction", "ViewTrigger", "ViewWorkflowTrigger", "walk_views"]
