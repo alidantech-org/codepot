@@ -30,6 +30,8 @@ class AuthorBackendHello:
     max_concurrency: int = 1
 
     def __post_init__(self) -> None:
+        if not self.backend_id or not self.backend_version or not self.fingerprint:
+            raise ValueError("author backend hello requires identity, version and fingerprint")
         if self.max_concurrency < 1:
             raise ValueError("author backend max_concurrency must be positive")
         for values in (self.supported_source_kinds, self.supported_ir_versions, self.protocol_versions):
@@ -42,6 +44,12 @@ class AuthorSource:
     resource_id: str
     media_type: str | None = None
 
+    def __post_init__(self) -> None:
+        if not self.resource_id or self.resource_id.strip() != self.resource_id:
+            raise ValueError("author source resource id must be non-empty and trimmed")
+        if self.media_type is not None and (not self.media_type or self.media_type.strip() != self.media_type):
+            raise ValueError("author source media type must be non-empty and trimmed")
+
 
 @dataclass(frozen=True, slots=True)
 class AuthorRequest:
@@ -53,12 +61,18 @@ class AuthorRequest:
     options: tuple[tuple[str, object], ...] = ()
 
     def __post_init__(self) -> None:
+        if self.protocol_version < 1:
+            raise ValueError("author protocol version must be positive")
         if not self.job_id or not self.requested_ir_version or not self.source_kind:
             raise ValueError("author requests require job id, IR version and source kind")
         if not self.sources:
             raise ValueError("author requests require at least one logical source resource")
-        if tuple(sorted(name for name, _ in self.options)) != tuple(name for name, _ in self.options):
-            raise ValueError("author options must be sorted")
+        source_ids = tuple(item.resource_id for item in self.sources)
+        if len(source_ids) != len(set(source_ids)):
+            raise ValueError("author source resource ids must be unique")
+        option_names = tuple(name for name, _ in self.options)
+        if tuple(sorted(option_names)) != option_names or len(option_names) != len(set(option_names)):
+            raise ValueError("author options must be sorted by unique name")
 
 
 @dataclass(frozen=True, slots=True)
@@ -142,9 +156,7 @@ class AuthoringFeature:
     ) -> AuthoringResult:
         hello = session.hello()
         self._validate_hello(hello, request)
-        if is_cancelled is not None and is_cancelled():
-            session.cancel(request.job_id)
-            raise AuthoringError("AUTHOR_CANCELLED", "author job was cancelled before submission", job_id=request.job_id)
+        self._raise_if_cancelled(session, request.job_id, is_cancelled, before_submission=True)
 
         progress: list[AuthorProgress] = []
         diagnostics: list[AuthorDiagnostic] = []
@@ -153,6 +165,7 @@ class AuthoringFeature:
 
         first_data: AuthorIRRecord | AuthorDocument | None = None
         for message in messages:
+            self._raise_if_cancelled(session, request.job_id, is_cancelled)
             if isinstance(message, AuthorProgress):
                 progress.append(message)
             elif isinstance(message, AuthorDiagnostic):
@@ -169,11 +182,15 @@ class AuthoringFeature:
 
         if isinstance(first_data, AuthorDocument):
             contract = decode_document(first_data.media_type, first_data.content)
-            self._consume_tail(messages, request, progress, diagnostics, complete, allow_records=False)
+            self._consume_tail(messages, session, request, progress, diagnostics, complete, is_cancelled)
         else:
-            records = self._record_stream(first_data, messages, request, progress, diagnostics, complete)
+            if not hello.streaming:
+                session.cancel(request.job_id)
+                raise AuthoringError("AUTHOR_STREAMING_UNSUPPORTED", "author backend returned record streaming without advertising streaming support", job_id=request.job_id)
+            records = self._record_stream(first_data, messages, session, request, progress, diagnostics, complete, is_cancelled)
             contract = decode_records(records)
 
+        self._raise_if_cancelled(session, request.job_id, is_cancelled)
         if not complete:
             raise AuthoringError("AUTHOR_INCOMPLETE", "author backend did not send completion", job_id=request.job_id)
         final = complete[-1]
@@ -189,13 +206,16 @@ class AuthoringFeature:
     def _record_stream(
         first: AuthorIRRecord,
         messages: Iterator[AuthorMessage],
+        session: AuthorSession,
         request: AuthorRequest,
         progress: list[AuthorProgress],
         diagnostics: list[AuthorDiagnostic],
         complete: list[AuthorComplete],
+        is_cancelled: Callable[[], bool] | None,
     ) -> Iterator[object]:
         yield first.record
         for message in messages:
+            AuthoringFeature._raise_if_cancelled(session, request.job_id, is_cancelled)
             if isinstance(message, AuthorIRRecord):
                 yield message.record
             elif isinstance(message, AuthorProgress):
@@ -211,14 +231,15 @@ class AuthoringFeature:
     @staticmethod
     def _consume_tail(
         messages: Iterator[AuthorMessage],
+        session: AuthorSession,
         request: AuthorRequest,
         progress: list[AuthorProgress],
         diagnostics: list[AuthorDiagnostic],
         complete: list[AuthorComplete],
-        *,
-        allow_records: bool,
+        is_cancelled: Callable[[], bool] | None,
     ) -> None:
         for message in messages:
+            AuthoringFeature._raise_if_cancelled(session, request.job_id, is_cancelled)
             if isinstance(message, AuthorProgress):
                 progress.append(message)
             elif isinstance(message, AuthorDiagnostic):
@@ -226,7 +247,7 @@ class AuthoringFeature:
             elif isinstance(message, AuthorComplete):
                 complete.append(message)
                 return
-            elif not allow_records:
+            else:
                 raise AuthoringError("AUTHOR_MULTIPLE_IR", "author backend returned more than one canonical IR representation", job_id=request.job_id)
 
     @staticmethod
@@ -237,6 +258,20 @@ class AuthoringFeature:
             raise AuthoringError("AUTHOR_IR_VERSION", "author backend does not support requested IR version", job_id=request.job_id)
         if request.source_kind not in hello.supported_source_kinds:
             raise AuthoringError("AUTHOR_SOURCE_KIND", f"author backend does not support source kind {request.source_kind!r}", job_id=request.job_id)
+
+    @staticmethod
+    def _raise_if_cancelled(
+        session: AuthorSession,
+        job_id: str,
+        is_cancelled: Callable[[], bool] | None,
+        *,
+        before_submission: bool = False,
+    ) -> None:
+        if is_cancelled is None or not is_cancelled():
+            return
+        session.cancel(job_id)
+        phase = " before submission" if before_submission else ""
+        raise AuthoringError("AUTHOR_CANCELLED", f"author job was cancelled{phase}", job_id=job_id)
 
     @staticmethod
     def _require_valid(validation: Diagnostics, job_id: str | None) -> None:
