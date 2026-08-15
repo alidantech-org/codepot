@@ -19,12 +19,14 @@ def test_ir_resource_project_is_normalized_without_filesystem_access() -> None:
         "sources": {"contract": {"resource": "resource://ir/main.jsonl"}},
         "packs": {},
         "resources": ["resource://project/templates", "resource://project/dryv.yaml"],
+        "renderers": {"preferred": ["handlebars", "jinja"], "required": ["handlebars"]},
     })
     assert project.sources[0].kind == "ir"
     assert project.sources[0].resource == "resource://ir/main.jsonl"
     assert project.resources == ("resource://project/dryv.yaml", "resource://project/templates")
     assert project.cache_mode is CacheMode.USE
     assert project.build_mode is BuildMode.RENDER
+    assert dict(project.renderers)["required"] == ("handlebars",)
 
 
 def test_author_source_and_multiple_pack_instances_are_supported() -> None:
