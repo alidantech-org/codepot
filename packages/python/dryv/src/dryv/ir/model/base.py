@@ -39,6 +39,7 @@ class Documentation:
 class GuidanceKind(StrEnum):
     EXPLAIN = "explain"
     IMPLEMENT = "implement"
+    WARN = "warn"
     SECURITY = "security"
     PERSISTENCE = "persistence"
     TRANSACTION = "transaction"
