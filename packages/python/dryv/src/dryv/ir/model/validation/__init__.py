@@ -10,6 +10,7 @@ from .index import SemanticIndex
 from .properties import validate_property_contract
 from .schema_extensions import validate_schema_extensions
 from .validator import ContractValidator as _BaseContractValidator
+from .value_sources import validate_value_sources
 
 
 class ContractValidator(_BaseContractValidator):
@@ -26,7 +27,7 @@ class ContractValidator(_BaseContractValidator):
     def validate(self, contract: Contract) -> Diagnostics:
         base = super().validate(contract)
         index, _ = SemanticIndex.build(contract)
-        return base.extend(validate_property_contract(contract, index)).extend(validate_schema_extensions(contract, index)).extend(validate_failures(contract, index)).extend(validate_additional_contract(contract, index))
+        return base.extend(validate_property_contract(contract, index)).extend(validate_schema_extensions(contract, index)).extend(validate_failures(contract, index)).extend(validate_value_sources(contract, index)).extend(validate_additional_contract(contract, index))
 
 
 def validate_contract(contract: Contract) -> Diagnostics:

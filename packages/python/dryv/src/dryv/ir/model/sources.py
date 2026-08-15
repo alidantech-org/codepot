@@ -20,9 +20,11 @@ class ValueSource:
     data: KernelData = field(default_factory=KernelData)
 
     def __post_init__(self) -> None:
-        if not self.output:
+        if not self.output.strip():
             raise ValueError("value sources require an operation output name")
         if not self.label_fields:
             raise ValueError("value sources require at least one label field")
         if len(self.label_fields) != len(set(self.label_fields)):
             raise ValueError("value source label fields must be unique")
+        if self.search_input is not None and not self.search_input.strip():
+            raise ValueError("value source search_input must not be empty when provided")

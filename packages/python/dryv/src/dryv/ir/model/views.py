@@ -15,7 +15,7 @@ class ViewTrigger:
     payload_schema: SemanticId | None = None
 
     def __post_init__(self) -> None:
-        if not self.interaction:
+        if not self.interaction.strip():
             raise ValueError("view triggers require an interaction name")
 
 
@@ -33,16 +33,17 @@ class View:
         part_ids = tuple(item.id for item in self.parts)
         if len(part_ids) != len(set(part_ids)):
             raise ValueError("nested view ids must be unique")
+        trigger_names = tuple(item.name for item in self.triggers)
+        if len(trigger_names) != len(set(trigger_names)):
+            raise ValueError("view trigger names must be unique")
 
 
 def walk_views(views: tuple[View, ...]) -> tuple[View, ...]:
     result: list[View] = []
-
     def visit(view: View) -> None:
         result.append(view)
         for child in view.parts:
             visit(child)
-
     for view in views:
         visit(view)
     return tuple(result)
