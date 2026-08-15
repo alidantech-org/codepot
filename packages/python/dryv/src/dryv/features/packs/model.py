@@ -59,6 +59,10 @@ class SelectionConfig:
             if len(values) != len(set(values)):
                 raise PackConfigurationError("PACK_DUPLICATE_VALUE", f"selection {label} must be unique")
 
+    @property
+    def provenance_pointer(self) -> str:
+        return f"$.selections.{self.key}"
+
 
 @dataclass(frozen=True, slots=True)
 class PackTemplateResource:
@@ -156,8 +160,11 @@ class PackManifest:
 class NormalizedPack:
     manifest: PackManifest
     templates: tuple[PackTemplateResource, ...]
+    manifest_resource_id: str
 
     def __post_init__(self) -> None:
+        if not self.manifest_resource_id or self.manifest_resource_id.strip() != self.manifest_resource_id:
+            raise PackConfigurationError("PACK_PROVENANCE", "normalized packs require the manifest logical resource id")
         resource_ids = tuple(item.resource_id for item in self.templates)
         if len(resource_ids) != len(set(resource_ids)):
             raise PackConfigurationError("PACK_DUPLICATE_RESOURCE", "template resource ids must be unique")
