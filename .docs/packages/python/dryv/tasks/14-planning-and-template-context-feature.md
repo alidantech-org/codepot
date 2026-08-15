@@ -1,9 +1,11 @@
 # Task 14 — Build Planning and canonical template-context generation
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Tasks 12 and 13
 Validation: deterministic planning tests, context-contract tests, trace tests
+
+> Implementation is complete on `develop`. External executable certification is still pending because the connected environment exposes no repository checkout or CI runner. See [`../PROGRESS-11-17.md`](../PROGRESS-11-17.md).
 
 ## Goal
 
