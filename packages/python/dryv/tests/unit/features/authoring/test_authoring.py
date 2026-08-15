@@ -19,12 +19,13 @@ from dryv.ir import Contract
 
 
 class FakeSession:
-    def __init__(self, messages: tuple[object, ...]) -> None:
+    def __init__(self, messages: tuple[object, ...], *, streaming: bool = True) -> None:
         self.messages = messages
+        self.streaming = streaming
         self.cancelled: list[str] = []
 
     def hello(self) -> AuthorBackendHello:
-        return AuthorBackendHello("python-author", "1.0.0", ("python",), ("1",), (1,), True, "author:python:1")
+        return AuthorBackendHello("python-author", "1.0.0", ("python",), ("1",), (1,), self.streaming, "author:python:1")
 
     def author(self, request: AuthorRequest):
         return iter(self.messages)
@@ -50,6 +51,14 @@ def test_record_stream_is_passed_to_canonical_decoder(connected_contract: Contra
     assert seen == [{"id": "one"}, {"id": "two"}]
     assert result.progress[0].message == "started"
     assert result.diagnostics[0].code == "NOTE"
+
+
+def test_record_stream_requires_advertised_streaming_support(connected_contract: Contract) -> None:
+    session = FakeSession((AuthorIRRecord({"id": "one"}), AuthorComplete("job.a", "author:python:1")), streaming=False)
+    with pytest.raises(AuthoringError) as caught:
+        AuthoringFeature().resolve(precompiled=None, validator=lambda _: Diagnostics(), session=session, request=_request(), decode_document=lambda _media, _content: connected_contract, decode_records=lambda _: connected_contract)
+    assert caught.value.code == "AUTHOR_STREAMING_UNSUPPORTED"
+    assert session.cancelled == ["job.a"]
 
 
 def test_document_output_uses_document_decoder(connected_contract: Contract) -> None:
