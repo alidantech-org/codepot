@@ -1,7 +1,29 @@
-"""Public facade boundary for the Dryv templating Feature.
+"""Render-session contracts and validation for planned Dryv artifacts."""
 
-Task 00 establishes this package boundary only. Capability behavior is added
-by the dedicated follow-up task without bypassing this public root.
-"""
+from .session import (
+    RENDER_PROTOCOL_VERSION,
+    PlannedOutput,
+    RenderDiagnostic,
+    RenderedOutput,
+    RendererHello,
+    RenderRequest,
+    RenderResult,
+    RenderSession,
+    TemplatingError,
+    TemplatingFeature,
+    ValidatedRender,
+)
 
-__all__: tuple[str, ...] = ()
+__all__ = [
+    "RENDER_PROTOCOL_VERSION",
+    "PlannedOutput",
+    "RenderDiagnostic",
+    "RenderedOutput",
+    "RendererHello",
+    "RenderRequest",
+    "RenderResult",
+    "RenderSession",
+    "TemplatingError",
+    "TemplatingFeature",
+    "ValidatedRender",
+]
