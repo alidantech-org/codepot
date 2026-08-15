@@ -11,6 +11,18 @@ def test_value_source_resolves_named_operation_output_and_fields() -> None:
     assert not validate_contract(contract).has_errors
 
 
+def test_storage_and_value_source_can_use_inherited_schema_fields() -> None:
+    inherited = SchemaField(SemanticId("field.base.id"), Name("id"), TypeExpression.primitive("string"))
+    base = Schema(SemanticId("schema.base"), Name("Base"), SchemaKind.OBJECT, fields=(inherited,))
+    label = SchemaField(SemanticId("field.child.label"), Name("label"), TypeExpression.primitive("string"))
+    child = Schema(SemanticId("schema.child"), Name("Child"), SchemaKind.OBJECT, fields=(label,), extends=base.id)
+    operation = Operation(SemanticId("operation.list"), Name("List"), outputs=(OperationOutput(Name("items"), child.id),))
+    source = ValueSource(SemanticId("source.items"), Name("Items"), operation.id, "items", inherited.id, (label.id,))
+    mapping = StorageMapping(SemanticId("storage.child"), Name("ChildStorage"), child.id, "children", fields=(StorageFieldMapping(inherited.id, "id"), StorageFieldMapping(label.id, "label")), primary_key=(inherited.id,))
+    group = Group(SemanticId("group.test"), Name("test"), schemas=(base, child), operations=(operation,), storage_mappings=(mapping,), value_sources=(source,))
+    assert not validate_contract(Contract(SemanticId("contract.test"), Name("Test"), (group,))).has_errors
+
+
 def test_storage_rejects_duplicate_columns_and_view_rejects_duplicate_trigger_names() -> None:
     field_a = StorageFieldMapping(SemanticId("field.a"), "same")
     field_b = StorageFieldMapping(SemanticId("field.b"), "same")

@@ -32,6 +32,7 @@ class FieldConstraints:
     pattern: str | None = None
     format: str | None = None
     origins: tuple[tuple[str, str], ...] = ()
+
     def __post_init__(self) -> None:
         if self.minimum is not None and self.maximum is not None and self.minimum > self.maximum:
             raise ValueError("minimum must not exceed maximum")
@@ -58,6 +59,7 @@ class SchemaField:
     data: KernelData = field(default_factory=KernelData)
     capabilities: FieldCapabilities = field(default_factory=FieldCapabilities)
     property: SemanticId | None = None
+    overrides: SemanticId | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,6 +82,8 @@ class Schema:
         field_names = tuple(item.name for item in self.fields)
         if len(field_names) != len(set(field_names)):
             raise ValueError("schema field names must be unique within a schema")
+        if self.extends is not None and not isinstance(self.extends, SemanticId):
+            raise ValueError("schema extends must reference exactly one direct base Schema")
         if self.extends == self.id:
             raise ValueError("schema cannot directly extend itself")
         if self.kind is SchemaKind.OBJECT and self.enum_values:

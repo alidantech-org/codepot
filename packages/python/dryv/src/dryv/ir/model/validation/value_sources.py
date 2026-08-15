@@ -3,6 +3,7 @@ from __future__ import annotations
 from dryv.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
 
 from ..groups import Contract, walk_groups
+from ..schema_resolution import SchemaResolutionError, resolve_effective_schema
 from .index import SemanticIndex, owner_span
 
 
@@ -28,10 +29,14 @@ def validate_value_sources(contract: Contract, index: SemanticIndex) -> Diagnost
             schema = index.schemas.get(output.schema)
             if schema is None:
                 continue
-            fields = {item.id for item in schema.fields}
+            try:
+                effective = resolve_effective_schema(schema.id, index.schemas)
+            except SchemaResolutionError:
+                continue
+            fields = {item.id for item in effective.fields}
             for role, field_id in (("value", source.value_field), *(("label", item) for item in source.label_fields)):
                 if field_id not in fields:
-                    diagnostics.append(Diagnostic(code="IR_MISSING_FIELD", severity=DiagnosticSeverity.ERROR, message=f"value source {source.id} {role} field {field_id} is not in output schema {schema.id}", span=owner_span(source)))
+                    diagnostics.append(Diagnostic(code="IR_MISSING_FIELD", severity=DiagnosticSeverity.ERROR, message=f"value source {source.id} {role} field {field_id} is not in effective output schema {schema.id}", span=owner_span(source)))
     return Diagnostics.from_iterable(diagnostics)
 
 

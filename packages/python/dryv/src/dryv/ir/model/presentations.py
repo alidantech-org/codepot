@@ -25,12 +25,19 @@ class PresentationEntry:
     navigation_parent: SemanticId | None = None
     order: int = 0
     data: KernelData = field(default_factory=KernelData)
+    policies: tuple[SemanticId, ...] = ()
+    operations: tuple[SemanticId, ...] = ()
+    events: tuple[SemanticId, ...] = ()
+    workflows: tuple[SemanticId, ...] = ()
 
     def __post_init__(self) -> None:
         if self.address is not None and (not self.address or self.address.strip() != self.address):
             raise ValueError("presentation entry addresses must be non-empty trimmed strings")
         if self.navigation_parent == self.id:
             raise ValueError("presentation entry cannot be its own navigation parent")
+        for label, values in (("policies", self.policies), ("operations", self.operations), ("events", self.events), ("workflows", self.workflows)):
+            if len(values) != len(set(values)):
+                raise ValueError(f"presentation entry {label} must be unique")
 
 
 @dataclass(frozen=True, slots=True)

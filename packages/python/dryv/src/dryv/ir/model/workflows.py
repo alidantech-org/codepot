@@ -13,6 +13,7 @@ from .schemas import SchemaUse
 
 class WorkflowStepKind(StrEnum):
     OPERATION = "operation"
+    WORKFLOW = "workflow"
     DECISION = "decision"
     PARALLEL = "parallel"
     WAIT = "wait"
@@ -56,18 +57,29 @@ class WorkflowStep:
     wait_event: SemanticId | None = None
     timeout_seconds: int | None = None
     data: KernelData = field(default_factory=KernelData)
+    workflow: SemanticId | None = None
 
     def __post_init__(self) -> None:
         if not self.name.strip() or self.name.strip() != self.name:
             raise ValueError("workflow steps require a non-empty trimmed name")
         if self.kind is WorkflowStepKind.OPERATION and self.operation is None:
             raise ValueError("operation steps require an operation")
+        if self.kind is WorkflowStepKind.WORKFLOW and self.workflow is None:
+            raise ValueError("workflow steps require a child workflow")
         if self.kind is WorkflowStepKind.PARALLEL and not self.nested_steps:
             raise ValueError("parallel steps require nested steps")
         if self.kind is WorkflowStepKind.DECISION and not self.decision_cases:
             raise ValueError("decision steps require cases")
         if self.kind is WorkflowStepKind.WAIT and self.wait_event is None:
             raise ValueError("wait steps require an event")
+        if self.operation is not None and self.kind is not WorkflowStepKind.OPERATION:
+            raise ValueError("only operation workflow steps may reference an operation")
+        if self.workflow is not None and self.kind is not WorkflowStepKind.WORKFLOW:
+            raise ValueError("only workflow steps may reference a child workflow")
+        if self.compensation is not None and self.kind is not WorkflowStepKind.OPERATION:
+            raise ValueError("compensation is attached to operation steps")
+        if self.wait_event is not None and self.kind is not WorkflowStepKind.WAIT:
+            raise ValueError("only wait steps may reference a wait event")
         if self.timeout_seconds is not None and self.timeout_seconds < 1:
             raise ValueError("workflow step timeouts must be positive")
 
@@ -101,9 +113,9 @@ class Workflow:
     data: KernelData = field(default_factory=KernelData)
 
     def __post_init__(self) -> None:
-        names = tuple(step.name for step in self.steps)
+        names = tuple(step.name for step in walk_workflow_steps(self.steps))
         if len(names) != len(set(names)):
-            raise ValueError("workflow step names must be unique")
+            raise ValueError("workflow step names must be unique across the workflow graph")
         if len(self.failures) != len(set(self.failures)):
             raise ValueError("workflow failure references must be unique")
         if self.compensation_order not in {"reverse_completed", "declared"}:
@@ -112,10 +124,12 @@ class Workflow:
 
 def walk_workflow_steps(steps: tuple[WorkflowStep, ...]) -> tuple[WorkflowStep, ...]:
     result: list[WorkflowStep] = []
+
     def visit(step: WorkflowStep) -> None:
         result.append(step)
         for child in step.nested_steps:
             visit(child)
+
     for step in steps:
         visit(step)
     return tuple(result)

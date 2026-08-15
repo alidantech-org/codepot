@@ -11,8 +11,6 @@ def validate_schema_extensions(contract: Contract, index: SemanticIndex) -> Diag
     diagnostics: list[Diagnostic] = []
     for group in walk_groups(contract.groups):
         for schema in group.schemas:
-            if schema.extends is None:
-                continue
             try:
                 resolve_effective_schema(schema.id, index.schemas)
             except SchemaResolutionError as exc:
