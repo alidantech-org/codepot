@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import ast
+from dataclasses import fields
 from pathlib import Path
+
+from dryv.ir import Contract, Group
 
 PACKAGE_ROOT = Path(__file__).parents[2]
 SOURCE_ROOT = PACKAGE_ROOT / "src" / "dryv"
@@ -9,15 +12,36 @@ CANONICAL_ROOT = SOURCE_ROOT / "ir"
 LEGACY_ROOT = SOURCE_ROOT / "domain" / "ir"
 
 CONCEPT_ROOTS = {
-    "contract", "cross_cutting", "events", "failures", "groups", "kernel",
-    "operations", "policies", "presentations", "properties", "schemas",
-    "sources", "storage", "validation", "views", "workflows",
+    "contract",
+    "cross_cutting",
+    "events",
+    "failures",
+    "groups",
+    "kernel",
+    "operations",
+    "policies",
+    "presentations",
+    "properties",
+    "schemas",
+    "sources",
+    "storage",
+    "validation",
+    "views",
+    "workflows",
 }
 
 
 def test_canonical_ir_exposes_the_approved_concept_roots() -> None:
     present = {path.name for path in CANONICAL_ROOT.iterdir() if path.is_dir()}
     assert CONCEPT_ROOTS <= present
+
+
+def test_workflow_is_contract_owned_not_group_owned() -> None:
+    contract_fields = {item.name for item in fields(Contract)}
+    group_fields = {item.name for item in fields(Group)}
+
+    assert "workflows" in contract_fields
+    assert "workflows" not in group_fields
 
 
 def test_legacy_ir_contains_no_semantic_class_definitions() -> None:
@@ -38,11 +62,15 @@ def test_production_code_uses_canonical_ir_imports() -> None:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom) and node.module:
-                if node.module == "dryv.domain.ir" or node.module.startswith("dryv.domain.ir."):
+                if node.module == "dryv.domain.ir" or node.module.startswith(
+                    "dryv.domain.ir."
+                ):
                     violations.append(f"{relative}: {node.module}")
             elif isinstance(node, ast.Import):
                 for alias in node.names:
-                    if alias.name == "dryv.domain.ir" or alias.name.startswith("dryv.domain.ir."):
+                    if alias.name == "dryv.domain.ir" or alias.name.startswith(
+                        "dryv.domain.ir."
+                    ):
                         violations.append(f"{relative}: {alias.name}")
     assert violations == []
 
