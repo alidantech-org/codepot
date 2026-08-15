@@ -15,7 +15,7 @@ class ProjectConfigurationError(ValueError):
 
 def decode_project(value: object) -> ProjectConfig:
     root = _object(value, "$")
-    _unknown(root, {"apiVersion", "name", "sources", "executables", "security", "packs", "commands", "bindings", "resources", "cache", "build"}, "$")
+    _unknown(root, {"apiVersion", "name", "sources", "executables", "security", "packs", "commands", "bindings", "resources", "cache", "build", "renderers"}, "$")
     sources_raw = _object(root.get("sources", {}), "$.sources")
     packs_raw = _object(root.get("packs", {}), "$.packs")
 
@@ -75,6 +75,7 @@ def decode_project(value: object) -> ProjectConfig:
             resources=tuple(sorted(_string(item, "$.resources") for item in _list(root.get("resources", []), "$.resources"))),
             cache_mode=CacheMode(_string(root.get("cache", CacheMode.USE.value), "$.cache")),
             build_mode=BuildMode(_string(root.get("build", BuildMode.RENDER.value), "$.build")),
+            renderers=freeze_object(root.get("renderers", {}), path="$.renderers"),
         )
     except ValueError as exc:
         raise ProjectConfigurationError("PROJECT_INVALID", str(exc)) from exc
