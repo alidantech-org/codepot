@@ -5,7 +5,7 @@ from typing import Protocol, runtime_checkable
 
 from dryv.api import CancellationToken
 from dryv.diagnostics import Diagnostics
-from dryv.domain.ir import Contract, FrozenObject
+from dryv.ir import Contract, FrozenObject
 from dryv.plugins import PluginDescriptor
 
 

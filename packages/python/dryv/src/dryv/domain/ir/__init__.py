@@ -1,131 +1,21 @@
-from .base import (
-    Documentation,
-    FrozenObject,
-    FrozenValue,
-    GuidanceKind,
-    GuidanceNote,
-    JsonScalar,
-    KernelData,
-    Provenance,
-    SemanticId,
-    TagSet,
-)
-from .events import Event, EventEffect, OperationEffects
-from .facets import (
-    AccessFacet,
-    EventsFacet,
-    ExecutionFacet,
-    ExecutionHook,
-    ExecutionPhase,
-    GroupFacets,
-    HttpFacet,
-    OperationFacets,
-    TriggerFacet,
-    TriggerKind,
-    WorkflowFacets,
-)
-from .field_behavior import (
-    FieldCapabilities,
-    FieldLifecycle,
-    FieldQuery,
-    FieldReference,
-    FieldVisibility,
-    FieldWriteMode,
-    QueryOperator,
-)
-from .groups import Contract, Group, walk_groups
-from .naming import Name, NameProjection, pluralize, singularize
-from .operations import Operation, OperationFailure, OperationOutput
-from .policies import Policy
-from .presentations import (
-    Presentation,
-    PresentationChannel,
-    PresentationEntry,
-)
-from .schemas import FieldConstraints, Schema, SchemaField, SchemaKind, SchemaUse
-from .sources import ValueSource
-from .storage import StorageFieldMapping, StorageMapping, StorageNamespace
-from .types import TypeExpression, TypeKind, type_references
-from .validation import ContractValidator, validate_contract
-from .views import View, ViewTrigger, walk_views
-from .workflows import (
-    Compensation,
-    Workflow,
-    WorkflowDecisionCase,
-    WorkflowStep,
-    WorkflowStepKind,
-    WorkflowTransition,
-    walk_workflow_steps,
-)
+"""Compatibility facade for the former semantic namespace.
 
-__all__ = [
-    "AccessFacet",
-    "Compensation",
-    "Contract",
-    "ContractValidator",
-    "Documentation",
-    "Event",
-    "EventEffect",
-    "EventsFacet",
-    "ExecutionFacet",
-    "ExecutionHook",
-    "ExecutionPhase",
-    "FieldCapabilities",
-    "FieldConstraints",
-    "FieldLifecycle",
-    "FieldQuery",
-    "FieldReference",
-    "FieldVisibility",
-    "FieldWriteMode",
-    "FrozenObject",
-    "FrozenValue",
-    "Group",
-    "GroupFacets",
-    "GuidanceKind",
-    "GuidanceNote",
-    "HttpFacet",
-    "JsonScalar",
-    "KernelData",
-    "Name",
-    "NameProjection",
-    "Operation",
-    "OperationEffects",
-    "OperationFacets",
-    "OperationFailure",
-    "OperationOutput",
-    "Policy",
-    "Presentation",
-    "PresentationChannel",
-    "PresentationEntry",
-    "Provenance",
-    "QueryOperator",
-    "Schema",
-    "SchemaField",
-    "SchemaKind",
-    "SchemaUse",
-    "SemanticId",
-    "StorageFieldMapping",
-    "StorageMapping",
-    "StorageNamespace",
-    "TagSet",
-    "TriggerFacet",
-    "TriggerKind",
-    "TypeExpression",
-    "TypeKind",
-    "ValueSource",
-    "View",
-    "ViewTrigger",
-    "Workflow",
-    "WorkflowDecisionCase",
-    "WorkflowFacets",
-    "WorkflowStep",
-    "WorkflowStepKind",
-    "WorkflowTransition",
-    "pluralize",
-    "singularize",
-    "type_references",
-    "validate_contract",
-    "walk_groups",
-    "walk_views",
-    "walk_workflow_steps",
-]
+Canonical Dryv IR is owned by :mod:`dryv.ir`. This namespace remains only so
+existing consumers can migrate without creating a second semantic model.
+"""
+from importlib import import_module
+from typing import Any
+
+_CANONICAL = import_module("dryv.ir.model")
+__all__ = tuple(getattr(_CANONICAL, "__all__", ()))
+
+
+def __getattr__(name: str) -> Any:
+    try:
+        return getattr(_CANONICAL, name)
+    except AttributeError as exc:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from exc
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(__all__))

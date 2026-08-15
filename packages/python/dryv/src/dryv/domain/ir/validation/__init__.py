@@ -1,22 +1,6 @@
-from __future__ import annotations
-
-from dryv.diagnostics import Diagnostics
-
-from ..groups import Contract
-from .additional import validate_additional_contract
-from .index import SemanticIndex
-from .validator import ContractValidator as _BaseContractValidator
-
-
-class ContractValidator(_BaseContractValidator):
-    def validate(self, contract: Contract) -> Diagnostics:
-        base = super().validate(contract)
-        index, _ = SemanticIndex.build(contract)
-        return base.extend(validate_additional_contract(contract, index))
-
-
-def validate_contract(contract: Contract) -> Diagnostics:
-    return ContractValidator().validate(contract)
-
-
-__all__ = ["ContractValidator", "SemanticIndex", "validate_contract"]
+from importlib import import_module
+from typing import Any
+_CANONICAL = import_module("dryv.ir.model.validation")
+__all__ = tuple(getattr(_CANONICAL, "__all__", ()))
+def __getattr__(name: str) -> Any: return getattr(_CANONICAL, name)
+def __dir__() -> list[str]: return sorted(set(globals()) | set(__all__))

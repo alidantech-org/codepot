@@ -1,18 +1,6 @@
-from __future__ import annotations
-
-from dataclasses import dataclass, field
-
-from .base import KernelData, SemanticId
-from .naming import Name
-
-
-@dataclass(frozen=True, slots=True)
-class Policy:
-    id: SemanticId
-    name: Name
-    roles: tuple[str, ...] = ()
-    permissions: tuple[str, ...] = ()
-    scopes: tuple[str, ...] = ()
-    ownership: str | None = None
-    conditions: tuple[str, ...] = ()
-    data: KernelData = field(default_factory=KernelData)
+from importlib import import_module
+from typing import Any
+_CANONICAL = import_module("dryv.ir.model.policies")
+__all__ = tuple(name for name in dir(_CANONICAL) if not name.startswith("_"))
+def __getattr__(name: str) -> Any: return getattr(_CANONICAL, name)
+def __dir__() -> list[str]: return sorted(set(globals()) | set(__all__))
