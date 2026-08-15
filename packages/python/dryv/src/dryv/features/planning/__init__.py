@@ -1,7 +1,29 @@
-"""Public facade boundary for the Dryv planning Feature.
+"""Deterministic generation planning and canonical template-context contracts."""
 
-Task 00 establishes this package boundary only. Capability behavior is added
-by the dedicated follow-up task without bypassing this public root.
-"""
+from .model import (
+    CONTEXT_VERSION,
+    PLAN_VERSION,
+    GenerationPlan,
+    InvocationStatus,
+    JsonValue,
+    PlannedArtifact,
+    PlannedInvocation,
+    PlanningCandidate,
+    PlanningError,
+    PlanningFeature,
+    TraceFact,
+)
 
-__all__: tuple[str, ...] = ()
+__all__ = [
+    "CONTEXT_VERSION",
+    "PLAN_VERSION",
+    "GenerationPlan",
+    "InvocationStatus",
+    "JsonValue",
+    "PlannedArtifact",
+    "PlannedInvocation",
+    "PlanningCandidate",
+    "PlanningError",
+    "PlanningFeature",
+    "TraceFact",
+]
