@@ -76,8 +76,17 @@ def decode_pack_manifest(value: object) -> PackManifest:
     )
 
 
-def normalize_pack(manifest: PackManifest, templates: tuple[PackTemplateResource, ...]) -> NormalizedPack:
-    return NormalizedPack(manifest, tuple(sorted(templates, key=lambda item: item.resource_id)))
+def normalize_pack(
+    manifest: PackManifest,
+    templates: tuple[PackTemplateResource, ...],
+    *,
+    manifest_resource_id: str,
+) -> NormalizedPack:
+    return NormalizedPack(
+        manifest,
+        tuple(sorted(templates, key=lambda item: item.resource_id)),
+        manifest_resource_id,
+    )
 
 
 def _freeze(value: object, path: str) -> FrozenValue:
