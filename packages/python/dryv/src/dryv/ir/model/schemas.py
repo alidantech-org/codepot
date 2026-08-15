@@ -71,10 +71,17 @@ class Schema:
     alias_of: TypeExpression | None = None
     literal: JsonScalar = None
     data: KernelData = field(default_factory=KernelData)
+    extends: SemanticId | None = None
+
     def __post_init__(self) -> None:
         field_ids = tuple(item.id for item in self.fields)
         if len(field_ids) != len(set(field_ids)):
             raise ValueError("schema field ids must be unique")
+        field_names = tuple(item.name for item in self.fields)
+        if len(field_names) != len(set(field_names)):
+            raise ValueError("schema field names must be unique within a schema")
+        if self.extends == self.id:
+            raise ValueError("schema cannot directly extend itself")
         if self.kind is SchemaKind.OBJECT and self.enum_values:
             raise ValueError("object schemas cannot declare enum values")
         if self.kind is SchemaKind.ENUM and not self.enum_values:
