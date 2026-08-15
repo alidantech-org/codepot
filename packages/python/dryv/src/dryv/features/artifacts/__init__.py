@@ -1,7 +1,33 @@
-"""Public facade boundary for the Dryv artifacts Feature.
+"""Generated artifact and Project Client write-instruction contracts."""
 
-Task 00 establishes this package boundary only. Capability behavior is added
-by the dedicated follow-up task without bypassing this public root.
-"""
+from .model import (
+    ArtifactChunk,
+    ArtifactClassification,
+    ArtifactError,
+    ArtifactFeature,
+    ArtifactProvenance,
+    ArtifactStatus,
+    GeneratedArtifact,
+    ManagedOutput,
+    ManagedOutputManifest,
+    ProjectPathState,
+    ProjectSnapshot,
+    WriteInstruction,
+    WriteKind,
+)
 
-__all__: tuple[str, ...] = ()
+__all__ = [
+    "ArtifactChunk",
+    "ArtifactClassification",
+    "ArtifactError",
+    "ArtifactFeature",
+    "ArtifactProvenance",
+    "ArtifactStatus",
+    "GeneratedArtifact",
+    "ManagedOutput",
+    "ManagedOutputManifest",
+    "ProjectPathState",
+    "ProjectSnapshot",
+    "WriteInstruction",
+    "WriteKind",
+]
