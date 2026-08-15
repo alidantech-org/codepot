@@ -1,3 +1,3 @@
-"""Canonical reusable Failure semantics are completed by Task 04."""
+from ..model.failures import Failure
 
-__all__: tuple[str, ...] = ()
+__all__ = ["Failure"]

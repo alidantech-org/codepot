@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from .base import KernelData, SemanticId
 from .events import Event
 from .facets import GroupFacets
+from .failures import Failure
 from .naming import Name
 from .operations import Operation
 from .policies import Policy
@@ -29,6 +30,7 @@ class Group:
     storage_mappings: tuple[StorageMapping, ...] = ()
     workflows: tuple[Workflow, ...] = ()
     policies: tuple[Policy, ...] = ()
+    failures: tuple[Failure, ...] = ()
     events: tuple[Event, ...] = ()
     groups: tuple[Group, ...] = ()
     facets: GroupFacets = field(default_factory=GroupFacets)
@@ -38,15 +40,10 @@ class Group:
     def __post_init__(self) -> None:
         if any(not part or "/" in part or "\\" in part for part in self.path):
             raise ValueError("group path parts must be non-empty path segments")
-        child_ids = tuple(item.id for item in self.groups)
-        if len(child_ids) != len(set(child_ids)):
-            raise ValueError("nested group ids must be unique")
-        property_ids = tuple(item.id for item in self.properties)
-        if len(property_ids) != len(set(property_ids)):
-            raise ValueError("group property ids must be unique")
-        source_ids = tuple(item.id for item in self.value_sources)
-        if len(source_ids) != len(set(source_ids)):
-            raise ValueError("group value source ids must be unique")
+        for label, items in (("nested group", self.groups), ("property", self.properties), ("failure", self.failures), ("value source", self.value_sources)):
+            ids = tuple(item.id for item in items)
+            if len(ids) != len(set(ids)):
+                raise ValueError(f"group {label} ids must be unique")
 
     @property
     def storage(self) -> StorageNamespace:

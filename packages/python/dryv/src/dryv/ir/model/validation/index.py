@@ -6,6 +6,7 @@ from dryv.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity, Relate
 
 from ..base import SemanticId
 from ..events import Event
+from ..failures import Failure
 from ..groups import Contract, walk_groups
 from ..operations import Operation
 from ..policies import Policy
@@ -35,6 +36,7 @@ class SemanticIndex:
     workflows: dict[SemanticId, Workflow] = field(default_factory=dict)
     events: dict[SemanticId, Event] = field(default_factory=dict)
     policies: dict[SemanticId, Policy] = field(default_factory=dict)
+    failures: dict[SemanticId, Failure] = field(default_factory=dict)
     value_sources: dict[SemanticId, ValueSource] = field(default_factory=dict)
     presentations: dict[SemanticId, Presentation] = field(default_factory=dict)
     presentation_entries: dict[SemanticId, PresentationEntry] = field(default_factory=dict)
@@ -45,7 +47,6 @@ class SemanticIndex:
         seen: dict[SemanticId, _Seen] = {}
         diagnostics: list[Diagnostic] = []
         _register(seen, contract.id, "contract", _owner_span(contract), diagnostics)
-
         for group in walk_groups(contract.groups):
             _register(seen, group.id, "group", _owner_span(group), diagnostics)
             for prop in group.properties:
@@ -72,13 +73,15 @@ class SemanticIndex:
             for policy in group.policies:
                 _register(seen, policy.id, "policy", _owner_span(policy), diagnostics)
                 index.policies.setdefault(policy.id, policy)
+            for failure in group.failures:
+                _register(seen, failure.id, "failure", _owner_span(failure), diagnostics)
+                index.failures.setdefault(failure.id, failure)
             for event in group.events:
                 _register(seen, event.id, "event", _owner_span(event), diagnostics)
                 index.events.setdefault(event.id, event)
             for source in group.value_sources:
                 _register(seen, source.id, "value_source", _owner_span(source), diagnostics)
                 index.value_sources.setdefault(source.id, source)
-
         for presentation in contract.presentations:
             _register(seen, presentation.id, "presentation", _owner_span(presentation), diagnostics)
             index.presentations.setdefault(presentation.id, presentation)
