@@ -7,6 +7,7 @@ from dryv.features.cache import (
     CacheStage,
     ContextCacheKey,
     RenderCacheKey,
+    cache_entry_bytes,
 )
 
 
@@ -66,3 +67,9 @@ def test_renderer_fingerprint_is_part_of_render_cache_identity() -> None:
     first = RenderCacheKey("context", "template", "renderer:v1", "options", 1, 1)
     second = RenderCacheKey("context", "template", "renderer:v2", "options", 1, 1)
     assert first != second
+
+
+def test_cache_serialization_is_deterministic() -> None:
+    entry = CacheEntry(CacheStage.CONTEXT, _context_key(), b"context", (("source", "test"),))
+    assert cache_entry_bytes(entry) == cache_entry_bytes(entry)
+    assert b'"stage":"context"' in cache_entry_bytes(entry)
