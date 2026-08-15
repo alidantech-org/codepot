@@ -1,9 +1,11 @@
 # Task 15 — Build the Cache Feature
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Tasks 11 and 14
 Validation: cache-key tests, invalidation tests, deterministic replay tests
+
+> Implementation is complete on `develop`. External executable certification is still pending because the connected environment exposes no repository checkout or CI runner. See [`../PROGRESS-11-17.md`](../PROGRESS-11-17.md).
 
 ## Goal
 
