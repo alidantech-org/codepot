@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
-from typing import BinaryIO, Iterable, Iterator, TypeAlias
+from typing import BinaryIO, TypeAlias
 
 import yaml
 
@@ -112,7 +113,6 @@ def iter_jsonl_indexed(chunks: Iterable[bytes] | BinaryIO, *, max_record_bytes: 
         raise ValueError("max_record_bytes must be positive")
     iterable: Iterable[bytes] = _file_chunks(chunks) if hasattr(chunks, "read") else chunks  # type: ignore[arg-type]
     buffer = bytearray()
-    absolute = 0
     record_start = 0
     for chunk in iterable:
         if not isinstance(chunk, bytes):
@@ -131,7 +131,6 @@ def iter_jsonl_indexed(chunks: Iterable[bytes] | BinaryIO, *, max_record_bytes: 
                 record = _decode_jsonl_line(line, record_start)
                 yield record, RecordLocation(record.id, record_start, length)
             record_start += length
-            absolute = record_start
         if len(buffer) > max_record_bytes:
             raise SerializationError("SERIALIZATION_RECORD_LIMIT", "JSONL record exceeds configured byte limit", offset=record_start)
     if buffer:
@@ -139,7 +138,6 @@ def iter_jsonl_indexed(chunks: Iterable[bytes] | BinaryIO, *, max_record_bytes: 
             raise SerializationError("SERIALIZATION_RECORD_LIMIT", "JSONL record exceeds configured byte limit", offset=record_start)
         record = _decode_jsonl_line(bytes(buffer), record_start)
         yield record, RecordLocation(record.id, record_start, len(buffer))
-    del absolute
 
 
 def decode_resource_bytes(data: bytes, media_type: str) -> tuple[RepresentationRecord, ...] | Iterator[RepresentationRecord]:
