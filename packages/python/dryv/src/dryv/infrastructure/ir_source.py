@@ -5,7 +5,7 @@ from pathlib import Path
 
 from dryv.api import CancellationToken, OperationCancelled
 from dryv.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
-from dryv.ir import (
+from dryv.features.serialization import (
     IrCodecError,
     contract_from_json,
     contract_from_yaml,

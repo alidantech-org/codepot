@@ -1,3 +1,9 @@
+from dryv.features.serialization import (
+    contract_from_json,
+    contract_from_yaml,
+    contract_to_json,
+    contract_to_yaml,
+)
 from dryv.ir import (
     Contract,
     Group,
@@ -16,10 +22,6 @@ from dryv.ir import (
     TypeExpression,
     ValueSource,
     View,
-    contract_from_json,
-    contract_from_yaml,
-    contract_to_json,
-    contract_to_yaml,
 )
 
 
@@ -39,12 +41,7 @@ def _contract() -> Contract:
     operation = Operation(
         id=SemanticId("company.list"),
         name=Name("listCompanies"),
-        outputs=(
-            OperationOutput(
-                name=Name("items"),
-                schema=company.id,
-            ),
-        ),
+        outputs=(OperationOutput(name=Name("items"), schema=company.id),),
     )
     view = View(
         id=SemanticId("company.view"),
@@ -72,21 +69,9 @@ def _contract() -> Contract:
         id=SemanticId("admin.presentation"),
         name=Name("Admin"),
         channel=PresentationChannel.WEB,
-        entries=(
-            PresentationEntry(
-                id=SemanticId("admin.companies"),
-                name=Name("Companies"),
-                view=view.id,
-                address="/companies",
-            ),
-        ),
+        entries=(PresentationEntry(id=SemanticId("admin.companies"), name=Name("Companies"), view=view.id, address="/companies"),),
     )
-    return Contract(
-        id=SemanticId("example.contract"),
-        name=Name("Example"),
-        groups=(group,),
-        presentations=(presentation,),
-    )
+    return Contract(id=SemanticId("example.contract"), name=Name("Example"), groups=(group,), presentations=(presentation,))
 
 
 def test_canonical_json_round_trip_is_exact_and_deterministic() -> None:

@@ -51,12 +51,12 @@ _LAZY_EXPORTS = {
     "RuntimePluginInfo": ("dryv.runtime", "RuntimePluginInfo"),
     "RuntimePlugins": ("dryv.runtime", "RuntimePlugins"),
     "RuntimeSnapshot": ("dryv.runtime", "RuntimeSnapshot"),
-    "contract_from_document": ("dryv.ir", "contract_from_document"),
-    "contract_from_json": ("dryv.ir", "contract_from_json"),
-    "contract_from_yaml": ("dryv.ir", "contract_from_yaml"),
-    "contract_to_document": ("dryv.ir", "contract_to_document"),
-    "contract_to_json": ("dryv.ir", "contract_to_json"),
-    "contract_to_yaml": ("dryv.ir", "contract_to_yaml"),
+    "contract_from_document": ("dryv.features.serialization", "contract_from_document"),
+    "contract_from_json": ("dryv.features.serialization", "contract_from_json"),
+    "contract_from_yaml": ("dryv.features.serialization", "contract_from_yaml"),
+    "contract_to_document": ("dryv.features.serialization", "contract_to_document"),
+    "contract_to_json": ("dryv.features.serialization", "contract_to_json"),
+    "contract_to_yaml": ("dryv.features.serialization", "contract_to_yaml"),
     "create_runtime": ("dryv.runtime", "create_runtime"),
     "generate": ("dryv.application", "generate"),
     "generate_to_files": ("dryv.runtime.composition", "generate_to_files"),
@@ -64,7 +64,7 @@ _LAZY_EXPORTS = {
 
 if TYPE_CHECKING:
     from .application import generate
-    from .ir import (
+    from .features.serialization import (
         contract_from_document,
         contract_from_json,
         contract_from_yaml,

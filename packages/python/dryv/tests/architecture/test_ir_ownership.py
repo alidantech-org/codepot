@@ -30,11 +30,10 @@ def test_legacy_ir_contains_no_semantic_class_definitions() -> None:
 
 
 def test_production_code_uses_canonical_ir_imports() -> None:
-    exceptions = {"ir/codec.py": "Task 08 moves transport into the serialization Feature"}
     violations: list[str] = []
     for path in sorted(SOURCE_ROOT.rglob("*.py")):
         relative = path.relative_to(SOURCE_ROOT).as_posix()
-        if relative.startswith("domain/ir/") or relative in exceptions:
+        if relative.startswith("domain/ir/"):
             continue
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
@@ -45,4 +44,20 @@ def test_production_code_uses_canonical_ir_imports() -> None:
                 for alias in node.names:
                     if alias.name == "dryv.domain.ir" or alias.name.startswith("dryv.domain.ir."):
                         violations.append(f"{relative}: {alias.name}")
+    assert violations == []
+
+
+def test_canonical_ir_never_depends_on_features() -> None:
+    violations: list[str] = []
+    for path in sorted(CANONICAL_ROOT.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            modules: list[str] = []
+            if isinstance(node, ast.Import):
+                modules.extend(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                modules.append(node.module)
+            for module in modules:
+                if module == "dryv.features" or module.startswith("dryv.features."):
+                    violations.append(f"{path.relative_to(SOURCE_ROOT)}: {module}")
     assert violations == []
