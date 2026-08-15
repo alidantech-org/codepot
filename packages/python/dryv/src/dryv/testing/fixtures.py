@@ -106,7 +106,12 @@ def build_connected_contract() -> Contract:
         schema=user_id,
         source="users",
         fields=(
-            StorageFieldMapping(field=user_field_id, column="id", column_type="uuid", unique=True),
+            StorageFieldMapping(
+                field=user_field_id,
+                column="id",
+                column_type="uuid",
+                unique=True,
+            ),
             StorageFieldMapping(
                 field=user_email_id,
                 column="email",
@@ -158,7 +163,6 @@ def build_connected_contract() -> Contract:
         operations=(create_user, delete_user, audit_listener),
         views=(view,),
         storage_mappings=(storage,),
-        workflows=(workflow,),
         policies=(policy,),
         events=(event,),
     )
@@ -166,4 +170,5 @@ def build_connected_contract() -> Contract:
         id=sid("application.identity"),
         name=Name("IdentityApplication"),
         groups=(group,),
+        workflows=(workflow,),
     )
