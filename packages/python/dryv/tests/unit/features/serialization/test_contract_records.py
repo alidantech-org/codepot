@@ -20,6 +20,7 @@ from dryv.ir import (
     SchemaKind,
     SemanticId,
     TypeExpression,
+    Workflow,
 )
 
 
@@ -41,10 +42,15 @@ def _contract() -> Contract:
         name=Name("Users"),
         schemas=(user,),
     )
+    workflow = Workflow(
+        id=SemanticId("user.workflow.register"),
+        name=Name("RegisterUser"),
+    )
     return Contract(
         id=SemanticId("example.contract"),
         name=Name("Example"),
         groups=(group,),
+        workflows=(workflow,),
     )
 
 
@@ -60,6 +66,7 @@ def test_contract_is_split_into_stable_semantic_records_and_reconstructed() -> N
         "Group",
         "Schema",
         "SchemaField",
+        "Workflow",
     }
     assert contract_from_records(records) == contract
 
@@ -97,7 +104,11 @@ def test_contract_record_reconstruction_rejects_missing_owned_record() -> None:
 
 def test_contract_record_reconstruction_rejects_duplicate_ids() -> None:
     records = contract_to_records(_contract())
-    duplicate = RepresentationRecord(records[0].id, records[0].kind, records[0].value)
+    duplicate = RepresentationRecord(
+        records[0].id,
+        records[0].kind,
+        records[0].value,
+    )
 
     with pytest.raises(SerializationError) as raised:
         contract_from_records((*records, duplicate))

@@ -1,9 +1,11 @@
 # Task 08 — Build the Serialization Feature
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Task 07
 Validation: canonical round-trip tests, JSONL streaming tests, architecture tests
+
+> Implementation is complete on `develop`. External executable certification is still pending because the connected environment exposes no repository checkout or CI runner. See [`../PROGRESS-00-10.md`](../PROGRESS-00-10.md).
 
 ## Goal
 

@@ -1,9 +1,11 @@
 # Task 01 — Consolidate Canonical Dryv IR ownership
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Task 00
 Validation: IR import-boundary tests, model tests, serialization compatibility tests
+
+> Implementation is complete on `develop`. External executable certification is still pending because the connected environment exposes no repository checkout or CI runner. See [`../PROGRESS-00-10.md`](../PROGRESS-00-10.md).
 
 ## Goal
 

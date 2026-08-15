@@ -1,9 +1,11 @@
 # Task 04 — Complete Policy, Failure, and Event semantics
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Task 03
 Validation: semantic relationship tests, transport round trips, architecture tests
+
+> Implementation is complete on `develop`. External executable certification is still pending because the connected environment exposes no repository checkout or CI runner. See [`../PROGRESS-00-10.md`](../PROGRESS-00-10.md).
 
 ## Goal
 
