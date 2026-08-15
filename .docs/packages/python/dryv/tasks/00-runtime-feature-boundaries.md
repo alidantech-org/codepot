@@ -97,3 +97,29 @@ During migration, tests may temporarily allow explicitly listed legacy modules. 
 ## Validation
 
 Run the Dryv test suite plus the new architecture tests and `git diff --check`. Record exact passing commands and any temporary architecture exemptions in the task completion evidence.
+
+## Progress evidence
+
+Implementation is present on `develop` in commit `142ec213719ed19525e0f1c02dbaec0db2c023e5` (`refactor(dryv): establish runtime feature boundaries`).
+
+Implemented:
+
+- all 13 approved `dryv.features.*` public package roots;
+- executable architecture policy for Feature catalog, Feature → Runtime denial, IR → Runtime/Feature denial, sibling Feature denial, public-root consumption, Runtime-only multi-Feature coordination, vague directory rejection, and server-hosting dependency/import rejection;
+- explicit temporary legacy package and project-writer exceptions, all bounded by Task 21;
+- canonical Dryv documentation for the Runtime/Feature boundary.
+
+Temporary Task 21 exceptions currently recorded by the architecture policy:
+
+- top-level migration packages: `api`, `application`, `config`, `diagnostics`, `domain`, `generation`, `infrastructure`, `plugins`, `ports`, `testing`, `versions`;
+- engine-side project write paths: `application/write.py`, `infrastructure/writers.py`.
+
+Required completion commands from the repository root:
+
+```bash
+uv run --all-packages pytest packages/python/dryv/tests/architecture
+uv run --all-packages pytest packages/python/dryv/tests
+git diff --check 98ae0ce5ba8ec98aa013bcda9a4ecbec5005bab2 142ec213719ed19525e0f1c02dbaec0db2c023e5
+```
+
+The connected GitHub environment exposes no CI/status runner for this commit, so these commands have not been falsely recorded as passing. Keep Task 00 open and keep `.docs/TODO.md` on Task 00 until executable validation succeeds.
