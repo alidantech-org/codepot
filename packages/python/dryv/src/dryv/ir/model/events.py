@@ -15,12 +15,15 @@ class Event:
     version: str | None = None
     source: str | None = None
     data: KernelData = field(default_factory=KernelData)
+    policies: tuple[SemanticId, ...] = ()
 
     def __post_init__(self) -> None:
         if self.version is not None and not self.version.strip():
             raise ValueError("event version must not be empty when provided")
         if self.source is not None and not self.source.strip():
             raise ValueError("event source must not be empty when provided")
+        if len(self.policies) != len(set(self.policies)):
+            raise ValueError("event policy references must be unique")
 
 
 @dataclass(frozen=True, slots=True)
