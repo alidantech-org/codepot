@@ -9,6 +9,7 @@ from .naming import Name
 from .operations import Operation
 from .policies import Policy
 from .presentations import Presentation
+from .properties import Property
 from .schemas import Schema
 from .sources import ValueSource
 from .storage import StorageMapping, StorageNamespace
@@ -21,6 +22,7 @@ class Group:
     id: SemanticId
     name: Name
     path: tuple[str, ...] = ()
+    properties: tuple[Property, ...] = ()
     schemas: tuple[Schema, ...] = ()
     operations: tuple[Operation, ...] = ()
     views: tuple[View, ...] = ()
@@ -39,6 +41,9 @@ class Group:
         child_ids = tuple(item.id for item in self.groups)
         if len(child_ids) != len(set(child_ids)):
             raise ValueError("nested group ids must be unique")
+        property_ids = tuple(item.id for item in self.properties)
+        if len(property_ids) != len(set(property_ids)):
+            raise ValueError("group property ids must be unique")
         source_ids = tuple(item.id for item in self.value_sources)
         if len(source_ids) != len(set(source_ids)):
             raise ValueError("group value source ids must be unique")
@@ -70,12 +75,10 @@ class Contract:
 
 def walk_groups(groups: tuple[Group, ...]) -> tuple[Group, ...]:
     result: list[Group] = []
-
     def visit(group: Group) -> None:
         result.append(group)
         for child in group.groups:
             visit(child)
-
     for group in groups:
         visit(group)
     return tuple(result)

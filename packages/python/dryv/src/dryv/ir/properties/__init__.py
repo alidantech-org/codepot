@@ -1,3 +1,3 @@
-"""Canonical reusable Property semantics are completed by Task 02."""
+from ..model.properties import Property
 
-__all__: tuple[str, ...] = ()
+__all__ = ["Property"]

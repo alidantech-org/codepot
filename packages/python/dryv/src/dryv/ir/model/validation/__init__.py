@@ -5,6 +5,7 @@ from dryv.diagnostics import Diagnostics
 from ..groups import Contract
 from .additional import validate_additional_contract
 from .index import SemanticIndex
+from .properties import validate_property_contract
 from .validator import ContractValidator as _BaseContractValidator
 
 
@@ -12,7 +13,7 @@ class ContractValidator(_BaseContractValidator):
     def validate(self, contract: Contract) -> Diagnostics:
         base = super().validate(contract)
         index, _ = SemanticIndex.build(contract)
-        return base.extend(validate_additional_contract(contract, index))
+        return base.extend(validate_property_contract(contract, index)).extend(validate_additional_contract(contract, index))
 
 
 def validate_contract(contract: Contract) -> Diagnostics:

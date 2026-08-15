@@ -32,7 +32,6 @@ class FieldConstraints:
     pattern: str | None = None
     format: str | None = None
     origins: tuple[tuple[str, str], ...] = ()
-
     def __post_init__(self) -> None:
         if self.minimum is not None and self.maximum is not None and self.minimum > self.maximum:
             raise ValueError("minimum must not exceed maximum")
@@ -40,11 +39,7 @@ class FieldConstraints:
             raise ValueError("min_length must be non-negative")
         if self.max_length is not None and self.max_length < 0:
             raise ValueError("max_length must be non-negative")
-        if (
-            self.min_length is not None
-            and self.max_length is not None
-            and self.min_length > self.max_length
-        ):
+        if self.min_length is not None and self.max_length is not None and self.min_length > self.max_length:
             raise ValueError("min_length must not exceed max_length")
         keys = tuple(key for key, _ in self.origins)
         if tuple(sorted(keys)) != keys or len(keys) != len(set(keys)):
@@ -62,6 +57,7 @@ class SchemaField:
     constraints: FieldConstraints = field(default_factory=FieldConstraints)
     data: KernelData = field(default_factory=KernelData)
     capabilities: FieldCapabilities = field(default_factory=FieldCapabilities)
+    property: SemanticId | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,7 +71,6 @@ class Schema:
     alias_of: TypeExpression | None = None
     literal: JsonScalar = None
     data: KernelData = field(default_factory=KernelData)
-
     def __post_init__(self) -> None:
         field_ids = tuple(item.id for item in self.fields)
         if len(field_ids) != len(set(field_ids)):
