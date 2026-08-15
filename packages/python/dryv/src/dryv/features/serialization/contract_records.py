@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Iterator
 from hashlib import sha256
-from typing import BinaryIO, Iterable, Iterator
+from typing import BinaryIO
 
 from dryv.ir import Contract
 from dryv.versions import IR_API_VERSION
