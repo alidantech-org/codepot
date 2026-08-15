@@ -19,6 +19,8 @@ class OperationOutput:
 
 @dataclass(frozen=True, slots=True)
 class OperationFailure:
+    """Legacy compatibility value. Canonical Operation.failures contains Failure ids."""
+
     code: str
     schema: SemanticId | None = None
     message: str | None = None
@@ -35,7 +37,7 @@ class Operation:
     name: Name
     inputs: tuple[SchemaUse, ...] = ()
     outputs: tuple[OperationOutput, ...] = ()
-    failures: tuple[OperationFailure, ...] = ()
+    failures: tuple[SemanticId, ...] = ()
     effects: OperationEffects = field(default_factory=OperationEffects)
     facets: OperationFacets = field(default_factory=OperationFacets)
     data: KernelData = field(default_factory=KernelData)
@@ -44,6 +46,8 @@ class Operation:
         input_names = tuple(item.name.raw.original for item in self.inputs)
         if len(input_names) != len(set(input_names)):
             raise ValueError("operation input names must be unique")
-        failure_codes = tuple(item.code for item in self.failures)
-        if len(failure_codes) != len(set(failure_codes)):
-            raise ValueError("operation failure codes must be unique")
+        output_names = tuple(item.name.raw.original for item in self.outputs if item.name is not None)
+        if len(output_names) != len(set(output_names)):
+            raise ValueError("named operation outputs must be unique")
+        if len(self.failures) != len(set(self.failures)):
+            raise ValueError("operation failure references must be unique")
