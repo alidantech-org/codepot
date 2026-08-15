@@ -13,6 +13,7 @@ from .service import (
     SessionRegistry,
     encode_build_result,
 )
+from .subprocess_render import SubprocessRenderSession
 
 __all__ = [
     "API_VERSION",
@@ -21,5 +22,6 @@ __all__ = [
     "RegisteredAuthorSession",
     "RegisteredRenderSession",
     "SessionRegistry",
+    "SubprocessRenderSession",
     "encode_build_result",
 ]
