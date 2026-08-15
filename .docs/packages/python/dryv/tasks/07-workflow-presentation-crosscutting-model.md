@@ -1,9 +1,11 @@
 # Task 07 — Complete Workflow, Presentation, and cross-cutting semantics
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Task 06
 Validation: workflow graph tests, presentation relationship tests, transport round trips
+
+> Implementation is complete on `develop`. External executable certification is still pending because the connected environment exposes no repository checkout or CI runner. See [`../PROGRESS-00-10.md`](../PROGRESS-00-10.md).
 
 ## Goal
 
