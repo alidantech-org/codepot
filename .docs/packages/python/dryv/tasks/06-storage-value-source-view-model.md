@@ -1,9 +1,11 @@
 # Task 06 — Complete StorageMapping, ValueSource, and View semantics
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Task 05
 Validation: semantic model tests, mapping tests, relationship tests
+
+> Implementation is complete on `develop`. External executable certification is still pending because the connected environment exposes no repository checkout or CI runner. See [`../PROGRESS-00-10.md`](../PROGRESS-00-10.md).
 
 ## Goal
 
