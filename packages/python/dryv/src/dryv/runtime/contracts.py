@@ -49,7 +49,11 @@ class BuildResource:
 class BuildPack:
     manifest_document: Mapping[str, object]
     templates: tuple[PackTemplateResource, ...]
-    manifest_resource_id: str | None = None
+    manifest_resource_id: str
+
+    def __post_init__(self) -> None:
+        if not self.manifest_resource_id or self.manifest_resource_id.strip() != self.manifest_resource_id:
+            raise ValueError("pack manifest resource id must be non-empty and trimmed")
 
 
 @dataclass(frozen=True, slots=True)
