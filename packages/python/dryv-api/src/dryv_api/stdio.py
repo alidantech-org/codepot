@@ -5,8 +5,7 @@ import json
 import os
 import sys
 import threading
-from collections.abc import Mapping, Sequence
-from pathlib import Path
+from collections.abc import Mapping
 
 from dryv.runtime import DryvRuntime
 
