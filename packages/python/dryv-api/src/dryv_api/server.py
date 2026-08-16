@@ -130,10 +130,6 @@ class DryvApiServer:
             self._stream_consumers.add(build_id)
             return True
 
-    def release_stream_consumer(self, build_id: str) -> None:
-        with self._lock:
-            self._stream_consumers.discard(build_id)
-
     def cancel_build(self, build_id: str) -> bool:
         changed = self.builds.cancel(build_id)
         self.scheduler.cancel(build_id)
