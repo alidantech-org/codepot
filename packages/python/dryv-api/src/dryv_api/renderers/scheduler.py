@@ -128,7 +128,14 @@ class RenderScheduler:
             self._coordinate(state, preflight)
         except ArtifactStreamCancelled:
             if not state.session.cancelled:
-                state.session.fail((BuildDiagnostic("API_ARTIFACT_STREAM_CANCELLED", "artifact delivery stream was cancelled"),))
+                state.session.fail(
+                    (
+                        BuildDiagnostic(
+                            "API_ARTIFACT_STREAM_CANCELLED",
+                            "artifact delivery stream was cancelled",
+                        ),
+                    )
+                )
         except ApiContractError as exc:
             if not state.session.cancelled:
                 state.session.fail((BuildDiagnostic(exc.code, exc.message),))
@@ -178,8 +185,17 @@ class RenderScheduler:
                     with self._lock:
                         state.jobs[job.id] = connection
                     state.session.render_job_started(job)
-                    future = executor.submit(self._execute_job, state, job, connection)
+                    try:
+                        future = executor.submit(self._execute_job, state, job, connection)
+                    except Exception:
+                        self._release_reservation(state, job.id, connection)
+                        raise
                     running[future] = (job, connection)
+                    future.add_done_callback(
+                        lambda _future, job_id=job.id, reserved=connection: self._release_reservation(
+                            state, job_id, reserved
+                        )
+                    )
                     del pending[job.id]
                     dispatched = True
 
@@ -197,15 +213,12 @@ class RenderScheduler:
                         )
                     continue
 
-                finished, _ = wait(tuple(running), timeout=0.1, return_when=FIRST_COMPLETED)
+                finished, _ = wait(
+                    tuple(running), timeout=0.1, return_when=FIRST_COMPLETED
+                )
                 for future in finished:
-                    job, connection = running.pop(future)
-                    try:
-                        future.result()
-                    finally:
-                        connection.release()
-                        with self._lock:
-                            state.jobs.pop(job.id, None)
+                    job, _connection = running.pop(future)
+                    future.result()
                     completed.add(job.id)
                     state.session.render_job_completed(
                         job,
@@ -218,11 +231,6 @@ class RenderScheduler:
                 if not future.done():
                     connection.cancel(job.id)
                     future.cancel()
-                if connection.active:
-                    try:
-                        connection.release()
-                    except RuntimeError:
-                        pass
             executor.shutdown(wait=False, cancel_futures=True)
 
     def _reserve_connection(
@@ -248,6 +256,19 @@ class RenderScheduler:
                 return connection
         return None
 
+    def _release_reservation(
+        self,
+        state: _ActiveBuild,
+        job_id: str,
+        connection: RendererConnection,
+    ) -> None:
+        with self._lock:
+            state.jobs.pop(job_id, None)
+        try:
+            connection.release()
+        except RuntimeError:
+            return
+
     def _execute_job(
         self,
         state: _ActiveBuild,
@@ -258,7 +279,12 @@ class RenderScheduler:
         request = RenderRequest(
             job.id,
             job.renderer.capability,
-            TemplatePayload(stored.resource_id, stored.media_type, stored.content_hash, stored.content),
+            TemplatePayload(
+                stored.resource_id,
+                stored.media_type,
+                stored.content_hash,
+                stored.content,
+            ),
             ContextPayload(
                 1,
                 job.context,
@@ -273,6 +299,7 @@ class RenderScheduler:
             {},
         )
         expected_offset = 0
+        declared_size: int | None = None
         digest = sha256()
         began = False
         ended = False
@@ -282,10 +309,27 @@ class RenderScheduler:
             if state.cancelled.is_set() or state.session.cancelled:
                 connection.cancel(job.id)
                 raise ArtifactStreamCancelled("render build cancelled")
+            if completed:
+                raise RenderExecutionError(
+                    "API_RENDERER_PROTOCOL",
+                    f"renderer sent data after completion for job {job.id!r}",
+                )
             if isinstance(message, ArtifactBegin):
-                if began or message.job_id != job.id or message.artifact_id != job.artifact.id or message.path != job.artifact.path:
-                    raise RenderExecutionError("API_RENDERER_PROTOCOL", f"invalid artifact begin for job {job.id!r}")
+                if (
+                    began
+                    or message.job_id != job.id
+                    or message.artifact_id != job.artifact.id
+                    or message.path != job.artifact.path
+                    or not message.media_type
+                    or message.media_type.strip() != message.media_type
+                    or (message.size is not None and message.size < 0)
+                ):
+                    raise RenderExecutionError(
+                        "API_RENDERER_PROTOCOL",
+                        f"invalid artifact begin for job {job.id!r}",
+                    )
                 began = True
+                declared_size = message.size
                 state.stream.publish(
                     ArtifactStarted(
                         job.id,
@@ -298,34 +342,97 @@ class RenderScheduler:
                     )
                 )
             elif isinstance(message, ArtifactChunk):
-                if not began or ended or message.job_id != job.id or message.artifact_id != job.artifact.id or message.offset != expected_offset:
-                    raise RenderExecutionError("API_RENDERER_PROTOCOL", f"invalid artifact chunk for job {job.id!r}")
+                if (
+                    not began
+                    or ended
+                    or message.job_id != job.id
+                    or message.artifact_id != job.artifact.id
+                    or message.offset != expected_offset
+                    or not message.content
+                ):
+                    raise RenderExecutionError(
+                        "API_RENDERER_PROTOCOL",
+                        f"invalid artifact chunk for job {job.id!r}",
+                    )
                 digest.update(message.content)
                 offset = message.offset
                 for start in range(0, len(message.content), state.stream.max_chunk_bytes):
                     chunk = message.content[start : start + state.stream.max_chunk_bytes]
-                    state.stream.publish(ArtifactData(job.id, job.artifact.id, job.order, offset + start, chunk))
+                    state.stream.publish(
+                        ArtifactData(
+                            job.id,
+                            job.artifact.id,
+                            job.order,
+                            offset + start,
+                            chunk,
+                        )
+                    )
                 expected_offset += len(message.content)
             elif isinstance(message, ArtifactEnd):
                 expected_hash = f"sha256:{digest.hexdigest()}"
-                if not began or ended or message.job_id != job.id or message.artifact_id != job.artifact.id:
-                    raise RenderExecutionError("API_RENDERER_PROTOCOL", f"invalid artifact end for job {job.id!r}")
+                if (
+                    not began
+                    or ended
+                    or message.job_id != job.id
+                    or message.artifact_id != job.artifact.id
+                ):
+                    raise RenderExecutionError(
+                        "API_RENDERER_PROTOCOL",
+                        f"invalid artifact end for job {job.id!r}",
+                    )
+                if declared_size is not None and message.size != declared_size:
+                    raise RenderExecutionError(
+                        "API_RENDERER_SIZE_MISMATCH",
+                        f"renderer changed declared artifact size for job {job.id!r}",
+                    )
                 if message.size != expected_offset or message.content_hash != expected_hash:
-                    raise RenderExecutionError("API_RENDERER_HASH_MISMATCH", f"renderer artifact hash/size mismatch for job {job.id!r}")
+                    raise RenderExecutionError(
+                        "API_RENDERER_HASH_MISMATCH",
+                        f"renderer artifact hash/size mismatch for job {job.id!r}",
+                    )
                 ended = True
-                state.stream.publish(ArtifactFinished(job.id, job.artifact.id, job.order, job.artifact.path, message.size, message.content_hash))
+                state.stream.publish(
+                    ArtifactFinished(
+                        job.id,
+                        job.artifact.id,
+                        job.order,
+                        job.artifact.path,
+                        message.size,
+                        message.content_hash,
+                    )
+                )
                 state.session.artifact_ready(job, message.size, message.content_hash)
             elif isinstance(message, RenderFailed):
-                detail = message.diagnostics[0].message if message.diagnostics else "renderer reported failure"
-                raise RenderExecutionError("API_RENDERER_FAILED", f"job {job.id!r}: {detail}")
+                if message.job_id != job.id:
+                    raise RenderExecutionError(
+                        "API_RENDERER_PROTOCOL",
+                        f"renderer failure belongs to another job while rendering {job.id!r}",
+                    )
+                detail = (
+                    message.diagnostics[0].message
+                    if message.diagnostics
+                    else "renderer reported failure"
+                )
+                raise RenderExecutionError(
+                    "API_RENDERER_FAILED", f"job {job.id!r}: {detail}"
+                )
             elif isinstance(message, RenderComplete):
                 if message.job_id != job.id or not ended:
-                    raise RenderExecutionError("API_RENDERER_PROTOCOL", f"render completed before artifact end for job {job.id!r}")
+                    raise RenderExecutionError(
+                        "API_RENDERER_PROTOCOL",
+                        f"render completed before artifact end for job {job.id!r}",
+                    )
                 completed = True
             else:
-                raise RenderExecutionError("API_RENDERER_PROTOCOL", f"unknown renderer message for job {job.id!r}")
+                raise RenderExecutionError(
+                    "API_RENDERER_PROTOCOL",
+                    f"unknown renderer message for job {job.id!r}",
+                )
         if not began or not ended or not completed:
-            raise RenderExecutionError("API_RENDERER_PROTOCOL", f"renderer stream ended incompletely for job {job.id!r}")
+            raise RenderExecutionError(
+                "API_RENDERER_PROTOCOL",
+                f"renderer stream ended incompletely for job {job.id!r}",
+            )
 
     def _cancel_running(
         self,
