@@ -1,9 +1,11 @@
 # Task 19 — Build the Artifacts Feature and write-instruction stream
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Tasks 14, 15, 16 and 18
 Validation: artifact classification tests, managed-output safety tests
+
+> Implementation is complete on `develop`. Executable certification is still pending because the connected repository environment exposes no checkout/test runner. See [`../PROGRESS-18-25.md`](../PROGRESS-18-25.md).
 
 ## Goal
 
