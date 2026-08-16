@@ -98,9 +98,29 @@ class BuildRequest:
         )
         if sources != 1:
             raise ValueError("build requests require exactly one Canonical IR source")
+
         resource_ids = tuple(item.resource_id for item in self.resources)
         if len(resource_ids) != len(set(resource_ids)):
             raise ValueError("build resource ids must be unique")
+        resource_id_set = set(resource_ids)
+
+        if (
+            self.precompiled_ir_resource_id is not None
+            and self.precompiled_ir_resource_id not in resource_id_set
+        ):
+            raise ValueError("precompiled Canonical IR resource must be supplied in resources")
+
+        for pack in self.packs:
+            if pack.manifest_resource_id not in resource_id_set:
+                raise ValueError(
+                    f"pack manifest resource {pack.manifest_resource_id!r} must be supplied in resources"
+                )
+            for template in pack.templates:
+                if template.resource_id not in resource_id_set:
+                    raise ValueError(
+                        f"pack template resource {template.resource_id!r} must be supplied in resources"
+                    )
+
         session_ids = tuple(item.session_id for item in self.render_sessions)
         if len(session_ids) != len(set(session_ids)):
             raise ValueError("render session ids must be unique")
