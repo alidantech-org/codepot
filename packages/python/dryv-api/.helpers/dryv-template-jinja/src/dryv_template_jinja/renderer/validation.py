@@ -72,7 +72,12 @@ def validate_template(request: ValidateTemplateRequest) -> ValidateTemplateResul
                 )
             )
 
-    visitor = _StaticAccessVisitor(undeclared_roots & allowed_roots)
+    call_targets = _CallTargetVisitor()
+    call_targets.visit(parsed)
+    visitor = _StaticAccessVisitor(
+        undeclared_roots & allowed_roots,
+        call_targets.targets,
+    )
     visitor.visit(parsed)
     unknown_paths = {
         path: line
@@ -91,9 +96,19 @@ def validate_template(request: ValidateTemplateRequest) -> ValidateTemplateResul
     return ValidateTemplateResult(request.validation_id, not diagnostics, tuple(diagnostics))
 
 
+class _CallTargetVisitor(NodeVisitor):
+    def __init__(self) -> None:
+        self.targets: set[int] = set()
+
+    def visit_Call(self, node: nodes.Call, *args: object, **kwargs: object) -> None:
+        self.targets.add(id(node.node))
+        self.generic_visit(node, *args, **kwargs)
+
+
 class _StaticAccessVisitor(NodeVisitor):
-    def __init__(self, roots: set[str]) -> None:
+    def __init__(self, roots: set[str], call_targets: set[int]) -> None:
         self.roots = roots
+        self.call_targets = call_targets
         self.paths: dict[str, int | None] = {}
 
     def visit_Getattr(self, node: nodes.Getattr, *args: object, **kwargs: object) -> None:
@@ -105,6 +120,8 @@ class _StaticAccessVisitor(NodeVisitor):
         self.generic_visit(node, *args, **kwargs)
 
     def _record(self, node: nodes.Expr) -> None:
+        if id(node) in self.call_targets:
+            return
         segments = _static_segments(node)
         if segments is None or not segments or segments[0] not in self.roots:
             return
