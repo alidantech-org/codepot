@@ -1,98 +1,117 @@
 # dryv
 
-`dryv` is the transport-neutral Dryv Engine. It owns Canonical Dryv Runtime IR meaning and the deterministic runtime Features that turn validated IR plus normalized pack declarations into rendered artifacts and Project Client write instructions.
+`dryv` is the transport-neutral semantic Runtime for Dryv.
 
-## Architecture
+It owns Canonical Dryv Runtime IR meaning and deterministically turns validated Usage configuration, Canonical IR, and already-resolved Template Pack bundles into an inspectable `GenerationPlan`.
 
 ```text
-Authoring source / precompiled IR
-        |
-        v
-Canonical Dryv Runtime IR
-        |
-        v
-Dryv Runtime
-  Serialization -> IR validation/indexing -> Packs -> Planning
-       -> Hashing/Cache -> Scheduling -> Render Sessions -> Artifacts
-        |
-        v
-render_complete + artifact stream + write instructions
-        |
-        v
-Project Client applies locally -> apply_complete
+dryv.yaml
++ Canonical Dryv Runtime IR
++ resolved pack manifests/resources
+        ↓
+    Dryv Runtime
+        ↓
+ validation / IR indexing
+ pack validation / selection
+ canonical contexts
+ dependency graph
+ planned output paths
+ provenance / trace
+        ↓
+   GenerationPlan
 ```
 
-The Engine does **not**:
+## Ownership boundary
 
-- host HTTP/WebSocket servers;
-- discover plugins or template engines;
-- execute an author implementation;
-- embed Jinja, Handlebars, or another renderer;
-- clone pack repositories or resolve Git credentials;
+`dryv` owns:
+
+- Canonical Runtime IR models and validation;
+- Runtime IR decoding/encoding and inspection support;
+- `dryv.yaml` semantic validation;
+- Template Pack manifest meaning;
+- deterministic pack selection over canonical IR;
+- context and context-contract construction;
+- semantic/render dependency planning;
+- planned artifact identities and project-relative output paths;
+- deterministic hashes, diagnostics and traceability;
+- the `GenerationPlan` returned to the outer host.
+
+`dryv` does **not**:
+
+- execute Author implementations;
+- discover local files or clone Git repositories;
+- host HTTP or WebSockets;
+- select renderer endpoints or machines;
+- execute Jinja, Handlebars or any other template engine;
+- own renderer capacity or network scheduling;
+- contain generated artifact bytes;
+- create ZIP bundles;
 - read or mutate the user's project filesystem;
-- report local `apply_complete`.
+- execute project shell commands.
 
-Those responsibilities live outside `dryv`: `dryv-api` hosts Runtime and established sessions, Author Backends produce Canonical IR, Render Clients render already-planned jobs, and Project Clients own project files.
+Those responsibilities belong to Author Backends, `dryv-api`, Render Clients and Project Clients respectively.
 
-## Public runtime
+## Canonical architecture
 
-```python
-from dryv.runtime import DryvRuntime
-
-runtime = DryvRuntime()
-print(runtime.snapshot())
+```text
+Authoring source
+      ↓
+Author Backend
+      ↓
+Canonical Dryv Runtime IR
+      │
+      ├──────── dryv.yaml
+      └──────── resolved Template Pack bundles
+                    ↓
+                DryvRuntime
+                    ↓
+              GenerationPlan
+                    ↓
+                 dryv-api
+                    ↓
+              Render Client(s)
+                    ↓
+                 artifacts
+                    ↓
+              Project Client
+                    ↓
+                 filesystem
 ```
 
-Cross-Feature composition belongs only to `dryv.runtime`. Individual Feature packages do not import Runtime or sibling Feature implementations.
-
-## Canonical IR
-
-`dryv.ir` is the only semantic authority. Authoring implementations may use Python, TypeScript, Rust, Codepot language, or another implementation, but downstream Runtime and packs consume the same versioned Canonical IR contract.
-
-Runtime owns validation, serialization/loading, indexing, effective Schema resolution, derived reverse relationships, and semantic dependency graphs. Derived indexes are not duplicated into authored state.
+Canonical Runtime IR is the only semantic authority. Authoring implementations may be written in Python, TypeScript, Rust, Codepot language, or another language as long as they compile to the same versioned IR contract.
 
 ## Packs and planning
 
-`dryv.pack.yaml` meaning is owned by `dryv.features.packs`. Packs declare approved generation behavior and logical template resources; all target-language syntax stays in template resources.
+A Template Pack declares generation behavior using the same Dryv vocabulary as Canonical IR. A pack identifies:
 
-Planning produces bounded canonical JSON context, virtual artifacts, dependencies, renderer capability requirements, and provenance **before** rendering begins. Render Clients do not understand Dryv semantics.
+- the canonical kinds/selections it reacts to;
+- template resources;
+- logical renderer capability requirements such as `jinja`;
+- output path patterns;
+- template dependencies;
+- options and project bindings.
 
-## Cache and determinism
+Packs never contain renderer URLs or redefine software meaning.
 
-Cache identities are versioned and include the relevant semantic dependency hashes, pack/context/template identities, renderer fingerprint, render options, and protocol/context versions. `use`, `refresh`, and `off` are explicit cache modes. Failed or cancelled builds roll back pending cache mutations.
+Planning produces `GenerationPlan` jobs containing exact template identities/hashes, canonical context, context contracts, renderer capability requirements, dependencies, planned artifacts and provenance. Runtime stops there.
 
-## Artifacts and project ownership
+## Determinism
 
-The Engine ends at rendered artifact content plus safe write instructions:
+Semantic plan identity depends on canonical input/configuration/resource identities, not an ephemeral build ID or network connection identity. The same semantic inputs can therefore produce the same `planHash` even when individual build executions use different request IDs.
+
+## Project ownership
+
+Only a Project Client knows the user's actual filesystem. The reference `dryv-cli` Project Client receives generated artifacts from `dryv-api`, verifies their identities and hashes, computes local conflicts/diffs and applies approved changes atomically. Runtime never writes user files.
+
+## Current companion packages
+
+Reference implementations live beside `dryv-api`:
 
 ```text
-CREATE
-UPDATE
-UNCHANGED
-DELETE_MANAGED
+packages/python/dryv-api/.helpers/
+├── dryv-author
+├── dryv-template-jinja
+└── dryv-cli
 ```
 
-The Project Client supplies observed local hashes and the previous managed-output manifest. Dryv refuses unmanaged collisions and modified managed outputs, but it never writes the project itself. The client rechecks hashes immediately before applying changes atomically.
-
-## Protocols
-
-See:
-
-- `.docs/packages/python/dryv/protocols/render-session-v1.md`
-- `.docs/packages/python/dryv/protocols/author-session-v1.md`
-- `.docs/packages/python/dryv/ARCHITECTURE.md`
-
-## Certification
-
-From a real checkout with Python and Node dependencies installed:
-
-```bash
-uv run --all-packages pytest packages/python/dryv/tests
-uv run --all-packages pytest packages/python/dryv-api/tests
-uv run --all-packages pytest packages/python/dryv-template-jinja/tests
-uv run --all-packages ruff check packages/python/dryv packages/python/dryv-api packages/python/dryv-author packages/python/dryv-cli packages/python/dryv-template-jinja
-pnpm --filter codepotx exec node render-clients/handlebars/stdio.mjs </dev/null
-git diff --check
-```
-
-The connected repository-editing environment used for this migration cannot execute those commands; task status distinguishes implementation completion from executable certification.
+They preserve the same architectural boundaries rather than becoming Runtime plugins.
