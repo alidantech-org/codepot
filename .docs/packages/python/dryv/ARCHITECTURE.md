@@ -1,8 +1,10 @@
-# Dryv final architecture
+# Dryv canonical runtime and server architecture
 
-This document describes the post-migration Dryv architecture implemented by Tasks 00–25. It is the active architecture reference for the Python Runtime and its external clients/backends.
+Status: approved architecture for the current refactor.
 
-## Three tiers
+This document replaces the earlier AuthorSession/RenderSession-in-Runtime design. There is no compatibility requirement with that design.
+
+## Governing three-tier model
 
 ```text
 Authoring
@@ -11,241 +13,301 @@ Canonical Dryv Runtime IR
     ↓
 Templating
     ↓
-Usage / generated output
+Usage and generated output
 ```
 
-The operational boundary is:
+Responsibilities are fixed:
+
+- Authoring defines software meaning and produces Canonical Dryv Runtime IR.
+- Canonical IR is the only semantic authority.
+- Dryv Engine interprets usage configuration, Canonical IR and pack definitions and produces a deterministic `GenerationPlan`.
+- Template packs define how Canonical IR becomes planned output.
+- Render Clients understand template languages and turn `template + context` into generated artifact bytes.
+- `dryv-api` coordinates builds, Render Clients, progress, streaming and optional bundle delivery.
+- Project Clients collect local inputs, inspect diffs and are the only owners that mutate user filesystems.
+
+## Canonical operational flow
 
 ```text
-Authoring source
-    ↓
-Author Backend (optional at build time)
-    ↓
-Canonical Dryv Runtime IR
-    ↓
-Dryv Runtime validation / indexing / planning / caching
-    ↓
-Render Sessions
-    ↓
-Generated artifacts + write instructions
-    ↓
-Project Client atomic apply
+Any Authoring implementation
+        ↓
+Canonical Dryv IR
+        │
+Project Client
+        ├── dryv.yaml
+        ├── Canonical IR
+        └── local pack bundles
+                ↓
+             dryv-api
+                ↓ normalized Runtime input
+           Dryv Runtime
+                ↓
+          GenerationPlan
+                ↓
+             dryv-api
+                ├── renderer availability
+                ├── template preflight
+                ├── execution scheduling
+                └── progress coordination
+                ↓
+          Render Clients
+                ↓ generated artifacts
+             dryv-api
+                ├── artifact stream
+                └── deterministic bundle
+                ↓
+          Project Client
+                ↓ diff / approve / apply
+          user filesystem
 ```
 
-## Semantic authority
+## Dryv Engine boundary
 
-`dryv.ir` is the only semantic authority.
-
-Authoring implementations may provide expressive language-specific APIs, but they compile into the same versioned Canonical IR. Authoring does not select packs, plan outputs, render templates, or write generated files.
-
-Runtime owns Canonical IR loading, validation, indexing, effective Schema resolution, derived reverse relationships, inspection, and deterministic semantic dependency graphs.
-
-## Dryv Engine Features
-
-The engine is decomposed into explicit Features:
+Dryv Engine consumes only normalized logical build inputs:
 
 ```text
-serialization
-project
-resources
-hashing
-ir
-packs
-planning
-cache
-authoring
-templating
-scheduling
-artifacts
-diagnostics
+RuntimeInput
+├── usage configuration (`dryv.yaml`)
+├── Canonical Dryv IR representation
+└── pack inputs
+    ├── pack manifest
+    ├── logical template resource metadata
+    ├── template content hashes
+    └── other declared pack resources
 ```
 
-Features do not import Runtime or sibling Feature implementations. `dryv.runtime` is the only Dryv owner allowed to coordinate several Features.
+Dryv Engine must never receive or own:
 
-### Serialization
+- HTTP requests or WebSocket objects;
+- renderer URLs, connections, sessions or capacity;
+- MCP requests;
+- author source execution or Author Backends;
+- Jinja, Handlebars or another template implementation;
+- generated artifact byte streams;
+- project-root paths or filesystem handles;
+- local diff/apply state;
+- shell or Git execution.
 
-Owns deterministic JSON/YAML/JSONL representation mechanics for Canonical IR and canonical representation records.
+Any Canonical IR is accepted through the same Runtime path regardless of whether it came from Python, TypeScript, Rust, Codepot, another compiler, an AI tool, or a serialized hand-authored representation.
 
-### Project
+## Runtime work
 
-Owns `dryv.yaml` meaning. It does not read a project directory; the Project Client supplies the document/resources.
-
-### Resources
-
-Owns logical resource identity/content registry inside a build. A resource is explicit bytes plus media type and content identity, not an arbitrary host path.
-
-### Hashing
-
-Owns versioned canonical hash families for resources, IR records/branches, pack manifests, templates, contexts, renderer fingerprints, artifacts, and build inputs.
-
-### IR Runtime
-
-Owns validation/indexing/resolution over `dryv.ir`, including effective Schema extension, forward/reverse relationships, and semantic dependency graphs.
-
-### Packs
-
-Owns normalized `dryv.pack.yaml` meaning. Packs refer to supplied logical template resources and renderer capabilities. They cannot add Canonical IR semantic concepts or target-language behavior to the Runtime model.
-
-### Planning
-
-Owns deterministic generation intelligence before rendering: selected semantic facts, canonical JSON context, virtual artifacts, dependency order, renderer capability requirements, skipped reasons, and trace/provenance.
-
-The current API accepts explicit normalized `PlanningCandidate` facts because final user-facing selector/grouping vocabulary was intentionally not expanded during Tasks 13–14. This is an explicit contract, not hidden selection magic. Future approved pack-selection vocabulary can move candidate derivation further inside Planning without changing Render Session, Artifact, or Project Client boundaries.
-
-### Cache
-
-Owns versioned Context/Render/Artifact cache records and `use`, `refresh`, `off` policy. Render identity includes context/template/renderer fingerprint/options/protocol facts. Cache mutations are transactional and commit only after a successful Runtime build.
-
-### Authoring
-
-Used only when a project supplies an Author Backend rather than precompiled IR. Runtime receives an established Author Session from the outer host. The Feature validates protocol/source/IR capabilities and passes returned canonical documents/records through Serialization + IR validation.
-
-### Templating
-
-Owns Render Session request/result validation. Runtime supplies an established session. Templating does not execute Jinja/Handlebars or another engine itself.
-
-### Scheduling
-
-Owns bounded queues/channels, dependency readiness, concurrency, session capacity, deterministic eligible-session choice, backpressure, timeout/cancellation, and retry-safe transport retry behavior.
-
-### Artifacts
-
-Owns rendered artifact records, provenance, managed-output comparison, and deterministic write instructions:
+The Runtime pipeline is:
 
 ```text
-CREATE
-UPDATE
-UNCHANGED
-DELETE_MANAGED
+load usage configuration
+    ↓
+validate usage configuration
+    ↓
+load Canonical IR
+    ↓
+validate and index Canonical IR
+    ↓
+load and validate packs
+    ↓
+resolve pack options and relationships
+    ↓
+evaluate template selection
+    ↓
+build semantic and generation dependency graphs
+    ↓
+construct canonical template contexts
+    ↓
+resolve planned project-relative outputs
+    ↓
+hash relevant deterministic inputs
+    ↓
+produce GenerationPlan
 ```
 
-It never mutates project files.
+Runtime stops at `GenerationPlan`. It does not render templates and does not create generated file bytes.
 
-## Outer host: `dryv-api`
+## GenerationPlan
 
-`dryv-api` is the network/process host around Runtime. It owns:
+`GenerationPlan` is the complete executable description of generation. `dryv-api` must be able to execute it without asking Runtime to reinterpret pack meaning.
 
-- strict `dryv.api/v1` wire decoding/encoding;
-- Render/Author connection registration;
-- mapping connection IDs to established sessions;
-- build cancellation handles;
-- bounded artifact-content transport.
+A plan contains:
 
-Runtime itself has no HTTP/WebSocket/stdio server dependency.
+- build and input identities;
+- required renderer capabilities;
+- deterministic render jobs;
+- semantic subjects and selection reasons;
+- template logical resource IDs and hashes;
+- canonical context values, context contracts and context hashes;
+- planned artifact IDs and project-relative output paths;
+- job/artifact dependencies and deterministic plan order;
+- diagnostics;
+- trace/provenance.
 
-The repository includes JSONL transports so the architecture can be proven without binding the Engine to one network stack:
+A render job conceptually contains:
 
 ```text
-python -m dryv_api.stdio
-python -m dryv_author.stdio
-python -m dryv_template_jinja.stdio
-node packages/nodejs/codepotx/render-clients/handlebars/stdio.mjs
+RenderJob
+├── id
+├── semantic subject
+├── selection reason
+├── renderer requirement
+├── template reference + hash
+├── canonical context + hash
+├── context contract
+├── planned outputs
+└── dependencies
 ```
 
-## Render Clients
+The Runtime owns why a template is selected, which values it receives and where its artifacts are planned. The Render Client owns every rendered byte.
 
-A Render Client receives only:
+## Runtime progress
 
-- protocol/context version;
-- stable job ID;
-- required capability;
-- template logical resource/content/hash;
-- canonical JSON context/hash;
-- planned logical outputs;
-- output-affecting render options.
+Runtime may emit transport-neutral progress and diagnostic events through an observer/sink supplied by its caller.
 
-It returns renderer fingerprint, logical output IDs, bytes/hashes, and diagnostics.
+Examples:
 
-It does not receive Canonical IR objects or project filesystem ownership.
+```text
+runtime.started
+config.loading
+config.validated
+ir.loading
+ir.validated
+pack.loading
+pack.validated
+graph.building
+planning.started
+planning.progress
+context.created
+plan.completed
+diagnostic.warning
+diagnostic.error
+```
 
-The reference proof uses independent Jinja and Handlebars process clients.
+Runtime events contain data only. Runtime does not know whether they are displayed in a CLI, sent over WebSocket or translated into an agent tool update.
 
-## Author Backends
+## Pack and template boundary
 
-An Author Backend receives logical authored source resources and version/capability requirements. It emits Canonical IR documents/records plus progress/diagnostics.
+Dryv Runtime validates:
 
-The Python backend uses `dryv-author` and executes trusted Python author source that exposes `build_author()` or `AUTHOR`. Runtime never imports or executes that author implementation.
+- `dryv.yaml` meaning;
+- Canonical IR;
+- `dryv.pack.yaml` meaning;
+- pack selection and binding;
+- context construction;
+- planned output paths;
+- semantic and artifact dependencies.
 
-Precompiled `dryv.ir.*` bypasses Authoring entirely.
+Template files are opaque resources to Runtime. Runtime knows their logical identity, hash, declared renderer requirement and the context contract supplied to them.
 
-## Project Clients
+Render Clients validate:
+
+- template-language syntax;
+- renderer-specific helpers/features;
+- compatibility with the supplied context contract;
+- actual template execution.
+
+A Render Client must not interpret Canonical IR, `dryv.yaml`, pack selection rules or project architecture.
+
+## dryv-api boundary
+
+`dryv-api` is execution and transport infrastructure around Dryv Runtime. It owns:
+
+- HTTP build lifecycle;
+- WebSocket build progress and renderer connections;
+- build sessions and cancellation;
+- uploaded logical resource normalization;
+- renderer connection registry and capability inventory;
+- template preflight coordination;
+- renderer capacity and execution scheduling;
+- bounded artifact streaming and backpressure;
+- deterministic ZIP/bundle delivery;
+- build status and transport diagnostics.
+
+`dryv-api` does not reinterpret Canonical IR or pack semantics.
+
+Renderer requirements are discovered from `GenerationPlan`, then matched to connected Render Clients. The API does not parse packs to derive renderer requirements independently.
+
+## Render Client protocol
+
+Every template implementation speaks one small renderer protocol:
+
+```text
+hello
+validate
+render
+cancel
+```
+
+A Render Client receives only the material needed for rendering:
+
+```text
+template
++ context
++ planned output metadata
++ render options
+```
+
+It returns generated artifacts and renderer diagnostics.
+
+The same protocol must support Jinja, Handlebars and future template engines without changing Dryv Runtime.
+
+Template preflight should be reusable by the identity:
+
+```text
+templateHash
++ contextContractHash
++ rendererFingerprint
+```
+
+## Artifact delivery
+
+Artifact execution and artifact delivery are separate concerns.
+
+Supported API delivery modes are:
+
+```text
+stream
+bundle
+```
+
+In stream mode, artifact metadata/content is forwarded through bounded streams.
+
+In bundle mode, WebSocket still carries live progress and artifact metadata while the API creates a deterministic bundle for efficient HTTP download. A bundle contains a `.dryv/manifest.json` with artifact IDs, paths, hashes and provenance.
+
+ZIP/bundle creation belongs to `dryv-api`, never to Dryv Runtime.
+
+## Project Client boundary
 
 Project Clients own:
 
-- local source/pack resource acquisition;
-- Git/filesystem access and credentials;
-- local output-root meaning;
-- project file hash observations;
-- previous managed-output state;
-- staging and atomic apply;
-- immediate pre-apply conflict recheck;
-- final `apply_complete` acknowledgement.
+- reading local `dryv.yaml` and Canonical IR files;
+- resolving local pack paths into logical bundles;
+- uploading required resources;
+- observing WebSocket progress;
+- receiving individual artifacts or downloading bundles;
+- comparing generated output with local files;
+- showing diffs and conflicts;
+- safe extraction and path validation;
+- filesystem mutation;
+- shell/Git work when the client or agent supports it.
 
-The Runtime/API response ends at `render_complete`, artifact content, and write instructions.
+The Dryv server never requires the user's project root.
 
-The Python CLI implements this boundary in `dryv_cli.project_client`. A transport-neutral TypeScript reference exists under `packages/nodejs/dryv-client/src/index.ts` for VS Code/web/desktop/agent hosts.
+A simple Dryv CLI can therefore remain a thin Project Client. DevAuto can use the same server but add agent tooling, interactive diffs, approvals and terminal verification.
 
-## Render complete vs apply complete
+## Stateful server evolution
 
-These states are intentionally different:
+V1 may be stateless.
 
-```text
-render_complete
-    Runtime has validated rendering and classified artifacts.
+Later versions may remember authenticated accounts/projects and content-addressed resources. State is an optimization, never semantic authority.
 
-apply_complete
-    Project Client has verified the stream, rechecked local hashes,
-    atomically applied changes, and persisted managed-output state.
-```
+Content identity is server-verified by cryptographic hash. A future server may reuse pack resources, templates, contexts, renders and bundles by hash and request only missing resources. Every build still identifies the exact configuration, IR, pack/template and renderer identities used.
 
-A remote Runtime can therefore succeed without claiming that a local project was mutated.
+## Non-negotiable boundaries
 
-## Incremental cache behavior
-
-Planning records the semantic dependencies used by each context. Hashing composes only reachable semantic branch dependencies. Context/render cache keys use those facts plus relevant pack/template/renderer/protocol identities.
-
-Consequences proven by the Task-23 fixture:
-
-- no change → context/render hits;
-- unrelated IR change → unrelated outputs retain hits;
-- relevant nested IR change → dependent context/render invalidated;
-- template change → only matching render invalidated;
-- renderer fingerprint change → only that renderer's render entries invalidated;
-- refresh/off explicitly bypass reusable cache reads;
-- failed/cancelled builds do not commit pending cache entries.
-
-## Remote project safety
-
-The Task-24 fixture launches `dryv-api` in another process. The temporary project root remains in the parent Project Client process and is not present in the API request.
-
-Only explicit logical resource bytes, project-relative paths, prior managed-output facts, and observed content hashes cross the boundary. The Project Client rechecks the expected hash immediately before applying each update/delete.
-
-## Removed architecture
-
-The active architecture no longer uses:
-
-- `dryv.plugins`;
-- `dryv.ports`;
-- Runtime plugin discovery;
-- embedded `TemplateEngine` ports;
-- Source/Target/Writer ports as extension boundaries;
-- engine-side `ManagedFilesystemWriter`;
-- `generate_to_files`;
-- `dryv.template_engines` or `dryv.source_adapters` package entry points.
-
-Permanent architecture tests reject reintroduction of these ownership patterns.
-
-## Executable certification
-
-The repository-editing connector used for Tasks 18–25 has no checkout/test runner, so implementation completion is not represented as executable proof. From a real checkout run:
-
-```bash
-uv lock
-uv run --all-packages pytest
-uv run --all-packages ruff check packages/python/dryv packages/python/dryv-api packages/python/dryv-author packages/python/dryv-cli packages/python/dryv-template-jinja
-pnpm install --frozen-lockfile
-node packages/nodejs/codepotx/render-clients/handlebars/stdio.mjs </dev/null
-git diff --check
-```
-
-`uv lock` is specifically required because the migration added the `dryv-api` workspace package and removed old `dryv` dependencies from `dryv-cli` and `dryv-template-jinja`; the connected environment could not regenerate the 267 KB lockfile safely.
+- Runtime IR is the only semantic authority.
+- Runtime stops at `GenerationPlan`.
+- No Author Backend execution exists inside Runtime.
+- No Render Client connection/session exists inside Runtime.
+- No template engine executes inside Runtime.
+- No generated artifact bytes are owned by Runtime.
+- No project filesystem mutation exists in `dryv` or `dryv-api`.
+- No compatibility shims preserve the superseded execution architecture.
+- `dryv-api` coordinates execution but does not redefine pack or IR meaning.
+- Project Clients remain independently implementable, including TypeScript clients and AI-agent tooling.
