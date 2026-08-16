@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TypeAlias
 
-from dryv.diagnostics import SourceSpan
+from dryv.ir.diagnostics import SourceSpan
 
 JsonScalar: TypeAlias = str | int | float | bool | None
 FrozenValue: TypeAlias = (
