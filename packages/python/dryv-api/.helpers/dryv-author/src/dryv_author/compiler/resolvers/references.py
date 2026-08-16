@@ -4,20 +4,30 @@ from dataclasses import fields, is_dataclass
 from typing import Any
 
 from dryv_author.compiler.context import CompilerContext
-from dryv_author.core import AuthorRef
+from dryv_author.core import AuthorRef, FieldRef, RefKind
 
 
 def resolve_references(context: CompilerContext) -> None:
     for declaration in context.registry.all():
-        for ref in _walk_refs(declaration.payload):
+        for ref in walk_refs(declaration.payload):
             try:
-                context.declaration(ref)
+                if isinstance(ref, FieldRef):
+                    if ref.author_key != context.metadata.key:
+                        raise ValueError("field reference belongs to another Author")
+                    schema = context.registry.get(ref.schema_declaration_id)
+                    if schema is None or schema.kind is not RefKind.SCHEMA:
+                        raise ValueError(
+                            f"field reference has unknown schema {ref.schema_declaration_id!r}"
+                        )
+                else:
+                    context.declaration(ref)
             except ValueError as exc:
                 context.error("AUTHOR_REF_INVALID", str(exc), declaration)
 
 
-def _walk_refs(value: object) -> tuple[AuthorRef[Any], ...]:
+def walk_refs(value: object) -> tuple[AuthorRef[Any], ...]:
     result: list[AuthorRef[Any]] = []
+
     def visit(item: object) -> None:
         if isinstance(item, AuthorRef):
             result.append(item)
@@ -33,8 +43,9 @@ def _walk_refs(value: object) -> tuple[AuthorRef[Any], ...]:
             for key, child in item.items():
                 visit(key)
                 visit(child)
+
     visit(value)
     return tuple(result)
 
 
-__all__ = ["resolve_references"]
+__all__ = ["resolve_references", "walk_refs"]
