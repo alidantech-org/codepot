@@ -73,23 +73,42 @@ class GenerationWorkflow:
             ir_override=ir_override,
             author_override=author_override,
         )
+        build_id = collected.request.build_id
         summary = self.environment.api.create_build(collected.request)
         if summary.status is BuildStatus.FAILED:
-            message = summary.diagnostics[0].message if summary.diagnostics else "Dryv Runtime planning failed"
+            message = (
+                summary.diagnostics[0].message
+                if summary.diagnostics
+                else "Dryv Runtime planning failed"
+            )
+            self._release_terminal(build_id)
             raise GenerationWorkflowError("CLI_PLAN_FAILED", message)
         if summary.status is not BuildStatus.PLAN_READY:
+            self._cancel_and_release(build_id)
             raise GenerationWorkflowError(
                 "CLI_PLAN_STATE",
                 f"dryv-api returned unexpected planning state {summary.status.value!r}",
             )
-        plan = self.environment.api.get_plan(collected.request.build_id)
-        return PlannedBuild(collected.request.build_id, plan, delivery, collected.author_result)
+        try:
+            plan = self.environment.api.get_plan(build_id)
+            planned = PlannedBuild(build_id, plan, delivery, collected.author_result)
+            planned.artifact_paths
+            planned.required_renderers
+            planned.plan_hash
+            return planned
+        except Exception:
+            self._release_terminal(build_id)
+            raise
 
     def render(self, planned: PlannedBuild) -> RunningBuild:
         self.environment.ensure_renderers(planned.required_renderers)
         preflight = self.environment.api.preflight(planned.build_id)
         if preflight.status is BuildStatus.FAILED:
-            message = preflight.diagnostics[0].message if preflight.diagnostics else "template preflight failed"
+            message = (
+                preflight.diagnostics[0].message
+                if preflight.diagnostics
+                else "template preflight failed"
+            )
             raise GenerationWorkflowError("CLI_PREFLIGHT_FAILED", message)
         if preflight.status is not BuildStatus.RENDER_READY:
             raise GenerationWorkflowError(
@@ -109,6 +128,19 @@ class GenerationWorkflow:
 
     def release(self, build_id: str) -> None:
         self.environment.api.release(build_id)
+
+    def _release_terminal(self, build_id: str) -> None:
+        try:
+            self.environment.api.release(build_id)
+        except Exception:
+            pass
+
+    def _cancel_and_release(self, build_id: str) -> None:
+        try:
+            self.environment.api.cancel(build_id)
+        except Exception:
+            pass
+        self._release_terminal(build_id)
 
 
 __all__ = ["GenerationWorkflow", "GenerationWorkflowError", "PlannedBuild", "RunningBuild"]
