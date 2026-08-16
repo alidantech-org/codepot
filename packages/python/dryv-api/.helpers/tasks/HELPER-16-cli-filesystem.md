@@ -1,25 +1,14 @@
 # HELPER-16 — CLI filesystem diff, staging and apply
 
-Status: TODO
+Status: DONE
 Prerequisite: HELPER-15 DONE.
 
-## Goal
-Create the single safe local filesystem mutation boundary for generated artifacts.
+## Implemented boundary
+`filesystem/` is the single helper owner of generated project-file mutation. It validates project-relative paths, reserves `.dryv/` for client state, loads explicit `dryv.managed/v1` metadata, hashes current files, and classifies CREATE / UPDATE / UNCHANGED / CONFLICT before mutation.
 
-## Required structure
-Implement `filesystem/paths.py`, `inspect.py`, `diff.py`, `stage.py`, and `apply.py`.
+A previously managed file is updated only when its current bytes still match the recorded generated hash. Existing unmanaged files and locally modified managed files conflict by default; explicit `force` changes only regular-file conflicts into updates. No managed deletions are synthesized.
 
-Required capabilities:
-- normalize/validate project-relative artifact destinations and reject traversal, absolute/drive escape and project-root escape;
-- inspect current local content/hashes;
-- classify CREATE, UPDATE, UNCHANGED and CONFLICT, with managed-delete behavior only when explicitly supported by current contracts;
-- build an inspectable change set before mutation;
-- stage writes safely and apply atomically as far as the platform permits;
-- protect local modifications/ownership according to explicit generated-state metadata rather than blind overwrite;
-- surface precise per-file failures and avoid partially claiming success.
-
-## Enforcement
-This directory is the only helper owner of generated project-file mutation. API, Runtime, Jinja and artifact transport must never write these files. Do not execute arbitrary lifecycle shell commands here; command execution requires a separately approved contract/owner.
+Writes are staged outside the project tree but on the same parent filesystem, applied with `os.replace`, existing updates are backed up, managed state is written atomically last, and failures attempt rollback without claiming success.
 
 ## Completion
-Verified artifacts can be previewed/diffed and safely applied to the project with explicit outcomes. No tests yet.
+Verified artifacts can now be diffed and safely applied with explicit outcomes. No other helper layer writes generated project files. No tests were added or run.
