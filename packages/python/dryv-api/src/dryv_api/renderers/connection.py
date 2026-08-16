@@ -87,12 +87,13 @@ class RendererConnection:
         if self.state is RendererConnectionState.READY:
             self.transport.cancel(CancelRender(job_id))
 
-    def close(self) -> None:
+    def close(self, *, close_transport: bool = True) -> None:
         with self._lock:
             if self._state is RendererConnectionState.CLOSED:
                 return
             self._state = RendererConnectionState.CLOSED
-        self.transport.close()
+        if close_transport:
+            self.transport.close()
 
 
 __all__ = ["RendererConnection", "RendererConnectionState"]
