@@ -28,8 +28,7 @@ class RendererRegistry:
             connection = self._connections.pop(connection_id, None)
         if connection is None:
             return False
-        if close:
-            connection.close()
+        connection.close(close_transport=close)
         return True
 
     def get(self, connection_id: str) -> RendererConnection | None:
