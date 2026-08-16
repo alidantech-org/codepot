@@ -4,7 +4,6 @@ import base64
 import hashlib
 import json
 import sys
-from types import ModuleType
 from typing import Iterator
 
 from . import Author, VERSION, __version__, dumps_json
