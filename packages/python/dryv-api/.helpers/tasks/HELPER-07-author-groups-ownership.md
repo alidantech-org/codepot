@@ -1,6 +1,6 @@
 # HELPER-07 — Groups, ownership and composition
 
-Status: TODO
+Status: DONE — PRODUCTION REVIEWED
 Prerequisite: HELPER-06 DONE.
 
 ## Goal
@@ -20,4 +20,4 @@ Required capabilities:
 Do not restore removed `Group.workflows` or other migration properties simply because archived code used them. Canonical Group shape on current `develop` wins. No implicit string-prefix ownership guesses where registry ownership is available.
 
 ## Completion
-All previously implemented Author features can be organized/composed through groups and compile into one coherent canonical contract. No tests yet.
+All Author features can be organized/composed through groups and compile into the current canonical Group/Contract shape. Production review confirmed removed group compatibility properties remain absent. No tests were added or run.
