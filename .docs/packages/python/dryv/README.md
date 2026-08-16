@@ -2,102 +2,63 @@
 
 Code: `packages/python/dryv`
 
-Status: active architecture refactor. The implementation sequence is enforced through [`tasks/`](tasks/), with `.docs/TODO.md` pointing to the single active task.
+Status: active architecture refactor.
 
-## Approved architecture direction
+Before changing Dryv production code, read:
 
-Dryv Engine is the deterministic semantic/planning runtime. It does not own frontend UI, project filesystem mutation, author implementation languages, template execution processes, or HTTP/WebSocket hosting.
+1. [`ARCHITECTURE.md`](ARCHITECTURE.md) — canonical runtime/server boundary.
+2. [`IMPLEMENTATION-RULES.md`](IMPLEMENTATION-RULES.md) — mandatory file/folder structure and change rules.
+3. the exact active task under [`tasks/`](tasks/).
+4. [`.docs/TODO.md`](../../../TODO.md) — current execution order.
 
-```text
-Author Backend
-    ↓ Canonical Dryv IR
+## Approved runtime purpose
 
-Project Client
-    ↓ dryv.yaml + logical resources + previous managed outputs
-
-Network host when used
-    ↓
-Dryv Runtime
-    ↓ coordinates independent Features
-    ↓
-AuthorSession / RenderSession when required
-    ↓
-Artifact + WriteInstruction stream
-    ↓
-Project Client
-    ↓
-user filesystem apply
-```
-
-## Runtime and Feature boundaries
-
-Runtime is the composition root. Independent capabilities live under `dryv.features.*` and are consumed through each Feature package root.
-
-The approved Feature catalog is:
+Dryv Engine is a deterministic semantic compiler/planner.
 
 ```text
-dryv.features.serialization
-dryv.features.project
-dryv.features.resources
-dryv.features.hashing
-dryv.features.ir
-dryv.features.packs
-dryv.features.planning
-dryv.features.cache
-dryv.features.authoring
-dryv.features.templating
-dryv.features.scheduling
-dryv.features.artifacts
-dryv.features.diagnostics
+dryv.yaml
++ Canonical Dryv IR
++ pack definitions/resources
+        ↓
+    Dryv Runtime
+        ↓
+   GenerationPlan
 ```
 
-Boundary rules are executable policy under `packages/python/dryv/tests/architecture/`:
+Runtime stops at `GenerationPlan`.
 
-- `dryv.ir` does not import Runtime or Features.
-- Features do not import Runtime.
-- Features do not import sibling Features.
-- production consumers import a Feature through its public package root, not a private path;
-- Runtime is the only owner allowed to coordinate multiple Features;
-- vague Feature buckets such as `common`, `utils`, `helpers`, `misc`, and `shared` are rejected;
-- server-hosting dependencies and server-framework imports are rejected from `dryv`.
+It validates usage configuration and Canonical IR, loads packs, builds semantic/generation graphs, selects templates, creates canonical contexts, resolves planned project-relative outputs, hashes deterministic inputs and emits trace/progress/diagnostics.
 
-The pre-Feature `api`, `application`, `config`, `diagnostics`, `domain`, `generation`, `infrastructure`, `plugins`, `ports`, `testing`, and `versions` packages are temporary migration surfaces, not alternate architectural owners. Their exception is explicit in the architecture tests and is bounded by Task 21. Engine-side project writers remain temporary Task 21 exceptions as well.
+Runtime does not execute author implementations, connect to Render Clients, execute template engines, own generated artifact bytes, package ZIP files, use HTTP/WebSocket, or mutate project files.
 
-## Canonical meaning
+## Active Engine Features
 
-Canonical Dryv IR remains the only semantic authority. The working concept family includes:
+The final Engine Feature ownership is limited to:
 
 ```text
-Contract
-├── Groups
-│   ├── Properties
-│   ├── Schemas
-│   ├── Policies
-│   ├── Failures
-│   ├── Events
-│   ├── Operations
-│   ├── StorageMappings
-│   ├── ValueSources
-│   └── Views
-├── Workflows
-└── Presentations
+serialization
+project
+resources
+hashing
+ir
+packs
+planning
+cache
+diagnostics
 ```
 
-Cross-cutting information includes tags, guidance, documentation, provenance, and typed references.
+`authoring`, `templating`, distributed `scheduling`, and generated-byte `artifacts` are not Engine owners in the approved architecture.
 
-Schema supports the approved zero-or-one direct base Schema extension model with transitive chains and explicit overrides. Relationship owners author forward relationships; Runtime may derive reverse indexes for inspection and template context.
+## External execution
 
-`dryv.yaml` is usage configuration. `dryv.pack.yaml` defines pack/generation behavior. Canonical IR may be represented as JSON, YAML, or JSONL; these are representations of the same semantic contract.
+`packages/python/dryv-api` consumes the Runtime `GenerationPlan`, verifies compatible Render Clients, performs template/context preflight, coordinates bounded rendering, streams progress/artifacts and may create deterministic bundles.
 
-## External boundaries
+Render Clients receive `template + context + planned output metadata` and return generated bytes.
 
-- Author Backends compile authored source to Canonical Dryv IR and may run independently.
-- Render Clients receive template content plus canonical JSON context and return generated logical output bytes.
-- Project Clients collect local/private resources and safely apply Artifact/WriteInstruction streams.
-- A separate API/network package may host Dryv Runtime over HTTP/WebSocket for local or remote frontends.
+Project Clients are independently implementable and are the only owners of local diff/apply/filesystem mutation.
 
-Dryv generation must remain deterministic, explainable, portable, bounded, cache-safe, and fully traceable from semantic input through planned artifacts.
+## Current tasks
 
-## Tasks
+The previous Tasks 18–25 describe the superseded execution architecture and are historical implementation context only. New implementation begins with Task 26 and must follow the current approved task sequence referenced by `.docs/TODO.md`.
 
-Implementation tasks live under [`tasks/`](tasks/) and must be executed in dependency order. `.docs/TODO.md` points to the currently active task only.
+Do not add tests during the current production-code implementation phase. Test work begins only after explicit user approval of the final production structure and code.
