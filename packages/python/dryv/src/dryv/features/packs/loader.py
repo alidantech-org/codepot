@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import math
+from dataclasses import dataclass, field
 from typing import Any
 
 import yaml
@@ -16,6 +18,15 @@ from .contracts import (
     SelectionKind,
     TemplateDefinition,
 )
+
+_MAX_VALUE_DEPTH = 64
+_MAX_VALUE_ITEMS = 100_000
+
+
+@dataclass(slots=True)
+class _FreezeState:
+    active: set[int] = field(default_factory=set)
+    items: int = 0
 
 
 def load_pack_manifest(content: bytes, media_type: str) -> PackManifest:
@@ -111,12 +122,73 @@ def decode_pack_manifest(value: object) -> PackManifest:
 
 
 def _freeze(value: object, path: str) -> FrozenValue:
-    if value is None or isinstance(value, (str, bool, int, float)):
+    return _freeze_value(value, path=path, depth=0, state=_FreezeState())
+
+
+def _freeze_value(value: object, *, path: str, depth: int, state: _FreezeState) -> FrozenValue:
+    state.items += 1
+    if state.items > _MAX_VALUE_ITEMS:
+        raise PackConfigurationError(
+            "PACK_VALUE_LIMIT",
+            f"pack value exceeds {_MAX_VALUE_ITEMS} items",
+            path=path,
+        )
+    if depth > _MAX_VALUE_DEPTH:
+        raise PackConfigurationError(
+            "PACK_VALUE_DEPTH",
+            f"pack value exceeds depth {_MAX_VALUE_DEPTH}",
+            path=path,
+        )
+    if value is None or isinstance(value, (str, bool, int)):
         return value
-    if isinstance(value, list):
-        return tuple(_freeze(item, path) for item in value)
-    if isinstance(value, dict) and all(isinstance(key, str) for key in value):
-        return tuple((key, _freeze(value[key], f"{path}.{key}")) for key in sorted(value))
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise PackConfigurationError(
+                "PACK_NUMBER",
+                "non-finite numbers are not supported",
+                path=path,
+            )
+        return value
+    if isinstance(value, (list, dict)):
+        identity = id(value)
+        if identity in state.active:
+            raise PackConfigurationError(
+                "PACK_VALUE_RECURSIVE",
+                "recursive pack values are not supported",
+                path=path,
+            )
+        state.active.add(identity)
+        try:
+            if isinstance(value, list):
+                return tuple(
+                    _freeze_value(
+                        item,
+                        path=f"{path}[{index}]",
+                        depth=depth + 1,
+                        state=state,
+                    )
+                    for index, item in enumerate(value)
+                )
+            if not all(isinstance(key, str) and key for key in value):
+                raise PackConfigurationError(
+                    "PACK_KEY",
+                    "pack object keys must be non-empty strings",
+                    path=path,
+                )
+            return tuple(
+                (
+                    key,
+                    _freeze_value(
+                        value[key],
+                        path=f"{path}.{key}",
+                        depth=depth + 1,
+                        state=state,
+                    ),
+                )
+                for key in sorted(value)
+            )
+        finally:
+            state.active.remove(identity)
     raise PackConfigurationError("PACK_VALUE", f"unsupported pack value {type(value).__name__}", path=path)
 
 
