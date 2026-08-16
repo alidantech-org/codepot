@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import base64
 from collections.abc import Iterable
-from queue import Queue
+from queue import Empty, Queue
 from threading import Event, Lock
 from typing import Any
 
@@ -50,17 +50,7 @@ async def build_events(websocket: WebSocket) -> None:
         while True:
             for event in session.events(after_sequence=after):
                 after = event.sequence
-                await websocket.send_json(
-                    {
-                        "type": event.type.value,
-                        "sequence": event.sequence,
-                        "buildId": event.build_id,
-                        "message": event.message,
-                        "subject": event.subject,
-                        "details": dict(event.details),
-                        "runtimeStage": event.runtime_stage,
-                    }
-                )
+                await websocket.send_json({"type": event.type.value, "sequence": event.sequence, "buildId": event.build_id, "message": event.message, "subject": event.subject, "details": dict(event.details), "runtimeStage": event.runtime_stage})
             execution = server.execution(build_id)
             if execution is not None and session.normalized.delivery is DeliveryMode.STREAM and not stream_finished:
                 item = await asyncio.to_thread(execution.stream.receive, timeout=0.05)
@@ -115,7 +105,7 @@ async def renderer_connection(websocket: WebSocket) -> None:
 
 
 class RemoteRendererTransport(RenderClientTransport):
-    """Bridge synchronous renderer calls to one renderer WebSocket."""
+    """Bridge synchronous renderer calls to one renderer WebSocket with bounded queues."""
 
     def __init__(self) -> None:
         self._outgoing: Queue[dict[str, object] | object] = Queue(maxsize=64)
@@ -124,7 +114,8 @@ class RemoteRendererTransport(RenderClientTransport):
         self._closed = Event()
 
     def validate(self, request: ValidateTemplateRequest) -> ValidateTemplateResult:
-        queue = self._open_response(f"validate:{request.validation_id}")
+        key = f"validate:{request.validation_id}"
+        queue = self._open_response(key)
         self._send(_validate_document(request))
         try:
             result = queue.get()
@@ -134,7 +125,7 @@ class RemoteRendererTransport(RenderClientTransport):
                 raise RuntimeError("renderer returned an invalid template validation response")
             return result
         finally:
-            self._close_response(f"validate:{request.validation_id}")
+            self._close_response(key)
 
     def render(self, request: RenderRequest) -> Iterable[RenderStreamMessage]:
         key = f"render:{request.job_id}"
@@ -174,7 +165,12 @@ class RemoteRendererTransport(RenderClientTransport):
             self._responses.clear()
         error = RuntimeError("renderer WebSocket disconnected")
         for queue in queues:
-            queue.put(error)
+            try:
+                while True:
+                    queue.get_nowait()
+            except Empty:
+                pass
+            queue.put_nowait(error)
 
     def next_outgoing(self) -> dict[str, object] | None:
         value = self._outgoing.get()
@@ -185,20 +181,11 @@ class RemoteRendererTransport(RenderClientTransport):
         message_type = _string(root.get("type"), "type")
         if message_type == "template.validation":
             validation_id = _string(root.get("validationId"), "validationId")
-            self._deliver(
-                f"validate:{validation_id}",
-                ValidateTemplateResult(validation_id, bool(root.get("valid")), _diagnostics(root.get("diagnostics", []))),
-            )
+            self._deliver(f"validate:{validation_id}", ValidateTemplateResult(validation_id, bool(root.get("valid")), _diagnostics(root.get("diagnostics", []))))
             return
         job_id = _string(root.get("jobId"), "jobId")
         if message_type == "artifact.begin":
-            value: object = ArtifactBegin(
-                job_id,
-                _string(root.get("artifactId"), "artifactId"),
-                _string(root.get("path"), "path"),
-                _string(root.get("mediaType"), "mediaType"),
-                _optional_int(root.get("size")),
-            )
+            value: object = ArtifactBegin(job_id, _string(root.get("artifactId"), "artifactId"), _string(root.get("path"), "path"), _string(root.get("mediaType"), "mediaType"), _optional_int(root.get("size")))
         elif message_type == "artifact.chunk":
             try:
                 content = base64.b64decode(_string(root.get("contentBase64"), "contentBase64"), validate=True)
@@ -253,7 +240,8 @@ async def _renderer_sender(websocket: WebSocket, transport: RemoteRendererTransp
 
 async def _renderer_receiver(websocket: WebSocket, transport: RemoteRendererTransport) -> None:
     while True:
-        transport.accept(await websocket.receive_json())
+        document = await websocket.receive_json()
+        await asyncio.to_thread(transport.accept, document)
 
 
 def _decode_hello(value: object) -> tuple[str, RendererHello]:
@@ -264,50 +252,19 @@ def _decode_hello(value: object) -> tuple[str, RendererHello]:
     capabilities_raw = root.get("capabilities")
     if not isinstance(capabilities_raw, list) or not all(isinstance(item, str) for item in capabilities_raw):
         raise RuntimeError("renderer capabilities must be an array of strings")
-    return connection_id, RendererHello(
-        _string(root.get("protocol"), "protocol"),
-        _string(root.get("rendererId"), "rendererId"),
-        _string(root.get("rendererVersion"), "rendererVersion"),
-        _string(root.get("fingerprint"), "fingerprint"),
-        tuple(sorted(set(capabilities_raw))),
-        _int(root.get("maxConcurrency"), "maxConcurrency"),
-    )
+    return connection_id, RendererHello(_string(root.get("protocol"), "protocol"), _string(root.get("rendererId"), "rendererId"), _string(root.get("rendererVersion"), "rendererVersion"), _string(root.get("fingerprint"), "fingerprint"), tuple(sorted(set(capabilities_raw))), _int(root.get("maxConcurrency"), "maxConcurrency"))
 
 
 def _validate_document(request: ValidateTemplateRequest) -> dict[str, object]:
-    return {
-        "type": "template.validate",
-        "validationId": request.validation_id,
-        "capability": request.capability,
-        "template": _template_document(request.template),
-        "contextContract": _contract_document(request.context_contract),
-    }
+    return {"type": "template.validate", "validationId": request.validation_id, "capability": request.capability, "template": _template_document(request.template), "contextContract": _contract_document(request.context_contract)}
 
 
 def _render_document(request: RenderRequest) -> dict[str, object]:
-    return {
-        "type": "render.request",
-        "jobId": request.job_id,
-        "capability": request.capability,
-        "template": _template_document(request.template),
-        "context": {
-            "version": request.context.version,
-            "value": request.context.value,
-            "hash": request.context.hash,
-            "contract": _contract_document(request.context.contract),
-        },
-        "output": {"artifactId": request.output.artifact_id, "path": request.output.path},
-        "options": request.options,
-    }
+    return {"type": "render.request", "jobId": request.job_id, "capability": request.capability, "template": _template_document(request.template), "context": {"version": request.context.version, "value": request.context.value, "hash": request.context.hash, "contract": _contract_document(request.context.contract)}, "output": {"artifactId": request.output.artifact_id, "path": request.output.path}, "options": request.options}
 
 
 def _template_document(value: TemplatePayload) -> dict[str, object]:
-    return {
-        "resourceId": value.resource_id,
-        "mediaType": value.media_type,
-        "contentHash": value.content_hash,
-        "contentBase64": base64.b64encode(value.content).decode("ascii"),
-    }
+    return {"resourceId": value.resource_id, "mediaType": value.media_type, "contentHash": value.content_hash, "contentBase64": base64.b64encode(value.content).decode("ascii")}
 
 
 def _contract_document(value: ContextContractPayload) -> dict[str, object]:

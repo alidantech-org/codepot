@@ -3,7 +3,8 @@ from __future__ import annotations
 import base64
 import json
 from collections.abc import Iterable
-from threading import Lock
+from queue import Queue
+from threading import Lock, Thread
 from typing import Any
 
 from websockets.sync.client import connect
@@ -30,6 +31,8 @@ from dryv_api.renderers import (
 from dryv_api.renderers.protocol import RenderStreamMessage
 
 from dryv_template_jinja.renderer import PACKAGE_VERSION, RENDERER_CAPABILITY, RENDERER_ID, render_template, renderer_fingerprint, validate_template
+
+_STOP = object()
 
 
 class JinjaRenderClient:
@@ -63,7 +66,6 @@ class JinjaRenderClient:
     def close(self) -> None:
         with self._lock:
             self._closed = True
-            self._cancelled.clear()
 
     def connection(self, connection_id: str = "local-jinja") -> RendererConnection:
         self._require_open()
@@ -71,26 +73,53 @@ class JinjaRenderClient:
 
     def serve(self, api_url: str, *, connection_id: str) -> None:
         self._require_open()
+        outgoing: Queue[dict[str, object] | object] = Queue(maxsize=64)
+        active: Thread | None = None
         with connect(api_url, max_size=16 * 1024 * 1024, open_timeout=10.0) as socket:
             socket.send(json.dumps(_hello_document(connection_id, self.hello), sort_keys=True))
-            for raw in socket:
-                if not isinstance(raw, str):
-                    raise RuntimeError("renderer WebSocket requires JSON text frames")
-                for response in self._handle_document(json.loads(raw)):
-                    socket.send(json.dumps(response, sort_keys=True))
 
-    def _handle_document(self, value: object) -> tuple[dict[str, object], ...]:
-        root = _object(value)
-        message_type = _string(root.get("type"), "type")
-        if message_type == "template.validate":
-            result = self.validate(_decode_validate(root))
-            return (_validation_document(result),)
-        if message_type == "render.request":
-            return tuple(_render_document(item) for item in self.render(_decode_render(root)))
-        if message_type == "render.cancel":
-            self.cancel(CancelRender(_string(root.get("jobId"), "jobId")))
-            return ()
-        raise RuntimeError(f"unknown renderer request {message_type!r}")
+            def send_loop() -> None:
+                while True:
+                    document = outgoing.get()
+                    if document is _STOP:
+                        return
+                    socket.send(json.dumps(document, sort_keys=True))
+
+            sender = Thread(target=send_loop, name=f"dryv-jinja-send-{connection_id}", daemon=True)
+            sender.start()
+            try:
+                for raw in socket:
+                    if not isinstance(raw, str):
+                        raise RuntimeError("renderer WebSocket requires JSON text frames")
+                    root = _object(json.loads(raw))
+                    message_type = _string(root.get("type"), "type")
+                    if message_type == "template.validate":
+                        outgoing.put(_validation_document(self.validate(_decode_validate(root))))
+                    elif message_type == "render.request":
+                        if active is not None and active.is_alive():
+                            raise RuntimeError("renderer received concurrent work beyond advertised capacity")
+                        request = _decode_render(root)
+                        active = Thread(
+                            target=self._render_to_queue,
+                            args=(request, outgoing),
+                            name=f"dryv-jinja-render-{request.job_id}",
+                            daemon=True,
+                        )
+                        active.start()
+                    elif message_type == "render.cancel":
+                        self.cancel(CancelRender(_string(root.get("jobId"), "jobId")))
+                    else:
+                        raise RuntimeError(f"unknown renderer request {message_type!r}")
+            finally:
+                self.close()
+                if active is not None:
+                    active.join(timeout=2.0)
+                outgoing.put(_STOP)
+                sender.join(timeout=2.0)
+
+    def _render_to_queue(self, request: RenderRequest, outgoing: Queue[dict[str, object] | object]) -> None:
+        for message in self.render(request):
+            outgoing.put(_render_document(message))
 
     def _is_cancelled(self, job_id: str) -> bool:
         with self._lock:

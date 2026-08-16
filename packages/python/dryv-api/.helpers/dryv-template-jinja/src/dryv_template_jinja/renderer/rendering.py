@@ -36,43 +36,50 @@ def render_template(
         return
     try:
         source = request.template.content.decode("utf-8")
-        environment = create_environment()
-        template = environment.from_string(source)
-        parts: list[str] = []
-        for part in template.generate(**request.context.value):
-            if cancelled():
-                yield _failure(request.job_id, "JINJA_CANCELLED", "render cancelled")
-                return
-            parts.append(part)
-        content = "".join(parts).encode("utf-8")
+        template = create_environment().from_string(source)
     except UnicodeDecodeError:
         yield _failure(request.job_id, "JINJA_TEMPLATE_UTF8", "Jinja templates must be UTF-8")
         return
-    except (TemplateSyntaxError, UndefinedError, TemplateError, TypeError, ValueError) as exc:
+    except (TemplateSyntaxError, TemplateError, TypeError, ValueError) as exc:
         yield _failure(request.job_id, "JINJA_RENDER_FAILED", str(exc) or type(exc).__name__)
         return
 
-    digest = hashlib.sha256(content).hexdigest()
     yield ArtifactBegin(
         request.job_id,
         request.output.artifact_id,
         request.output.path,
         "text/plain; charset=utf-8",
-        len(content),
+        None,
     )
+    digest = hashlib.sha256()
+    pending = bytearray()
     offset = 0
-    while offset < len(content):
-        if cancelled():
-            yield _failure(request.job_id, "JINJA_CANCELLED", "render cancelled while streaming")
-            return
-        chunk = content[offset : offset + chunk_bytes]
-        yield ArtifactChunk(request.job_id, request.output.artifact_id, offset, chunk)
-        offset += len(chunk)
+    try:
+        for part in template.generate(**request.context.value):
+            if cancelled():
+                yield _failure(request.job_id, "JINJA_CANCELLED", "render cancelled")
+                return
+            encoded = part.encode("utf-8")
+            digest.update(encoded)
+            pending.extend(encoded)
+            while len(pending) >= chunk_bytes:
+                chunk = bytes(pending[:chunk_bytes])
+                del pending[:chunk_bytes]
+                yield ArtifactChunk(request.job_id, request.output.artifact_id, offset, chunk)
+                offset += len(chunk)
+        if pending:
+            chunk = bytes(pending)
+            yield ArtifactChunk(request.job_id, request.output.artifact_id, offset, chunk)
+            offset += len(chunk)
+    except (UnicodeEncodeError, UndefinedError, TemplateError, TypeError, ValueError) as exc:
+        yield _failure(request.job_id, "JINJA_RENDER_FAILED", str(exc) or type(exc).__name__)
+        return
+
     yield ArtifactEnd(
         request.job_id,
         request.output.artifact_id,
-        len(content),
-        f"sha256:{digest}",
+        offset,
+        f"sha256:{digest.hexdigest()}",
     )
     yield RenderComplete(request.job_id)
 
