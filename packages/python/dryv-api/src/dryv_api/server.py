@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from threading import Lock
+
 from dryv.runtime import DryvRuntime
 
 from .builds import BuildManager, BuildSession
-from .contracts import ApiContractError, BuildDiagnostic, CreateBuildRequest
+from .contracts import ApiContractError, BuildDiagnostic, CreateBuildRequest, DeliveryMode
+from .delivery import BundleBuilder, BundleHandle
 from .renderers import (
     PreflightCoordinator,
     PreflightReport,
@@ -16,7 +19,7 @@ from .renderers import (
 
 
 class DryvApiServer:
-    """Small API composition root around Runtime, builds and Render Client execution."""
+    """Application service for Runtime planning, render coordination and delivery."""
 
     def __init__(
         self,
@@ -31,6 +34,9 @@ class DryvApiServer:
         self.renderers = renderers or RendererRegistry()
         self.preflight = PreflightCoordinator(self.renderers)
         self.scheduler = RenderScheduler(self.renderers)
+        self.bundles = BundleBuilder()
+        self._executions: dict[str, RenderExecution] = {}
+        self._lock = Lock()
 
     def accept_build(self, request: CreateBuildRequest) -> BuildSession:
         return self.builds.create(request)
@@ -39,8 +45,7 @@ class DryvApiServer:
         return self.builds.run(build_id)
 
     def submit_build(self, request: CreateBuildRequest) -> BuildSession:
-        session = self.accept_build(request)
-        return self.plan_build(session.build_id)
+        return self.plan_build(self.accept_build(request).build_id)
 
     def preflight_build(self, build_id: str) -> PreflightReport | None:
         session = self.builds.require(build_id)
@@ -57,19 +62,13 @@ class DryvApiServer:
                     item.path,
                     tuple(
                         (key, str(value))
-                        for key, value in (
-                            ("line", item.line),
-                            ("column", item.column),
-                        )
+                        for key, value in (("line", item.line), ("column", item.column))
                         if value is not None
                     ),
                 )
                 for item in exc.diagnostics
             )
-            session.fail(
-                diagnostics
-                or (BuildDiagnostic(exc.code, exc.message, "error", exc.job_id),)
-            )
+            session.fail(diagnostics or (BuildDiagnostic(exc.code, exc.message, "error", exc.job_id),))
             return None
         except ApiContractError as exc:
             session.fail((BuildDiagnostic(exc.code, exc.message),))
@@ -80,12 +79,6 @@ class DryvApiServer:
         session.complete_preflight(validations=len(report.validated))
         return report
 
-    def prepare_build(self, request: CreateBuildRequest) -> BuildSession:
-        session = self.submit_build(request)
-        if session.plan is not None:
-            self.preflight_build(session.build_id)
-        return session
-
     def render_build(self, build_id: str) -> RenderExecution:
         session = self.builds.require(build_id)
         report = self.preflight.report(build_id)
@@ -94,13 +87,15 @@ class DryvApiServer:
                 "API_PREFLIGHT_REQUIRED",
                 f"build {build_id!r} must complete renderer preflight before rendering",
             )
-        return self.scheduler.start(session, report)
-
-    def prepare_and_render(self, request: CreateBuildRequest) -> RenderExecution | None:
-        session = self.prepare_build(request)
-        if session.status.value != "render_ready":
-            return None
-        return self.render_build(session.build_id)
+        execution = self.scheduler.start(session, report)
+        with self._lock:
+            if build_id in self._executions:
+                self.scheduler.cancel(build_id)
+                raise ApiContractError("API_RENDER_ACTIVE", "build already has retained execution")
+            self._executions[build_id] = execution
+        if session.normalized.delivery is DeliveryMode.BUNDLE:
+            self.bundles.start(session, execution.stream)
+        return execution
 
     def register_renderer(self, connection: RendererConnection) -> None:
         self.renderers.register(connection)
@@ -111,6 +106,13 @@ class DryvApiServer:
     def build(self, build_id: str) -> BuildSession:
         return self.builds.require(build_id)
 
+    def execution(self, build_id: str) -> RenderExecution | None:
+        with self._lock:
+            return self._executions.get(build_id)
+
+    def bundle(self, build_id: str) -> BundleHandle | None:
+        return self.bundles.get(build_id)
+
     def cancel_build(self, build_id: str) -> bool:
         changed = self.builds.cancel(build_id)
         self.scheduler.cancel(build_id)
@@ -118,9 +120,13 @@ class DryvApiServer:
 
     def release_build(self, build_id: str) -> bool:
         released = self.builds.release(build_id)
-        if released:
-            self.preflight.clear(build_id)
-        return released
+        if not released:
+            return False
+        self.preflight.clear(build_id)
+        self.bundles.release(build_id)
+        with self._lock:
+            self._executions.pop(build_id, None)
+        return True
 
 
 __all__ = ["DryvApiServer"]
