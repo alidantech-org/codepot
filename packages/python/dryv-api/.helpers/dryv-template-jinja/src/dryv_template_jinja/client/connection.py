@@ -97,11 +97,18 @@ class JinjaRenderClient:
             socket.send(json.dumps(_hello_document(connection_id, self.hello), sort_keys=True))
 
             def send_loop() -> None:
-                while True:
-                    document = outgoing.get()
-                    if document is _STOP:
-                        return
-                    socket.send(json.dumps(document, sort_keys=True))
+                try:
+                    while True:
+                        document = outgoing.get()
+                        if document is _STOP:
+                            return
+                        socket.send(json.dumps(document, sort_keys=True))
+                except Exception:
+                    self.close()
+                    try:
+                        socket.close()
+                    except Exception:
+                        pass
 
             sender = Thread(
                 target=send_loop,
@@ -121,9 +128,13 @@ class JinjaRenderClient:
                     elif message_type == "render.request":
                         request = _decode_render(root)
                         if request.job_id in active:
-                            raise RuntimeError(f"renderer received duplicate render job {request.job_id!r}")
+                            raise RuntimeError(
+                                f"renderer received duplicate render job {request.job_id!r}"
+                            )
                         if len(active) >= self.max_concurrency:
-                            raise RuntimeError("renderer received concurrent work beyond advertised capacity")
+                            raise RuntimeError(
+                                "renderer received concurrent work beyond advertised capacity"
+                            )
                         thread = Thread(
                             target=self._render_to_queue,
                             args=(request, outgoing),
@@ -151,8 +162,23 @@ class JinjaRenderClient:
         request: RenderRequest,
         outgoing: Queue[dict[str, object] | object],
     ) -> None:
-        for message in self.render(request):
-            outgoing.put(_render_document(message))
+        try:
+            for message in self.render(request):
+                outgoing.put(_render_document(message))
+        except Exception as exc:
+            failure = RenderFailed(
+                request.job_id,
+                (
+                    RendererDiagnostic(
+                        "JINJA_RENDER_CLIENT_FAILED",
+                        str(exc) or type(exc).__name__,
+                    ),
+                ),
+            )
+            try:
+                outgoing.put(_render_document(failure), timeout=1.0)
+            except Full:
+                self.close()
 
     def _is_cancelled(self, job_id: str) -> bool:
         with self._lock:
