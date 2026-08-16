@@ -1,4 +1,4 @@
-"""Network execution coordinator for Dryv GenerationPlans."""
+"""Network execution coordinator for Dryv Runtime."""
 
 from .contracts import (
     API_VERSION,
@@ -8,6 +8,7 @@ from .contracts import (
     BuildStatus,
     BuildSummary,
     CreateBuildRequest,
+    DeliveryMode,
     PackBundleUpload,
     PackResourceUpload,
 )
@@ -21,6 +22,7 @@ __all__ = [
     "BuildStatus",
     "BuildSummary",
     "CreateBuildRequest",
+    "DeliveryMode",
     "DryvApiServer",
     "PackBundleUpload",
     "PackResourceUpload",

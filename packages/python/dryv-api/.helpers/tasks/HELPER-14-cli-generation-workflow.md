@@ -1,34 +1,25 @@
 # HELPER-14 — CLI generation workflow
 
-Status: TODO
+Status: DONE
 Prerequisite: HELPER-13 DONE.
 
-## Goal
-Compose project resolution, optional author compilation, API planning, renderer availability, preflight and rendering into one inspectable CLI workflow.
-
-## Required structure
-Implement `generation/request.py`, `build.py`, `plan.py`, and `progress.py`.
-
-Required flow:
+## Implemented flow
+The CLI now has one shared generation workflow:
 
 ```text
-discover project
-→ obtain/compile Canonical IR
-→ collect dryv.yaml + pack/resource bundles
-→ connect/start API
-→ submit build inputs
-→ receive GenerationPlan
-→ determine required renderer capabilities from plan/API
-→ ensure local renderers when needed
-→ preflight
-→ render
-→ expose ordered progress/events/artifact delivery
+discover/resolve inputs
+→ optional Author compile
+→ create API build
+→ Runtime GenerationPlan
+→ inspect required renderer capabilities
+→ ensure owned local renderers when applicable
+→ API template preflight
+→ API render execution
 ```
 
-`plan` must be usable without writing generated files. `generate` uses the same planning/build path rather than a second shortcut implementation.
+`PlannedBuild` is the stable handoff for `dryv plan`; `generate` advances that same build through preflight/render rather than using another code path. The workflow only reads GenerationPlan renderer/artifact metadata and never derives selectors, contexts, paths, dependencies or ordering.
 
-## Enforcement
-Never synthesize selectors, template contexts, output paths, dependencies or job order in CLI; Runtime/GenerationPlan is authoritative. Do not bypass API by importing internal Runtime execution for convenience. No filesystem application here.
+Build request IDs are unique execution identities; Dryv plan hashing now excludes buildId so semantic plan reproducibility is preserved.
 
 ## Completion
-One production workflow drives local or remote dryv-api consistently and reports failures/progress without semantic duplication. No tests yet.
+Planning and rendering orchestration are connected through public Author/API boundaries with no filesystem application in this module. No tests were added or run.
