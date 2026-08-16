@@ -5,10 +5,10 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, fields, is_dataclass
 from typing import Generic, TypeVar
 
-from dryv.diagnostics import Diagnostics
 from dryv.ir import Contract, SemanticId, TriggerKind, walk_groups
+from dryv.ir.diagnostics import Diagnostics
 from dryv.ir.model.schema_resolution import EffectiveSchema, resolve_effective_schema
-from dryv.ir.validation import SemanticIndex, validate_contract
+from dryv.ir.model.validation import SemanticIndex, validate_contract
 
 T = TypeVar("T")
 
