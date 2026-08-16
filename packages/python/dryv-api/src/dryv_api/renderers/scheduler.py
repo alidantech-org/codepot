@@ -201,11 +201,8 @@ class RenderScheduler:
 
                 if not running:
                     if pending and ready and not dispatched:
-                        unavailable = ready[0]
-                        raise RenderExecutionError(
-                            "API_RENDERER_CAPACITY",
-                            f"no preflight-approved renderer capacity is available for job {unavailable.id!r}",
-                        )
+                        state.cancelled.wait(0.05)
+                        continue
                     if pending and not ready:
                         raise RenderExecutionError(
                             "API_RENDER_DEPENDENCY_DEADLOCK",
