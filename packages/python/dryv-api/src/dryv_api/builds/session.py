@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from threading import Lock
 
-from dryv.features.planning import GenerationPlan
+from dryv.features.planning import GenerationPlan, RenderJob
 from dryv.runtime import RuntimeEvent
 
 from dryv_api.contracts import BuildDiagnostic, BuildStatus, BuildSummary
@@ -111,6 +111,79 @@ class BuildSession:
                     BuildEventType.PREFLIGHT_READY,
                     "All renderer prerequisites passed; build is ready to render",
                     details=(("validations", str(validations)),),
+                )
+            )
+            return True
+
+    def start_render(self) -> bool:
+        with self._lock:
+            if self._status is not BuildStatus.RENDER_READY:
+                return False
+            self._status = BuildStatus.RENDERING
+            sequence = self._next_sequence_locked()
+            self._events.append(
+                BuildEvent(
+                    sequence,
+                    self.build_id,
+                    BuildEventType.RENDER_STARTED,
+                    "Render execution started",
+                )
+            )
+            return True
+
+    def render_job_started(self, job: RenderJob) -> None:
+        self.emit(
+            BuildEventType.RENDER_JOB_STARTED,
+            "Render job started",
+            subject=job.id,
+            details=(
+                ("planIndex", str(job.order)),
+                ("artifactId", job.artifact.id),
+                ("path", job.artifact.path),
+            ),
+        )
+
+    def artifact_ready(self, job: RenderJob, size: int, content_hash: str) -> None:
+        self.emit(
+            BuildEventType.ARTIFACT_READY,
+            "Rendered artifact completed",
+            subject=job.artifact.id,
+            details=(
+                ("jobId", job.id),
+                ("planIndex", str(job.order)),
+                ("path", job.artifact.path),
+                ("size", str(size)),
+                ("contentHash", content_hash),
+            ),
+        )
+
+    def render_job_completed(self, job: RenderJob, *, completed: int, total: int) -> None:
+        self.emit(
+            BuildEventType.RENDER_JOB_COMPLETED,
+            "Render job completed",
+            subject=job.id,
+            details=(("planIndex", str(job.order)),),
+        )
+        self.emit(
+            BuildEventType.RENDER_PROGRESS,
+            "Render progress",
+            details=(("completed", str(completed)), ("total", str(total))),
+        )
+
+    def complete_render(self) -> bool:
+        with self._lock:
+            if self._status is BuildStatus.CANCELLED:
+                return False
+            if self._status is not BuildStatus.RENDERING:
+                return False
+            self._status = BuildStatus.RENDER_COMPLETE
+            sequence = self._next_sequence_locked()
+            self._events.append(
+                BuildEvent(
+                    sequence,
+                    self.build_id,
+                    BuildEventType.RENDER_COMPLETE,
+                    "All planned artifacts rendered",
                 )
             )
             return True
