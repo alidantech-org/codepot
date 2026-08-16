@@ -19,6 +19,8 @@ class BuildStatus(StrEnum):
     ACCEPTED = "accepted"
     PLANNING = "planning"
     PLAN_READY = "plan_ready"
+    PREFLIGHT = "preflight"
+    RENDER_READY = "render_ready"
     CANCELLED = "cancelled"
     FAILED = "failed"
 
