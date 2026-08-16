@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from dryv.runtime import RuntimeInput, RuntimePack, RuntimePackResource
 
-from dryv_api.contracts import CreateBuildRequest
+from dryv_api.contracts import CreateBuildRequest, DeliveryMode
 
 from .store import ResourceStore
 
@@ -13,6 +13,7 @@ from .store import ResourceStore
 class NormalizedBuild:
     runtime_input: RuntimeInput
     resources: ResourceStore
+    delivery: DeliveryMode
 
 
 def normalize_build(request: CreateBuildRequest) -> NormalizedBuild:
@@ -46,7 +47,7 @@ def normalize_build(request: CreateBuildRequest) -> NormalizedBuild:
         resources=tuple(item.runtime_resource() for item in store.resources()),
         packs=tuple(sorted(runtime_packs, key=lambda item: item.instance_name)),
     )
-    return NormalizedBuild(runtime_input, store)
+    return NormalizedBuild(runtime_input, store, request.delivery)
 
 
 __all__ = ["NormalizedBuild", "normalize_build"]
