@@ -1,30 +1,8 @@
-"""Independent Jinja Render Client for the Dryv Render Session protocol."""
+"""Jinja Render Client for the renderer-neutral Dryv API protocol."""
 
-from .session import (
-    CONTEXT_VERSION,
-    JinjaRenderSession,
-    PACKAGE_VERSION,
-    RENDERER_CAPABILITY,
-    RENDER_PROTOCOL_VERSION,
-    RenderDiagnosticMessage,
-    RenderResultMessage,
-    RenderedOutputMessage,
-    RendererHelloMessage,
-    TEMPLATE_MEDIA_TYPES,
-)
+from .client import JinjaRenderClient
+from .renderer import PACKAGE_VERSION, RENDERER_CAPABILITY, RENDERER_ID, renderer_fingerprint
 
 __version__ = PACKAGE_VERSION
 
-__all__ = [
-    "CONTEXT_VERSION",
-    "JinjaRenderSession",
-    "PACKAGE_VERSION",
-    "RENDERER_CAPABILITY",
-    "RENDER_PROTOCOL_VERSION",
-    "RenderDiagnosticMessage",
-    "RenderResultMessage",
-    "RenderedOutputMessage",
-    "RendererHelloMessage",
-    "TEMPLATE_MEDIA_TYPES",
-    "__version__",
-]
+__all__ = ["JinjaRenderClient", "PACKAGE_VERSION", "RENDERER_CAPABILITY", "RENDERER_ID", "renderer_fingerprint"]

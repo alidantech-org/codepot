@@ -4,18 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dryv-template-jinja"
-version = "2.0.0a1"
-description = "Independent Jinja Render Client for the Dryv Render Session protocol"
+version = "0.2.0a1"
+description = "Jinja Render Client for the renderer-neutral Dryv API protocol"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{ name = "Alidantech" }]
-dependencies = ["Jinja2>=3.1.4,<4.0"]
-
-[project.urls]
-Homepage = "https://github.com/alidantech-org/codepot"
-Repository = "https://github.com/alidantech-org/codepot"
-Issues = "https://github.com/alidantech-org/codepot/issues"
+keywords = ["dryv", "jinja", "templates", "codegen"]
+dependencies = [
+  "dryv-api>=0.1.0a1,<0.2",
+  "Jinja2>=3.1,<4",
+]
 
 [tool.setuptools]
 include-package-data = true
@@ -38,7 +37,3 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 ignore = ["E501"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = ["--strict-markers", "--strict-config"]
