@@ -1,0 +1,1 @@
+"""Active build lifecycle registry."""
