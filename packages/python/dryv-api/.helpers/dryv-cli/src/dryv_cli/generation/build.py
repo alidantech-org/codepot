@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from dryv_api import BuildStatus, DeliveryMode
 
-from dryv_cli.connections.author import AuthorClient
+from dryv_cli.connections.author import AuthorClient, AuthorResult
 from dryv_cli.local import LocalEnvironment
 from dryv_cli.project import LocalProject
 
@@ -24,7 +24,7 @@ class PlannedBuild:
     build_id: str
     plan: dict[str, object]
     delivery: DeliveryMode
-    author_result: object | None = None
+    author_result: AuthorResult | None = None
 
     @property
     def required_renderers(self) -> tuple[str, ...]:
@@ -83,12 +83,7 @@ class GenerationWorkflow:
                 f"dryv-api returned unexpected planning state {summary.status.value!r}",
             )
         plan = self.environment.api.get_plan(collected.request.build_id)
-        return PlannedBuild(
-            collected.request.build_id,
-            plan,
-            delivery,
-            collected.author_result,
-        )
+        return PlannedBuild(collected.request.build_id, plan, delivery, collected.author_result)
 
     def render(self, planned: PlannedBuild) -> RunningBuild:
         self.environment.ensure_renderers(planned.required_renderers)
@@ -116,9 +111,4 @@ class GenerationWorkflow:
         self.environment.api.release(build_id)
 
 
-__all__ = [
-    "GenerationWorkflow",
-    "GenerationWorkflowError",
-    "PlannedBuild",
-    "RunningBuild",
-]
+__all__ = ["GenerationWorkflow", "GenerationWorkflowError", "PlannedBuild", "RunningBuild"]

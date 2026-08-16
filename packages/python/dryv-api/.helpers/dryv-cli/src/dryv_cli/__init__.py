@@ -1,5 +1,5 @@
-from __future__ import annotations
+"""Dryv reference Project Client and local orchestration CLI."""
 
-__version__ = "0.1.0a1"
+__version__ = "0.2.0a1"
 
 __all__ = ["__version__"]

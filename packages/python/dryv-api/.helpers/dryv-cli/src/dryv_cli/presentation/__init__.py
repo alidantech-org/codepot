@@ -1,18 +1,15 @@
-from .console import activity, get_console
-from .results import (
-    render_cancelled,
-    render_failure,
-    render_json,
-    render_operation,
-    render_runtime,
-)
+from .changes import render_apply_result, render_changes
+from .console import Console
+from .diagnostics import render_diagnostics, render_exception
+from .plan import render_plan
+from .progress import ProgressPrinter
 
 __all__ = [
-    "activity",
-    "get_console",
-    "render_cancelled",
-    "render_failure",
-    "render_json",
-    "render_operation",
-    "render_runtime",
+    "Console",
+    "ProgressPrinter",
+    "render_apply_result",
+    "render_changes",
+    "render_diagnostics",
+    "render_exception",
+    "render_plan",
 ]

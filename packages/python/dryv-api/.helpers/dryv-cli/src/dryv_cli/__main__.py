@@ -1,5 +1,11 @@
 from __future__ import annotations
 
-from .main import main
+from .app import run
 
-raise SystemExit(main())
+
+def main() -> int:
+    return run()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

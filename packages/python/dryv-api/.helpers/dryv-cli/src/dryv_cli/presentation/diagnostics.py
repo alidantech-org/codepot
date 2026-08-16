@@ -1,51 +1,37 @@
 from __future__ import annotations
 
-from dryv.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
-from rich.text import Text
-from rich.tree import Tree
+from collections.abc import Iterable
 
-_SEVERITY_STYLES = {
-    DiagnosticSeverity.INFO: ("i", "info"),
-    DiagnosticSeverity.WARNING: ("!", "warning"),
-    DiagnosticSeverity.ERROR: ("×", "error"),
-    DiagnosticSeverity.FATAL: ("×", "fatal"),
-}
+from .console import Console
 
 
-def diagnostics_tree(diagnostics: Diagnostics) -> Tree:
-    root = Tree(Text("diagnostics", style="accent"), guide_style="muted")
+def render_diagnostics(console: Console, diagnostics: Iterable[object]) -> None:
     for diagnostic in diagnostics:
-        root.add(_diagnostic_tree(diagnostic))
-    return root
+        if isinstance(diagnostic, dict):
+            code = str(diagnostic.get("code", "DIAGNOSTIC"))
+            message = str(diagnostic.get("message", ""))
+            severity = str(diagnostic.get("severity", diagnostic.get("level", "error")))
+            subject = diagnostic.get("subject")
+        else:
+            code = str(getattr(diagnostic, "code", "DIAGNOSTIC"))
+            message = str(getattr(diagnostic, "message", diagnostic))
+            severity = str(getattr(diagnostic, "level", "error"))
+            subject = getattr(diagnostic, "subject", None)
+        suffix = f" [{subject}]" if isinstance(subject, str) and subject else ""
+        target = console.error if severity.lower() == "error" else console.write
+        target(f"{severity.upper()} {code}{suffix}: {message}")
 
 
-def _diagnostic_tree(diagnostic: Diagnostic) -> Tree:
-    symbol, style = _SEVERITY_STYLES[diagnostic.severity]
-    heading = Text()
-    heading.append(f"{symbol} ", style=style)
-    heading.append(diagnostic.code, style=style)
-    heading.append("  ")
-    heading.append(diagnostic.message, style="value")
-    node = Tree(heading, guide_style="muted")
-
-    if diagnostic.span is not None:
-        location = (
-            f"{diagnostic.span.source.value}:"
-            f"{diagnostic.span.start.line}:{diagnostic.span.start.column}"
-        )
-        node.add(_label("location", location, "path"))
-    for key, value in diagnostic.details:
-        node.add(_label(key, str(value), "value"))
-    if diagnostic.suggestion:
-        node.add(_label("suggestion", diagnostic.suggestion, "success"))
-    if diagnostic.documentation:
-        node.add(_label("documentation", diagnostic.documentation, "path"))
-    return node
+def render_exception(console: Console, error: Exception) -> None:
+    code = str(getattr(error, "code", type(error).__name__))
+    message = str(getattr(error, "message", str(error) or type(error).__name__))
+    console.error(f"ERROR {code}: {message}")
+    diagnostics = getattr(error, "diagnostics", ())
+    if diagnostics:
+        render_diagnostics(console, diagnostics)
+    stderr = getattr(error, "stderr", "")
+    if isinstance(stderr, str) and stderr.strip():
+        console.error(stderr.rstrip())
 
 
-def _label(left: str, right: str, right_style: str) -> Text:
-    text = Text()
-    text.append(left, style="muted")
-    text.append(": ", style="muted")
-    text.append(right, style=right_style)
-    return text
+__all__ = ["render_diagnostics", "render_exception"]

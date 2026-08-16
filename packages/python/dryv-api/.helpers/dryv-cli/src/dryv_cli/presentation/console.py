@@ -1,20 +1,22 @@
 from __future__ import annotations
 
-from contextlib import AbstractContextManager, nullcontext
-
-from rich.console import Console
-from rich.status import Status
-
-from .theme import DRYV_THEME
-
-_CONSOLE = Console(theme=DRYV_THEME, highlight=False)
+import sys
+from dataclasses import dataclass
+from typing import TextIO
 
 
-def get_console() -> Console:
-    return _CONSOLE
+@dataclass(slots=True)
+class Console:
+    stdout: TextIO = sys.stdout
+    stderr: TextIO = sys.stderr
+
+    def write(self, message: str = "") -> None:
+        self.stdout.write(message + "\n")
+        self.stdout.flush()
+
+    def error(self, message: str) -> None:
+        self.stderr.write(message + "\n")
+        self.stderr.flush()
 
 
-def activity(message: str, *, enabled: bool = True) -> AbstractContextManager[Status | None]:
-    if not enabled:
-        return nullcontext()
-    return _CONSOLE.status(f"[accent]{message}[/]", spinner="dots")
+__all__ = ["Console"]

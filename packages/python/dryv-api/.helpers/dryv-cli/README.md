@@ -1,65 +1,36 @@
 # dryv-cli
 
-`dryv-cli` is a Dryv **Project Client**. It talks to the versioned Dryv API and owns local project resource collection, file observation, managed-output state, conflict checks, atomic apply, and the final `apply_complete` acknowledgement.
-
-It does not import or orchestrate `dryv.runtime`.
-
-## Build flow
-
-```text
-local project
-   |
-   | collect explicit logical resources + local hash observations
-   v
-dryv.api/v1 request
-   |
-   v
-dryv-api / remote Dryv Runtime
-   |
-   | render_complete + artifact stream + write instructions
-   v
-dryv-cli
-   |
-   | recheck hashes, stage, atomically apply, persist managed-output state
-   v
-apply_complete
-```
-
-The local project root is never sent to Runtime. Only explicit logical resources and project-relative observations cross the API boundary.
-
-## Command
+Reference Project Client for Dryv. A normal local installation hides API and renderer topology behind four commands:
 
 ```bash
-dryv build request.json --root .
+dryv validate
+dryv compile
+dryv plan
+dryv generate
 ```
 
-By default the CLI starts/connects to:
+Example `dryv.yaml`:
+
+```yaml
+apiVersion: dryv.dev/v1
+name: shop
+source:
+  author: software.py:build
+packs:
+  api:
+    source:
+      local: packs/typescript-api
+    output: generated
+```
+
+`dryv generate` resolves/compiles Canonical IR, starts a temporary loopback dryv-api when no `--api` is supplied, starts required local renderer helpers such as Jinja, watches build progress, verifies streamed or bundled artifact bytes, computes a local change set, and applies safe generated changes. Runtime remains authoritative for Dryv semantics and planning.
+
+Useful generation controls:
 
 ```bash
-python -m dryv_api.stdio
+dryv generate --dry-run
+dryv generate --delivery bundle
+dryv generate --force
 ```
 
-A different API command can be supplied with `--api-command` or `DRYV_API_COMMAND`.
-
-The request file uses the strict `dryv.api/v1` wire contract. It contains logical resource IDs/bytes, normalized pack/template inventory, planning facts, an IR source, renderer connection IDs, previous managed-output facts, and project-relative observed hashes. The CLI never adds its local root path to the request.
-
-## Local apply safety
-
-`dryv_cli.project_client`:
-
-- streams artifact bytes into staging storage;
-- verifies artifact size and SHA-256 content identity;
-- refuses unsafe or traversing paths;
-- rechecks `expectedPreviousHash` immediately before mutation;
-- refuses unmanaged CREATE collisions;
-- rolls back partial writes on failure;
-- writes `.dryv/managed-outputs.json` only after generated file changes succeed.
-
-`render_complete` is a Runtime/API fact. `apply_complete` exists only after the Project Client has committed the local changes.
-
-## Validation
-
-```bash
-uv run --all-packages pytest packages/python/dryv-api/tests/integration/test_remote_runtime_local_project.py
-uv run --all-packages ruff check packages/python/dryv-cli
-```
+`--force` is explicit because existing unmanaged files and locally modified managed files are conflicts by default.
