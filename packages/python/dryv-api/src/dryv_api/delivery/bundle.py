@@ -17,6 +17,7 @@ _ARTIFACT_MEMORY_LIMIT = 4 * 1024 * 1024
 _BUNDLE_MEMORY_LIMIT = 8 * 1024 * 1024
 _COPY_CHUNK = 64 * 1024
 _FIXED_ZIP_TIME = (1980, 1, 1, 0, 0, 0)
+_MANIFEST_PATH = ".dryv/manifest.json"
 
 
 @dataclass(frozen=True, slots=True)
@@ -143,6 +144,7 @@ class BundleBuilder:
     def _build(self, session: BuildSession, stream: ArtifactStream, handle: BundleHandle) -> None:
         files: dict[str, BinaryIO] = {}
         paths: dict[str, str] = {}
+        path_owners: dict[str, str] = {}
         metadata: dict[str, RenderedArtifactMetadata] = {}
         completed = 0
         plan = session.plan
@@ -153,8 +155,14 @@ class BundleBuilder:
                 if isinstance(event, ArtifactStarted):
                     if event.artifact_id in files:
                         raise ApiContractError("API_BUNDLE_ARTIFACT_DUPLICATE", f"artifact {event.artifact_id!r} started twice")
+                    if event.path == _MANIFEST_PATH:
+                        raise ApiContractError("API_BUNDLE_RESERVED_PATH", f"artifact {event.artifact_id!r} targets reserved bundle path {_MANIFEST_PATH!r}")
+                    previous = path_owners.get(event.path)
+                    if previous is not None:
+                        raise ApiContractError("API_BUNDLE_PATH_DUPLICATE", f"artifacts {previous!r} and {event.artifact_id!r} target the same bundle path {event.path!r}")
                     files[event.artifact_id] = SpooledTemporaryFile(max_size=_ARTIFACT_MEMORY_LIMIT, mode="w+b")
                     paths[event.artifact_id] = event.path
+                    path_owners[event.path] = event.artifact_id
                 elif isinstance(event, ArtifactData):
                     file = files.get(event.artifact_id)
                     if file is None or file.tell() != event.offset:
@@ -164,6 +172,8 @@ class BundleBuilder:
                     file = files.get(event.artifact_id)
                     if file is None:
                         raise ApiContractError("API_BUNDLE_ARTIFACT_MISSING", f"artifact {event.artifact_id!r} was never started")
+                    if paths[event.artifact_id] != event.path:
+                        raise ApiContractError("API_BUNDLE_PATH_CHANGED", f"artifact {event.artifact_id!r} changed path during bundling")
                     if file.tell() != event.size:
                         raise ApiContractError("API_BUNDLE_SIZE", f"artifact {event.artifact_id!r} size changed during bundling")
                     actual_hash = _file_hash(file)
@@ -183,7 +193,7 @@ class BundleBuilder:
             manifest = build_bundle_manifest(plan, metadata)
             bundle_file = SpooledTemporaryFile(max_size=_BUNDLE_MEMORY_LIMIT, mode="w+b")
             with ZipFile(bundle_file, mode="w", compression=ZIP_STORED, allowZip64=True) as archive:
-                _write_bytes(archive, ".dryv/manifest.json", manifest.bytes())
+                _write_bytes(archive, _MANIFEST_PATH, manifest.bytes())
                 for entry in manifest.artifacts:
                     file = files[entry.artifact_id]
                     file.seek(0)
