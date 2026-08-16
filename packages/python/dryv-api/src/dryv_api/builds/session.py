@@ -239,7 +239,11 @@ class BuildSession:
 
     def events(self, *, after_sequence: int = 0) -> tuple[BuildEvent, ...]:
         with self._lock:
-            return tuple(item for item in self._events if item.sequence > after_sequence)
+            if after_sequence <= 0:
+                return tuple(self._events)
+            if after_sequence >= self._sequence:
+                return ()
+            return tuple(self._events[after_sequence:])
 
     def summary(self) -> BuildSummary:
         with self._lock:
