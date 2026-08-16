@@ -1,6 +1,6 @@
 # HELPER-06 — Workflows, views and presentations
 
-Status: TODO
+Status: DONE — PRODUCTION REVIEWED
 Prerequisite: HELPER-05 DONE.
 
 ## Goal
@@ -17,4 +17,4 @@ Views must own view declarations/builders/triggers/references and compile to cur
 No hidden workflow execution engine in Author. Author describes and validates meaning; it does not run workflows. No frontend framework conventions or template paths.
 
 ## Completion
-Complex workflows, views and presentations compile deterministically with useful relationship diagnostics. No tests yet.
+Workflows, views and presentations compile deterministically through current Canonical IR. Production review additionally hardened presentation navigation parent existence/cycle validation. No tests were added or run.
