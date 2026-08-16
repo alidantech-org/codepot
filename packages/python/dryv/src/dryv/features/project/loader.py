@@ -32,7 +32,7 @@ def load_project(content: bytes, media_type: str) -> ProjectConfig:
         if _is_json(media_type):
             document = json.loads(text, object_pairs_hook=_json_pairs)
         elif _is_yaml(media_type):
-            document = yaml.safe_load(text)
+            document = yaml.load(text, Loader=_UniqueKeyLoader)
         else:
             raise ProjectConfigurationError(
                 "PROJECT_MEDIA_TYPE",
@@ -146,5 +146,23 @@ def _json_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
         result[key] = value
     return result
 
+
+class _UniqueKeyLoader(yaml.SafeLoader):
+    pass
+
+
+def _yaml_mapping(loader: _UniqueKeyLoader, node: yaml.MappingNode, deep: bool = False) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        if not isinstance(key, str):
+            raise ProjectConfigurationError("PROJECT_KEY", "YAML mapping keys must be strings")
+        if key in result:
+            raise ProjectConfigurationError("PROJECT_DUPLICATE_KEY", f"duplicate key {key!r}")
+        result[key] = loader.construct_object(value_node, deep=deep)
+    return result
+
+
+_UniqueKeyLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _yaml_mapping)
 
 __all__ = ["ProjectConfigurationError", "decode_project", "load_project"]
