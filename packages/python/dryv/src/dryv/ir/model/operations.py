@@ -18,20 +18,6 @@ class OperationOutput:
 
 
 @dataclass(frozen=True, slots=True)
-class OperationFailure:
-    """Legacy compatibility value. Canonical Operation.failures contains Failure ids."""
-
-    code: str
-    schema: SemanticId | None = None
-    message: str | None = None
-    data: KernelData = field(default_factory=KernelData)
-
-    def __post_init__(self) -> None:
-        if not self.code:
-            raise ValueError("operation failure code must not be empty")
-
-
-@dataclass(frozen=True, slots=True)
 class OperationRelations:
     """Typed forward Operation relationships with neutral software meaning."""
 
