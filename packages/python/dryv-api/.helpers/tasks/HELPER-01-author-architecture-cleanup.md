@@ -1,6 +1,6 @@
 # HELPER-01 — Dryv Author architecture cleanup
 
-Status: TODO
+Status: DONE — PRODUCTION REVIEWED
 Prerequisites: approved `TASKS.md`; current Dryv Canonical IR inspected.
 
 ## Goal
@@ -25,4 +25,4 @@ This task may move/rewrite useful current code, but old files are not compatibil
 - Superseded production files are physically removed, not deprecated.
 - No removed `dryv`/legacy Author concepts remain imported merely to preserve old behavior.
 
-Do not implement later feature semantics opportunistically beyond what is needed to establish clean boundaries.
+Production review confirmed this boundary. No tests were added or run.
