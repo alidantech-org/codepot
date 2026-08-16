@@ -15,6 +15,11 @@ class ApiContractError(ValueError):
         self.path = path
 
 
+class DeliveryMode(StrEnum):
+    STREAM = "stream"
+    BUNDLE = "bundle"
+
+
 class BuildStatus(StrEnum):
     ACCEPTED = "accepted"
     PLANNING = "planning"
@@ -75,6 +80,7 @@ class CreateBuildRequest:
     canonical_ir: BuildResourceUpload
     packs: tuple[PackBundleUpload, ...] = ()
     resources: tuple[BuildResourceUpload, ...] = ()
+    delivery: DeliveryMode = DeliveryMode.STREAM
 
     def __post_init__(self) -> None:
         if not self.build_id or self.build_id.strip() != self.build_id:
@@ -111,6 +117,7 @@ __all__ = [
     "BuildStatus",
     "BuildSummary",
     "CreateBuildRequest",
+    "DeliveryMode",
     "PackBundleUpload",
     "PackResourceUpload",
 ]
