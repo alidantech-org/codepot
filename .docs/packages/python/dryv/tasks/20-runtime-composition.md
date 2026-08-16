@@ -1,9 +1,11 @@
 # Task 20 — Rewrite Dryv Runtime as the composition root
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Tasks 08–19
 Validation: end-to-end runtime tests with fake sessions/resources, architecture tests
+
+> Implementation is complete on `develop`. Executable certification is still pending because the connected repository environment exposes no checkout/test runner. See [`../PROGRESS-18-25.md`](../PROGRESS-18-25.md).
 
 ## Goal
 
