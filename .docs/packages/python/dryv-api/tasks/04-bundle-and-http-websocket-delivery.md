@@ -1,130 +1,137 @@
 # Task 04 — Bundle and HTTP/WebSocket delivery
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv-api`
 Depends on: Task 03
 
 ## Goal
 
-Complete the stateless V1 network host with HTTP build lifecycle, WebSocket progress/control, renderer WebSocket registration and optional deterministic bundle delivery without changing Runtime semantics.
+Complete the approved stateless V1 server boundary with client-selected stream/bundle delivery and concrete HTTP/WebSocket transport adapters around the already implemented Runtime, preflight, renderer scheduling and artifact-stream operations.
 
 ## Delivery modes
 
-Support two API delivery modes:
+Build input now chooses transport delivery only:
 
 ```text
 stream
 bundle
 ```
 
-Delivery mode is an API/client concern, not `dryv.yaml` software meaning.
+This setting does not affect Runtime semantics or `GenerationPlan`.
 
-### Stream mode
+### Stream
 
-Use the bounded artifact streaming path from Task 03.
+The Project Client observes build events and receives bounded artifact events over:
 
-### Bundle mode
+```text
+WS /v1/builds/{buildId}/events
+```
 
-`delivery/bundle.py` packages completed rendered artifacts into a deterministic ZIP-compatible bundle.
+Artifact messages preserve stable job/artifact identity, plan index, path, offsets, content hash and dependencies. Content is base64 only at the V1 JSON WebSocket boundary.
 
-`delivery/manifest.py` produces `.dryv/manifest.json` containing at minimum:
+A stream-mode Project Client disconnect while rendering cancels the active build so blocked producers/renderers cannot remain indefinitely backpressured by a missing consumer.
 
-- build identity;
-- artifact IDs;
-- normalized project-relative paths;
-- artifact hashes;
-- semantic/pack/template provenance available from the plan.
+### Bundle
 
-Normalize bundle metadata such as entry ordering and timestamps/permissions where required so identical artifact sets can produce reproducible bundle identity.
+Bundle mode consumes the same bounded `ArtifactStream`; it is not a second rendering path.
 
-Bundle creation belongs only to `dryv-api`.
+The server creates one deterministic ZIP containing:
+
+```text
+.dryv/manifest.json
+<planned generated artifact paths>
+```
+
+The manifest records build/plan identity plus artifact path/hash/provenance facts from the plan.
+
+ZIP determinism includes fixed entry order, timestamps, permissions, compression mode and content. Artifacts/final bundles use spooled temporary files so larger builds spill to server temporary storage instead of accumulating in RAM.
+
+The build WebSocket remains the live progress channel while the final ZIP is downloaded over HTTP.
 
 ## HTTP transport
 
-`transport/http.py` owns thin HTTP endpoints for build/resource lifecycle and large bundle download.
-
-Conceptually support:
+`DryvApiServer` is a framework-free ASGI application. The HTTP adapter exposes:
 
 ```text
-POST /v1/builds
-GET  /v1/builds/{id}
-GET  /v1/builds/{id}/plan
-POST /v1/builds/{id}/cancel
-GET  /v1/builds/{id}/bundle
+POST   /v1/builds
+GET    /v1/builds/{id}
+GET    /v1/builds/{id}/plan
+POST   /v1/builds/{id}/cancel
+GET    /v1/builds/{id}/bundle
+DELETE /v1/builds/{id}
 ```
 
-Exact framework/router mechanics may be chosen during implementation, but transport code must call existing build/resource owners rather than contain build logic.
+Build submission includes explicit logical resources with base64 content and optional claimed hashes. Server resource verification still computes the authoritative SHA-256.
 
-Large bundle bytes should use HTTP download rather than JSON/base64 WebSocket messages.
+ZIP download uses binary HTTP rather than WebSocket/base64 and includes content length plus the deterministic bundle hash as ETag.
 
 ## WebSocket transport
 
-`transport/websocket.py` owns thin WebSocket framing for two distinct roles:
+Two deliberately separate WebSocket contracts exist:
 
 ```text
 /v1/builds/{buildId}/events
 /v1/renderers
 ```
 
-Build sockets carry progress, diagnostics, artifact metadata/control and completion events.
+The first is Project Client/observer lifecycle and artifact delivery. The second is the external Render Client protocol.
 
-Renderer sockets carry the Render Client protocol.
+Renderer WebSocket registration starts with `renderer.hello` and advertises renderer identity/version/fingerprint/capabilities/maxConcurrency. The API assigns an opaque connection ID.
 
-Do not mix UI-specific messages into either protocol.
-
-Bundle mode still streams live build/render/bundle progress over the build WebSocket while artifact bytes are delivered through the bundle download.
-
-## Bundle/client safety
-
-The server emits only normalized project-relative artifact paths. Project Clients must still independently validate downloaded manifest hashes and reject unsafe extraction paths before applying locally.
-
-The API never extracts a bundle into a user project and never receives a user project root for mutation.
-
-## Server composition
-
-`server.py` wires the final components:
+Renderer RPC over the socket supports:
 
 ```text
-DryvRuntime
-BuildManager
-ResourceStore
-RendererRegistry
-RendererScheduler
-Delivery
-HTTP transport
-WebSocket transport
+template.validate
+render.request
+render.cancel
+
+template.validation
+artifact.begin
+artifact.chunk
+artifact.end
+render.complete
+render.failed
 ```
 
-It must remain a small composition root, not a general service containing the implementation of these owners.
+The WebSocket renderer bridge uses bounded queues. If artifact delivery backpressures the scheduler, renderer inbound queues fill, WebSocket reads slow and transport backpressure propagates toward the Render Client rather than growing memory without bound.
 
-## Stateless V1
+## Server composition/lifecycle
 
-No account persistence, shared distributed cache, MCP facade or multi-node coordination is required in this task.
+`DryvApiServer` now composes:
 
-The design must leave room for future content-addressed resource reuse, but do not implement it speculatively.
+```text
+BuildManager
+DryvRuntime
+RendererRegistry
+PreflightCoordinator
+RenderScheduler
+BundleBuilder
+HTTP/WebSocket adapters
+```
 
-## Code-size enforcement
+It retains active `RenderExecution` handles so Project Client WebSockets can consume live stream-mode artifacts after build submission returns.
 
-Every production source file must remain at or below 500 lines. If a transport file approaches the limit, split by the already approved HTTP/WebSocket responsibility rather than inventing generic services/helpers.
+Bundle consumers are attached immediately when bundle-mode rendering begins, preventing the bounded artifact queue from waiting for a later HTTP download.
 
-## No-test gate
-
-Do not create, modify or rewrite tests.
+Release is allowed only after render completion/failure/cancellation, and bundle-mode builds cannot be released while their bundle is still being created.
 
 ## Completion evidence
 
-Before marking complete, inspect production code and demonstrate the intended flow:
+Completed on `develop` without test changes.
 
-```text
-Project Client
-    → HTTP build request
-    → Runtime GenerationPlan
-    → renderer prerequisite/preflight/scheduling
-    → live WebSocket progress
-    → streamed artifacts OR deterministic bundle download
-    → Project Client local apply
-```
+- the final approved API ownership tree remains intact;
+- old stdio/subprocess/service compatibility paths remain physically absent;
+- stream and bundle delivery use the same Runtime/preflight/scheduler execution path;
+- HTTP and WebSocket are thin transport adapters and do not reinterpret Canonical IR or packs;
+- renderer and Project Client WebSockets are separate protocols;
+- artifact streaming and renderer bridges use bounded queues/backpressure;
+- deterministic ZIP delivery includes a provenance manifest and spooled storage;
+- API/Runtime never write the user's project filesystem;
+- direct production-tree inspection found no extra architecture owner;
+- transport/scheduler/bundle production files respect the approximately-500-line file ceiling (WebSocket transport is at the ceiling and must not grow without splitting an approved responsibility);
+- no tests were created, modified or deleted;
+- no test success is claimed; executable certification remains intentionally deferred until user approval.
 
-Confirm `dryv-api` contains no project filesystem writer, Runtime contains no network/render execution, no production file exceeds 500 lines and no tests were changed.
+## Review gate
 
-After this task, stop for explicit user review of the final production structure/code. Do not begin test implementation until the user explicitly lifts the test gate.
+Stop after this task. Do not begin test work, client work, MCP work, stateful account storage or renderer-specific implementations until the user explicitly approves the final production structure/code.
