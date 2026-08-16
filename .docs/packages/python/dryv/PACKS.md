@@ -1,117 +1,182 @@
 # Dryv Pack contract
 
-A Dryv pack defines how Canonical Runtime IR becomes planned generated artifacts. Pack metadata remains language/runtime neutral; all target syntax stays in template resources.
+A Dryv pack defines how Canonical Runtime IR becomes planned generated artifacts. Pack metadata remains language/runtime neutral; emitted syntax remains entirely inside template resources.
 
 ## Manifest
 
-The active pack manifest is `dryv.pack.yaml` with versioned schema `dryv.dev/v1`.
+The active manifest is `dryv.pack.yaml` with schema `dryv.dev/v1`.
 
-Approved root concerns include:
+The implemented root vocabulary is:
 
 ```text
 apiVersion
-id / version / description
-requires
-include / exclude
+id
+version
+description
 options
 bindings
 selections
+templates
+requires
 executables
 commands
 ```
 
-Unknown fields are rejected rather than becoming hidden generator behavior.
+Unknown fields are rejected.
 
-## Logical resources
+## Selection vocabulary
 
-The Runtime never clones or traverses arbitrary pack paths. The Project Client/API supplies explicit logical resources:
+A selection chooses one canonical IR kind. The current closed vocabulary is:
 
 ```text
-manifest resource id
-logical template resource id
-media type
-content bytes/hash
-required renderer capability
-optional approved selection relationship
+contract
+group
+property
+schema
+policy
+failure
+event
+operation
+storage_mapping
+value_source
+view
+workflow
+presentation
 ```
 
-A build is rejected when a referenced manifest/template resource is absent from the Resource inventory.
+A selection has a stable key and may declare the binding names and symbolic names it exposes to its templates.
+
+Example:
+
+```yaml
+selections:
+  schemas:
+    kind: schema
+    bindings: []
+    symbols: []
+```
+
+Clients do not send `PlanningCandidate` objects. Runtime derives invocations from Canonical IR plus the pack manifest.
+
+## Template declarations
+
+Every template is declared by the pack itself:
+
+```yaml
+templates:
+  schema-type:
+    selection: schemas
+    file: templates/schema.ts.j2
+    renderer: jinja
+    output: src/models/{pascal}.ts
+    dependsOn: []
+```
+
+A declaration owns:
+
+- template key;
+- selection key;
+- pack-relative template file;
+- required renderer capability;
+- deterministic output pattern;
+- dependencies on other template declarations.
+
+The API must never reconstruct this mapping itself.
+
+## Output placeholders
+
+The current output placeholder vocabulary is intentionally closed:
+
+```text
+{name}
+{singular}
+{plural}
+{snake}
+{kebab}
+{camel}
+{pascal}
+{kind}
+```
+
+Runtime resolves the pattern against the selected semantic subject and prefixes the configured pack output root from `dryv.yaml`. Resulting artifact paths must remain normalized project-relative POSIX paths.
+
+## Pack bundles and logical resources
+
+Project Clients resolve local/Git pack sources before calling a remote API. The build carries an explicit pack bundle:
+
+```text
+instance name
+manifest logical resource id
+pack-relative path -> logical resource id
+```
+
+Runtime never traverses the user's filesystem and never clones a repository.
+
+The manifest decides which bundled resource is a template. Runtime verifies that every referenced template exists and records the resource media type and content hash in the `GenerationPlan`.
 
 ## Options and bindings
 
-Options are pack-owned public configuration with deterministic defaults/choices/required checks.
+Options are pack-owned public configuration with deterministic defaults, choices and required checks.
 
-Bindings are explicit project-provided values. A selection states which bindings it consumes. Bindings do not authorize arbitrary environment/project filesystem reads by Runtime or templates.
+Bindings are project-provided explicit values. A pack may state which selections consume them. Unknown options/bindings and missing required values are errors.
 
-## Selections
+## Template dependencies
 
-Selections remain the explicit generation registry. Approved existing vocabulary such as group-rooted semantic selectors may be used where already defined by the canonical pack specification.
+`dependsOn` names another template declaration in the same pack instance. Planning resolves the corresponding render-job dependency against the same semantic subject or one of that subject's canonical semantic dependencies.
 
-This migration intentionally did not expand unresolved user-facing vocabulary for filtering/grouping/import/export/symbol behavior. Runtime/API therefore accepts an explicit normalized `PlanningCandidate` contract for the generation facts needed by Planning.
+The final plan therefore contains artifact dependencies before rendering starts. Cycles and unresolved required template dependencies are errors.
 
-That is not permission for clients to invent semantic meaning: Runtime validates candidate pack/template/selection references, and semantic dependencies/context remain inspectable. Future approved selection vocabulary can move more candidate derivation into Planning without changing Render/Artifact/API contracts.
+## Context ownership
 
-## Planning boundary
+Runtime owns template context meaning. A Render Client receives JSON-compatible context, never Canonical IR Python objects.
 
-Planning turns validated semantic facts + normalized pack declarations + resolved usage inputs into:
-
-```text
-selected semantic subject(s)
-template invocation
-skip reason when skipped
-canonical JSON context
-semantic dependency set
-required renderer capability
-virtual artifact id/path
-artifact dependency set
-trace/provenance
-```
-
-Virtual artifacts exist before files exist. A dependent invocation can use planned artifact/path facts without waiting for a Project Client write.
-
-## Template context
-
-Render Clients receive only bounded JSON-compatible context prepared by Planning. They do not receive Python objects, callbacks, lazy semantic resolvers, or an unbounded Contract.
-
-Planning records which semantic IDs/branches contributed to each context so Hashing/Cache can invalidate narrowly.
-
-## Renderer capability
-
-Renderer requirement is an explicit template/resource inventory fact, e.g.:
+The current context includes:
 
 ```text
-jinja/v1
-handlebars/v1
+project
+subject / subjectId / subjectKind
+effective                    # for Schema when applicable
+semantic dependencies
+current planned artifact
+dependency planned artifacts
+pack id / instance / version
+pack options / bindings
+selection key / symbols
 ```
 
-Runtime Scheduling selects among established sessions that advertise the required capability. A pack does not discover/install an in-process template engine.
+Each job also carries a context hash and a context contract containing the available JSON paths plus a contract hash. `dryv-api` later uses this for renderer preflight without understanding pack semantics.
 
-## Artifact relationship
+## GenerationPlan boundary
 
-Planning declares logical outputs and project-relative paths. Templating validates that a Render Client returns only those planned logical output IDs. Artifacts then classify safe Project Client instructions.
-
-## Explainability
-
-The build trace preserves enough provenance to answer:
+Planning produces:
 
 ```text
-which pack declaration/template caused this invocation?
-which semantic subject(s) caused it?
-why was it selected or skipped?
-which context/dependencies were consumed?
-which renderer session handled it?
-which artifact/path resulted?
-why is the local instruction create/update/unchanged/delete-managed?
+stable RenderJob identity
+deterministic order
+semantic subject identity/kind
+selection reason
+renderer capability requirement
+template resource identity/hash/media type
+canonical context/context contract/hashes
+planned artifact id/path
+semantic dependencies
+render-job/artifact dependencies
+pack hashes
+plan hash
 ```
+
+Dryv Engine stops there.
 
 ## What packs do not own
 
 Packs do not:
 
 - redefine Canonical IR concepts;
+- connect to Render Clients;
 - write project files;
 - execute template engines;
-- manage Git credentials/repository acquisition;
-- host renderer processes;
-- mutate cache storage directly;
-- embed framework meaning into IR.
+- manage Git credentials;
+- choose renderer network endpoints;
+- create ZIP bundles;
+- mutate server/client filesystem state;
+- embed framework-specific syntax into Canonical IR.
