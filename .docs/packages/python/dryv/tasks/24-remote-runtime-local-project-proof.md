@@ -1,9 +1,11 @@
 # Task 24 — Prove remote Runtime with local Project Client ownership
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Task 22, `dryv-api`, CLI Project Client tasks
 Validation: multi-process integration test with filesystem isolation
+
+> The remote-runtime/local-project proof is implemented on `develop`. Executable/process certification is still pending because the connected repository environment exposes no checkout/test runner. See [`../PROGRESS-18-25.md`](../PROGRESS-18-25.md).
 
 ## Goal
 
