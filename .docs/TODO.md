@@ -1,6 +1,6 @@
 # Current work
 
-Dryv's approved production architecture is implemented through the Engine, `dryv-api`, Python Author helper, Jinja Render Client, and reference CLI Project Client.
+Dryv's approved production architecture is implemented and production-reviewed through the Engine, `dryv-api`, Python Author helper, Jinja Render Client, and reference CLI Project Client.
 
 ```text
 Authoring source
@@ -9,7 +9,7 @@ dryv-author
     ↓
 Canonical Dryv Runtime IR
     ↓
-dryv-cli collects dryv.yaml + IR + resolved pack bundles
+dryv-cli collects dryv.yaml + IR + resolved local/Git pack bundles
     ↓
 dryv-api
     ↓
@@ -47,15 +47,30 @@ local filesystem
 - [x] public `dryv validate`, `dryv compile`, `dryv plan`, `dryv generate` commands
 - [x] production architecture/bug review and hardening
 
-## Current review notes
+## Production review fixes
 
-The production review fixed renderer lifecycle/protocol edge cases, deterministic bundle path collisions, premature build release, Jinja template media-type detection, Windows Author targets, presentation navigation validation, strict duplicate-key handling, route-safe build IDs, failed remote-build cleanup, reserved `.dryv` output paths, and Git-backed packs.
+The review hardened:
+
+- Author target parsing on Windows and presentation navigation ownership/cycles;
+- Author subprocess timeout, strict host-envelope validation and exit-status agreement;
+- Jinja template media types, empty/nested context-contract validation, advertised concurrency and worker/sender failure propagation;
+- ASGI planning/preflight execution so blocking Runtime/renderer work cannot deadlock renderer WebSockets;
+- renderer fingerprint preflight, cancellable transient-capacity waiting, render-capacity queuing, declared-size/hash/protocol lifecycle checks and duplicate-registration cleanup;
+- strict project/API duplicate/unknown-field decoding and route-safe build identities;
+- local and Git pack acquisition through normal Git configuration/credentials;
+- streamed artifact job/order/dependency provenance and deterministic ZIP semantic provenance;
+- reserved `.dryv` outputs and symlink conflicts;
+- diff→apply time-of-check/time-of-use protection, managed-state rechecks, final-byte verification and failed-state-temp cleanup.
+
+No old AuthorSession/RenderSession/stdio compatibility path was restored.
 
 ## Remaining certification work
 
-The production code is ready for executable certification, but the previously approved no-test gate has not been lifted. No test suite has been added or run as part of the architecture work.
+Production review is complete, but executable certification is not.
 
-The root uv workspace now includes the relocated helper packages. `uv.lock` was produced before that relocation and must be regenerated once executable/testing work is explicitly approved and a dependency-resolving environment is available.
+- The root uv workspace includes the relocated helper packages, but `uv.lock` was produced before that relocation and must be regenerated in a dependency-resolving environment.
+- The current assistant execution environment cannot clone GitHub because external DNS resolution is unavailable, so no repository checkout/test execution was falsely claimed.
+- After lock regeneration, run package/import/CLI checks and real `dryv validate → compile → plan → generate` samples for both `stream` and `bundle` delivery before calling the stack test-certified.
 
 ## Rules retained
 
