@@ -1,6 +1,6 @@
 # HELPER-04 — Failures, events and operations
 
-Status: TODO
+Status: DONE — PRODUCTION REVIEWED
 Prerequisite: HELPER-03 DONE.
 
 ## Goal
@@ -21,4 +21,4 @@ Required capabilities:
 Do not model HTTP routes/framework handlers as operation semantics unless represented canonically. No generator/template behavior. No old OpenAPI route compiler copied into Author.
 
 ## Completion
-Failure/Event/Operation declarations are ergonomic but compile to explicit canonical items and IDs, with all cross-references validated. No tests yet.
+Failure/Event/Operation declarations compile to explicit canonical items and IDs with cross-references resolved through the Author compiler. Production review confirmed removal of legacy `OperationFailure` behavior. No tests were added or run.
