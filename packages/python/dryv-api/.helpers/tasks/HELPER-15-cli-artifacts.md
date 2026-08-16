@@ -1,20 +1,15 @@
 # HELPER-15 — CLI artifact stream and bundle handling
 
-Status: TODO
+Status: DONE
 Prerequisite: HELPER-14 DONE.
 
-## Goal
-Accept both live WebSocket artifact streaming and deterministic ZIP bundle delivery without creating two filesystem/application paths.
+## Implemented model
+Both live WebSocket artifact delivery and deterministic ZIP delivery normalize into one verified, disk-backed `ArtifactSet`. Content is written incrementally to a temporary workspace rather than accumulated as a whole build in memory.
 
-## Required structure
-Implement `artifacts/model.py`, `stream.py`, `bundle.py`, `manifest.py`, and `verify.py`.
-
-Both transports must normalize into one verified artifact representation/ArtifactSet containing logical artifact identity, intended relative path, content/hash and available provenance/metadata.
-
-Required verification includes artifact IDs, normalized safe relative paths, stream chunk offsets/order, declared sizes, SHA-256/content hashes and bundle manifest consistency. Large files/builds must be handled without unbounded whole-build memory growth.
+Verification covers planned artifact identity/path, safe relative paths, duplicate ids/paths, stream offsets, base64 transfer, declared sizes, SHA-256 hashes, stream completion, bundle HTTP hash/size metadata, ZIP entry identity, `dryv.bundle/v1` manifest identity and exact GenerationPlan membership.
 
 ## Enforcement
-A transport may not apply files directly. Do not trust server/client-declared hashes without verifying received bytes. Reject duplicate artifact IDs/paths and incomplete streams. Preserve backpressure rather than accumulating arbitrary queued content.
+Artifact transport never writes into the project. The returned temporary artifact set is the only handoff to the filesystem module. Stream mode preserves API backpressure because it consumes the bounded server artifact stream as received.
 
 ## Completion
-Downstream filesystem code receives the same verified model regardless of `stream` or `bundle` delivery. No tests yet.
+Stream and bundle delivery now produce the same verified artifact representation for downstream diff/apply. No tests were added or run.
