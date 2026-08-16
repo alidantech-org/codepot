@@ -11,7 +11,7 @@ from .session import BuildSession
 
 
 class BuildManager:
-    """Own active build sessions and invoke the public Dryv Runtime boundary."""
+    """Own build sessions and invoke the public Dryv Runtime planning boundary."""
 
     def __init__(self, runtime: DryvRuntime | None = None) -> None:
         self.runtime = runtime or DryvRuntime()
@@ -21,18 +21,12 @@ class BuildManager:
     def create(self, request: CreateBuildRequest) -> BuildSession:
         with self._lock:
             if request.build_id in self._sessions:
-                raise ApiContractError(
-                    "API_BUILD_EXISTS",
-                    f"build {request.build_id!r} already exists",
-                )
+                raise ApiContractError("API_BUILD_EXISTS", f"build {request.build_id!r} already exists")
         normalized = normalize_build(request)
         session = BuildSession(normalized)
         with self._lock:
             if request.build_id in self._sessions:
-                raise ApiContractError(
-                    "API_BUILD_EXISTS",
-                    f"build {request.build_id!r} already exists",
-                )
+                raise ApiContractError("API_BUILD_EXISTS", f"build {request.build_id!r} already exists")
             self._sessions[request.build_id] = session
         session.accepted()
         return session
@@ -41,32 +35,16 @@ class BuildManager:
         session = self.require(build_id)
         if not session.start_planning():
             return session
-        result = self.runtime.plan(
-            session.normalized.runtime_input,
-            events=session.runtime_event,
-        )
+        result = self.runtime.plan(session.normalized.runtime_input, events=session.runtime_event)
         if session.cancelled:
             return session
         if result.success and result.plan is not None:
             session.complete_plan(result.plan)
             return session
         diagnostics = tuple(
-            BuildDiagnostic(
-                item.code,
-                item.message,
-                item.level,
-                item.subject,
-                item.details,
-            )
+            BuildDiagnostic(item.code, item.message, item.level, item.subject, item.details)
             for item in result.diagnostics
-        )
-        if not diagnostics:
-            diagnostics = (
-                BuildDiagnostic(
-                    "API_RUNTIME_FAILED",
-                    "Dryv Runtime failed without a diagnostic",
-                ),
-            )
+        ) or (BuildDiagnostic("API_RUNTIME_FAILED", "Dryv Runtime failed without a diagnostic"),)
         session.fail(diagnostics)
         return session
 
@@ -89,18 +67,18 @@ class BuildManager:
             if session is None:
                 return False
             if session.status not in {
-                BuildStatus.PLAN_READY,
+                BuildStatus.RENDER_COMPLETE,
                 BuildStatus.CANCELLED,
                 BuildStatus.FAILED,
             }:
                 raise ApiContractError(
                     "API_BUILD_ACTIVE",
-                    f"build {build_id!r} cannot be released while active",
+                    f"build {build_id!r} cannot be released while {session.status.value}",
                 )
             del self._sessions[build_id]
             return True
 
-    def active_ids(self) -> tuple[str, ...]:
+    def ids(self) -> tuple[str, ...]:
         with self._lock:
             return tuple(sorted(self._sessions))
 
