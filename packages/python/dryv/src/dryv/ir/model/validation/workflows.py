@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dryv.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
+from dryv.ir.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
 
 from ..base import SemanticId
 from ..groups import Contract
