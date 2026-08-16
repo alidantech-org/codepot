@@ -6,7 +6,7 @@ import jinja2
 
 PACKAGE_VERSION = "0.2.0a1"
 RENDERER_ID = "jinja"
-RENDERER_CAPABILITY = "jinja/v1"
+RENDERER_CAPABILITY = "jinja"
 
 
 def renderer_fingerprint() -> str:
