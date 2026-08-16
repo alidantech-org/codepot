@@ -1,6 +1,6 @@
 # HELPER-02 — Author core registry, references, naming and metadata
 
-Status: TODO
+Status: DONE — PRODUCTION REVIEWED
 Prerequisite: HELPER-01 DONE.
 
 ## Goal
@@ -21,4 +21,4 @@ Required capabilities:
 Author refs are authoring conveniences; Canonical IR IDs remain authoritative after compilation. No reference may silently resolve by ambiguous guessing. No process/network/file-generation behavior belongs here. No generic magic registry/plugin discovery.
 
 ## Completion
-Core can represent and register cross-feature authoring relationships deterministically, while feature-specific declarations remain outside core. No tests yet.
+Core represents and registers cross-feature authoring relationships deterministically while feature-specific declarations remain outside core. Production review confirmed the ownership/reference boundary. No tests were added or run.
