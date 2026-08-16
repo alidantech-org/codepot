@@ -50,15 +50,31 @@ async def build_events(websocket: WebSocket) -> None:
         while True:
             for event in session.events(after_sequence=after):
                 after = event.sequence
-                await websocket.send_json({"type": event.type.value, "sequence": event.sequence, "buildId": event.build_id, "message": event.message, "subject": event.subject, "details": dict(event.details), "runtimeStage": event.runtime_stage})
+                await websocket.send_json(
+                    {
+                        "type": event.type.value,
+                        "sequence": event.sequence,
+                        "buildId": event.build_id,
+                        "message": event.message,
+                        "subject": event.subject,
+                        "details": dict(event.details),
+                        "runtimeStage": event.runtime_stage,
+                    }
+                )
             execution = server.execution(build_id)
-            if execution is not None and session.normalized.delivery is DeliveryMode.STREAM and not stream_finished:
+            if (
+                execution is not None
+                and session.normalized.delivery is DeliveryMode.STREAM
+                and not stream_finished
+            ):
                 item = await asyncio.to_thread(execution.stream.receive, timeout=0.05)
                 if item is not None:
                     await websocket.send_json(_artifact_document(item))
                 elif execution.done.is_set() and execution.stream.closed:
                     stream_finished = True
-                    await websocket.send_json({"type": "artifact.stream.complete", "buildId": build_id})
+                    await websocket.send_json(
+                        {"type": "artifact.stream.complete", "buildId": build_id}
+                    )
             status = session.status
             if status in _TERMINAL:
                 if session.normalized.delivery is DeliveryMode.BUNDLE:
@@ -66,7 +82,11 @@ async def build_events(websocket: WebSocket) -> None:
                     if handle is not None and not handle.ready.is_set():
                         await asyncio.sleep(0.05)
                         continue
-                if session.normalized.delivery is DeliveryMode.STREAM and execution is not None and not stream_finished:
+                if (
+                    session.normalized.delivery is DeliveryMode.STREAM
+                    and execution is not None
+                    and not stream_finished
+                ):
                     await asyncio.sleep(0.05)
                     continue
                 return
@@ -81,14 +101,18 @@ async def renderer_connection(websocket: WebSocket) -> None:
     await websocket.accept()
     transport: RemoteRendererTransport | None = None
     connection_id: str | None = None
+    registered = False
     try:
         hello_document = await asyncio.wait_for(websocket.receive_json(), timeout=10.0)
         connection_id, hello = _decode_hello(hello_document)
         transport = RemoteRendererTransport()
         server.register_renderer(RendererConnection(connection_id, hello, transport))
+        registered = True
         sender = asyncio.create_task(_renderer_sender(websocket, transport))
         receiver = asyncio.create_task(_renderer_receiver(websocket, transport))
-        done, pending = await asyncio.wait((sender, receiver), return_when=asyncio.FIRST_COMPLETED)
+        done, pending = await asyncio.wait(
+            (sender, receiver), return_when=asyncio.FIRST_COMPLETED
+        )
         for task in pending:
             task.cancel()
         for task in done:
@@ -100,7 +124,7 @@ async def renderer_connection(websocket: WebSocket) -> None:
     finally:
         if transport is not None:
             transport.close()
-        if connection_id is not None:
+        if registered and connection_id is not None:
             server.unregister_renderer(connection_id, close=False)
 
 
@@ -138,7 +162,16 @@ class RemoteRendererTransport(RenderClientTransport):
                     item = queue.get()
                     if isinstance(item, Exception):
                         raise item
-                    if not isinstance(item, (ArtifactBegin, ArtifactChunk, ArtifactEnd, RenderComplete, RenderFailed)):
+                    if not isinstance(
+                        item,
+                        (
+                            ArtifactBegin,
+                            ArtifactChunk,
+                            ArtifactEnd,
+                            RenderComplete,
+                            RenderFailed,
+                        ),
+                    ):
                         raise RuntimeError("renderer returned an invalid render response")
                     yield item
                     if isinstance(item, (RenderComplete, RenderFailed)):
@@ -181,20 +214,48 @@ class RemoteRendererTransport(RenderClientTransport):
         message_type = _string(root.get("type"), "type")
         if message_type == "template.validation":
             validation_id = _string(root.get("validationId"), "validationId")
-            self._deliver(f"validate:{validation_id}", ValidateTemplateResult(validation_id, bool(root.get("valid")), _diagnostics(root.get("diagnostics", []))))
+            self._deliver(
+                f"validate:{validation_id}",
+                ValidateTemplateResult(
+                    validation_id,
+                    _bool(root.get("valid"), "valid"),
+                    _diagnostics(root.get("diagnostics", [])),
+                ),
+            )
             return
         job_id = _string(root.get("jobId"), "jobId")
         if message_type == "artifact.begin":
-            value: object = ArtifactBegin(job_id, _string(root.get("artifactId"), "artifactId"), _string(root.get("path"), "path"), _string(root.get("mediaType"), "mediaType"), _optional_int(root.get("size")))
+            value: object = ArtifactBegin(
+                job_id,
+                _string(root.get("artifactId"), "artifactId"),
+                _string(root.get("path"), "path"),
+                _string(root.get("mediaType"), "mediaType"),
+                _optional_int(root.get("size"), "size"),
+            )
         elif message_type == "artifact.chunk":
             try:
-                content = base64.b64decode(_string(root.get("contentBase64"), "contentBase64"), validate=True)
+                content = base64.b64decode(
+                    _string(root.get("contentBase64"), "contentBase64"), validate=True
+                )
             except Exception:
-                self._deliver(f"render:{job_id}", RuntimeError("renderer artifact chunk is invalid base64"))
+                self._deliver(
+                    f"render:{job_id}",
+                    RuntimeError("renderer artifact chunk is invalid base64"),
+                )
                 return
-            value = ArtifactChunk(job_id, _string(root.get("artifactId"), "artifactId"), _int(root.get("offset"), "offset"), content)
+            value = ArtifactChunk(
+                job_id,
+                _string(root.get("artifactId"), "artifactId"),
+                _int(root.get("offset"), "offset"),
+                content,
+            )
         elif message_type == "artifact.end":
-            value = ArtifactEnd(job_id, _string(root.get("artifactId"), "artifactId"), _int(root.get("size"), "size"), _string(root.get("contentHash"), "contentHash"))
+            value = ArtifactEnd(
+                job_id,
+                _string(root.get("artifactId"), "artifactId"),
+                _int(root.get("size"), "size"),
+                _string(root.get("contentHash"), "contentHash"),
+            )
         elif message_type == "render.complete":
             value = RenderComplete(job_id)
         elif message_type == "render.failed":
@@ -230,7 +291,9 @@ class RemoteRendererTransport(RenderClientTransport):
         queue.put(value)
 
 
-async def _renderer_sender(websocket: WebSocket, transport: RemoteRendererTransport) -> None:
+async def _renderer_sender(
+    websocket: WebSocket, transport: RemoteRendererTransport
+) -> None:
     while True:
         document = await asyncio.to_thread(transport.next_outgoing)
         if document is None:
@@ -238,7 +301,9 @@ async def _renderer_sender(websocket: WebSocket, transport: RemoteRendererTransp
         await websocket.send_json(document)
 
 
-async def _renderer_receiver(websocket: WebSocket, transport: RemoteRendererTransport) -> None:
+async def _renderer_receiver(
+    websocket: WebSocket, transport: RemoteRendererTransport
+) -> None:
     while True:
         document = await websocket.receive_json()
         await asyncio.to_thread(transport.accept, document)
@@ -250,21 +315,57 @@ def _decode_hello(value: object) -> tuple[str, RendererHello]:
         raise RuntimeError("renderer WebSocket must begin with renderer.hello")
     connection_id = _string(root.get("connectionId"), "connectionId")
     capabilities_raw = root.get("capabilities")
-    if not isinstance(capabilities_raw, list) or not all(isinstance(item, str) for item in capabilities_raw):
+    if not isinstance(capabilities_raw, list) or not all(
+        isinstance(item, str) for item in capabilities_raw
+    ):
         raise RuntimeError("renderer capabilities must be an array of strings")
-    return connection_id, RendererHello(_string(root.get("protocol"), "protocol"), _string(root.get("rendererId"), "rendererId"), _string(root.get("rendererVersion"), "rendererVersion"), _string(root.get("fingerprint"), "fingerprint"), tuple(sorted(set(capabilities_raw))), _int(root.get("maxConcurrency"), "maxConcurrency"))
+    return connection_id, RendererHello(
+        _string(root.get("protocol"), "protocol"),
+        _string(root.get("rendererId"), "rendererId"),
+        _string(root.get("rendererVersion"), "rendererVersion"),
+        _string(root.get("fingerprint"), "fingerprint"),
+        tuple(capabilities_raw),
+        _int(root.get("maxConcurrency"), "maxConcurrency"),
+    )
 
 
 def _validate_document(request: ValidateTemplateRequest) -> dict[str, object]:
-    return {"type": "template.validate", "validationId": request.validation_id, "capability": request.capability, "template": _template_document(request.template), "contextContract": _contract_document(request.context_contract)}
+    return {
+        "type": "template.validate",
+        "validationId": request.validation_id,
+        "capability": request.capability,
+        "template": _template_document(request.template),
+        "contextContract": _contract_document(request.context_contract),
+    }
 
 
 def _render_document(request: RenderRequest) -> dict[str, object]:
-    return {"type": "render.request", "jobId": request.job_id, "capability": request.capability, "template": _template_document(request.template), "context": {"version": request.context.version, "value": request.context.value, "hash": request.context.hash, "contract": _contract_document(request.context.contract)}, "output": {"artifactId": request.output.artifact_id, "path": request.output.path}, "options": request.options}
+    return {
+        "type": "render.request",
+        "jobId": request.job_id,
+        "capability": request.capability,
+        "template": _template_document(request.template),
+        "context": {
+            "version": request.context.version,
+            "value": request.context.value,
+            "hash": request.context.hash,
+            "contract": _contract_document(request.context.contract),
+        },
+        "output": {
+            "artifactId": request.output.artifact_id,
+            "path": request.output.path,
+        },
+        "options": request.options,
+    }
 
 
 def _template_document(value: TemplatePayload) -> dict[str, object]:
-    return {"resourceId": value.resource_id, "mediaType": value.media_type, "contentHash": value.content_hash, "contentBase64": base64.b64encode(value.content).decode("ascii")}
+    return {
+        "resourceId": value.resource_id,
+        "mediaType": value.media_type,
+        "contentHash": value.content_hash,
+        "contentBase64": base64.b64encode(value.content).decode("ascii"),
+    }
 
 
 def _contract_document(value: ContextContractPayload) -> dict[str, object]:
@@ -273,11 +374,35 @@ def _contract_document(value: ContextContractPayload) -> dict[str, object]:
 
 def _artifact_document(value: object) -> dict[str, object]:
     if isinstance(value, ArtifactStarted):
-        return {"type": "artifact.begin", "jobId": value.job_id, "artifactId": value.artifact_id, "planIndex": value.plan_index, "path": value.path, "dependencies": list(value.dependencies), "mediaType": value.media_type, "size": value.size}
+        return {
+            "type": "artifact.begin",
+            "jobId": value.job_id,
+            "artifactId": value.artifact_id,
+            "planIndex": value.plan_index,
+            "path": value.path,
+            "dependencies": list(value.dependencies),
+            "mediaType": value.media_type,
+            "size": value.size,
+        }
     if isinstance(value, ArtifactData):
-        return {"type": "artifact.chunk", "jobId": value.job_id, "artifactId": value.artifact_id, "planIndex": value.plan_index, "offset": value.offset, "contentBase64": base64.b64encode(value.content).decode("ascii")}
+        return {
+            "type": "artifact.chunk",
+            "jobId": value.job_id,
+            "artifactId": value.artifact_id,
+            "planIndex": value.plan_index,
+            "offset": value.offset,
+            "contentBase64": base64.b64encode(value.content).decode("ascii"),
+        }
     if isinstance(value, ArtifactFinished):
-        return {"type": "artifact.end", "jobId": value.job_id, "artifactId": value.artifact_id, "planIndex": value.plan_index, "path": value.path, "size": value.size, "contentHash": value.content_hash}
+        return {
+            "type": "artifact.end",
+            "jobId": value.job_id,
+            "artifactId": value.artifact_id,
+            "planIndex": value.plan_index,
+            "path": value.path,
+            "size": value.size,
+            "contentHash": value.content_hash,
+        }
     raise TypeError(f"unsupported artifact event {type(value).__name__}")
 
 
@@ -287,7 +412,15 @@ def _diagnostics(value: object) -> tuple[RendererDiagnostic, ...]:
     result: list[RendererDiagnostic] = []
     for raw in value:
         item = _object(raw)
-        result.append(RendererDiagnostic(_string(item.get("code"), "code"), _string(item.get("message"), "message"), item.get("path") if isinstance(item.get("path"), str) else None, _optional_int(item.get("line")), _optional_int(item.get("column"))))
+        result.append(
+            RendererDiagnostic(
+                _string(item.get("code"), "code"),
+                _string(item.get("message"), "message"),
+                item.get("path") if isinstance(item.get("path"), str) else None,
+                _optional_int(item.get("line"), "line"),
+                _optional_int(item.get("column"), "column"),
+            )
+        )
     return tuple(result)
 
 
@@ -303,14 +436,22 @@ def _string(value: object, name: str) -> str:
     return value
 
 
+def _bool(value: object, name: str) -> bool:
+    if not isinstance(value, bool):
+        raise RuntimeError(f"renderer message {name} must be a boolean")
+    return value
+
+
 def _int(value: object, name: str) -> int:
     if not isinstance(value, int) or isinstance(value, bool):
         raise RuntimeError(f"renderer message {name} must be an integer")
     return value
 
 
-def _optional_int(value: object) -> int | None:
-    return value if isinstance(value, int) and not isinstance(value, bool) else None
+def _optional_int(value: object, name: str) -> int | None:
+    if value is None:
+        return None
+    return _int(value, name)
 
 
 __all__ = ["RemoteRendererTransport", "build_events", "renderer_connection"]
