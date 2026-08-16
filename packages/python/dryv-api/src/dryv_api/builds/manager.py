@@ -9,6 +9,14 @@ from dryv_api.resources.bundle import normalize_build
 
 from .session import BuildSession
 
+_RELEASABLE = {
+    BuildStatus.PLAN_READY,
+    BuildStatus.RENDER_READY,
+    BuildStatus.RENDER_COMPLETE,
+    BuildStatus.CANCELLED,
+    BuildStatus.FAILED,
+}
+
 
 class BuildManager:
     """Own build sessions and invoke the public Dryv Runtime planning boundary."""
@@ -66,11 +74,7 @@ class BuildManager:
             session = self._sessions.get(build_id)
             if session is None:
                 return False
-            if session.status not in {
-                BuildStatus.RENDER_COMPLETE,
-                BuildStatus.CANCELLED,
-                BuildStatus.FAILED,
-            }:
+            if session.status not in _RELEASABLE:
                 raise ApiContractError(
                     "API_BUILD_ACTIVE",
                     f"build {build_id!r} cannot be released while {session.status.value}",
