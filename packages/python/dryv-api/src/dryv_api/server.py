@@ -7,6 +7,8 @@ from .contracts import ApiContractError, BuildDiagnostic, CreateBuildRequest
 from .renderers import (
     PreflightCoordinator,
     PreflightReport,
+    RenderExecution,
+    RenderScheduler,
     RendererConnection,
     RendererRegistry,
     TemplatePreflightError,
@@ -14,7 +16,7 @@ from .renderers import (
 
 
 class DryvApiServer:
-    """Small API composition root around Runtime, builds and Render Client inventory."""
+    """Small API composition root around Runtime, builds and Render Client execution."""
 
     def __init__(
         self,
@@ -28,6 +30,7 @@ class DryvApiServer:
         self.builds = builds or BuildManager(runtime)
         self.renderers = renderers or RendererRegistry()
         self.preflight = PreflightCoordinator(self.renderers)
+        self.scheduler = RenderScheduler(self.renderers)
 
     def accept_build(self, request: CreateBuildRequest) -> BuildSession:
         return self.builds.create(request)
@@ -83,6 +86,22 @@ class DryvApiServer:
             self.preflight_build(session.build_id)
         return session
 
+    def render_build(self, build_id: str) -> RenderExecution:
+        session = self.builds.require(build_id)
+        report = self.preflight.report(build_id)
+        if report is None:
+            raise ApiContractError(
+                "API_PREFLIGHT_REQUIRED",
+                f"build {build_id!r} must complete renderer preflight before rendering",
+            )
+        return self.scheduler.start(session, report)
+
+    def prepare_and_render(self, request: CreateBuildRequest) -> RenderExecution | None:
+        session = self.prepare_build(request)
+        if session.status.value != "render_ready":
+            return None
+        return self.render_build(session.build_id)
+
     def register_renderer(self, connection: RendererConnection) -> None:
         self.renderers.register(connection)
 
@@ -93,7 +112,9 @@ class DryvApiServer:
         return self.builds.require(build_id)
 
     def cancel_build(self, build_id: str) -> bool:
-        return self.builds.cancel(build_id)
+        changed = self.builds.cancel(build_id)
+        self.scheduler.cancel(build_id)
+        return changed
 
     def release_build(self, build_id: str) -> bool:
         released = self.builds.release(build_id)
