@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from dryv.diagnostics import (
+from dryv.ir.diagnostics import (
     Diagnostic,
     Diagnostics,
     DiagnosticSeverity,
