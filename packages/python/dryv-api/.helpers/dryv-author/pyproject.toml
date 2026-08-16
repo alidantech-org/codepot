@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dryv-author"
-version = "0.1.0a1"
-description = "Typed Python authoring compiler and canonical IR transport for Dryv"
+version = "0.2.0a1"
+description = "Python authoring frontend for Canonical Dryv Runtime IR"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{ name = "Alidantech" }]
-keywords = ["codegen", "codepot", "semantic-ir", "pydantic", "authoring"]
+keywords = ["codegen", "codepot", "semantic-ir", "authoring"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
@@ -22,11 +22,10 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Typing :: Typed",
 ]
-dependencies = [
-  "dryv>=2.0.0a1,<2.1",
-  "pydantic>=2.7,<3",
-  "PyYAML>=6,<7",
-]
+dependencies = ["dryv>=2.0.0a1,<2.1"]
+
+[project.scripts]
+dryv-author = "dryv_author.host.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/alidantech-org/codepot"
