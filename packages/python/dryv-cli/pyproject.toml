@@ -5,12 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dryv-cli"
 version = "0.1.0a1"
-description = "Rich terminal frontend for the Dryv runtime"
+description = "Project Client CLI for the Dryv API"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{ name = "Alidantech" }]
-keywords = ["codegen", "codepot", "dryv", "cli", "tui"]
+keywords = ["codegen", "codepot", "dryv", "cli", "project-client"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",
@@ -24,7 +24,6 @@ classifiers = [
 ]
 dependencies = [
   "click>=8.1.7,<9",
-  "dryv>=2.0.0a1,<2.1",
   "questionary>=2.1,<3",
   "rich>=13.9,<15",
 ]
