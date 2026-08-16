@@ -22,6 +22,8 @@ class HashPurpose(StrEnum):
     PACK_MANIFEST = "pack-manifest"
     TEMPLATE_CONTENT = "template-content"
     CONTEXT = "context"
+    CONTEXT_CONTRACT = "context-contract"
+    GENERATION_PLAN = "generation-plan"
     RENDERER_FINGERPRINT = "renderer-fingerprint"
     ARTIFACT_CONTENT = "artifact-content"
     BUILD_INPUT = "build-input"
@@ -79,12 +81,6 @@ def hash_branch(
     record_hashes: Mapping[str, HashValue],
     dependencies: Mapping[str, Sequence[str]],
 ) -> HashValue:
-    """Hash one semantic branch from already-canonical direct record hashes.
-
-    Only dependencies reachable from ``root`` participate. Dependency ids are
-    sorted before composition so callers can build indexes in any order.
-    """
-
     cache: dict[str, str] = {}
     active: list[str] = []
 
@@ -94,18 +90,10 @@ def hash_branch(
             return cached
         direct = record_hashes.get(subject)
         if direct is None:
-            raise HashingError(
-                "HASH_MISSING_RECORD",
-                f"branch references missing direct record hash {subject!r}",
-                subject=subject,
-            )
+            raise HashingError("HASH_MISSING_RECORD", f"branch references missing direct record hash {subject!r}", subject=subject)
         if subject in active:
-            cycle = " -> ".join((*active[active.index(subject) :], subject))
-            raise HashingError(
-                "HASH_DEPENDENCY_CYCLE",
-                f"semantic dependency cycle: {cycle}",
-                subject=subject,
-            )
+            cycle = " -> ".join((*active[active.index(subject):], subject))
+            raise HashingError("HASH_DEPENDENCY_CYCLE", f"semantic dependency cycle: {cycle}", subject=subject)
         active.append(subject)
         try:
             children = tuple(sorted(set(dependencies.get(subject, ()))))
@@ -125,9 +113,7 @@ def hash_branch(
 
 
 def hash_build_inputs(parts: Mapping[str, HashValue]) -> HashValue:
-    payload: CanonicalValue = {
-        "parts": [[name, value.identity] for name, value in sorted(parts.items())]
-    }
+    payload: CanonicalValue = {"parts": [[name, value.identity] for name, value in sorted(parts.items())]}
     return hash_value(HashPurpose.BUILD_INPUT, payload)
 
 

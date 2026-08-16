@@ -107,7 +107,8 @@ def normalize_resource_id(value: str | ResourceId) -> str:
 def resource_id(namespace: str, relative_name: str) -> ResourceId:
     if not namespace or "/" in namespace or "\\" in namespace:
         raise ResourceIdError("resource namespace must be one path segment")
-    return ResourceId(f"resource://{namespace}/{relative_name.replace('\\', '/')}")
+    relative = relative_name.replace(chr(92), "/")
+    return ResourceId(f"resource://{namespace}/{relative}")
 
 
 def validate_content_hash(value: str) -> None:

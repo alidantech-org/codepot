@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import PurePosixPath
 
-from dryv.features.packs import PackTemplateResource
 from dryv.features.planning import GenerationPlan
 
 
@@ -27,16 +27,37 @@ class RuntimeResource:
 
 
 @dataclass(frozen=True, slots=True)
+class RuntimePackResource:
+    relative_path: str
+    resource_id: str
+
+    def __post_init__(self) -> None:
+        if not self.relative_path or self.relative_path.startswith("/") or "\\" in self.relative_path:
+            raise ValueError("pack bundle paths must be POSIX-relative")
+        if any(part in {"", ".", ".."} for part in PurePosixPath(self.relative_path).parts):
+            raise ValueError("pack bundle paths cannot contain dot or traversal segments")
+        if not self.resource_id.startswith("resource://"):
+            raise ValueError("pack bundle resource ids must use resource://")
+
+
+@dataclass(frozen=True, slots=True)
 class RuntimePack:
     instance_name: str
     manifest_resource_id: str
-    templates: tuple[PackTemplateResource, ...]
+    resources: tuple[RuntimePackResource, ...]
 
     def __post_init__(self) -> None:
         if not self.instance_name or self.instance_name.strip() != self.instance_name:
             raise ValueError("runtime pack instance name must be non-empty and trimmed")
         if not self.manifest_resource_id.startswith("resource://"):
             raise ValueError("runtime pack manifest must use resource://")
+        paths = tuple(item.relative_path for item in self.resources)
+        if len(paths) != len(set(paths)):
+            raise ValueError("pack bundle relative paths must be unique")
+
+    def resource_id(self, relative_path: str) -> str | None:
+        item = next((item for item in self.resources if item.relative_path == relative_path), None)
+        return None if item is None else item.resource_id
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,10 +71,10 @@ class RuntimeInput:
     def __post_init__(self) -> None:
         if not self.build_id or self.build_id.strip() != self.build_id:
             raise ValueError("build id must be non-empty and trimmed")
-        resource_ids = tuple(item.resource_id for item in self.resources)
-        if len(resource_ids) != len(set(resource_ids)):
+        ids = tuple(item.resource_id for item in self.resources)
+        if len(ids) != len(set(ids)):
             raise ValueError("runtime resource ids must be unique")
-        available = set(resource_ids)
+        available = set(ids)
         for required in (self.project_resource_id, self.canonical_ir_resource_id):
             if required not in available:
                 raise ValueError(f"required runtime resource {required!r} is missing")
@@ -63,16 +84,18 @@ class RuntimeInput:
         for pack in self.packs:
             if pack.manifest_resource_id not in available:
                 raise ValueError(f"pack manifest resource {pack.manifest_resource_id!r} is missing")
-            for template in pack.templates:
-                if template.resource_id not in available:
-                    raise ValueError(f"pack template resource {template.resource_id!r} is missing")
+            for item in pack.resources:
+                if item.resource_id not in available:
+                    raise ValueError(f"pack resource {item.resource_id!r} is missing")
 
 
 @dataclass(frozen=True, slots=True)
 class RuntimeDiagnostic:
     code: str
     message: str
+    level: str = "error"
     subject: str | None = None
+    details: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,6 +129,7 @@ __all__ = [
     "RuntimeDiagnostic",
     "RuntimeInput",
     "RuntimePack",
+    "RuntimePackResource",
     "RuntimeResource",
     "RuntimeResult",
     "RuntimeSnapshot",
