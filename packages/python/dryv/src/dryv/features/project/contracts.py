@@ -44,6 +44,22 @@ def thaw_object(value: FrozenObject) -> dict[str, object]:
 
 
 @dataclass(frozen=True, slots=True)
+class ProjectInputSource:
+    ir: str | None = None
+    author: str | None = None
+
+    def __post_init__(self) -> None:
+        if sum(item is not None for item in (self.ir, self.author)) != 1:
+            raise ValueError("project source requires exactly one ir or author locator")
+        if self.ir is not None:
+            _relative_path("project IR source", self.ir)
+        if self.author is not None and (
+            not self.author or self.author.strip() != self.author
+        ):
+            raise ValueError("project Author source must be a non-empty trimmed target")
+
+
+@dataclass(frozen=True, slots=True)
 class PackSource:
     local: str | None = None
     git: str | None = None
@@ -92,6 +108,7 @@ class ProjectConfig:
     packs: tuple[PackInstanceConfig, ...]
     resources: tuple[str, ...] = ()
     cache_mode: CacheMode = CacheMode.USE
+    source: ProjectInputSource | None = None
 
     def __post_init__(self) -> None:
         if self.api_version != "dryv.dev/v1":
@@ -179,6 +196,7 @@ __all__ = [
     "PackInstanceConfig",
     "PackSource",
     "ProjectConfig",
+    "ProjectInputSource",
     "freeze_object",
     "freeze_value",
     "thaw_object",

@@ -5,7 +5,14 @@ from typing import Any
 
 import yaml
 
-from .contracts import CacheMode, PackInstanceConfig, PackSource, ProjectConfig, freeze_object
+from .contracts import (
+    CacheMode,
+    PackInstanceConfig,
+    PackSource,
+    ProjectConfig,
+    ProjectInputSource,
+    freeze_object,
+)
 
 
 class ProjectConfigurationError(ValueError):
@@ -38,7 +45,7 @@ def load_project(content: bytes, media_type: str) -> ProjectConfig:
 
 def decode_project(value: object) -> ProjectConfig:
     root = _object(value, "$")
-    _unknown(root, {"apiVersion", "name", "packs", "resources", "cache"}, "$")
+    _unknown(root, {"apiVersion", "name", "source", "packs", "resources", "cache"}, "$")
     packs_raw = _object(root.get("packs", {}), "$.packs")
     packs: list[PackInstanceConfig] = []
     for name in sorted(packs_raw):
@@ -65,6 +72,7 @@ def decode_project(value: object) -> ProjectConfig:
             )
         except ValueError as exc:
             raise ProjectConfigurationError("PROJECT_PACK", str(exc), path=path) from exc
+    source = _decode_source(root.get("source"))
     try:
         return ProjectConfig(
             api_version=_string(root.get("apiVersion"), "$.apiVersion"),
@@ -74,9 +82,24 @@ def decode_project(value: object) -> ProjectConfig:
                 sorted(_string(item, "$.resources") for item in _list(root.get("resources", []), "$.resources"))
             ),
             cache_mode=CacheMode(_string(root.get("cache", CacheMode.USE.value), "$.cache")),
+            source=source,
         )
     except ValueError as exc:
         raise ProjectConfigurationError("PROJECT_INVALID", str(exc)) from exc
+
+
+def _decode_source(value: object) -> ProjectInputSource | None:
+    if value is None:
+        return None
+    source = _object(value, "$.source")
+    _unknown(source, {"ir", "author"}, "$.source")
+    try:
+        return ProjectInputSource(
+            ir=_optional_string(source.get("ir"), "$.source.ir"),
+            author=_optional_string(source.get("author"), "$.source.author"),
+        )
+    except ValueError as exc:
+        raise ProjectConfigurationError("PROJECT_SOURCE", str(exc), path="$.source") from exc
 
 
 def _is_json(media_type: str) -> bool:

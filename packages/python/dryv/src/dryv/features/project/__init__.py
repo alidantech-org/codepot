@@ -1,5 +1,3 @@
-"""Strict ``dryv.yaml`` usage configuration owned by Dryv Engine."""
-
 from .contracts import (
     CacheMode,
     FrozenObject,
@@ -7,6 +5,7 @@ from .contracts import (
     PackInstanceConfig,
     PackSource,
     ProjectConfig,
+    ProjectInputSource,
     freeze_object,
     freeze_value,
     thaw_object,
@@ -21,6 +20,7 @@ __all__ = [
     "PackSource",
     "ProjectConfig",
     "ProjectConfigurationError",
+    "ProjectInputSource",
     "decode_project",
     "freeze_object",
     "freeze_value",
