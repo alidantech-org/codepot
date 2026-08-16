@@ -1,9 +1,11 @@
 # Task 23 — Prove heterogeneous renderers, concurrency, and incremental cache
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Task 22, Jinja Render Client, Handlebars Render Client
 Validation: multi-process integration tests, cache invalidation assertions, scheduler/backpressure tests
+
+> The heterogeneous renderer/cache proof is implemented on `develop`. Executable/process certification is still pending because the connected repository environment exposes no checkout/test runner. See [`../PROGRESS-18-25.md`](../PROGRESS-18-25.md).
 
 ## Goal
 
