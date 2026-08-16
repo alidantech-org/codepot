@@ -1,9 +1,11 @@
 # Task 25 — Certify Dryv documentation and architecture after migration
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Tasks 21–24 and all participating external package migrations
 Validation: documentation link checks, architecture tests, full workspace verification
+
+> Documentation/architecture-certification implementation is complete on `develop`. **Executable certification is still pending** because the connected repository environment exposes no checkout/test runner. A real checkout must also run `uv lock` and commit the regenerated `uv.lock` before this migration is considered executable-certified. See [`../PROGRESS-18-25.md`](../PROGRESS-18-25.md).
 
 ## Goal
 
