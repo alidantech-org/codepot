@@ -3,15 +3,6 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Any
 
-from .diagnostics import (
-    Diagnostic,
-    Diagnostics,
-    DiagnosticSeverity,
-    SourceIdentity,
-    SourceKind,
-    SourcePosition,
-    SourceSpan,
-)
 from .ir import (
     Contract,
     ContractValidator,
@@ -22,6 +13,15 @@ from .ir import (
     Schema,
     SemanticId,
     validate_contract,
+)
+from .ir.diagnostics import (
+    Diagnostic,
+    Diagnostics,
+    DiagnosticSeverity,
+    SourceIdentity,
+    SourceKind,
+    SourcePosition,
+    SourceSpan,
 )
 from .versions import (
     CORE_VERSION,
@@ -38,6 +38,8 @@ __version__ = str(CORE_VERSION)
 
 _LAZY_EXPORTS = {
     "DryvRuntime": ("dryv.runtime", "DryvRuntime"),
+    "RuntimeInput": ("dryv.runtime", "RuntimeInput"),
+    "RuntimeResult": ("dryv.runtime", "RuntimeResult"),
     "RuntimeSnapshot": ("dryv.runtime", "RuntimeSnapshot"),
     "contract_from_document": ("dryv.features.serialization", "contract_from_document"),
     "contract_from_json": ("dryv.features.serialization", "contract_from_json"),
@@ -45,7 +47,6 @@ _LAZY_EXPORTS = {
     "contract_to_document": ("dryv.features.serialization", "contract_to_document"),
     "contract_to_json": ("dryv.features.serialization", "contract_to_json"),
     "contract_to_yaml": ("dryv.features.serialization", "contract_to_yaml"),
-    "create_runtime": ("dryv.runtime", "create_runtime"),
 }
 
 
@@ -81,6 +82,8 @@ __all__ = [
     "NameProjection",
     "Operation",
     "PUBLIC_API_VERSION",
+    "RuntimeInput",
+    "RuntimeResult",
     "RuntimeSnapshot",
     "Schema",
     "SemanticId",
@@ -95,6 +98,5 @@ __all__ = [
     "contract_to_document",
     "contract_to_json",
     "contract_to_yaml",
-    "create_runtime",
     "validate_contract",
 ]

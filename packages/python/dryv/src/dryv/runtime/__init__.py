@@ -1,35 +1,29 @@
-"""Transport-neutral Dryv Runtime composition root."""
+"""Deterministic semantic/planning composition root for Dryv Engine."""
 
 from .contracts import (
-    AuthorSourceBuild,
-    AvailableRenderSession,
-    BuildCacheStats,
-    BuildDiagnostic,
-    BuildPack,
-    BuildRequest,
-    BuildResource,
-    BuildResult,
-    BuildStatus,
-    BuildTrace,
-    RuntimeBuildError,
+    RuntimeDiagnostic,
+    RuntimeInput,
+    RuntimePack,
+    RuntimeResource,
+    RuntimeResult,
     RuntimeSnapshot,
+    RuntimeStatus,
+    RuntimeTrace,
 )
-from .engine import DryvRuntime
-from .facade import create_runtime
+from .events import RuntimeEvent, RuntimeEventSink, RuntimeStage
+from .runtime import DryvRuntime
 
 __all__ = [
-    "AuthorSourceBuild",
-    "AvailableRenderSession",
-    "BuildCacheStats",
-    "BuildDiagnostic",
-    "BuildPack",
-    "BuildRequest",
-    "BuildResource",
-    "BuildResult",
-    "BuildStatus",
-    "BuildTrace",
     "DryvRuntime",
-    "RuntimeBuildError",
+    "RuntimeDiagnostic",
+    "RuntimeEvent",
+    "RuntimeEventSink",
+    "RuntimeInput",
+    "RuntimePack",
+    "RuntimeResource",
+    "RuntimeResult",
     "RuntimeSnapshot",
-    "create_runtime",
+    "RuntimeStage",
+    "RuntimeStatus",
+    "RuntimeTrace",
 ]

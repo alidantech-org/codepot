@@ -2,194 +2,113 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Mapping
 
-from dryv.features.artifacts import (
-    ArtifactClassification,
-    ManagedOutputManifest,
-    ProjectSnapshot,
-)
-from dryv.features.authoring import AuthorRequest, AuthorSession
-from dryv.features.cache import CacheMode
 from dryv.features.packs import PackTemplateResource
-from dryv.features.planning import GenerationPlan, PlanningCandidate
-from dryv.features.scheduling import CancellationToken
-from dryv.features.templating import RenderSession
-from dryv.ir import Contract
+from dryv.features.planning import GenerationPlan
 
 
-class RuntimeBuildError(ValueError):
-    def __init__(self, code: str, message: str, *, subject: str | None = None) -> None:
-        super().__init__(message)
-        self.code = code
-        self.message = message
-        self.subject = subject
-
-
-class BuildStatus(StrEnum):
-    RENDER_COMPLETE = "render_complete"
+class RuntimeStatus(StrEnum):
+    PLAN_COMPLETE = "plan_complete"
     FAILED = "failed"
-    CANCELLED = "cancelled"
 
 
 @dataclass(frozen=True, slots=True)
-class BuildResource:
+class RuntimeResource:
     resource_id: str
     media_type: str
     content: bytes
     content_hash: str | None = None
 
     def __post_init__(self) -> None:
-        for label, value in (("resource id", self.resource_id), ("media type", self.media_type)):
-            if not value or value.strip() != value:
-                raise ValueError(f"{label} must be non-empty and trimmed")
+        if not self.resource_id.startswith("resource://"):
+            raise ValueError("runtime resource ids must use resource://")
+        if not self.media_type or self.media_type.strip() != self.media_type:
+            raise ValueError("runtime resource media type must be non-empty and trimmed")
 
 
 @dataclass(frozen=True, slots=True)
-class BuildPack:
-    manifest_document: Mapping[str, object]
-    templates: tuple[PackTemplateResource, ...]
+class RuntimePack:
+    instance_name: str
     manifest_resource_id: str
+    templates: tuple[PackTemplateResource, ...]
 
     def __post_init__(self) -> None:
-        if not self.manifest_resource_id or self.manifest_resource_id.strip() != self.manifest_resource_id:
-            raise ValueError("pack manifest resource id must be non-empty and trimmed")
+        if not self.instance_name or self.instance_name.strip() != self.instance_name:
+            raise ValueError("runtime pack instance name must be non-empty and trimmed")
+        if not self.manifest_resource_id.startswith("resource://"):
+            raise ValueError("runtime pack manifest must use resource://")
 
 
 @dataclass(frozen=True, slots=True)
-class AvailableRenderSession:
-    session_id: str
-    session: RenderSession
-
-    def __post_init__(self) -> None:
-        if not self.session_id or self.session_id.strip() != self.session_id:
-            raise ValueError("render session id must be non-empty and trimmed")
-
-
-@dataclass(frozen=True, slots=True)
-class AuthorSourceBuild:
-    request: AuthorRequest
-    session: AuthorSession
-
-
-@dataclass(frozen=True, slots=True)
-class BuildRequest:
+class RuntimeInput:
     build_id: str
-    resources: tuple[BuildResource, ...]
-    planning_candidates: tuple[PlanningCandidate, ...]
-    project_document: Mapping[str, object] | None = None
-    packs: tuple[BuildPack, ...] = ()
-    precompiled_contract: Contract | None = None
-    precompiled_ir_resource_id: str | None = None
-    author: AuthorSourceBuild | None = None
-    render_sessions: tuple[AvailableRenderSession, ...] = ()
-    previous_managed_outputs: ManagedOutputManifest = ManagedOutputManifest()
-    project_snapshot: ProjectSnapshot = ProjectSnapshot(())
-    cache_mode: CacheMode = CacheMode.USE
-    commit_cache: bool = True
-    cancellation: CancellationToken | None = None
+    project_resource_id: str
+    canonical_ir_resource_id: str
+    resources: tuple[RuntimeResource, ...]
+    packs: tuple[RuntimePack, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.build_id or self.build_id.strip() != self.build_id:
             raise ValueError("build id must be non-empty and trimmed")
-        sources = sum(
-            item is not None
-            for item in (self.precompiled_contract, self.precompiled_ir_resource_id, self.author)
-        )
-        if sources != 1:
-            raise ValueError("build requests require exactly one Canonical IR source")
-
         resource_ids = tuple(item.resource_id for item in self.resources)
         if len(resource_ids) != len(set(resource_ids)):
-            raise ValueError("build resource ids must be unique")
-        resource_id_set = set(resource_ids)
-
-        if (
-            self.precompiled_ir_resource_id is not None
-            and self.precompiled_ir_resource_id not in resource_id_set
-        ):
-            raise ValueError("precompiled Canonical IR resource must be supplied in resources")
-
+            raise ValueError("runtime resource ids must be unique")
+        available = set(resource_ids)
+        for required in (self.project_resource_id, self.canonical_ir_resource_id):
+            if required not in available:
+                raise ValueError(f"required runtime resource {required!r} is missing")
+        pack_names = tuple(item.instance_name for item in self.packs)
+        if len(pack_names) != len(set(pack_names)):
+            raise ValueError("runtime pack instance names must be unique")
         for pack in self.packs:
-            if pack.manifest_resource_id not in resource_id_set:
-                raise ValueError(
-                    f"pack manifest resource {pack.manifest_resource_id!r} must be supplied in resources"
-                )
+            if pack.manifest_resource_id not in available:
+                raise ValueError(f"pack manifest resource {pack.manifest_resource_id!r} is missing")
             for template in pack.templates:
-                if template.resource_id not in resource_id_set:
-                    raise ValueError(
-                        f"pack template resource {template.resource_id!r} must be supplied in resources"
-                    )
-
-        session_ids = tuple(item.session_id for item in self.render_sessions)
-        if len(session_ids) != len(set(session_ids)):
-            raise ValueError("render session ids must be unique")
+                if template.resource_id not in available:
+                    raise ValueError(f"pack template resource {template.resource_id!r} is missing")
 
 
 @dataclass(frozen=True, slots=True)
-class BuildTrace:
-    stage: str
-    subject: str
-    message: str
-    details: tuple[tuple[str, str], ...] = ()
-
-    def __post_init__(self) -> None:
-        if not self.stage or not self.subject or not self.message:
-            raise ValueError("build trace requires stage, subject and message")
-        if tuple(sorted(self.details)) != self.details:
-            raise ValueError("build trace details must be sorted")
-
-
-@dataclass(frozen=True, slots=True)
-class BuildDiagnostic:
+class RuntimeDiagnostic:
     code: str
     message: str
     subject: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
-class BuildCacheStats:
-    context_hits: int = 0
-    context_misses: int = 0
-    render_hits: int = 0
-    render_misses: int = 0
+class RuntimeTrace:
+    stage: str
+    message: str
+    subject: str | None = None
+    details: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
-class BuildResult:
+class RuntimeResult:
     build_id: str
-    status: BuildStatus
-    render_complete: bool
+    status: RuntimeStatus
     plan: GenerationPlan | None
-    artifacts: ArtifactClassification | None
-    trace: tuple[BuildTrace, ...]
-    diagnostics: tuple[BuildDiagnostic, ...]
-    cache: BuildCacheStats = BuildCacheStats()
+    diagnostics: tuple[RuntimeDiagnostic, ...] = ()
+    trace: tuple[RuntimeTrace, ...] = ()
 
     @property
     def success(self) -> bool:
-        return self.status is BuildStatus.RENDER_COMPLETE and self.render_complete
+        return self.status is RuntimeStatus.PLAN_COMPLETE and self.plan is not None
 
 
 @dataclass(frozen=True, slots=True)
 class RuntimeSnapshot:
     core_version: str
     features: tuple[str, ...]
-    author_protocol_version: int
-    render_protocol_version: int
 
 
 __all__ = [
-    "AuthorSourceBuild",
-    "AvailableRenderSession",
-    "BuildCacheStats",
-    "BuildDiagnostic",
-    "BuildPack",
-    "BuildRequest",
-    "BuildResource",
-    "BuildResult",
-    "BuildStatus",
-    "BuildTrace",
-    "RuntimeBuildError",
+    "RuntimeDiagnostic",
+    "RuntimeInput",
+    "RuntimePack",
+    "RuntimeResource",
+    "RuntimeResult",
     "RuntimeSnapshot",
+    "RuntimeStatus",
+    "RuntimeTrace",
 ]

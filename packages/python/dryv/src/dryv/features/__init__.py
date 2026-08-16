@@ -1,13 +1,6 @@
-"""Public feature namespace for Dryv Runtime capabilities.
-
-Each child package is an independent capability boundary. Runtime may compose
-Features through their public package roots; Features must not import Runtime
-or sibling Feature internals.
-"""
+"""Independent capabilities composed only by ``dryv.runtime``."""
 
 __all__ = [
-    "artifacts",
-    "authoring",
     "cache",
     "diagnostics",
     "hashing",
@@ -16,7 +9,5 @@ __all__ = [
     "planning",
     "project",
     "resources",
-    "scheduling",
     "serialization",
-    "templating",
 ]
