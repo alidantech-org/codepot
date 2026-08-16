@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from typing import Any
 
 import yaml
 
@@ -33,7 +34,10 @@ def load_locators(content: bytes, media_type: str) -> ProjectLocators:
     except UnicodeDecodeError as exc:
         raise ProjectError("CLI_PROJECT_UTF8", "dryv.yaml must be UTF-8") from exc
     try:
-        document = json.loads(text) if media_type.endswith("json") else yaml.safe_load(text)
+        if media_type.endswith("json"):
+            document = json.loads(text, object_pairs_hook=_json_pairs)
+        else:
+            document = yaml.load(text, Loader=_UniqueKeyLoader)
     except (json.JSONDecodeError, yaml.YAMLError) as exc:
         raise ProjectError("CLI_PROJECT_SYNTAX", "dryv.yaml could not be parsed") from exc
     if not isinstance(document, dict):
@@ -42,8 +46,12 @@ def load_locators(content: bytes, media_type: str) -> ProjectLocators:
     source_ir, source_author = _source(document.get("source"))
     packs = _packs(document.get("packs", {}))
     resources_raw = document.get("resources", [])
-    if not isinstance(resources_raw, list) or not all(isinstance(item, str) for item in resources_raw):
+    if not isinstance(resources_raw, list) or not all(
+        isinstance(item, str) for item in resources_raw
+    ):
         raise ProjectError("CLI_PROJECT_RESOURCES", "resources must be an array of resource ids")
+    if len(resources_raw) != len(set(resources_raw)):
+        raise ProjectError("CLI_PROJECT_RESOURCES", "resources must be unique")
     return ProjectLocators(source_ir, source_author, packs, tuple(sorted(resources_raw)))
 
 
@@ -72,15 +80,34 @@ def _packs(value: object) -> tuple[PackLocator, ...]:
         source = item.get("source")
         if not isinstance(source, dict):
             raise ProjectError("CLI_PROJECT_PACK", f"pack {name!r} requires a source object")
+        local = _optional_string(source.get("local"), f"packs.{name}.source.local")
+        git = _optional_string(source.get("git"), f"packs.{name}.source.git")
+        resource = _optional_string(source.get("resource"), f"packs.{name}.source.resource")
+        ref = _optional_string(source.get("ref"), f"packs.{name}.source.ref")
+        path = _optional_string(source.get("path"), f"packs.{name}.source.path")
+        if sum(item is not None for item in (local, git, resource)) != 1:
+            raise ProjectError(
+                "CLI_PROJECT_PACK_SOURCE",
+                f"pack {name!r} requires exactly one of source.local, source.git or source.resource",
+            )
+        if git is not None and ref is None:
+            raise ProjectError(
+                "CLI_PROJECT_PACK_REF", f"Git pack {name!r} requires an explicit source.ref"
+            )
+        if git is None and (ref is not None or path is not None):
+            raise ProjectError(
+                "CLI_PROJECT_PACK_SOURCE",
+                f"pack {name!r} may use source.ref/source.path only with source.git",
+            )
         result.append(
             PackLocator(
                 name=name,
                 output=_string(item.get("output"), f"packs.{name}.output"),
-                local=_optional_string(source.get("local"), f"packs.{name}.source.local"),
-                git=_optional_string(source.get("git"), f"packs.{name}.source.git"),
-                ref=_optional_string(source.get("ref"), f"packs.{name}.source.ref"),
-                path=_optional_string(source.get("path"), f"packs.{name}.source.path"),
-                resource=_optional_string(source.get("resource"), f"packs.{name}.source.resource"),
+                local=local,
+                git=git,
+                ref=ref,
+                path=path,
+                resource=resource,
             )
         )
     return tuple(result)
@@ -95,5 +122,34 @@ def _string(value: object, path: str) -> str:
 def _optional_string(value: object, path: str) -> str | None:
     return None if value is None else _string(value, path)
 
+
+def _json_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ProjectError("CLI_PROJECT_DUPLICATE_KEY", f"duplicate project key {key!r}")
+        result[key] = value
+    return result
+
+
+class _UniqueKeyLoader(yaml.SafeLoader):
+    pass
+
+
+def _yaml_mapping(
+    loader: _UniqueKeyLoader, node: yaml.MappingNode, deep: bool = False
+) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        if not isinstance(key, str):
+            raise ProjectError("CLI_PROJECT_KEY", "YAML project mapping keys must be strings")
+        if key in result:
+            raise ProjectError("CLI_PROJECT_DUPLICATE_KEY", f"duplicate project key {key!r}")
+        result[key] = loader.construct_object(value_node, deep=deep)
+    return result
+
+
+_UniqueKeyLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _yaml_mapping)
 
 __all__ = ["PackLocator", "ProjectLocators", "load_locators"]
