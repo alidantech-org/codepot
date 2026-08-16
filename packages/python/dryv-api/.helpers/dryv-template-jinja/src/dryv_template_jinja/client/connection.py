@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import json
 from collections.abc import Iterable
-from queue import Queue
+from queue import Full, Queue
 from threading import Lock, Thread
 from typing import Any
 
@@ -30,7 +30,14 @@ from dryv_api.renderers import (
 )
 from dryv_api.renderers.protocol import RenderStreamMessage
 
-from dryv_template_jinja.renderer import PACKAGE_VERSION, RENDERER_CAPABILITY, RENDERER_ID, render_template, renderer_fingerprint, validate_template
+from dryv_template_jinja.renderer import (
+    PACKAGE_VERSION,
+    RENDERER_CAPABILITY,
+    RENDERER_ID,
+    render_template,
+    renderer_fingerprint,
+    validate_template,
+)
 
 _STOP = object()
 
@@ -47,7 +54,14 @@ class JinjaRenderClient:
 
     @property
     def hello(self) -> RendererHello:
-        return RendererHello(RENDER_PROTOCOL_VERSION, RENDERER_ID, PACKAGE_VERSION, renderer_fingerprint(), (RENDERER_CAPABILITY,), self.max_concurrency)
+        return RendererHello(
+            RENDER_PROTOCOL_VERSION,
+            RENDERER_ID,
+            PACKAGE_VERSION,
+            renderer_fingerprint(),
+            (RENDERER_CAPABILITY,),
+            self.max_concurrency,
+        )
 
     def validate(self, request: ValidateTemplateRequest) -> ValidateTemplateResult:
         self._require_open()
@@ -57,7 +71,11 @@ class JinjaRenderClient:
         self._require_open()
         with self._lock:
             self._cancelled.discard(request.job_id)
-        return render_template(request, cancelled=lambda: self._is_cancelled(request.job_id), chunk_bytes=self.chunk_bytes)
+        return render_template(
+            request,
+            cancelled=lambda: self._is_cancelled(request.job_id),
+            chunk_bytes=self.chunk_bytes,
+        )
 
     def cancel(self, request: CancelRender) -> None:
         with self._lock:
@@ -74,7 +92,7 @@ class JinjaRenderClient:
     def serve(self, api_url: str, *, connection_id: str) -> None:
         self._require_open()
         outgoing: Queue[dict[str, object] | object] = Queue(maxsize=64)
-        active: Thread | None = None
+        active: dict[str, Thread] = {}
         with connect(api_url, max_size=16 * 1024 * 1024, open_timeout=10.0) as socket:
             socket.send(json.dumps(_hello_document(connection_id, self.hello), sort_keys=True))
 
@@ -85,7 +103,11 @@ class JinjaRenderClient:
                         return
                     socket.send(json.dumps(document, sort_keys=True))
 
-            sender = Thread(target=send_loop, name=f"dryv-jinja-send-{connection_id}", daemon=True)
+            sender = Thread(
+                target=send_loop,
+                name=f"dryv-jinja-send-{connection_id}",
+                daemon=True,
+            )
             sender.start()
             try:
                 for raw in socket:
@@ -93,31 +115,42 @@ class JinjaRenderClient:
                         raise RuntimeError("renderer WebSocket requires JSON text frames")
                     root = _object(json.loads(raw))
                     message_type = _string(root.get("type"), "type")
+                    _discard_finished(active)
                     if message_type == "template.validate":
                         outgoing.put(_validation_document(self.validate(_decode_validate(root))))
                     elif message_type == "render.request":
-                        if active is not None and active.is_alive():
-                            raise RuntimeError("renderer received concurrent work beyond advertised capacity")
                         request = _decode_render(root)
-                        active = Thread(
+                        if request.job_id in active:
+                            raise RuntimeError(f"renderer received duplicate render job {request.job_id!r}")
+                        if len(active) >= self.max_concurrency:
+                            raise RuntimeError("renderer received concurrent work beyond advertised capacity")
+                        thread = Thread(
                             target=self._render_to_queue,
                             args=(request, outgoing),
                             name=f"dryv-jinja-render-{request.job_id}",
                             daemon=True,
                         )
-                        active.start()
+                        active[request.job_id] = thread
+                        thread.start()
                     elif message_type == "render.cancel":
                         self.cancel(CancelRender(_string(root.get("jobId"), "jobId")))
                     else:
                         raise RuntimeError(f"unknown renderer request {message_type!r}")
             finally:
                 self.close()
-                if active is not None:
-                    active.join(timeout=2.0)
-                outgoing.put(_STOP)
+                for thread in tuple(active.values()):
+                    thread.join(timeout=2.0)
+                try:
+                    outgoing.put_nowait(_STOP)
+                except Full:
+                    pass
                 sender.join(timeout=2.0)
 
-    def _render_to_queue(self, request: RenderRequest, outgoing: Queue[dict[str, object] | object]) -> None:
+    def _render_to_queue(
+        self,
+        request: RenderRequest,
+        outgoing: Queue[dict[str, object] | object],
+    ) -> None:
         for message in self.render(request):
             outgoing.put(_render_document(message))
 
@@ -131,12 +164,32 @@ class JinjaRenderClient:
                 raise RuntimeError("Jinja Render Client is closed")
 
 
+def _discard_finished(active: dict[str, Thread]) -> None:
+    for job_id, thread in tuple(active.items()):
+        if not thread.is_alive():
+            active.pop(job_id, None)
+
+
 def _hello_document(connection_id: str, hello: RendererHello) -> dict[str, object]:
-    return {"type": "renderer.hello", "connectionId": connection_id, "protocol": hello.protocol, "rendererId": hello.renderer_id, "rendererVersion": hello.renderer_version, "fingerprint": hello.fingerprint, "capabilities": list(hello.capabilities), "maxConcurrency": hello.max_concurrency}
+    return {
+        "type": "renderer.hello",
+        "connectionId": connection_id,
+        "protocol": hello.protocol,
+        "rendererId": hello.renderer_id,
+        "rendererVersion": hello.renderer_version,
+        "fingerprint": hello.fingerprint,
+        "capabilities": list(hello.capabilities),
+        "maxConcurrency": hello.max_concurrency,
+    }
 
 
 def _decode_validate(root: dict[str, Any]) -> ValidateTemplateRequest:
-    return ValidateTemplateRequest(_string(root.get("validationId"), "validationId"), _string(root.get("capability"), "capability"), _template(_object(root.get("template"))), _contract(_object(root.get("contextContract"))))
+    return ValidateTemplateRequest(
+        _string(root.get("validationId"), "validationId"),
+        _string(root.get("capability"), "capability"),
+        _template(_object(root.get("template"))),
+        _contract(_object(root.get("contextContract"))),
+    )
 
 
 def _decode_render(root: dict[str, Any]) -> RenderRequest:
@@ -152,47 +205,100 @@ def _decode_render(root: dict[str, Any]) -> RenderRequest:
         _string(root.get("jobId"), "jobId"),
         _string(root.get("capability"), "capability"),
         _template(_object(root.get("template"))),
-        ContextPayload(_int(context_raw.get("version"), "context.version"), dict(value), _string(context_raw.get("hash"), "context.hash"), _contract(_object(context_raw.get("contract")))),
-        PlannedOutputPayload(_string(output.get("artifactId"), "output.artifactId"), _string(output.get("path"), "output.path")),
+        ContextPayload(
+            _int(context_raw.get("version"), "context.version"),
+            dict(value),
+            _string(context_raw.get("hash"), "context.hash"),
+            _contract(_object(context_raw.get("contract"))),
+        ),
+        PlannedOutputPayload(
+            _string(output.get("artifactId"), "output.artifactId"),
+            _string(output.get("path"), "output.path"),
+        ),
         dict(options),
     )
 
 
 def _template(value: dict[str, Any]) -> TemplatePayload:
     try:
-        content = base64.b64decode(_string(value.get("contentBase64"), "contentBase64"), validate=True)
+        content = base64.b64decode(
+            _string(value.get("contentBase64"), "contentBase64"), validate=True
+        )
     except Exception as exc:
         raise RuntimeError("template contentBase64 is invalid") from exc
-    return TemplatePayload(_string(value.get("resourceId"), "resourceId"), _string(value.get("mediaType"), "mediaType"), _string(value.get("contentHash"), "contentHash"), content)
+    return TemplatePayload(
+        _string(value.get("resourceId"), "resourceId"),
+        _string(value.get("mediaType"), "mediaType"),
+        _string(value.get("contentHash"), "contentHash"),
+        content,
+    )
 
 
 def _contract(value: dict[str, Any]) -> ContextContractPayload:
     paths = value.get("paths")
     if not isinstance(paths, list) or not all(isinstance(item, str) for item in paths):
         raise RuntimeError("context contract paths must be an array of strings")
-    return ContextContractPayload(_int(value.get("version"), "contextContract.version"), tuple(paths), _string(value.get("hash"), "contextContract.hash"))
+    return ContextContractPayload(
+        _int(value.get("version"), "contextContract.version"),
+        tuple(paths),
+        _string(value.get("hash"), "contextContract.hash"),
+    )
 
 
 def _validation_document(value: ValidateTemplateResult) -> dict[str, object]:
-    return {"type": "template.validation", "validationId": value.validation_id, "valid": value.valid, "diagnostics": [_diagnostic_document(item) for item in value.diagnostics]}
+    return {
+        "type": "template.validation",
+        "validationId": value.validation_id,
+        "valid": value.valid,
+        "diagnostics": [_diagnostic_document(item) for item in value.diagnostics],
+    }
 
 
 def _render_document(value: RenderStreamMessage) -> dict[str, object]:
     if isinstance(value, ArtifactBegin):
-        return {"type": "artifact.begin", "jobId": value.job_id, "artifactId": value.artifact_id, "path": value.path, "mediaType": value.media_type, "size": value.size}
+        return {
+            "type": "artifact.begin",
+            "jobId": value.job_id,
+            "artifactId": value.artifact_id,
+            "path": value.path,
+            "mediaType": value.media_type,
+            "size": value.size,
+        }
     if isinstance(value, ArtifactChunk):
-        return {"type": "artifact.chunk", "jobId": value.job_id, "artifactId": value.artifact_id, "offset": value.offset, "contentBase64": base64.b64encode(value.content).decode("ascii")}
+        return {
+            "type": "artifact.chunk",
+            "jobId": value.job_id,
+            "artifactId": value.artifact_id,
+            "offset": value.offset,
+            "contentBase64": base64.b64encode(value.content).decode("ascii"),
+        }
     if isinstance(value, ArtifactEnd):
-        return {"type": "artifact.end", "jobId": value.job_id, "artifactId": value.artifact_id, "size": value.size, "contentHash": value.content_hash}
+        return {
+            "type": "artifact.end",
+            "jobId": value.job_id,
+            "artifactId": value.artifact_id,
+            "size": value.size,
+            "contentHash": value.content_hash,
+        }
     if isinstance(value, RenderComplete):
         return {"type": "render.complete", "jobId": value.job_id}
     if isinstance(value, RenderFailed):
-        return {"type": "render.failed", "jobId": value.job_id, "diagnostics": [_diagnostic_document(item) for item in value.diagnostics]}
+        return {
+            "type": "render.failed",
+            "jobId": value.job_id,
+            "diagnostics": [_diagnostic_document(item) for item in value.diagnostics],
+        }
     raise TypeError(f"unsupported render message {type(value).__name__}")
 
 
 def _diagnostic_document(value: RendererDiagnostic) -> dict[str, object]:
-    return {"code": value.code, "message": value.message, "path": value.path, "line": value.line, "column": value.column}
+    return {
+        "code": value.code,
+        "message": value.message,
+        "path": value.path,
+        "line": value.line,
+        "column": value.column,
+    }
 
 
 def _object(value: object) -> dict[str, Any]:
