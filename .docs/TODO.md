@@ -55,12 +55,13 @@ The review hardened:
 - Author subprocess timeout, strict host-envelope validation and exit-status agreement;
 - Jinja template media types, empty/nested context-contract validation, advertised concurrency and worker/sender failure propagation;
 - ASGI planning/preflight execution so blocking Runtime/renderer work cannot deadlock renderer WebSockets;
-- renderer fingerprint preflight, cancellable transient-capacity waiting, render-capacity queuing, declared-size/hash/protocol lifecycle checks and duplicate-registration cleanup;
+- renderer fingerprint preflight, cancellable transient-capacity waiting, render-capacity queuing, declared-size/hash/protocol lifecycle checks, duplicate-registration cleanup and closed-state propagation;
 - strict project/API duplicate/unknown-field decoding and route-safe build identities;
 - local and Git pack acquisition through normal Git configuration/credentials;
 - streamed artifact job/order/dependency provenance and deterministic ZIP semantic provenance;
 - reserved `.dryv` outputs and symlink conflicts;
-- diff→apply time-of-check/time-of-use protection, managed-state rechecks, final-byte verification and failed-state-temp cleanup.
+- diff→apply time-of-check/time-of-use protection, managed-state rechecks, final-byte verification and failed-state-temp cleanup;
+- pack `requires` / `executables` / `commands` declarations now fail explicitly instead of being silently ignored until a typed planned-execution contract is implemented.
 
 No old AuthorSession/RenderSession/stdio compatibility path was restored.
 
