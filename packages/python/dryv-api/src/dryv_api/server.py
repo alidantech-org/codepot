@@ -36,6 +36,7 @@ class DryvApiServer:
         self.scheduler = RenderScheduler(self.renderers)
         self.bundles = BundleBuilder()
         self._executions: dict[str, RenderExecution] = {}
+        self._stream_consumers: set[str] = set()
         self._lock = Lock()
 
     def accept_build(self, request: CreateBuildRequest) -> BuildSession:
@@ -116,6 +117,23 @@ class DryvApiServer:
     def bundle(self, build_id: str) -> BundleHandle | None:
         return self.bundles.get(build_id)
 
+    def claim_stream_consumer(self, build_id: str) -> bool:
+        session = self.builds.require(build_id)
+        if session.normalized.delivery is not DeliveryMode.STREAM:
+            raise ApiContractError(
+                "API_STREAM_DELIVERY",
+                f"build {build_id!r} is not configured for stream delivery",
+            )
+        with self._lock:
+            if build_id in self._stream_consumers:
+                return False
+            self._stream_consumers.add(build_id)
+            return True
+
+    def release_stream_consumer(self, build_id: str) -> None:
+        with self._lock:
+            self._stream_consumers.discard(build_id)
+
     def cancel_build(self, build_id: str) -> bool:
         changed = self.builds.cancel(build_id)
         self.scheduler.cancel(build_id)
@@ -141,6 +159,7 @@ class DryvApiServer:
         self.bundles.release(build_id)
         with self._lock:
             self._executions.pop(build_id, None)
+            self._stream_consumers.discard(build_id)
         return True
 
 
