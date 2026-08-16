@@ -1,28 +1,32 @@
-"""Normalized `dryv.pack.yaml` meaning and supplied pack-resource relationships."""
+"""Versioned, closed Template Pack semantics for Dryv planning."""
 
-from .decoder import decode_pack_manifest, normalize_pack
-from .model import (
+from .contracts import (
     BindingDefinition,
     FrozenObject,
     FrozenValue,
-    NormalizedPack,
     OptionDefinition,
     PackConfigurationError,
     PackManifest,
-    PackTemplateResource,
-    SelectionConfig,
+    ResolvedPack,
+    SelectionDefinition,
+    SelectionKind,
+    TemplateDefinition,
 )
+from .loader import decode_pack_manifest, load_pack_manifest
+from .validation import resolve_pack
 
 __all__ = [
     "BindingDefinition",
     "FrozenObject",
     "FrozenValue",
-    "NormalizedPack",
     "OptionDefinition",
     "PackConfigurationError",
     "PackManifest",
-    "PackTemplateResource",
-    "SelectionConfig",
+    "ResolvedPack",
+    "SelectionDefinition",
+    "SelectionKind",
+    "TemplateDefinition",
     "decode_pack_manifest",
-    "normalize_pack",
+    "load_pack_manifest",
+    "resolve_pack",
 ]
