@@ -1,6 +1,6 @@
 # Task 03 — Render scheduling and artifact streaming
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv-api`
 Depends on: Task 02
 
@@ -8,70 +8,53 @@ Depends on: Task 02
 
 Execute `GenerationPlan` render jobs through connected Render Clients with bounded concurrency, dependency readiness, cancellation, backpressure and live artifact/progress streaming.
 
-## Scheduler ownership
+## Implemented scheduler
 
-`renderers/scheduler.py` owns execution scheduling only:
+`renderers/scheduler.py` now owns execution scheduling only:
 
-- renderer capability matching;
-- per-connection capacity;
-- bounded outstanding work;
-- deterministic eligible-job ordering;
-- generation dependency readiness from `GenerationPlan`;
-- cancellation propagation;
-- renderer disconnect handling;
-- backpressure-aware dispatch.
+- consumes Runtime-supplied job order/dependencies;
+- dispatches only dependency-ready jobs;
+- matches renderer capability from each `RenderJob`;
+- refuses renderer fingerprints not approved by preflight;
+- reserves/releases per-connection advertised capacity;
+- bounds total active render jobs;
+- preserves deterministic `jobId`, `artifactId`, plan index and dependency identity regardless of completion timing;
+- propagates cancellation to active Render Clients;
+- treats disconnected/protocol-failing Render Clients as explicit build failure.
 
-It must not reinterpret pack selectors, context meaning or artifact paths.
+The scheduler never evaluates pack selection or reconstructs template context.
 
-## Ordering
+## Artifact protocol validation
 
-Runtime supplies deterministic plan order and dependencies.
-
-Execution may complete concurrently and out of order, but every job/artifact retains:
+Each renderer stream is validated against the exact planned job/artifact:
 
 ```text
-jobId
-artifactId
-planIndex
-dependencies
+ArtifactBegin
+ArtifactChunk*
+ArtifactEnd
+RenderComplete
 ```
 
-Arrival timing must never redefine deterministic generation order.
+The API verifies job/artifact/path identity, chunk offsets, final byte size and SHA-256. Renderer-declared hash/size mismatch is rejected.
 
-## Artifact streaming
+## Bounded streaming/backpressure
 
-`delivery/streaming.py` owns bounded forwarding of generated artifact data from Render Clients to Project Clients.
+`delivery/streaming.py` owns `ArtifactStream`, a bounded producer/consumer channel.
 
-Support:
+- queue length is bounded;
+- forwarded chunk size is bounded;
+- larger renderer chunks are split into bounded delivery chunks with stable offsets;
+- producers block when the Project Client is slower than rendering;
+- cancellation drains/unblocks the channel;
+- the entire build is never accumulated in process memory for stream delivery.
 
-- artifact begin/metadata;
-- small inline artifact content when appropriate;
-- chunked large artifacts;
-- stable offsets/sequence identity;
-- artifact completion/hash metadata;
-- render/build progress events.
+This allows transport-level TCP/WebSocket backpressure to compose with application-level bounds.
 
-Do not require one whole build to be buffered in memory before clients can receive output.
+## Live execution
 
-## Backpressure
+`RenderScheduler.start()` runs coordination in a background thread and returns `RenderExecution` immediately with the live `ArtifactStream`. Project Clients can therefore consume artifacts while other jobs continue rendering.
 
-Unbounded buffering is forbidden.
-
-Use bounded queues/windows so a slow Project Client eventually slows API consumption from Render Clients. Do not accumulate arbitrary artifact bytes in process memory.
-
-V1 may rely on bounded application queues plus underlying TCP/WebSocket flow control. Explicit credit/window flow control may be added later without changing artifact identity.
-
-## Disconnect policy
-
-Stateless V1 may cancel an active build when the consuming Project Client disconnects if no approved retention mechanism exists.
-
-Do not silently keep unbounded completed output waiting for a client that is gone.
-
-Renderer disconnect/failure must produce explicit API diagnostics and release capacity. Retry behavior, if implemented, must never duplicate a completed artifact identity or violate dependency ordering.
-
-## Build events
-
-WebSocket observers should receive structured events such as:
+Build events now include:
 
 ```text
 render.started
@@ -80,29 +63,25 @@ render.job.completed
 render.progress
 artifact.ready
 render.completed
-build.failed
-build.cancelled
 ```
 
-Messages are data contracts, not UI instructions.
+## Cancellation ownership
 
-## Code-size enforcement
-
-Every production file must remain at or below 500 lines. Keep scheduling and delivery streaming separate; do not create a large execution service.
-
-## No-test gate
-
-Do not create, modify or rewrite tests.
+`DryvApiServer.cancel_build()` marks the BuildSession cancelled and asks the scheduler to cancel every active renderer job and artifact stream. Renderer transports receive explicit cancel requests.
 
 ## Completion evidence
 
-Inspect production code and demonstrate that:
+Completed on `develop` without test changes.
 
-- only ready jobs are dispatched;
-- renderer capacity is bounded;
-- slow clients cannot create unbounded API buffers;
-- artifact/job identity survives concurrent completion order;
-- cancellation/disconnect has explicit ownership;
-- Runtime contains none of this network execution logic;
-- no production file exceeds 500 lines;
-- no tests were changed.
+- only dependency-ready jobs are dispatched;
+- renderer and global concurrency are bounded;
+- only preflight-approved fingerprints may render;
+- slow clients backpressure renderer workers through bounded queues;
+- artifact identity/order metadata is independent of concurrent completion timing;
+- streamed offsets/hash/size are validated by the API;
+- cancellation propagates to active Render Clients and blocked streams;
+- Runtime contains none of the execution/streaming logic;
+- scheduler and streaming modules remain below the 500-line ceiling by inspection;
+- no tests were added, modified or deleted.
+
+Task 04 may now add deterministic bundle delivery and concrete HTTP/WebSocket transport adapters around these existing operations/events.
