@@ -1,6 +1,6 @@
 # HELPER-05 — Storage, value sources and policies
 
-Status: TODO
+Status: DONE — PRODUCTION REVIEWED
 Prerequisite: HELPER-04 DONE.
 
 ## Goal
@@ -19,4 +19,4 @@ Required policy capabilities include named policy declarations, references and c
 Keep all relationships explicit and deterministic. A convenience builder may reduce repetition but may not hide semantic items that must exist in Canonical IR.
 
 ## Completion
-Storage, ValueSource and Policy declarations compile independently and compose through explicit refs. No tests yet.
+Storage, ValueSource and Policy declarations compile independently and compose through explicit references into current Canonical IR. Production review confirmed their constructor mappings and separation. No tests were added or run.
