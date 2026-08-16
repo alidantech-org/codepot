@@ -5,36 +5,15 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dryv-template-jinja"
 version = "2.0.0a1"
-description = "Sandboxed deterministic Jinja template engine for Dryv"
+description = "Independent Jinja Render Client for the Dryv Render Session protocol"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11"
 license = "MIT"
-authors = [
-  { name = "Alidantech" },
-]
-keywords = ["codegen", "codepot", "jinja", "templates", "sandbox"]
-classifiers = [
-  "Development Status :: 3 - Alpha",
-  "Intended Audience :: Developers",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Topic :: Software Development :: Code Generators",
-  "Topic :: Software Development :: Libraries :: Python Modules",
-  "Typing :: Typed",
-]
-dependencies = [
-  "dryv>=2.0.0a1,<2.1",
-  "Jinja2>=3.1.4,<4.0",
-]
-
-[project.entry-points."dryv.template_engines"]
-jinja = "dryv_template_jinja.plugin:create_plugin"
+authors = [{ name = "Alidantech" }]
+dependencies = ["Jinja2>=3.1.4,<4.0"]
 
 [project.urls]
 Homepage = "https://github.com/alidantech-org/codepot"
-Documentation = "https://github.com/alidantech-org/codepot/tree/develop/.docs/products/dryv/template-jinja"
 Repository = "https://github.com/alidantech-org/codepot"
 Issues = "https://github.com/alidantech-org/codepot/issues"
 
@@ -60,17 +39,6 @@ target-version = "py311"
 select = ["E", "F", "I", "UP", "B", "SIM"]
 ignore = ["E501"]
 
-[tool.ruff.lint.isort]
-known-first-party = ["dryv", "dryv_template_jinja"]
-section-order = ["future", "standard-library", "third-party", "first-party", "tests", "local-folder"]
-
-[tool.ruff.lint.isort.sections]
-tests = ["tests"]
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = ["--strict-markers", "--strict-config"]
-markers = [
-  "distribution: wheel, sdist, and isolated installation checks",
-  "performance: bounded performance and benchmark-contract checks",
-]
