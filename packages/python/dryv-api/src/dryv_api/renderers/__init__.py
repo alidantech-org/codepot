@@ -28,6 +28,7 @@ from .protocol import (
     ValidateTemplateResult,
 )
 from .registry import RendererRegistry
+from .scheduler import RenderExecution, RenderExecutionError, RenderScheduler
 
 __all__ = [
     "ArtifactBegin",
@@ -44,8 +45,11 @@ __all__ = [
     "RENDER_PROTOCOL_VERSION",
     "RenderClientTransport",
     "RenderComplete",
+    "RenderExecution",
+    "RenderExecutionError",
     "RenderFailed",
     "RenderRequest",
+    "RenderScheduler",
     "RendererConnection",
     "RendererConnectionState",
     "RendererDiagnostic",
