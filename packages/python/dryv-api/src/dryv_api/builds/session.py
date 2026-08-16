@@ -10,7 +10,7 @@ from dryv_api.resources.bundle import NormalizedBuild
 
 from .events import BuildEvent, BuildEventType, runtime_build_event
 
-_TERMINAL = {BuildStatus.CANCELLED, BuildStatus.FAILED}
+_CANCEL_TERMINAL = {BuildStatus.RENDER_COMPLETE, BuildStatus.CANCELLED, BuildStatus.FAILED}
 
 
 class BuildSession:
@@ -214,7 +214,7 @@ class BuildSession:
 
     def cancel(self) -> bool:
         with self._lock:
-            if self._status in _TERMINAL:
+            if self._status in _CANCEL_TERMINAL:
                 return False
             self._status = BuildStatus.CANCELLED
             sequence = self._next_sequence_locked()
