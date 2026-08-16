@@ -1,26 +1,69 @@
 # Current work
 
-Dryv Engine is structurally complete for the approved server-generation architecture. Current work is rebuilding `dryv-api` around that `GenerationPlan` boundary.
+Dryv's approved production architecture is implemented through the Engine, `dryv-api`, Python Author helper, Jinja Render Client, and reference CLI Project Client.
 
-Mandatory references before implementation:
+```text
+Authoring source
+    ↓
+dryv-author
+    ↓
+Canonical Dryv Runtime IR
+    ↓
+dryv-cli collects dryv.yaml + IR + resolved pack bundles
+    ↓
+dryv-api
+    ↓
+Dryv Runtime → GenerationPlan
+    ↓
+dryv-api preflight/scheduling
+    ↓
+Render Client(s)
+    ↓
+streamed artifacts or deterministic ZIP
+    ↓
+dryv-cli verify/diff/stage/apply
+    ↓
+local filesystem
+```
 
-- [`packages/python/dryv/ARCHITECTURE.md`](packages/python/dryv/ARCHITECTURE.md)
-- [`packages/python/dryv/IMPLEMENTATION-RULES.md`](packages/python/dryv/IMPLEMENTATION-RULES.md)
+## Production implementation status
 
-Implementation order/status:
+- [x] Dryv Engine boundary cleanup
+- [x] Canonical `GenerationPlan` Runtime
+- [x] dryv-api build/resource coordination
+- [x] renderer-neutral protocol and preflight
+- [x] dependency-aware bounded render scheduling
+- [x] HTTP/WebSocket transport and artifact delivery
+- [x] deterministic ZIP bundle delivery
+- [x] rich Python `dryv-author` compiler
+- [x] Jinja Render Client
+- [x] CLI project/resource resolvers
+- [x] local and Git Template Pack resolution using normal Git credentials
+- [x] CLI Author/API connections
+- [x] temporary loopback API and local renderer orchestration
+- [x] shared plan/generate workflow
+- [x] stream/bundle artifact verification
+- [x] local conflict detection, staging and atomic apply
+- [x] public `dryv validate`, `dryv compile`, `dryv plan`, `dryv generate` commands
+- [x] production architecture/bug review and hardening
 
-1. [x] [`Dryv Task 26 — Final Engine boundary cleanup`](packages/python/dryv/tasks/26-final-engine-boundary-cleanup.md)
-2. [x] [`Dryv Task 27 — Build the GenerationPlan Runtime`](packages/python/dryv/tasks/27-generation-plan-runtime.md)
-3. [ ] **CURRENT:** [`dryv-api Task 00 — Rebuild the final API structure`](packages/python/dryv-api/tasks/00-final-api-structure.md)
-4. [ ] [`dryv-api Task 01 — Build input and Runtime coordination`](packages/python/dryv-api/tasks/01-build-input-and-runtime-coordination.md)
-5. [ ] [`dryv-api Task 02 — Render Client protocol and template preflight`](packages/python/dryv-api/tasks/02-render-client-protocol-and-preflight.md)
-6. [ ] [`dryv-api Task 03 — Render scheduling and artifact streaming`](packages/python/dryv-api/tasks/03-render-scheduling-and-artifact-streaming.md)
-7. [ ] [`dryv-api Task 04 — Bundle and HTTP/WebSocket delivery`](packages/python/dryv-api/tasks/04-bundle-and-http-websocket-delivery.md)
+## Current review notes
 
-## Mandatory gate
+The production review fixed renderer lifecycle/protocol edge cases, deterministic bundle path collisions, premature build release, Jinja template media-type detection, Windows Author targets, presentation navigation validation, strict duplicate-key handling, route-safe build IDs, failed remote-build cleanup, reserved `.dryv` output paths, and Git-backed packs.
 
-Do not create, modify or rewrite tests during API Tasks 00–04. Do not preserve superseded production architecture to satisfy old tests.
+## Remaining certification work
 
-After API Task 04, stop for explicit user review of the final production file/folder structure and code. Test implementation begins only after the user explicitly lifts this gate.
+The production code is ready for executable certification, but the previously approved no-test gate has not been lifted. No test suite has been added or run as part of the architecture work.
 
-Deferred client work such as CLI, authoring implementations, Jinja/Handlebars clients, MCP adapters and TypeScript Project Clients is not part of the current implementation sequence.
+The root uv workspace now includes the relocated helper packages. `uv.lock` was produced before that relocation and must be regenerated once executable/testing work is explicitly approved and a dependency-resolving environment is available.
+
+## Rules retained
+
+- `develop` only; never create a work branch for this project.
+- no compatibility shims or old/new dual architecture;
+- Canonical Runtime IR remains the only semantic authority;
+- Runtime stops at `GenerationPlan`;
+- API owns renderer topology/execution/delivery;
+- Render Clients do not interpret Dryv semantics;
+- CLI/Project Client is the only generated-project filesystem writer;
+- keep production modules focused and around/under 500 lines.
