@@ -38,10 +38,12 @@ members = ["packages/python/*"]
 
 [tool.uv.sources]
 dryv = { workspace = true }
+dryv-api = { workspace = true }
 
 [tool.pytest.ini_options]
 testpaths = [
   "packages/python/dryv/tests",
+  "packages/python/dryv-api/tests",
   "packages/python/dryv-author/tests",
   "packages/python/dryv-cli/tests",
   "packages/python/dryv-language-dart/tests",
