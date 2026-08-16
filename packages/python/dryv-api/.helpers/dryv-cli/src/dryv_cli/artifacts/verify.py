@@ -21,7 +21,14 @@ def safe_artifact_path(value: str) -> PurePosixPath:
         raise ArtifactVerificationError("CLI_ARTIFACT_PATH", f"unsafe artifact path {value!r}")
     first = path.parts[0]
     if len(first) >= 2 and first[1] == ":":
-        raise ArtifactVerificationError("CLI_ARTIFACT_PATH", f"drive-qualified artifact path {value!r} is forbidden")
+        raise ArtifactVerificationError(
+            "CLI_ARTIFACT_PATH", f"drive-qualified artifact path {value!r} is forbidden"
+        )
+    if first == ".dryv":
+        raise ArtifactVerificationError(
+            "CLI_ARTIFACT_RESERVED",
+            f"artifact path {value!r} uses the Project Client reserved .dryv namespace",
+        )
     return path
 
 
@@ -66,4 +73,9 @@ def verify_file(path: Path, *, size: int, content_hash: str, artifact_id: str) -
         )
 
 
-__all__ = ["ArtifactVerificationError", "content_hash_stream", "safe_artifact_path", "verify_file"]
+__all__ = [
+    "ArtifactVerificationError",
+    "content_hash_stream",
+    "safe_artifact_path",
+    "verify_file",
+]
