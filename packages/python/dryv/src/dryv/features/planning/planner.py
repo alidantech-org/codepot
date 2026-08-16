@@ -134,7 +134,9 @@ class PlanningFeature:
             tuple(sorted(dependencies, key=lambda item: (item.job_id, item.depends_on_job_id, item.reason))),
             "",
         )
-        plan_hash = hash_plan(placeholder.canonical_document(include_hash=False))
+        semantic_document = placeholder.canonical_document(include_hash=False)
+        semantic_document.pop("buildId", None)
+        plan_hash = hash_plan(semantic_document)
         return replace(placeholder, plan_hash=plan_hash)
 
 
