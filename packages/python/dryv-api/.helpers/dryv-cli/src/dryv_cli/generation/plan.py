@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dryv_cli.artifacts import safe_artifact_path
+
 
 class PlanDocumentError(ValueError):
     pass
@@ -9,7 +11,9 @@ def required_renderers(plan: dict[str, object]) -> tuple[str, ...]:
     raw = plan.get("requiredRenderers")
     if not isinstance(raw, list) or not all(isinstance(item, str) and item for item in raw):
         raise PlanDocumentError("GenerationPlan requiredRenderers must be an array of strings")
-    return tuple(sorted(set(raw)))
+    if len(raw) != len(set(raw)):
+        raise PlanDocumentError("GenerationPlan requiredRenderers must be unique")
+    return tuple(raw)
 
 
 def artifact_paths(plan: dict[str, object]) -> tuple[str, ...]:
@@ -23,6 +27,7 @@ def artifact_paths(plan: dict[str, object]) -> tuple[str, ...]:
         path = item.get("path")
         if not isinstance(path, str) or not path:
             raise PlanDocumentError("GenerationPlan artifact requires a path")
+        safe_artifact_path(path)
         paths.append(path)
     if len(paths) != len(set(paths)):
         raise PlanDocumentError("GenerationPlan artifact paths must be unique")
