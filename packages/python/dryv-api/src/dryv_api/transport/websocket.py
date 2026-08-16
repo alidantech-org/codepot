@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import base64
 from collections.abc import Iterable
-from queue import Empty, Queue
+from queue import Empty, Full, Queue
 from threading import Event, Lock
 from typing import Any
 
@@ -43,13 +43,21 @@ async def build_events(websocket: WebSocket) -> None:
     except Exception:
         await websocket.close(code=4404)
         return
+
+    stream_delivery = session.normalized.delivery is DeliveryMode.STREAM
+    if stream_delivery and not server.claim_stream_consumer(build_id):
+        await websocket.close(code=4409)
+        return
+
     await websocket.accept()
     after = 0
     stream_finished = False
     try:
         while True:
+            did_work = False
             for event in session.events(after_sequence=after):
                 after = event.sequence
+                did_work = True
                 await websocket.send_json(
                     {
                         "type": event.type.value,
@@ -61,20 +69,20 @@ async def build_events(websocket: WebSocket) -> None:
                         "runtimeStage": event.runtime_stage,
                     }
                 )
+
             execution = server.execution(build_id)
-            if (
-                execution is not None
-                and session.normalized.delivery is DeliveryMode.STREAM
-                and not stream_finished
-            ):
+            if execution is not None and stream_delivery and not stream_finished:
                 item = await asyncio.to_thread(execution.stream.receive, timeout=0.05)
                 if item is not None:
+                    did_work = True
                     await websocket.send_json(_artifact_document(item))
                 elif execution.done.is_set() and execution.stream.closed:
+                    did_work = True
                     stream_finished = True
                     await websocket.send_json(
                         {"type": "artifact.stream.complete", "buildId": build_id}
                     )
+
             status = session.status
             if status in _TERMINAL:
                 if session.normalized.delivery is DeliveryMode.BUNDLE:
@@ -82,17 +90,16 @@ async def build_events(websocket: WebSocket) -> None:
                     if handle is not None and not handle.ready.is_set():
                         await asyncio.sleep(0.05)
                         continue
-                if (
-                    session.normalized.delivery is DeliveryMode.STREAM
-                    and execution is not None
-                    and not stream_finished
-                ):
-                    await asyncio.sleep(0.05)
+                if stream_delivery and execution is not None and not stream_finished:
                     continue
                 return
-            await asyncio.sleep(0.05)
+
+            if did_work:
+                await asyncio.sleep(0)
+            elif execution is None or not stream_delivery:
+                await asyncio.sleep(0.05)
     except WebSocketDisconnect:
-        if session.normalized.delivery is DeliveryMode.STREAM:
+        if stream_delivery:
             server.cancel_build(build_id)
 
 
@@ -190,9 +197,11 @@ class RemoteRendererTransport(RenderClientTransport):
             return
         self._closed.set()
         try:
-            self._outgoing.put_nowait(_STOP)
-        except Exception:
+            while True:
+                self._outgoing.get_nowait()
+        except Empty:
             pass
+        self._outgoing.put_nowait(_STOP)
         with self._lock:
             queues = tuple(self._responses.values())
             self._responses.clear()
@@ -203,7 +212,10 @@ class RemoteRendererTransport(RenderClientTransport):
                     queue.get_nowait()
             except Empty:
                 pass
-            queue.put_nowait(error)
+            try:
+                queue.put_nowait(error)
+            except Full:
+                pass
 
     def next_outgoing(self) -> dict[str, object] | None:
         value = self._outgoing.get()
@@ -265,9 +277,13 @@ class RemoteRendererTransport(RenderClientTransport):
         self._deliver(f"render:{job_id}", value)
 
     def _send(self, document: dict[str, object]) -> None:
-        if self._closed.is_set():
-            raise RuntimeError("renderer WebSocket is closed")
-        self._outgoing.put(document)
+        while not self._closed.is_set():
+            try:
+                self._outgoing.put(document, timeout=0.1)
+                return
+            except Full:
+                continue
+        raise RuntimeError("renderer WebSocket is closed")
 
     def _open_response(self, key: str) -> Queue[object]:
         queue: Queue[object] = Queue(maxsize=64)
@@ -288,7 +304,13 @@ class RemoteRendererTransport(RenderClientTransport):
             queue = self._responses.get(key)
         if queue is None:
             raise RuntimeError(f"renderer response has no active request {key!r}")
-        queue.put(value)
+        while not self._closed.is_set():
+            try:
+                queue.put(value, timeout=0.1)
+                return
+            except Full:
+                continue
+        raise RuntimeError("renderer WebSocket is closed")
 
 
 async def _renderer_sender(
