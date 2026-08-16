@@ -10,7 +10,7 @@ from dryv_api.resources.bundle import NormalizedBuild
 
 from .events import BuildEvent, BuildEventType, runtime_build_event
 
-_TERMINAL = {BuildStatus.PLAN_READY, BuildStatus.CANCELLED, BuildStatus.FAILED}
+_TERMINAL = {BuildStatus.CANCELLED, BuildStatus.FAILED}
 
 
 class BuildSession:
@@ -46,7 +46,7 @@ class BuildSession:
 
     def start_planning(self) -> bool:
         with self._lock:
-            if self._status in _TERMINAL:
+            if self._status is not BuildStatus.ACCEPTED:
                 return False
             self._status = BuildStatus.PLANNING
         return True
@@ -80,6 +80,41 @@ class BuildSession:
             )
             return True
 
+    def start_preflight(self) -> bool:
+        with self._lock:
+            if self._status is not BuildStatus.PLAN_READY:
+                return False
+            self._status = BuildStatus.PREFLIGHT
+            sequence = self._next_sequence_locked()
+            self._events.append(
+                BuildEvent(
+                    sequence,
+                    self.build_id,
+                    BuildEventType.PREFLIGHT_STARTED,
+                    "Renderer prerequisites and templates are being validated",
+                )
+            )
+            return True
+
+    def complete_preflight(self, *, validations: int) -> bool:
+        with self._lock:
+            if self._status is BuildStatus.CANCELLED:
+                return False
+            if self._status is not BuildStatus.PREFLIGHT:
+                return False
+            self._status = BuildStatus.RENDER_READY
+            sequence = self._next_sequence_locked()
+            self._events.append(
+                BuildEvent(
+                    sequence,
+                    self.build_id,
+                    BuildEventType.PREFLIGHT_READY,
+                    "All renderer prerequisites passed; build is ready to render",
+                    details=(("validations", str(validations)),),
+                )
+            )
+            return True
+
     def fail(self, diagnostics: tuple[BuildDiagnostic, ...]) -> bool:
         with self._lock:
             if self._status is BuildStatus.CANCELLED:
@@ -100,7 +135,7 @@ class BuildSession:
                 )
             sequence = self._next_sequence_locked()
             self._events.append(
-                BuildEvent(sequence, self.build_id, BuildEventType.FAILED, "Build planning failed")
+                BuildEvent(sequence, self.build_id, BuildEventType.FAILED, "Build failed")
             )
             return True
 
