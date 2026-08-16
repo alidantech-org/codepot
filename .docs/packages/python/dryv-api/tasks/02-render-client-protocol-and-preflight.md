@@ -1,6 +1,6 @@
 # Task 02 — Render Client protocol and template preflight
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv-api`
 Depends on: Task 01
 
@@ -8,9 +8,9 @@ Depends on: Task 01
 
 Implement one renderer-neutral protocol for all template engines and perform early template/context compatibility checks before rendering begins.
 
-## Protocol surface
+## Implemented protocol
 
-`renderers/protocol.py` defines only the shared renderer protocol:
+`renderers/protocol.py` now defines one language-neutral `dryv.render/v1` contract covering:
 
 ```text
 hello
@@ -19,46 +19,23 @@ render
 cancel
 ```
 
-Protocol data must support:
+The shared data includes renderer identity/version/fingerprint, capabilities, max concurrency, exact template bytes/hash/media type, canonical context, Runtime context contract, planned output metadata, renderer diagnostics and artifact stream messages.
 
-- renderer identity/version/fingerprint;
-- declared capabilities;
-- max concurrency;
-- template logical resource identity/hash/content;
-- canonical context values;
-- context contract/version/hash;
-- planned output metadata;
-- render options;
-- generated artifact metadata/chunks;
-- renderer diagnostics and completion/failure.
-
-Do not expose Canonical IR objects, `dryv.yaml` semantics or pack selectors to Render Clients.
+Render Clients never receive Canonical IR model objects, `dryv.yaml`, pack selectors or generation semantics.
 
 ## Connections and registry
 
-`renderers/connection.py` owns one connected Render Client transport state.
+`RendererConnection` owns one established Render Client transport plus advertised bounded capacity and lifecycle state.
 
-`renderers/registry.py` owns the currently available renderer/capability inventory and connection lifecycle.
+`RendererRegistry` owns currently connected clients and indexes availability by capability only. Required capabilities are read directly from `GenerationPlan.required_renderers`; the API never reparses pack definitions to rediscover them.
 
-Runtime never sees these connection objects.
-
-## Renderer requirement source
-
-Renderer requirements come only from `GenerationPlan`.
-
-The API must not parse pack definitions to rediscover renderer requirements.
-
-If a required capability has no compatible Render Client, fail the build with an API-owned renderer-unavailable diagnostic before rendering.
+Missing capabilities become API-owned `API_RENDERER_UNAVAILABLE` failures.
 
 ## Template preflight
 
-`renderers/preflight.py` asks the selected Render Client whether a template is syntactically valid and compatible with the context contract supplied by Runtime.
+`PreflightCoordinator` validates every currently eligible renderer fingerprint for each planned job before rendering is allowed.
 
-Preflight validates template-language concerns only.
-
-Runtime remains the authority for context meaning and shape.
-
-A reusable preflight identity is:
+The reusable identity is exactly:
 
 ```text
 templateHash
@@ -66,39 +43,35 @@ templateHash
 + rendererFingerprint
 ```
 
-Identical preflight identities should not require repeated validation within the same build/session scope.
+Identical keys validate once within the build preflight. The coordinator retains a `PreflightReport` so later scheduling can prove that the selected renderer fingerprint was actually validated.
 
-All required preflights must succeed before normal rendering begins unless a future explicitly approved execution mode changes this rule.
+Template bytes are retrieved from the same server-verified build ResourceStore referenced by the plan. Hash mismatch between stored bytes and `GenerationPlan` is rejected.
 
-## Error ownership
+## Build lifecycle
 
-Renderer/template diagnostics include concerns such as:
+The API build lifecycle now includes:
 
 ```text
-TEMPLATE_SYNTAX_ERROR
-UNKNOWN_CONTEXT_VARIABLE
-MISSING_RENDERER_HELPER
-UNSUPPORTED_RENDERER_FEATURE
+PLAN_READY
+    ↓
+PREFLIGHT
+    ↓
+RENDER_READY
 ```
 
-Do not turn template-language failures into Runtime IR/pack errors.
-
-## Code-size enforcement
-
-Every production file must remain at or below 500 lines. Keep protocol, connection, registry and preflight responsibilities separate; do not merge them into a large generic renderer service.
-
-## No-test gate
-
-Do not create, modify or rewrite tests.
+`DryvApiServer.preflight_build()` translates renderer/template diagnostics to build diagnostics without changing Runtime meaning.
 
 ## Completion evidence
 
-Inspect production code and confirm:
+Completed on `develop` without test changes.
 
-- one protocol can represent Jinja, Handlebars and future Render Clients;
-- Render Clients receive only template/context/planned-output material;
-- renderer requirements are read from `GenerationPlan`;
-- preflight can report bad template variables before render execution;
+- one protocol can represent Jinja, Handlebars and future template engines;
+- Render Clients receive template/context/planned-output material only;
+- renderer requirements are consumed from `GenerationPlan`;
+- bad variables/syntax/helpers can be reported during `validate` before `render` is invoked;
+- preflight is renderer-fingerprint aware and cached per build report;
 - Runtime imports no renderer connection/session types;
-- no production file exceeds 500 lines;
-- no tests were changed.
+- renderer connection/registry/preflight responsibilities remain separate and below the 500-line ceiling;
+- no tests were added, modified or deleted.
+
+Task 03 may now schedule only preflight-approved renderer fingerprints and stream generated artifacts.
