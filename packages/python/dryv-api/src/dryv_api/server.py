@@ -100,8 +100,8 @@ class DryvApiServer:
     def register_renderer(self, connection: RendererConnection) -> None:
         self.renderers.register(connection)
 
-    def unregister_renderer(self, connection_id: str) -> bool:
-        return self.renderers.unregister(connection_id)
+    def unregister_renderer(self, connection_id: str, *, close: bool = True) -> bool:
+        return self.renderers.unregister(connection_id, close=close)
 
     def build(self, build_id: str) -> BuildSession:
         return self.builds.require(build_id)

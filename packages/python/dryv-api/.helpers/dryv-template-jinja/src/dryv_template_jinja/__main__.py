@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-import json
+import argparse
+import os
 
 from .client import JinjaRenderClient
 
 
 def main() -> int:
-    client = JinjaRenderClient()
-    print(json.dumps({"renderer": client.hello.renderer_id, "version": client.hello.renderer_version, "capabilities": client.hello.capabilities, "fingerprint": client.hello.fingerprint}, sort_keys=True))
+    parser = argparse.ArgumentParser(prog="dryv-template-jinja")
+    parser.add_argument("--api", required=True, help="dryv-api renderer WebSocket URL")
+    parser.add_argument("--connection-id", default=f"jinja-{os.getpid()}")
+    args = parser.parse_args()
+    JinjaRenderClient(max_concurrency=1).serve(args.api, connection_id=args.connection_id)
     return 0
 
 

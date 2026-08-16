@@ -14,10 +14,8 @@ keywords = ["dryv", "jinja", "templates", "codegen"]
 dependencies = [
   "dryv-api>=0.1.0a1,<0.2",
   "Jinja2>=3.1,<4",
+  "websockets>=15,<16",
 ]
-
-[tool.setuptools]
-include-package-data = true
 
 [tool.setuptools.package-dir]
 "" = "src"
@@ -25,7 +23,6 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["dryv_template_jinja*"]
-exclude = ["tests*"]
 
 [tool.setuptools.package-data]
 dryv_template_jinja = ["py.typed"]

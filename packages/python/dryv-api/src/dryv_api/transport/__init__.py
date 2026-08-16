@@ -5,17 +5,8 @@ from starlette.routing import Route, WebSocketRoute
 
 from dryv_api.server import DryvApiServer
 
-from .http import (
-    cancel_build,
-    create_build,
-    delete_build,
-    get_build,
-    get_bundle,
-    get_plan,
-    preflight_build,
-    render_build,
-)
-from .websocket import build_events
+from .http import cancel_build, create_build, delete_build, get_build, get_bundle, get_plan, preflight_build, render_build
+from .websocket import build_events, renderer_connection
 
 
 def create_app(server: DryvApiServer | None = None) -> Starlette:
@@ -30,6 +21,7 @@ def create_app(server: DryvApiServer | None = None) -> Starlette:
             Route("/v1/builds/{build_id}/cancel", cancel_build, methods=["POST"]),
             Route("/v1/builds/{build_id}/bundle", get_bundle, methods=["GET"]),
             WebSocketRoute("/v1/builds/{build_id}/events", build_events),
+            WebSocketRoute("/v1/renderers", renderer_connection),
         ]
     )
     app.state.dryv_server = server or DryvApiServer()
