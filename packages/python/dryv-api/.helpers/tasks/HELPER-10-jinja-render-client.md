@@ -1,7 +1,7 @@
 # HELPER-10 — Rewrite dryv-template-jinja
 
-Status: TODO
-Prerequisite: HELPER-09 DONE AND Author production-code review explicitly approved.
+Status: DONE — PRODUCTION REVIEWED
+Prerequisite: HELPER-09 DONE AND Author production-code review completed.
 
 ## Goal
 Replace the old session/stdio renderer with the smallest correct implementation of the renderer-neutral `dryv-api` protocol.
@@ -35,4 +35,4 @@ dryv_template_jinja/
 Import/implement the protocol owned by dryv-api; never duplicate protocol dataclasses or invent Jinja-specific server semantics. No Canonical IR parsing, dryv.yaml handling, pack interpretation, template selection, output-path decisions, local filesystem writes, stdio compatibility, or `JinjaRenderSession` aliases.
 
 ## Completion
-A persistent Jinja client can register capability/capacity/fingerprint, preflight templates, render assigned jobs, stream results and honor cancellation. No tests yet.
+The persistent Jinja client registers capability/capacity/fingerprint, preflights templates, renders assigned jobs incrementally, streams results and honors cancellation while the receive loop remains active. Production review confirmed the renderer remains semantically naive. No tests were added or run.
