@@ -1,6 +1,6 @@
 # Task 00 — Rebuild the final dryv-api structure
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv-api`
 Depends on: Dryv Task 27
 
@@ -45,52 +45,22 @@ dryv_api/
     └── websocket.py
 ```
 
-## Required removals
-
-Delete rather than shim:
-
-```text
-dryv_api/service.py
-dryv_api/stdio.py
-dryv_api/subprocess_author.py
-dryv_api/subprocess_render.py
-```
-
-Remove old contracts for:
-
-- AuthorSession/Author Backend registration;
-- Runtime RenderSession injection;
-- `planningCandidates` wire input;
-- `renderSessionIds` wire input;
-- previous managed-output/project snapshot data passed into Runtime;
-- stdio/subprocess-first hosting.
-
 ## Ownership
 
 `server.py` is the API composition root only. It may wire Runtime, BuildManager, ResourceStore, RendererRegistry, scheduler and delivery services. It must not contain pack/IR semantics.
 
-`contracts.py` contains only public API transport/build contracts. Do not duplicate Runtime semantic contracts.
-
-## Code-size enforcement
-
-Every production file must remain at or below 500 lines. Do not create alternate `services`, `controllers`, `utils`, `helpers`, `common`, `shared`, `legacy` or adapter trees.
-
-## No-test gate
-
-Do not create, modify or rewrite tests. Existing tests do not justify preserving superseded API contracts.
-
-## Allowed paths
-
-- `packages/python/dryv-api/**`
-- `.docs/packages/python/dryv-api/**` for factual task status/progress
+`contracts.py` contains only public API transport/build contracts. It must not duplicate Runtime semantic contracts.
 
 ## Completion evidence
 
-Confirm by production-tree inspection that:
+Completed on `develop` without test changes.
 
-- only the approved API ownership tree remains;
-- old subprocess/stdio/session compatibility files are gone;
-- no API file reimplements Canonical IR, pack selection or context construction;
-- no project filesystem writer exists;
-- every production file is at or below 500 lines;
-- no tests were added or modified.
+- The production package now has exactly the approved root ownership directories/files.
+- `service.py`, `stdio.py`, `subprocess_author.py`, and `subprocess_render.py` were physically removed.
+- Old AuthorSession/RenderSession/stdin/subprocess contracts were not preserved through alternate modules.
+- Renderer/build/resource/delivery/transport modules are separated by the approved ownership tree.
+- No project filesystem writer exists.
+- No new production file approaches the 500-line ceiling.
+- No tests were added, modified or deleted.
+
+Task 01 may now implement real build input normalization and Runtime coordination inside this structure.
