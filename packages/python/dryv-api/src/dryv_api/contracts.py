@@ -21,6 +21,8 @@ class BuildStatus(StrEnum):
     PLAN_READY = "plan_ready"
     PREFLIGHT = "preflight"
     RENDER_READY = "render_ready"
+    RENDERING = "rendering"
+    RENDER_COMPLETE = "render_complete"
     CANCELLED = "cancelled"
     FAILED = "failed"
 
