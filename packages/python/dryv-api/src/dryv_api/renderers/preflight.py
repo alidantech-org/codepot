@@ -3,10 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from hashlib import sha256
 from threading import Lock
+from time import sleep
 
 from dryv_api.builds import BuildSession
 from dryv_api.contracts import ApiContractError
 
+from .connection import RendererConnection, RendererConnectionState
 from .protocol import (
     ContextContractPayload,
     RendererDiagnostic,
@@ -82,6 +84,8 @@ class PreflightCoordinator:
         validated: dict[PreflightKey, bool] = {}
         jobs: list[JobPreflight] = []
         for job in plan.jobs:
+            if session.cancelled:
+                raise ApiContractError("API_BUILD_CANCELLED", "build was cancelled during preflight")
             template = session.normalized.resources.require(job.template.resource_id)
             if template.content_hash != job.template.content_hash:
                 raise ApiContractError(
@@ -99,14 +103,17 @@ class PreflightCoordinator:
                 job.context_contract.paths,
                 job.context_contract.hash,
             )
+            by_fingerprint = _fingerprint_groups(
+                self.registry.require_capability(job.renderer.capability)
+            )
             fingerprints: set[str] = set()
-            for connection in self.registry.require_capability(job.renderer.capability):
+            for fingerprint in sorted(by_fingerprint):
                 key = PreflightKey(
                     job.template.content_hash,
                     job.context_contract.hash,
-                    connection.hello.fingerprint,
+                    fingerprint,
                 )
-                fingerprints.add(connection.hello.fingerprint)
+                fingerprints.add(fingerprint)
                 if key in validated:
                     continue
                 validation_id = _validation_id(key)
@@ -116,11 +123,11 @@ class PreflightCoordinator:
                     payload,
                     contract,
                 )
-                if not connection.reserve():
-                    raise ApiContractError(
-                        "API_RENDERER_BUSY",
-                        f"renderer {connection.connection_id!r} has no preflight capacity",
-                    )
+                connection = _reserve_preflight(
+                    by_fingerprint[fingerprint],
+                    session,
+                    fingerprint,
+                )
                 try:
                     result = connection.validate(request)
                 finally:
@@ -137,6 +144,11 @@ class PreflightCoordinator:
                         result.diagnostics,
                     )
                 validated[key] = True
+            if not fingerprints:
+                raise ApiContractError(
+                    "API_RENDERER_UNAVAILABLE",
+                    f"no renderer fingerprints remain for capability {job.renderer.capability!r}",
+                )
             jobs.append(JobPreflight(job.id, tuple(sorted(fingerprints))))
 
         report = PreflightReport(
@@ -155,6 +167,45 @@ class PreflightCoordinator:
     def clear(self, build_id: str) -> None:
         with self._lock:
             self._reports.pop(build_id, None)
+
+
+def _fingerprint_groups(
+    connections: tuple[RendererConnection, ...],
+) -> dict[str, tuple[RendererConnection, ...]]:
+    grouped: dict[str, list[RendererConnection]] = {}
+    for connection in connections:
+        grouped.setdefault(connection.hello.fingerprint, []).append(connection)
+    return {
+        fingerprint: tuple(sorted(items, key=lambda item: item.connection_id))
+        for fingerprint, items in grouped.items()
+    }
+
+
+def _reserve_preflight(
+    connections: tuple[RendererConnection, ...],
+    session: BuildSession,
+    fingerprint: str,
+) -> RendererConnection:
+    while True:
+        if session.cancelled:
+            raise ApiContractError("API_BUILD_CANCELLED", "build was cancelled during preflight")
+        ready = tuple(
+            connection
+            for connection in connections
+            if connection.state is RendererConnectionState.READY
+        )
+        if not ready:
+            raise ApiContractError(
+                "API_RENDERER_UNAVAILABLE",
+                f"renderer fingerprint {fingerprint!r} disconnected during preflight",
+            )
+        for connection in sorted(
+            ready,
+            key=lambda item: (item.active / item.hello.max_concurrency, item.connection_id),
+        ):
+            if connection.reserve():
+                return connection
+        sleep(0.02)
 
 
 def _validation_id(key: PreflightKey) -> str:
