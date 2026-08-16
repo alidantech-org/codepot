@@ -1,10 +1,10 @@
 # Dryv helper rewrite tasks
 
-Status: PRODUCTION IMPLEMENTATION COMPLETE — REVIEW REQUIRED
+Status: PRODUCTION IMPLEMENTATION AND REVIEW COMPLETE — EXECUTABLE CERTIFICATION PENDING
 Branch: `develop` only
 Scope: `packages/python/dryv-api/.helpers/{dryv-author,dryv-template-jinja,dryv-cli}`
 
-The approved helper implementation sequence HELPER-01 through HELPER-17 is complete in production code. The mandatory next action is production-code architecture/integration review. **Do not add, modify, delete, regenerate or run tests until explicit approval starts the testing phase.**
+The approved HELPER-01 through HELPER-17 production sequence and the mandatory architecture/integration review are complete. This does **not** claim executable test certification; the root lockfile still predates helper relocation and must be regenerated in a dependency-resolving environment before frozen workspace certification.
 
 ## Non-negotiable architecture
 
@@ -15,7 +15,7 @@ dryv-author
     ↓
 Canonical Dryv Runtime IR
     ↓
-dryv-cli collects dryv.yaml + IR + local pack bundles
+dryv-cli collects dryv.yaml + IR + resolved local/Git pack bundles
     ↓
 dryv-api
     ↓
@@ -47,9 +47,9 @@ local filesystem
 
 ## Completed sequence
 
-- HELPER-01 through HELPER-09: Author rewrite and review corrections
-- HELPER-10: renderer-neutral Jinja client
-- HELPER-11: CLI project/resolvers
+- HELPER-01 through HELPER-09: Author rewrite and production review
+- HELPER-10: renderer-neutral Jinja client and production review
+- HELPER-11: CLI project/resolvers and local/Git pack resolution
 - HELPER-12: Author/API connections
 - HELPER-13: temporary local API/renderer environment
 - HELPER-14: shared plan/render workflow
@@ -57,6 +57,12 @@ local filesystem
 - HELPER-16: filesystem diff/stage/apply
 - HELPER-17: final commands/presentation and old CLI removal
 
-## Mandatory review gate
+## Review hardening completed
 
-Review the production architecture and actual connections end-to-end. Tests remain deferred until the user explicitly approves this review gate.
+The review corrected Author target/navigation validation, Author subprocess bounds/protocol strictness, Jinja media types/context-path validation/concurrency/failure propagation, ASGI event-loop blocking, renderer preflight and render-capacity queuing, renderer protocol size/hash/lifecycle checks, Git pack acquisition, strict project/wire decoding, route-safe build identities, stream/ZIP provenance verification, reserved `.dryv` outputs, symlink conflicts, and filesystem diff→apply race protection.
+
+## Remaining certification work
+
+- Regenerate `uv.lock` after the relocated helper workspace packages are resolved.
+- Run import/package/CLI and end-to-end stream + bundle certification in an environment with repository/dependency access.
+- Do not describe the production path as test-certified until those commands actually pass.
