@@ -11,6 +11,8 @@ class BuildEventType(StrEnum):
     RESOURCES_READY = "build.resources_ready"
     RUNTIME = "build.runtime"
     PLAN_READY = "build.plan_ready"
+    PREFLIGHT_STARTED = "build.preflight_started"
+    PREFLIGHT_READY = "build.preflight_ready"
     DIAGNOSTIC = "build.diagnostic"
     CANCELLED = "build.cancelled"
     FAILED = "build.failed"
