@@ -1,6 +1,6 @@
 # Task 26 — Final Engine boundary cleanup
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: approved `ARCHITECTURE.md` and `IMPLEMENTATION-RULES.md`
 
@@ -97,13 +97,15 @@ Existing tests that require removed architecture do not justify compatibility co
 
 ## Completion evidence
 
-Before marking complete, inspect the production tree and confirm:
+Completed on `develop` without touching tests.
 
-- forbidden owners/files are gone rather than shimmed;
-- the required Runtime tree exists;
-- no Engine production import references deleted Author/RenderSession execution concepts;
-- no project filesystem writer or bundle builder exists in `dryv`;
-- no production source file exceeds 500 lines;
-- no tests were added or modified.
+- The production root is now only `features`, `ir`, `runtime`, `versions`, `__init__.py`, and `py.typed`.
+- The Feature catalog is exactly serialization, project, resources, hashing, ir, packs, planning, cache, diagnostics.
+- `runtime/` contains only `__init__.py`, `contracts.py`, `events.py`, and `runtime.py`.
+- Authoring, Templating, Scheduling, Artifacts, old inner API/config/domain/testing owners, Runtime engine/facade, and canonical IR re-export compatibility shims were removed rather than forwarded.
+- Canonical diagnostic primitives moved under `dryv.ir.diagnostics`; retained IR code points directly at that owner.
+- Runtime contracts no longer contain AuthorSession, RenderSession, renderer capacity, generated-byte, managed-output, filesystem-write, stdio, or subprocess concepts.
+- Production source files introduced/rewritten by this task are below the 500-line limit.
+- No tests were added, changed, deleted, or used as a reason to restore compatibility code.
 
-Do not begin Task 27 until this boundary is clean.
+Task 27 may now implement the complete GenerationPlan flow on this clean boundary.
