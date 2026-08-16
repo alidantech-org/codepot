@@ -68,7 +68,10 @@ class DryvApiServer:
                 )
                 for item in exc.diagnostics
             )
-            session.fail(diagnostics or (BuildDiagnostic(exc.code, exc.message, "error", exc.job_id),))
+            session.fail(
+                diagnostics
+                or (BuildDiagnostic(exc.code, exc.message, "error", exc.job_id),)
+            )
             return None
         except ApiContractError as exc:
             session.fail((BuildDiagnostic(exc.code, exc.message),))
@@ -119,6 +122,18 @@ class DryvApiServer:
         return changed
 
     def release_build(self, build_id: str) -> bool:
+        execution = self.execution(build_id)
+        if execution is not None and not execution.done.is_set():
+            raise ApiContractError(
+                "API_RENDER_ACTIVE",
+                f"build {build_id!r} cannot be released while renderer work is still active",
+            )
+        bundle = self.bundle(build_id)
+        if bundle is not None and not bundle.ready.is_set():
+            raise ApiContractError(
+                "API_BUNDLE_ACTIVE",
+                f"build {build_id!r} cannot be released while bundle packaging is still active",
+            )
         released = self.builds.release(build_id)
         if not released:
             return False
