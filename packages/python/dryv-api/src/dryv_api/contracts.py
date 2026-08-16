@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import PurePosixPath
 
 API_VERSION = "dryv.api/v1"
+_BUILD_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
 
 
 class ApiContractError(ValueError):
@@ -83,8 +85,11 @@ class CreateBuildRequest:
     delivery: DeliveryMode = DeliveryMode.STREAM
 
     def __post_init__(self) -> None:
-        if not self.build_id or self.build_id.strip() != self.build_id:
-            raise ApiContractError("API_BUILD_ID", "build id must be non-empty and trimmed")
+        if _BUILD_ID.fullmatch(self.build_id) is None:
+            raise ApiContractError(
+                "API_BUILD_ID",
+                "build id must be 1-128 route-safe ASCII characters: letters, digits, '.', '_' or '-'",
+            )
         names = tuple(item.instance_name for item in self.packs)
         if len(names) != len(set(names)):
             raise ApiContractError("API_PACK_DUPLICATE", "pack instance names must be unique")
