@@ -1,6 +1,6 @@
 # HELPER-03 — Properties, schemas, projections and types
 
-Status: TODO
+Status: DONE — PRODUCTION REVIEWED
 Prerequisite: HELPER-02 DONE.
 
 ## Goal
@@ -23,4 +23,4 @@ Required capabilities:
 Projection instructions are Author conveniences, not new Runtime IR semantics. Do not reintroduce OpenAPI/Zod-specific meaning into generic Dryv Author. Do not flatten reusable Property semantics into arbitrary field dictionaries when Canonical IR has an explicit concept.
 
 ## Completion
-Users can author reusable properties and rich schemas concisely; compiler produces explicit current Canonical IR items with deterministic IDs and references. No tests yet.
+Users can author reusable properties and rich schemas concisely; compiler produces explicit current Canonical IR items with deterministic IDs and references. Production review confirmed the canonical mapping. No tests were added or run.
