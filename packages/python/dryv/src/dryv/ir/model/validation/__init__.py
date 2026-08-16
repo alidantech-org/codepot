@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dryv.diagnostics import Diagnostic, Diagnostics
+from dryv.ir.diagnostics import Diagnostic, Diagnostics
 
 from ..groups import Contract
 from ..operations import Operation
