@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dryv.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
+from dryv.ir.diagnostics import Diagnostic, Diagnostics, DiagnosticSeverity
 
 from ..groups import Contract, walk_groups
 from ..schema_resolution import SchemaResolutionError, resolve_effective_schema
