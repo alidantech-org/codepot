@@ -1,6 +1,6 @@
 # HELPER-13 — CLI temporary local environment
 
-Status: DONE
+Status: DONE — PRODUCTION REVIEWED
 Prerequisite: HELPER-12 DONE.
 
 ## Implemented topology
@@ -8,5 +8,8 @@ Prerequisite: HELPER-12 DONE.
 
 Jinja connects through the public renderer WebSocket protocol; the CLI does not register an in-memory renderer shortcut. Child argv is explicit with `shell=False`, readiness is bounded, and owned services are cleaned on normal exit or exceptions.
 
+## Review hardening
+The local topology now relies on the same public HTTP/WebSocket contracts as remote deployment. The API no longer blocks its ASGI loop during planning/preflight, Jinja honors its advertised concurrency, and renderer worker/sender failures terminate or report through the protocol rather than silently stalling local generation.
+
 ## Completion
-One command invocation can acquire a local API and renderer availability without fixed ports or user-visible topology. No tests were added or run.
+One command invocation can acquire a local API and renderer availability without fixed ports or user-visible topology. Production source was reviewed; executable test certification remains separate.
