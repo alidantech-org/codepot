@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from importlib import import_module
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from .api import CancellationToken, OperationCancelled, OperationResult, OperationStatus
 from .diagnostics import (
     Diagnostic,
     Diagnostics,
@@ -12,13 +11,6 @@ from .diagnostics import (
     SourceKind,
     SourcePosition,
     SourceSpan,
-)
-from .generation import (
-    DEFAULT_SELECTOR_REGISTRY,
-    SelectionCardinality,
-    SelectionContext,
-    SelectorDescriptor,
-    SelectorRegistry,
 )
 from .ir import (
     Contract,
@@ -31,12 +23,10 @@ from .ir import (
     SemanticId,
     validate_contract,
 )
-from .plugins import PluginCategory, PluginDescriptor, PluginRegistry, PluginTrust
 from .versions import (
     CORE_VERSION,
     DEFAULT_BEHAVIOR_VERSIONS,
     IR_API_VERSION,
-    PLUGIN_API_VERSION,
     PUBLIC_API_VERSION,
     ApiVersion,
     BehaviorVersion,
@@ -48,8 +38,6 @@ __version__ = str(CORE_VERSION)
 
 _LAZY_EXPORTS = {
     "DryvRuntime": ("dryv.runtime", "DryvRuntime"),
-    "RuntimePluginInfo": ("dryv.runtime", "RuntimePluginInfo"),
-    "RuntimePlugins": ("dryv.runtime", "RuntimePlugins"),
     "RuntimeSnapshot": ("dryv.runtime", "RuntimeSnapshot"),
     "contract_from_document": ("dryv.features.serialization", "contract_from_document"),
     "contract_from_json": ("dryv.features.serialization", "contract_from_json"),
@@ -58,28 +46,7 @@ _LAZY_EXPORTS = {
     "contract_to_json": ("dryv.features.serialization", "contract_to_json"),
     "contract_to_yaml": ("dryv.features.serialization", "contract_to_yaml"),
     "create_runtime": ("dryv.runtime", "create_runtime"),
-    "generate": ("dryv.application", "generate"),
-    "generate_to_files": ("dryv.runtime.composition", "generate_to_files"),
 }
-
-if TYPE_CHECKING:
-    from .application import generate
-    from .features.serialization import (
-        contract_from_document,
-        contract_from_json,
-        contract_from_yaml,
-        contract_to_document,
-        contract_to_json,
-        contract_to_yaml,
-    )
-    from .runtime import (
-        DryvRuntime,
-        RuntimePluginInfo,
-        RuntimePlugins,
-        RuntimeSnapshot,
-        create_runtime,
-    )
-    from .runtime.composition import generate_to_files
 
 
 def __getattr__(name: str) -> Any:
@@ -101,11 +68,9 @@ __all__ = [
     "BehaviorVersion",
     "BehaviorVersions",
     "CORE_VERSION",
-    "CancellationToken",
     "Contract",
     "ContractValidator",
     "DEFAULT_BEHAVIOR_VERSIONS",
-    "DEFAULT_SELECTOR_REGISTRY",
     "Diagnostic",
     "DiagnosticSeverity",
     "Diagnostics",
@@ -115,23 +80,9 @@ __all__ = [
     "Name",
     "NameProjection",
     "Operation",
-    "OperationCancelled",
-    "OperationResult",
-    "OperationStatus",
-    "PLUGIN_API_VERSION",
     "PUBLIC_API_VERSION",
-    "PluginCategory",
-    "PluginDescriptor",
-    "PluginRegistry",
-    "PluginTrust",
-    "RuntimePluginInfo",
-    "RuntimePlugins",
     "RuntimeSnapshot",
     "Schema",
-    "SelectionCardinality",
-    "SelectionContext",
-    "SelectorDescriptor",
-    "SelectorRegistry",
     "SemanticId",
     "SourceIdentity",
     "SourceKind",
@@ -145,7 +96,5 @@ __all__ = [
     "contract_to_json",
     "contract_to_yaml",
     "create_runtime",
-    "generate",
-    "generate_to_files",
     "validate_contract",
 ]
