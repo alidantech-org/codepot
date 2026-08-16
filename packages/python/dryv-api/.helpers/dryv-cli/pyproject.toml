@@ -14,9 +14,11 @@ keywords = ["codegen", "codepot", "dryv", "cli", "project-client"]
 dependencies = [
   "dryv-api>=0.1.0a1,<0.2",
   "dryv-author>=0.2.0a1,<0.3",
+  "dryv-template-jinja>=0.2.0a1,<0.3",
   "PyYAML>=6.0,<7",
   "httpx>=0.28,<1",
   "websockets>=15,<16",
+  "uvicorn>=0.35,<1",
 ]
 
 [project.scripts]

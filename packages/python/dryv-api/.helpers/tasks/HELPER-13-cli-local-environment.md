@@ -1,25 +1,12 @@
 # HELPER-13 — CLI temporary local environment
 
-Status: TODO
+Status: DONE
 Prerequisite: HELPER-12 DONE.
 
-## Goal
-Hide local deployment/process plumbing so a normal install works through one `dryv` command.
+## Implemented topology
+`LocalEnvironment` owns only services it starts. The default path reserves a loopback listening socket, starts one local dryv-api ASGI host, and launches required renderer helpers as owned subprocesses after renderer requirements are known. External API URLs remain unowned and are never stopped by the CLI.
 
-## Required structure
-Implement `local/environment.py`, `api.py`, `renderer.py`, `process.py`, and `ports.py`.
-
-Required capabilities:
-- allocate loopback-only ephemeral ports safely;
-- start a temporary local dryv-api when no external API is configured;
-- wait for deterministic readiness/fail with child diagnostics;
-- start required local renderer helpers, including Jinja, after plan requirements are known where practical;
-- track child ownership so externally configured services are never killed;
-- propagate cancellation/interrupts;
-- always clean owned children on success, error and user cancellation.
-
-## Enforcement
-This layer hides topology only; it does not hide semantic decisions. No Runtime construction inside CLI when dryv-api is the selected host path. No hard-coded fixed ports, orphan child processes, shell-string command assembly, or platform-specific path assumptions without a dedicated owner.
+Jinja connects through the public renderer WebSocket protocol; the CLI does not register an in-memory renderer shortcut. Child argv is explicit with `shell=False`, readiness is bounded, and owned services are cleaned on normal exit or exceptions.
 
 ## Completion
-`LocalEnvironment` can provide API + renderer availability for one command invocation while remaining replaceable by a configured remote API. No tests yet.
+One command invocation can acquire a local API and renderer availability without fixed ports or user-visible topology. No tests were added or run.
