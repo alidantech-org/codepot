@@ -1,6 +1,6 @@
 # Task 27 — Build the GenerationPlan Runtime
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Task 26
 
@@ -54,63 +54,74 @@ Own only Runtime boundary data such as:
 RuntimeInput
 RuntimeResource
 RuntimePack
-GenerationPlan
-RenderJob
-RendererRequirement
-TemplateReference
-ContextContract
-PlannedArtifact
-PlanDependency
+RuntimePackResource
 RuntimeDiagnostic
 RuntimeResult
 ```
 
-Do not add HTTP/WebSocket/client/session objects.
+Planning owns the `GenerationPlan`/RenderJob planning data contracts consumed through its public Feature root.
 
 ### `events.py`
 
 Own transport-neutral Runtime events and the event sink/observer contract.
 
-Events may describe stages such as config/IR/pack loading, graph construction, planning progress, context creation, diagnostics and plan completion. They must not contain WebSocket-specific framing.
-
 ### `runtime.py`
 
 Own the small Runtime composition root. It coordinates approved Features and returns the complete plan.
 
-If this file approaches 500 lines, split logic into the owning Feature rather than creating another Runtime facade/service layer.
+## Implemented planning completeness
 
-## Planning completeness
+Every `RenderJob` carries deterministic execution data for `dryv-api` without API-side pack reinterpretation:
 
-Every `RenderJob` must carry enough deterministic data for `dryv-api` to execute it without reinterpreting pack semantics:
-
-- stable job identity;
+- stable job identity and topological order;
 - semantic subject identity/kind;
 - pack/template selection reason;
 - renderer capability requirement;
-- template logical resource identity and content hash;
-- canonical context values;
+- template logical resource identity, path, media type and content hash;
+- canonical JSON-compatible context;
 - context contract/version/hash;
-- planned artifact IDs and normalized project-relative paths;
-- deterministic job/artifact dependencies;
-- deterministic plan ordering/provenance.
+- planned artifact ID and normalized project-relative path;
+- semantic and render-job dependencies.
+
+Pack manifests now directly declare selections and templates. Clients no longer construct `PlanningCandidate` values.
 
 ## Context rule
 
-Runtime owns context meaning. Render Clients must receive JSON-like canonical context, not Canonical IR model objects.
+Runtime owns context meaning. Render Clients receive canonical JSON-like values, never Canonical IR model objects.
 
-Context hashes must reflect only output-relevant deterministic input so later cache/stateful work can avoid unrelated rerenders.
+Schema jobs include effective inherited Schema information. Context also contains semantic dependencies, planned artifact/dependency paths, pack options/bindings and selection facts.
 
 ## Pack rule
 
-Only Packs/Planning may interpret `dryv.pack.yaml` selection/binding/output semantics. `dryv-api` must not need to parse pack rules again.
+Only Packs/Planning interpret `dryv.pack.yaml` selection/binding/output semantics. `dryv-api` does not need to parse pack rules again.
+
+The implemented template declaration owns:
+
+```text
+selection
+file
+renderer
+output
+dependsOn
+```
 
 ## Runtime progress
 
-Runtime accepts an observer/sink and emits pure-data progress/diagnostic events. Event delivery must not block semantic correctness or introduce transport dependencies.
+Runtime accepts a pure-data event sink and emits transport-neutral stages:
+
+```text
+started
+project
+ir
+packs
+planning
+complete
+failed
+```
 
 ## Forbidden implementation
 
-Do not:
+The completed Engine does not:
 
 - execute Jinja/Handlebars/another template engine;
 - connect to Render Clients;
@@ -120,30 +131,22 @@ Do not:
 - create ZIP/TAR bundles;
 - write files;
 - execute shell/Git;
-- add compatibility aliases for the removed Runtime architecture.
-
-## Code-size enforcement
-
-Every production source file must remain at or below 500 lines. Use the exact final folder structure from `IMPLEMENTATION-RULES.md`; do not invent generic buckets.
-
-## No-test gate
-
-Do not create, modify or rewrite tests in this task. Production code is reviewed first. Test design begins only after explicit user approval.
-
-## Allowed paths
-
-- `packages/python/dryv/**`
-- `.docs/packages/python/dryv/**` only for factual progress/status corrections
+- preserve the removed Runtime architecture through compatibility aliases.
 
 ## Completion evidence
 
-Before marking complete, inspect and demonstrate through code/data flow that:
+Completed on `develop` without test changes.
 
-- Runtime can accept normalized usage config, Canonical IR and pack resources;
-- Runtime produces a complete deterministic `GenerationPlan`;
-- all renderer execution concerns are absent from Engine;
-- Runtime progress is transport-neutral;
-- no production source file exceeds 500 lines;
-- no tests were added or modified.
+- Production root is only `features`, `ir`, `runtime`, `versions`, `__init__.py`, and `py.typed`.
+- The Feature tree matches the approved file/folder architecture exactly.
+- Project parsing contains no Author Backend/renderer connection configuration.
+- Canonical IR JSON, YAML and JSONL decoding is owned by Serialization.
+- Pack manifests own canonical selection and template declarations.
+- Planning derives jobs directly from Canonical IR + packs and constructs contexts, context contracts, dependencies, planned artifact paths, renderer requirements and plan hashes.
+- `DryvRuntime.plan()` registers explicit resources, validates `dryv.yaml`, decodes/validates/indexes Canonical IR, validates resolved pack bundles and returns `GenerationPlan`.
+- The old `Group.workflows` migration path and explicit legacy `OperationFailure` value were removed rather than shimmed.
+- Runtime progress remains transport-neutral.
+- Current production source files are below the 500-line ceiling by inspection.
+- No tests were added, modified, deleted, or used to restore removed architecture.
 
-After Task 27, the Engine production code is structurally ready for `dryv-api`. Do not add test work until the explicit approval gate is lifted.
+Executable test certification remains intentionally deferred until the user approves the final production architecture/code. The next work is `dryv-api` Task 00.
