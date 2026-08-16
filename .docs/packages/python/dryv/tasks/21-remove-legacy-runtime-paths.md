@@ -1,9 +1,11 @@
 # Task 21 — Remove legacy runtime/plugin/port/write paths
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Task 20 and replacement external Project Client/API path proven
 Validation: no legacy imports, architecture tests, full Dryv suite
+
+> Implementation is complete on `develop`. Executable certification is still pending because the connected repository environment exposes no checkout/test runner. See [`../PROGRESS-18-25.md`](../PROGRESS-18-25.md).
 
 ## Goal
 
