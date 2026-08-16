@@ -1,33 +1,23 @@
-from .engine import (
-    CAPABILITIES,
-    ENGINE_BEHAVIOR_VERSION,
-    PACKAGE_VERSION,
-    SUFFIXES,
-    JinjaTemplateEngine,
-)
-from .helpers import HelperDescriptor, HelperKind
-from .plugin import create_plugin
-from .rules import JinjaEngineRules
+"""Independent Jinja Render Client for the Dryv Render Session protocol."""
+
 from .session import (
     CONTEXT_VERSION,
+    JinjaRenderSession,
+    PACKAGE_VERSION,
     RENDERER_CAPABILITY,
     RENDER_PROTOCOL_VERSION,
-    JinjaRenderSession,
     RenderDiagnosticMessage,
     RenderResultMessage,
     RenderedOutputMessage,
     RendererHelloMessage,
+    TEMPLATE_MEDIA_TYPES,
 )
 
+__version__ = PACKAGE_VERSION
+
 __all__ = [
-    "CAPABILITIES",
     "CONTEXT_VERSION",
-    "ENGINE_BEHAVIOR_VERSION",
-    "HelperDescriptor",
-    "HelperKind",
-    "JinjaEngineRules",
     "JinjaRenderSession",
-    "JinjaTemplateEngine",
     "PACKAGE_VERSION",
     "RENDERER_CAPABILITY",
     "RENDER_PROTOCOL_VERSION",
@@ -35,6 +25,6 @@ __all__ = [
     "RenderResultMessage",
     "RenderedOutputMessage",
     "RendererHelloMessage",
-    "SUFFIXES",
-    "create_plugin",
+    "TEMPLATE_MEDIA_TYPES",
+    "__version__",
 ]
