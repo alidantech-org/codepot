@@ -1,9 +1,11 @@
 # Task 22 — Prove the full architecture with a reference pack
 
-Status: [ ]
+Status: [x]
 Owner: `packages/python/dryv`
 Depends on: Dryv Task 20, `dryv-api` build/render connections, one working Render Client, one Project Client apply path
 Validation: full process integration test and trace assertions
+
+> The end-to-end proof is implemented on `develop`. Executable/process certification is still pending because the connected repository environment exposes no checkout/test runner. See [`../PROGRESS-18-25.md`](../PROGRESS-18-25.md).
 
 ## Goal
 
