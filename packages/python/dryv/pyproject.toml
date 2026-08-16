@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dryv"
 version = "2.0.0a1"
-description = "Typed semantic generation runtime for Dryv"
+description = "Canonical IR runtime and deterministic generation engine for Dryv"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11"
 license = "MIT"
@@ -29,9 +29,6 @@ dependencies = [
   "pathspec>=0.12,<1.0",
   "PyYAML>=6.0.2,<7.0",
 ]
-
-[project.entry-points."dryv.source_adapters"]
-ir = "dryv.infrastructure.ir_source:create_plugin"
 
 [project.urls]
 Homepage = "https://github.com/alidantech-org/codepot"
