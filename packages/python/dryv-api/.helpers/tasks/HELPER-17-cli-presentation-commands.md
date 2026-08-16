@@ -1,8 +1,8 @@
 # HELPER-17 — CLI presentation and final commands
 
-Status: DONE — PRODUCTION REVIEW REQUIRED
+Status: DONE — PRODUCTION REVIEWED
 Prerequisite: HELPER-16 DONE.
-Review gate: ALL PRODUCTION-CODE REVIEW after completion.
+Review gate: production architecture/integration review completed.
 
 ## Implemented public experience
 - `dryv validate` compiles Author source when required, submits the resulting Canonical IR through dryv-api/Runtime validation/planning, reports diagnostics and performs no generated-file writes.
@@ -12,5 +12,8 @@ Review gate: ALL PRODUCTION-CODE REVIEW after completion.
 
 The old flat CLI, stdio API transport, monolithic Project Client, generic services/prompts and superseded presentation modules are removed rather than wrapped.
 
-## Mandatory stop
-Production implementation through HELPER-17 is complete. Perform architecture/integration review only now. Do not add, modify, delete, regenerate or run tests until explicit approval starts the testing phase.
+## Production review result
+The connected production path has been reviewed and hardened across Author process boundaries, HTTP/ASGI coordination, renderer registration/capacity/cancellation, Jinja context preflight, stream and ZIP provenance verification, and local filesystem race/conflict safety. No compatibility path was restored.
+
+## Certification boundary
+This task is production-reviewed, not executable-test certified. The current environment could not clone the repository because external DNS is unavailable, and the relocated workspace still requires a regenerated `uv.lock` in a dependency-resolving environment before frozen workspace certification can be claimed.
