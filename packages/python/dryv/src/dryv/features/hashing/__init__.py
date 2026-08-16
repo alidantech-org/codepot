@@ -1,6 +1,6 @@
-"""Typed deterministic hashing capability for Dryv Runtime composition."""
+"""Versioned deterministic hashing used by Runtime planning."""
 
-from .model import (
+from .hashing import (
     HASH_ALGORITHM,
     HASH_VERSION,
     CanonicalValue,

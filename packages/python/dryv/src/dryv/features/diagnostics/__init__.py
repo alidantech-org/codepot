@@ -1,7 +1,5 @@
-"""Public facade boundary for the Dryv diagnostics Feature.
+"""Runtime/build diagnostic normalization outside canonical IR diagnostics."""
 
-Task 00 establishes this package boundary only. Capability behavior is added
-by the dedicated follow-up task without bypassing this public root.
-"""
+from .diagnostics import DiagnosticEntry, DiagnosticLevel, DiagnosticsFeature
 
-__all__: tuple[str, ...] = ()
+__all__ = ["DiagnosticEntry", "DiagnosticLevel", "DiagnosticsFeature"]
