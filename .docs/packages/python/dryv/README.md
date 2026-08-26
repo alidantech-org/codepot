@@ -11,6 +11,13 @@ Before changing Dryv production code, read:
 3. the exact active task under [`tasks/`](tasks/).
 4. [`.docs/TODO.md`](../../../TODO.md) — current execution order.
 
+## Research and future architecture
+
+The following documents are research-backed proposals, not part of the current canonical Runtime contract:
+
+- [`BOX-ENGINEERING.md`](BOX-ENGINEERING.md) — bounded, solver-neutral implementation obligations for work that cannot be rendered deterministically from templates.
+- [`BOX-SKILLS-AND-ENFORCEMENT.md`](BOX-SKILLS-AND-ENFORCEMENT.md) — findings from DevAuto Skill discovery/activation/enforcement and external agent-harness research; defines how reusable Skills, project/Box policy, knowledge, capabilities and independent verification can compose without weakening Dryv's deterministic architecture.
+
 ## Approved runtime purpose
 
 Dryv Engine is a deterministic semantic compiler/planner.
